@@ -47,17 +47,24 @@ struct DealTextAnalyzerTests {
         let results = try await DealTextAnalyzer().analyze(texts: texts)
 
         #expect(results.count == 1)
-        
-        print(results)
 
-        let combinedText = results
-            .map { [$0.title] + $0.details }
-            .flatMap { $0 }
-            .joined(separator: " ")
-            .lowercased()
-        #expect(combinedText.contains("cheeseburger"))
-        #expect(combinedText.contains("dollar") || combinedText.contains("$10") || combinedText.contains("ten"))
-        #expect(results.flatMap(\.days).contains(.tuesday))
+        let deal = try #require(results.first)
+        let title = deal.title.lowercased()
+        let details = deal.details.map { $0.lowercased() }
+        let combinedDetails = details.joined(separator: " ")
+        
+        print(deal)
+
+        #expect(title.contains("cheeseburger"))
+        #expect(title.contains("ten") || title.contains("$10") || title.contains("dollar"))
+
+        #expect(combinedDetails.contains("beef") || combinedDetails.contains("vegan"))
+        #expect(combinedDetails.contains("chip"))
+        #expect(combinedDetails.contains("drink"))
+        #expect(combinedDetails.contains("dine in"))
+
+        #expect(deal.days == [.tuesday])
+        #expect(deal.times == [.allDay])
     }
 
     @Test func hiveBarHappyHourPosterExtractsDeal() async throws {

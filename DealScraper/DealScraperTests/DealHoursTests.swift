@@ -65,6 +65,12 @@ struct DealHoursTests {
         #expect(DealHours.parse("4 PM to 6 PM") == .between(960, 1080))
     }
 
+    @Test func parseAllDay() {
+        #expect(DealHours.parse("all day") == .allDay)
+        #expect(DealHours.parse("ALL DAY") == .allDay)
+        #expect(DealHours.parse("all-day") == .allDay)
+    }
+
     @Test func parseReturnsNilForUnparseableInput() {
         #expect(DealHours.parse("") == nil)
         #expect(DealHours.parse("not a time") == nil)

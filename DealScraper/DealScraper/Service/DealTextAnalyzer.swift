@@ -49,6 +49,7 @@ struct DealTextAnalyzer {
         - Output days as full lowercase English day names (monday, tuesday, etc.).
         - Copy time strings verbatim from the poster, including ranges like '4 PM - 6 PM'.
         - If a time appears without AM/PM, include it exactly as written (e.g. '11:30').
+        - If a deal does not mention any time or hours, set times to exactly ['all day'].
         - Large text is typically the deal title; small/medium text is typically supporting details, times, or footers.
         """
 
@@ -73,7 +74,7 @@ struct DealTextAnalyzer {
         guard !title.isEmpty || !details.isEmpty else { return nil }
 
         let days = deal.days.compactMap { DealDay.parse($0) }
-        let times = deal.times.compactMap { DealHours.parse($0) }
+        let times = parseTimes(deal.times)
 
         return Deal(
             title: title,
@@ -81,6 +82,28 @@ struct DealTextAnalyzer {
             days: days,
             times: times
         )
+    }
+
+    private static func parseTimes(_ strings: [String]) -> [DealHours] {
+        let trimmed = strings
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        guard !trimmed.isEmpty else { return [] }
+
+        if trimmed.allSatisfy({ isAllDayToken($0) }) {
+            return [.allDay]
+        }
+
+        return trimmed.compactMap { DealHours.parse($0) }
+    }
+
+    private static func isAllDayToken(_ string: String) -> Bool {
+        switch string.lowercased() {
+        case "all day", "all-day", "allday":
+            return true
+        default:
+            return false
+        }
     }
 
     private static func supplementTimes(from texts: [String], into deal: Deal) -> Deal {
@@ -91,13 +114,13 @@ struct DealTextAnalyzer {
             times.append(contentsOf: timesInText(text))
         }
 
-        guard !times.isEmpty else { return deal }
+        let resolvedTimes = times.isEmpty ? [DealHours.allDay] : Array(Set(times))
 
         return Deal(
             title: deal.title,
             details: deal.details,
             days: deal.days,
-            times: Array(Set(times))
+            times: resolvedTimes
         )
     }
 
@@ -106,7 +129,7 @@ struct DealTextAnalyzer {
             return [time]
         }
 
-        let pattern = #"(?i)\b(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)\b"#
+        let pattern = #"(?i)(?<!\d)(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)(?!\d)"#
         guard let regex = try? NSRegularExpression(pattern: pattern) else { return [] }
 
         let range = NSRange(text.startIndex..., in: text)

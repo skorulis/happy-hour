@@ -93,6 +93,10 @@ nonisolated enum DealHours: Equatable, Hashable {
             .replacingOccurrences(of: "–", with: "-")
         guard !normalized.isEmpty else { return nil }
 
+        if normalized == "all day" || normalized == "all-day" || normalized == "allday" {
+            return .allDay
+        }
+
         let rangeSeparators = [" - ", "-", " to "]
         for separator in rangeSeparators {
             let parts = normalized.components(separatedBy: separator)

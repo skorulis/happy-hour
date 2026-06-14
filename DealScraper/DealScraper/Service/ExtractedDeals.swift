@@ -13,7 +13,7 @@ struct ExtractedDeal {
     @Guide(description: "Weekdays using lowercase full names: monday, tuesday, wednesday, thursday, friday, saturday, sunday. Expand abbreviations like Tues to tuesday.")
     var days: [String]
 
-    @Guide(description: "Time expressions as written on the poster, e.g. '4 PM' or '4 PM - 6 PM' or '11:30'. Include all times mentioned for this deal.")
+    @Guide(description: "Time expressions as written on the poster, e.g. '4 PM' or '4 PM - 6 PM' or '11:30'. Include all times mentioned for this deal. If the poster does not mention any time or hours for the deal, use exactly 'all day'.")
     var times: [String]
 }
 
