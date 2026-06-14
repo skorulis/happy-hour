@@ -10,7 +10,7 @@ struct DealTextAnalyzer {
         case emptyInput
     }
 
-    func analyze(lines: [ExtractedTextLine]) async throws -> [ExtractionResult] {
+    func analyze(lines: [ExtractedTextLine]) async throws -> [Deal] {
         guard !lines.isEmpty else {
             throw Error.emptyInput
         }
@@ -26,12 +26,12 @@ struct DealTextAnalyzer {
         let response = try await session.respond(to: prompt, generating: ExtractedDealsResponse.self)
 
         let mapped = response.content.deals.compactMap { deal in
-            Self.map(deal, allTexts: texts)
+            Self.map(deal)
         }.map { Self.supplementTimes(from: texts, into: $0) }
         return Self.merge(mapped)
     }
 
-    func analyze(texts: [String]) async throws -> [ExtractionResult] {
+    func analyze(texts: [String]) async throws -> [Deal] {
         let lines = texts.map {
             ExtractedTextLine(text: $0, lineHeight: 0, relativeSize: .medium)
         }
@@ -43,13 +43,13 @@ struct DealTextAnalyzer {
 
         Rules:
         - Return one deal per distinct schedule (same days AND times).
-        - Put all products sharing that schedule into the products array of one deal.
+        - Set title to the promotion headline. Put every supporting line for that promotion into details — a single deal often has multiple detail lines (prices, items, conditions).
         - Do not split a single promotion into multiple deals.
         - Ignore venue names, URLs, social media handles, and addresses.
         - Output days as full lowercase English day names (monday, tuesday, etc.).
         - Copy time strings verbatim from the poster, including ranges like '4 PM - 6 PM'.
         - If a time appears without AM/PM, include it exactly as written (e.g. '11:30').
-        - Large text is typically a deal or section title; small/medium text is typically supporting details, times, or footers. Prefer product names from large text when pairing deals with days/times.
+        - Large text is typically the deal title; small/medium text is typically supporting details, times, or footers.
         """
 
     private static func makePrompt(from lines: [ExtractedTextLine]) -> String {
@@ -65,43 +65,44 @@ struct DealTextAnalyzer {
         """
     }
 
-    private static func map(_ deal: ExtractedDeal, allTexts: [String]) -> ExtractionResult? {
-        let products = deal.products
+    private static func map(_ deal: ExtractedDeal) -> Deal? {
+        let title = deal.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        let details = deal.details
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
-        guard !products.isEmpty else { return nil }
+        guard !title.isEmpty || !details.isEmpty else { return nil }
 
         let days = deal.days.compactMap { DealDay.parse($0) }
-        let times = deal.times.compactMap { DealTime.parse($0) }
+        let times = deal.times.compactMap { DealHours.parse($0) }
 
-        return ExtractionResult(
-            allTexts: allTexts,
-            deals: products,
+        return Deal(
+            title: title,
+            details: details,
             days: days,
             times: times
         )
     }
 
-    private static func supplementTimes(from texts: [String], into result: ExtractionResult) -> ExtractionResult {
-        guard result.times.isEmpty else { return result }
+    private static func supplementTimes(from texts: [String], into deal: Deal) -> Deal {
+        guard deal.times.isEmpty else { return deal }
 
-        var times: [DealTime] = []
+        var times: [DealHours] = []
         for text in texts {
             times.append(contentsOf: timesInText(text))
         }
 
-        guard !times.isEmpty else { return result }
+        guard !times.isEmpty else { return deal }
 
-        return ExtractionResult(
-            allTexts: result.allTexts,
-            deals: result.deals,
-            days: result.days,
+        return Deal(
+            title: deal.title,
+            details: deal.details,
+            days: deal.days,
             times: Array(Set(times))
         )
     }
 
-    private static func timesInText(_ text: String) -> [DealTime] {
-        if let time = DealTime.parse(text) {
+    private static func timesInText(_ text: String) -> [DealHours] {
+        if let time = DealHours.parse(text) {
             return [time]
         }
 
@@ -113,34 +114,34 @@ struct DealTextAnalyzer {
 
         return matches.compactMap { match in
             guard let matchRange = Range(match.range(at: 1), in: text) else { return nil }
-            return DealTime.parse(String(text[matchRange]))
+            return DealHours.parse(String(text[matchRange]))
         }
     }
 
-    private static func merge(_ results: [ExtractionResult]) -> [ExtractionResult] {
-        var merged: [ExtractionResult] = []
+    private static func merge(_ deals: [Deal]) -> [Deal] {
+        var merged: [Deal] = []
 
-        for result in results {
-            if let index = merged.firstIndex(where: { shouldMerge($0, result) }) {
+        for deal in deals {
+            if let index = merged.firstIndex(where: { shouldMerge($0, deal) }) {
                 let existing = merged[index]
-                merged[index] = ExtractionResult(
-                    allTexts: existing.allTexts,
-                    deals: Array(Set(existing.deals + result.deals)),
-                    days: Array(Set(existing.days + result.days)),
-                    times: mergedTimes(existing.times, result.times)
+                merged[index] = Deal(
+                    title: existing.title.isEmpty ? deal.title : existing.title,
+                    details: Array(Set(existing.details + deal.details)),
+                    days: Array(Set(existing.days + deal.days)),
+                    times: mergedTimes(existing.times, deal.times)
                 )
             } else {
-                merged.append(result)
+                merged.append(deal)
             }
         }
 
         return merged
     }
 
-    private static func shouldMerge(_ lhs: ExtractionResult, _ rhs: ExtractionResult) -> Bool {
-        let sharedProducts = Set(lhs.deals.map { $0.lowercased() })
-            .intersection(rhs.deals.map { $0.lowercased() })
-        if !sharedProducts.isEmpty {
+    private static func shouldMerge(_ lhs: Deal, _ rhs: Deal) -> Bool {
+        let sharedText = Set(dealText(lhs).map { $0.lowercased() })
+            .intersection(dealText(rhs).map { $0.lowercased() })
+        if !sharedText.isEmpty {
             return true
         }
 
@@ -154,7 +155,16 @@ struct DealTextAnalyzer {
         return lhs.times.isEmpty || rhs.times.isEmpty || lhs.times == rhs.times
     }
 
-    private static func mergedTimes(_ lhs: [DealTime], _ rhs: [DealTime]) -> [DealTime] {
+    private static func dealText(_ deal: Deal) -> [String] {
+        var text: [String] = []
+        if !deal.title.isEmpty {
+            text.append(deal.title)
+        }
+        text.append(contentsOf: deal.details)
+        return text
+    }
+
+    private static func mergedTimes(_ lhs: [DealHours], _ rhs: [DealHours]) -> [DealHours] {
         if lhs.isEmpty { return rhs }
         if rhs.isEmpty { return lhs }
         if lhs == rhs { return lhs }

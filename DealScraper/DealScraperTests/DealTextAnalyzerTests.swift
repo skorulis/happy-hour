@@ -47,14 +47,16 @@ struct DealTextAnalyzerTests {
         let results = try await DealTextAnalyzer().analyze(texts: texts)
 
         #expect(results.count == 1)
-        let deal = try #require(results.first)
-        #expect(deal.allTexts == texts)
         
-        print(deal)
+        print(results)
 
-        let combinedDeals = results.flatMap(\.deals).joined(separator: " ").lowercased()
-        #expect(combinedDeals.contains("cheeseburger"))
-        #expect(combinedDeals.contains("dollar") || combinedDeals.contains("$10") || combinedDeals.contains("ten"))
+        let combinedText = results
+            .map { [$0.title] + $0.details }
+            .flatMap { $0 }
+            .joined(separator: " ")
+            .lowercased()
+        #expect(combinedText.contains("cheeseburger"))
+        #expect(combinedText.contains("dollar") || combinedText.contains("$10") || combinedText.contains("ten"))
         #expect(results.flatMap(\.days).contains(.tuesday))
     }
 
@@ -63,11 +65,13 @@ struct DealTextAnalyzerTests {
         let results = try await DealTextAnalyzer().analyze(texts: texts)
 
         #expect(results.count == 1)
-        let deal = try #require(results.first)
-        #expect(deal.allTexts == texts)
 
-        let combinedDeals = results.flatMap(\.deals).joined(separator: " ").lowercased()
-        #expect(combinedDeals.contains("happy hour") || combinedDeals.contains("schooner") || combinedDeals.contains("pale ale"))
+        let combinedText = results
+            .map { [$0.title] + $0.details }
+            .flatMap { $0 }
+            .joined(separator: " ")
+            .lowercased()
+        #expect(combinedText.contains("happy hour") || combinedText.contains("schooner") || combinedText.contains("pale ale"))
         #expect(results.flatMap(\.days).contains(.tuesday))
         #expect(results.flatMap(\.days).contains(.thursday))
         #expect(Self.containsTime(from: 960, in: results.flatMap(\.times)))
@@ -78,18 +82,20 @@ struct DealTextAnalyzerTests {
         let results = try await DealTextAnalyzer().analyze(texts: texts)
 
         #expect(results.count == 1)
-        let deal = try #require(results.first)
-        #expect(deal.allTexts == texts)
 
-        let combinedDeals = results.flatMap(\.deals).joined(separator: " ").lowercased()
+        let combinedText = results
+            .map { [$0.title] + $0.details }
+            .flatMap { $0 }
+            .joined(separator: " ")
+            .lowercased()
         let combinedTexts = texts.joined(separator: " ").lowercased()
-        #expect(combinedDeals.contains("roast") || combinedTexts.contains("roast"))
-        #expect(combinedDeals.contains("$39") || combinedDeals.contains("39"))
+        #expect(combinedText.contains("roast") || combinedTexts.contains("roast"))
+        #expect(combinedText.contains("$39") || combinedText.contains("39"))
         #expect(results.flatMap(\.days).contains(.sunday))
         #expect(Self.containsTime(from: 690, in: results.flatMap(\.times)))
     }
 
-    private static func containsTime(from minutes: Int, in times: [DealTime]) -> Bool {
+    private static func containsTime(from minutes: Int, in times: [DealHours]) -> Bool {
         times.contains { time in
             switch time {
             case .from(let value):
