@@ -48,6 +48,28 @@ struct DealImageExtractorTests {
         #expect(hasLine("ROAST, GRAVY, AND ZERO REGRETS.", in: texts))
     }
 
+    @Test func goatDealsPosterExtractsExpectedText() async throws {
+        let imageURL = try getURL(name: "goat_deals")
+
+        let texts = try await DealImageExtractor().extractTexts(from: imageURL)
+
+        #expect(!texts.isEmpty)
+        #expect(hasLine("GOAT", in: texts))
+        #expect(hasLine("WHAT'S ON", in: texts))
+        #expect(hasLine("MON STEAK NIGHT", in: texts))
+        #expect(hasLine("$25 STEAK + SCHOONER, FREE POOL, HAPPY HOUR 4-6PM", in: texts))
+        #expect(hasLine("TUE $20 BURGER + SCHOONER, HAPPY HOUR 4-6PM", in: texts))
+        #expect(hasLine("WED HALF-PRICE PIZZA", in: texts))
+        #expect(hasLine("HALF PRICE PIZZAS, $10 PINTS OF TPA, BILLY + VEB, HAPPY HOUR 4-6PM", in: texts))
+        #expect(hasLine("THU SCHNITZ&BEER", in: texts))
+        #expect(hasLine("$20 SCHNITZEL + SCHOONER ALL DAY, HAPPY HOUR 4-6PM", in: texts))
+        #expect(hasLine("FRI HAPPY HOUR", in: texts))
+        #expect(hasLine("SAT $12 ESPRESSO MARTINIS 6-8PM", in: texts))
+        #expect(hasLine("SUN CHICKEN& BEER", in: texts))
+        #expect(hasLine("$12 SPITZ + BEER CAN CHICKEN", in: texts))
+        #expect(hasLine("FOLLOW US @GOATNEWTOWN", in: texts))
+    }
+
     private func hasLine(_ expected: String, in texts: [String]) -> Bool {
         texts.contains { $0.caseInsensitiveCompare(expected) == .orderedSame }
     }
