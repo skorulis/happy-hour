@@ -21,8 +21,7 @@ struct DealTextAnalyzerTests {
     ]
 
     private static let hiveHappyHourTexts = [
-        "HAPPY HOUR AT",
-        "Hive Bar",
+        "HAPPY HOUR AT Hive Bar",
         "ESTE 2009",
         "$8 SCHOONERS OF RECKLESS",
         "PALE ALE & LAGER",
@@ -59,7 +58,7 @@ struct DealTextAnalyzerTests {
         #expect(combinedDetails.contains("ten") || combinedDetails.contains("dollar"))
 
         #expect(combinedDetails.contains("ten dollar beef or vegan"))
-        #expect(combinedDetails.contains("cheeseburger with chip"))
+        #expect(combinedDetails.contains("cheeseburgers with chips"))
         #expect(combinedDetails.contains("with any drink purchase"))
 
         #expect(deal.days == [.tuesday])

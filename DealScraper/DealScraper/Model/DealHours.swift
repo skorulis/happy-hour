@@ -91,6 +91,7 @@ nonisolated enum DealHours: Equatable, Hashable {
         let normalized = string
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .replacingOccurrences(of: "–", with: "-")
+            .lowercased()
         guard !normalized.isEmpty else { return nil }
 
         if normalized == "all day" || normalized == "all-day" || normalized == "allday" {

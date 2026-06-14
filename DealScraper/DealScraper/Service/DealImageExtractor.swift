@@ -58,10 +58,10 @@ struct DealImageExtractor {
             return TextFragment(text: text, boundingBox: observation.boundingBox)
         }
 
-        let lines = groupIntoLines(fragments).map { line -> ExtractedTextLine in
-            let text = line.map(\.text).joined(separator: " ")
-            let lineHeight = line.map(\.boundingBox.height).max() ?? 0
-            return ExtractedTextLine(text: text, lineHeight: lineHeight, relativeSize: .medium)
+        let groupedLines = groupIntoLines(fragments).map { GroupedLine(fragments: $0) }
+        let joinedLines = joinTightlyStackedLines(groupedLines)
+        let lines = joinedLines.map { line -> ExtractedTextLine in
+            ExtractedTextLine(text: line.text, lineHeight: line.lineHeight, relativeSize: .medium)
         }
 
         return assignRelativeSizes(to: lines)
@@ -90,9 +90,87 @@ struct DealImageExtractor {
         }
     }
 
-    private struct TextFragment {
+    private nonisolated struct TextFragment {
         let text: String
         let boundingBox: CGRect
+    }
+
+    private nonisolated struct GroupedLine {
+        let fragments: [TextFragment]
+        let stackedTexts: [String]
+
+        init(fragments: [TextFragment]) {
+            let sortedFragments = sortLineLeftToRight(fragments)
+            self.fragments = sortedFragments
+            self.stackedTexts = [sortedFragments.map(\.text).joined(separator: " ")]
+        }
+
+        init(fragments: [TextFragment], stackedTexts: [String]) {
+            self.fragments = fragments
+            self.stackedTexts = stackedTexts
+        }
+
+        var text: String {
+            stackedTexts.joined(separator: " ")
+        }
+
+        var lineHeight: CGFloat {
+            fragments.map(\.boundingBox.height).max() ?? 0
+        }
+
+        var boundingBox: CGRect {
+            fragments.map(\.boundingBox).reduce(.null) { $0.union($1) }
+        }
+    }
+
+    private static let lineHeightSimilarityThreshold: CGFloat = 0.9
+    private static let tightVerticalGapFactor: CGFloat = 0.35
+    private static let horizontalOverlapThreshold: CGFloat = 0.4
+
+    private static func joinTightlyStackedLines(_ lines: [GroupedLine]) -> [GroupedLine] {
+        guard !lines.isEmpty else { return [] }
+
+        let sorted = lines.sorted { $0.boundingBox.midY > $1.boundingBox.midY }
+        var result: [GroupedLine] = []
+
+        for line in sorted {
+            if let matchIndex = result.indices.reversed().first(where: { index in
+                shouldJoinVertically(upper: result[index], lower: line)
+            }) {
+                let previous = result[matchIndex]
+                result[matchIndex] = GroupedLine(
+                    fragments: previous.fragments + line.fragments,
+                    stackedTexts: previous.stackedTexts + line.stackedTexts
+                )
+            } else {
+                result.append(line)
+            }
+        }
+
+        return result
+    }
+
+    private static func shouldJoinVertically(upper: GroupedLine, lower: GroupedLine) -> Bool {
+        guard upper.boundingBox.midY > lower.boundingBox.midY else { return false }
+        guard heightsAreSimilar(upper.lineHeight, lower.lineHeight) else { return false }
+
+        let gap = upper.boundingBox.minY - lower.boundingBox.maxY
+        let maxGap = min(upper.lineHeight, lower.lineHeight) * tightVerticalGapFactor
+        guard gap <= maxGap else { return false }
+
+        let overlap = horizontalOverlap(upper.boundingBox, lower.boundingBox)
+        let minWidth = min(upper.boundingBox.width, lower.boundingBox.width)
+        guard minWidth > 0 else { return false }
+        return overlap / minWidth >= horizontalOverlapThreshold
+    }
+
+    private static func heightsAreSimilar(_ a: CGFloat, _ b: CGFloat) -> Bool {
+        guard a > 0, b > 0 else { return a == b }
+        return min(a, b) / max(a, b) >= lineHeightSimilarityThreshold
+    }
+
+    private static func horizontalOverlap(_ a: CGRect, _ b: CGRect) -> CGFloat {
+        max(0, min(a.maxX, b.maxX) - max(a.minX, b.minX))
     }
 
     private static func groupIntoLines(_ fragments: [TextFragment]) -> [[TextFragment]] {
@@ -121,7 +199,7 @@ struct DealImageExtractor {
         return lines
     }
 
-    private static func sortLineLeftToRight(_ line: [TextFragment]) -> [TextFragment] {
+    private nonisolated static func sortLineLeftToRight(_ line: [TextFragment]) -> [TextFragment] {
         line.sorted { $0.boundingBox.origin.x < $1.boundingBox.origin.x }
     }
 

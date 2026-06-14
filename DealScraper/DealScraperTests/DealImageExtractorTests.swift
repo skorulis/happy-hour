@@ -12,16 +12,14 @@ struct DealImageExtractorTests {
         let imageURL = try getURL(name: "hive_$10_cheese_burger")
 
         let lines = try await DealImageExtractor().extractTexts(from: imageURL)
-        
-        print(lines)
 
         #expect(!lines.isEmpty)
-        #expect(hasLine("CHEESEBURGER TUESDAYS", in: lines))
-        #expect(hasLine("TEN DOLLAR BEEF OR VEGAN", in: lines))
-        #expect(hasLine("CHEESEBURGERS WITH CHIPS", in: lines))
-        #expect(hasLine("(WITH ANY DRINK PURCHASE)", in: lines))
-        #expect(hasLine("EVERY TUES", in: lines))
-        #expect(hasLine("DINE IN ONLY", in: lines))
+        #expect(hasLine(containing: "CHEESEBURGER TUESDAYS", in: lines))
+        #expect(hasLine(
+            "TEN DOLLAR BEEF OR VEGAN CHEESEBURGERS WITH CHIPS (WITH ANY DRINK PURCHASE)",
+            in: lines
+        ))
+        #expect(hasLine("EVERY TUES DINE IN ONLY", in: lines))
     }
 
     @Test func hiveBarHappyHourPosterExtractsExpectedText() async throws {
@@ -30,10 +28,10 @@ struct DealImageExtractorTests {
         let lines = try await DealImageExtractor().extractTexts(from: imageURL)
 
         #expect(!lines.isEmpty)
-        #expect(hasLine("HAPPY HOUR AT", in: lines))
-        #expect(hasLine("$8 SCHOONERS OF RECKLESS", in: lines))
-        #expect(hasLine("PALE ALE & LAGER", in: lines))
-        #expect(hasLine("$8 WINES, S10 GIN & TONICS", in: lines))
+        #expect(hasLine(containing: "HAPPY HOUR AT Hive Bar", in: lines))
+        #expect(hasLine(containing: "$8 SCHOONERS OF RECKLESS", in: lines))
+        #expect(hasLine(containing: "PALE ALE & LAGER", in: lines))
+        #expect(hasLine(containing: "$8 WINES, S10 GIN & TONICS", in: lines))
         #expect(hasLine("TUES - THURS 4PM - 6PM / FRI 3PM - 5PM", in: lines))
     }
 
@@ -88,6 +86,10 @@ struct DealImageExtractorTests {
 
     private func hasLine(_ expected: String, in lines: [ExtractedTextLine]) -> Bool {
         line(expected, in: lines) != nil
+    }
+
+    private func hasLine(containing expected: String, in lines: [ExtractedTextLine]) -> Bool {
+        lines.contains { $0.text.range(of: expected, options: .caseInsensitive) != nil }
     }
 
     private func line(_ expected: String, in lines: [ExtractedTextLine]) -> ExtractedTextLine? {
