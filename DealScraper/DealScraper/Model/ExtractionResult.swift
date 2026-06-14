@@ -2,7 +2,7 @@
 
 import Foundation
 
-struct ExtractionResult {
+nonisolated struct ExtractionResult {
     
     /// All text blocks that were extracted from the image
     let allTexts: [String]

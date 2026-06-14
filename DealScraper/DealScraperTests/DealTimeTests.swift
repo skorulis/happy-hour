@@ -53,4 +53,36 @@ struct DealTimeTests {
         #expect(DealTime.toMinutes(string: "11:30 PM") == 1410)
         #expect(DealTime.toMinutes(string: "3:00 AM") == 180)
     }
+
+    @Test func parseSingleTime() {
+        #expect(DealTime.parse("4 PM") == .from(960))
+        #expect(DealTime.parse("11:30") == .from(690))
+    }
+
+    @Test func parseTimeRange() {
+        #expect(DealTime.parse("4 PM - 6 PM") == .between(960, 1080))
+        #expect(DealTime.parse("4 PM-6 PM") == .between(960, 1080))
+        #expect(DealTime.parse("4 PM to 6 PM") == .between(960, 1080))
+    }
+
+    @Test func parseReturnsNilForUnparseableInput() {
+        #expect(DealTime.parse("") == nil)
+        #expect(DealTime.parse("not a time") == nil)
+    }
+
+    @Test func fromStringParsesFromPrefix() {
+        #expect(DealTime.fromString("from 11AM") == .from(660))
+        #expect(DealTime.fromString("FROM 11:30") == .from(690))
+    }
+
+    @Test func fromStringParsesTimeRange() {
+        #expect(DealTime.fromString("4PM - 6PM") == .between(960, 1080))
+        #expect(DealTime.fromString("4 PM - 6 PM") == .between(960, 1080))
+    }
+
+    @Test func fromStringReturnsNilForUnparseableInput() {
+        #expect(DealTime.fromString("") == nil)
+        #expect(DealTime.fromString("from") == nil)
+        #expect(DealTime.fromString("not a time") == nil)
+    }
 }
