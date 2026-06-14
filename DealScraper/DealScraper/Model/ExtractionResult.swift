@@ -7,9 +7,11 @@ struct ExtractionResult {
     /// All text blocks that were extracted from the image
     let allTexts: [String]
     
-    /// The deal that would be shown to a user
-    let dealText: String
+    /// The product(s) that are being offered
+    let deals: [String]
     
     /// The days this deal applies to
     let days: [DealDay]
+    
+    let times: [DealTime]
 }

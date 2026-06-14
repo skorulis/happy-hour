@@ -2,6 +2,7 @@
 
 import Foundation
 
+/// Describes the days a deal is valid
 enum DealDay: String, CaseIterable {
     case monday, tuesday, wednesday, thursday, friday, saturday, sunday
 }
