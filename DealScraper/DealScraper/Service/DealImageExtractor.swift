@@ -12,14 +12,17 @@ struct DealImageExtractor {
         case recognitionFailed
     }
 
-    nonisolated func extractTexts(from url: URL) async throws -> [String] {
+    private static let largeSizeThreshold: CGFloat = 0.75
+    private static let mediumSizeThreshold: CGFloat = 0.45
+
+    nonisolated func extractTexts(from url: URL) async throws -> [ExtractedTextLine] {
         guard let cgImage = Self.loadCGImage(from: url) else {
             throw Error.invalidImage
         }
         return try await extractTexts(from: cgImage)
     }
 
-    nonisolated func extractTexts(from cgImage: CGImage) async throws -> [String] {
+    nonisolated func extractTexts(from cgImage: CGImage) async throws -> [ExtractedTextLine] {
         try await Task.detached {
             try Self.performRecognition(on: cgImage)
         }.value
@@ -32,7 +35,7 @@ struct DealImageExtractor {
         return CGImageSourceCreateImageAtIndex(source, 0, nil)
     }
 
-    private nonisolated static func performRecognition(on cgImage: CGImage) throws -> [String] {
+    private nonisolated static func performRecognition(on cgImage: CGImage) throws -> [ExtractedTextLine] {
         let request = VNRecognizeTextRequest()
         request.recognitionLevel = .accurate
         request.usesLanguageCorrection = true
@@ -55,8 +58,35 @@ struct DealImageExtractor {
             return TextFragment(text: text, boundingBox: observation.boundingBox)
         }
 
-        return groupIntoLines(fragments).map { line in
-            line.map(\.text).joined(separator: " ")
+        let lines = groupIntoLines(fragments).map { line -> ExtractedTextLine in
+            let text = line.map(\.text).joined(separator: " ")
+            let lineHeight = line.map(\.boundingBox.height).max() ?? 0
+            return ExtractedTextLine(text: text, lineHeight: lineHeight, relativeSize: .medium)
+        }
+
+        return assignRelativeSizes(to: lines)
+    }
+
+    private static func assignRelativeSizes(to lines: [ExtractedTextLine]) -> [ExtractedTextLine] {
+        guard let maxHeight = lines.map(\.lineHeight).max(), maxHeight > 0 else {
+            return lines
+        }
+
+        return lines.map { line in
+            let ratio = line.lineHeight / maxHeight
+            let relativeSize: RelativeTextSize
+            if ratio >= largeSizeThreshold {
+                relativeSize = .large
+            } else if ratio >= mediumSizeThreshold {
+                relativeSize = .medium
+            } else {
+                relativeSize = .small
+            }
+            return ExtractedTextLine(
+                text: line.text,
+                lineHeight: line.lineHeight,
+                relativeSize: relativeSize
+            )
         }
     }
 

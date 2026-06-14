@@ -11,67 +11,87 @@ struct DealImageExtractorTests {
     @Test func hiveCheeseburgerPosterExtractsExpectedText() async throws {
         let imageURL = try getURL(name: "hive_$10_cheese_burger")
 
-        let texts = try await DealImageExtractor().extractTexts(from: imageURL)
+        let lines = try await DealImageExtractor().extractTexts(from: imageURL)
+        
+        print(lines)
 
-        #expect(!texts.isEmpty)
-        #expect(hasLine("CHEESEBURGER TUESDAYS", in: texts))
-        #expect(hasLine("TEN DOLLAR BEEF OR VEGAN", in: texts))
-        #expect(hasLine("CHEESEBURGERS WITH CHIPS", in: texts))
-        #expect(hasLine("(WITH ANY DRINK PURCHASE)", in: texts))
-        #expect(hasLine("EVERY TUES", in: texts))
-        #expect(hasLine("DINE IN ONLY", in: texts))
+        #expect(!lines.isEmpty)
+        #expect(hasLine("CHEESEBURGER TUESDAYS", in: lines))
+        #expect(hasLine("TEN DOLLAR BEEF OR VEGAN", in: lines))
+        #expect(hasLine("CHEESEBURGERS WITH CHIPS", in: lines))
+        #expect(hasLine("(WITH ANY DRINK PURCHASE)", in: lines))
+        #expect(hasLine("EVERY TUES", in: lines))
+        #expect(hasLine("DINE IN ONLY", in: lines))
     }
 
     @Test func hiveBarHappyHourPosterExtractsExpectedText() async throws {
         let imageURL = try getURL(name: "hive_bar_happy_hour")
 
-        let texts = try await DealImageExtractor().extractTexts(from: imageURL)
+        let lines = try await DealImageExtractor().extractTexts(from: imageURL)
 
-        #expect(!texts.isEmpty)
-        #expect(hasLine("HAPPY HOUR AT", in: texts))
-        #expect(hasLine("$8 SCHOONERS OF RECKLESS", in: texts))
-        #expect(hasLine("PALE ALE & LAGER", in: texts))
-        #expect(hasLine("$8 WINES, S10 GIN & TONICS", in: texts))
-        #expect(hasLine("TUES - THURS 4PM - 6PM / FRI 3PM - 5PM", in: texts))
+        #expect(!lines.isEmpty)
+        #expect(hasLine("HAPPY HOUR AT", in: lines))
+        #expect(hasLine("$8 SCHOONERS OF RECKLESS", in: lines))
+        #expect(hasLine("PALE ALE & LAGER", in: lines))
+        #expect(hasLine("$8 WINES, S10 GIN & TONICS", in: lines))
+        #expect(hasLine("TUES - THURS 4PM - 6PM / FRI 3PM - 5PM", in: lines))
     }
 
     @Test func kurrajongRoastPosterExtractsExpectedText() async throws {
         let imageURL = try getURL(name: "kurrajon_roast")
 
-        let texts = try await DealImageExtractor().extractTexts(from: imageURL)
+        let lines = try await DealImageExtractor().extractTexts(from: imageURL)
 
-        #expect(!texts.isEmpty)
-        #expect(hasLine("FROM 11:30 TILL SOLD OUT.", in: texts))
-        #expect(hasLine("$39PP", in: texts))
-        #expect(hasLine("SUNDAY", in: texts))
-        #expect(hasLine("ROAST", in: texts))
-        #expect(hasLine("ROAST, GRAVY, AND ZERO REGRETS.", in: texts))
+        #expect(!lines.isEmpty)
+        #expect(hasLine("FROM 11:30 TILL SOLD OUT.", in: lines))
+        #expect(hasLine("$39PP", in: lines))
+        #expect(hasLine("SUNDAY", in: lines))
+        #expect(hasLine("ROAST", in: lines))
+        #expect(hasLine("ROAST, GRAVY, AND ZERO REGRETS.", in: lines))
     }
 
     @Test func goatDealsPosterExtractsExpectedText() async throws {
         let imageURL = try getURL(name: "goat_deals")
 
-        let texts = try await DealImageExtractor().extractTexts(from: imageURL)
+        let lines = try await DealImageExtractor().extractTexts(from: imageURL)
 
-        #expect(!texts.isEmpty)
-        #expect(hasLine("GOAT", in: texts))
-        #expect(hasLine("WHAT'S ON", in: texts))
-        #expect(hasLine("MON STEAK NIGHT", in: texts))
-        #expect(hasLine("$25 STEAK + SCHOONER, FREE POOL, HAPPY HOUR 4-6PM", in: texts))
-        #expect(hasLine("TUE $20 BURGER + SCHOONER, HAPPY HOUR 4-6PM", in: texts))
-        #expect(hasLine("WED HALF-PRICE PIZZA", in: texts))
-        #expect(hasLine("HALF PRICE PIZZAS, $10 PINTS OF TPA, BILLY + VEB, HAPPY HOUR 4-6PM", in: texts))
-        #expect(hasLine("THU SCHNITZ&BEER", in: texts))
-        #expect(hasLine("$20 SCHNITZEL + SCHOONER ALL DAY, HAPPY HOUR 4-6PM", in: texts))
-        #expect(hasLine("FRI HAPPY HOUR", in: texts))
-        #expect(hasLine("SAT $12 ESPRESSO MARTINIS 6-8PM", in: texts))
-        #expect(hasLine("SUN CHICKEN& BEER", in: texts))
-        #expect(hasLine("$12 SPITZ + BEER CAN CHICKEN", in: texts))
-        #expect(hasLine("FOLLOW US @GOATNEWTOWN", in: texts))
+        #expect(!lines.isEmpty)
+        #expect(hasLine("GOAT", in: lines))
+        #expect(hasLine("WHAT'S ON", in: lines))
+        #expect(hasLine("MON STEAK NIGHT", in: lines))
+        #expect(hasLine("$25 STEAK + SCHOONER, FREE POOL, HAPPY HOUR 4-6PM", in: lines))
+        #expect(hasLine("TUE $20 BURGER + SCHOONER, HAPPY HOUR 4-6PM", in: lines))
+        #expect(hasLine("WED HALF-PRICE PIZZA", in: lines))
+        #expect(hasLine("HALF PRICE PIZZAS, $10 PINTS OF TPA, BILLY + VEB, HAPPY HOUR 4-6PM", in: lines))
+        #expect(hasLine("THU SCHNITZ&BEER", in: lines))
+        #expect(hasLine("$20 SCHNITZEL + SCHOONER ALL DAY, HAPPY HOUR 4-6PM", in: lines))
+        #expect(hasLine("FRI HAPPY HOUR", in: lines))
+        #expect(hasLine("SAT $12 ESPRESSO MARTINIS 6-8PM", in: lines))
+        #expect(hasLine("SUN CHICKEN& BEER", in: lines))
+        #expect(hasLine("$12 SPITZ + BEER CAN CHICKEN", in: lines))
+        #expect(hasLine("FOLLOW US @GOATNEWTOWN", in: lines))
     }
 
-    private func hasLine(_ expected: String, in texts: [String]) -> Bool {
-        texts.contains { $0.caseInsensitiveCompare(expected) == .orderedSame }
+    @Test func goatDealsPosterTitleLinesAreLargerThanDetailLines() async throws {
+        let imageURL = try getURL(name: "goat_deals")
+
+        let lines = try await DealImageExtractor().extractTexts(from: imageURL)
+
+        let titleLine = try #require(line("MON STEAK NIGHT", in: lines))
+        let detailLine = try #require(line("$25 STEAK + SCHOONER, FREE POOL, HAPPY HOUR 4-6PM", in: lines))
+        let whatsOnLine = try #require(line("WHAT'S ON", in: lines))
+
+        #expect(titleLine.lineHeight > detailLine.lineHeight)
+        #expect(whatsOnLine.relativeSize == .large)
+        #expect(detailLine.relativeSize == .small)
+    }
+
+    private func hasLine(_ expected: String, in lines: [ExtractedTextLine]) -> Bool {
+        line(expected, in: lines) != nil
+    }
+
+    private func line(_ expected: String, in lines: [ExtractedTextLine]) -> ExtractedTextLine? {
+        lines.first { $0.text.caseInsensitiveCompare(expected) == .orderedSame }
     }
 
     private func getURL(name: String, extension ext: String = "jpeg") throws -> URL {

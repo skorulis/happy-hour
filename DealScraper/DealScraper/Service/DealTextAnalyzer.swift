@@ -10,8 +10,8 @@ struct DealTextAnalyzer {
         case emptyInput
     }
 
-    func analyze(texts: [String]) async throws -> [ExtractionResult] {
-        guard !texts.isEmpty else {
+    func analyze(lines: [ExtractedTextLine]) async throws -> [ExtractionResult] {
+        guard !lines.isEmpty else {
             throw Error.emptyInput
         }
 
@@ -20,7 +20,8 @@ struct DealTextAnalyzer {
             throw Error.modelUnavailable
         }
 
-        let prompt = Self.makePrompt(from: texts)
+        let texts = lines.map(\.text)
+        let prompt = Self.makePrompt(from: lines)
         let session = LanguageModelSession(model: model, instructions: Self.instructions)
         let response = try await session.respond(to: prompt, generating: ExtractedDealsResponse.self)
 
@@ -28,6 +29,13 @@ struct DealTextAnalyzer {
             Self.map(deal, allTexts: texts)
         }.map { Self.supplementTimes(from: texts, into: $0) }
         return Self.merge(mapped)
+    }
+
+    func analyze(texts: [String]) async throws -> [ExtractionResult] {
+        let lines = texts.map {
+            ExtractedTextLine(text: $0, lineHeight: 0, relativeSize: .medium)
+        }
+        return try await analyze(lines: lines)
     }
 
     private static let instructions = """
@@ -41,11 +49,13 @@ struct DealTextAnalyzer {
         - Output days as full lowercase English day names (monday, tuesday, etc.).
         - Copy time strings verbatim from the poster, including ranges like '4 PM - 6 PM'.
         - If a time appears without AM/PM, include it exactly as written (e.g. '11:30').
+        - Large text is typically a deal or section title; small/medium text is typically supporting details, times, or footers. Prefer product names from large text when pairing deals with days/times.
         """
 
-    private static func makePrompt(from texts: [String]) -> String {
-        let numberedLines = texts.enumerated().map { index, text in
-            "\(index + 1). \(text)"
+    private static func makePrompt(from lines: [ExtractedTextLine]) -> String {
+        let numberedLines = lines.enumerated().map { index, line in
+            let height = String(format: "%.3f", line.lineHeight)
+            return "\(index + 1). [\(line.relativeSize.rawValue), height=\(height)] \(line.text)"
         }.joined(separator: "\n")
 
         return """
