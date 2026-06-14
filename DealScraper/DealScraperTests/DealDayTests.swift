@@ -19,6 +19,12 @@ struct DealDayTests {
         #expect(DealDay.parse("mon") == .monday)
     }
 
+    @Test func parseAllFindsDaysInVerbatimLines() {
+        #expect(DealDay.parseAll(in: "EVERY TUES") == [.tuesday])
+        #expect(DealDay.parseAll(in: "CHEESEBURGER TUESDAYS") == [.tuesday])
+        #expect(DealDay.parseAll(in: "TUES - THURS 4PM - 6PM / FRI 3PM - 5PM") == [.tuesday, .thursday, .friday])
+    }
+
     @Test func returnsNilForUnparseableInput() {
         #expect(DealDay.parse("") == nil)
         #expect(DealDay.parse("notaday") == nil)

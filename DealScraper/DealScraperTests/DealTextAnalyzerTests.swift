@@ -56,12 +56,11 @@ struct DealTextAnalyzerTests {
         print(deal)
 
         #expect(title.contains("cheeseburger"))
-        #expect(title.contains("ten") || title.contains("$10") || title.contains("dollar"))
+        #expect(combinedDetails.contains("ten") || combinedDetails.contains("dollar"))
 
-        #expect(combinedDetails.contains("beef") || combinedDetails.contains("vegan"))
-        #expect(combinedDetails.contains("chip"))
-        #expect(combinedDetails.contains("drink"))
-        #expect(combinedDetails.contains("dine in"))
+        #expect(combinedDetails.contains("ten dollar beef or vegan"))
+        #expect(combinedDetails.contains("cheeseburger with chip"))
+        #expect(combinedDetails.contains("with any drink purchase"))
 
         #expect(deal.days == [.tuesday])
         #expect(deal.times == [.allDay])

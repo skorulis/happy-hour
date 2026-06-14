@@ -30,4 +30,34 @@ nonisolated enum DealDay: String, CaseIterable {
         }
         return abbreviations[normalized]
     }
+
+    static func parseAll(in string: String) -> [DealDay] {
+        if let day = parse(string) {
+            return [day]
+        }
+
+        let normalized = string
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+        guard !normalized.isEmpty else { return [] }
+
+        var found = Set<DealDay>()
+
+        for day in DealDay.allCases where normalized.contains(day.rawValue) {
+            found.insert(day)
+        }
+
+        let abbreviationsByLength = abbreviations.sorted { $0.key.count > $1.key.count }
+        for (abbrev, day) in abbreviationsByLength {
+            let pattern = #"\b"# + NSRegularExpression.escapedPattern(for: abbrev) + #"\b"#
+            guard let regex = try? NSRegularExpression(pattern: pattern),
+                  regex.firstMatch(in: normalized, range: NSRange(normalized.startIndex..., in: normalized)) != nil
+            else {
+                continue
+            }
+            found.insert(day)
+        }
+
+        return DealDay.allCases.filter { found.contains($0) }
+    }
 }

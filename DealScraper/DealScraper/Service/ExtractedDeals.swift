@@ -4,21 +4,21 @@ import FoundationModels
 
 @Generable
 struct ExtractedDeal {
-    @Guide(description: "Short headline or name for this promotion, e.g. 'Happy Hour', 'Ten Dollar Cheeseburger Tuesdays', or 'Sunday Roast'. Prefer large text on the poster.")
+    @Guide(description: "Exactly one input line that is the promotion headline. Must match an input line character-for-character. Do not combine, merge, reword, or change capitalization.")
     var title: String
 
-    @Guide(description: "Each line of supporting detail that belongs to this deal. A single promotion often spans multiple lines — put every distinct line here, such as prices, items, sizes, or conditions. Include price and item together when written that way, e.g. '$10 cheeseburger' or '$8 schooners of pale ale'.")
+    @Guide(description: "Input lines that are supporting detail for this deal. Each entry must match an input line character-for-character. Do not merge lines, paraphrase, or create new text.")
     var details: [String]
 
-    @Guide(description: "Weekdays using lowercase full names: monday, tuesday, wednesday, thursday, friday, saturday, sunday. Expand abbreviations like Tues to tuesday.")
+    @Guide(description: "Input line(s) that mention which days the deal applies to. Each entry must match an input line character-for-character. Do not normalize or rewrite day names.")
     var days: [String]
 
-    @Guide(description: "Time expressions as written on the poster, e.g. '4 PM' or '4 PM - 6 PM' or '11:30'. Include all times mentioned for this deal. If the poster does not mention any time or hours for the deal, use exactly 'all day'.")
+    @Guide(description: "Input line(s) that mention when the deal applies. Each entry must match an input line character-for-character. If no input line mentions a time, use exactly ['all day'].")
     var times: [String]
 }
 
 @Generable
 struct ExtractedDealsResponse {
-    @Guide(description: "One entry per distinct promotion schedule. Combine all detail lines sharing the same days and times into a single deal.")
+    @Guide(description: "One entry per distinct promotion schedule. Categorize input lines into each deal without rewriting them.")
     var deals: [ExtractedDeal]
 }

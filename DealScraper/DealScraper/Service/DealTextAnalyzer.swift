@@ -39,17 +39,19 @@ struct DealTextAnalyzer {
     }
 
     private static let instructions = """
-        You extract structured deal information from OCR text of pub and restaurant posters.
+        You categorize OCR text lines from pub and restaurant posters into structured deals.
+
+        Critical rule: never rewrite input text. Every title, detail, day, and time value must be copied character-for-character from the input lines. Do not combine lines, change capitalization, fix spelling, expand abbreviations, or paraphrase.
 
         Rules:
+        - Each numbered input line is a discrete string. Assign lines to the correct deal field without modifying them.
         - Return one deal per distinct schedule (same days AND times).
-        - Set title to the promotion headline. Put every supporting line for that promotion into details — a single deal often has multiple detail lines (prices, items, conditions).
+        - title: exactly one input line — the promotion headline. Prefer large-text lines.
+        - details: every other input line that belongs to this deal (prices, items, conditions). One input line per entry.
+        - days: the input line(s) that mention which days apply. Use the line as written, e.g. 'EVERY TUES' or 'TUES - THURS 4PM - 6PM / FRI 3PM - 5PM'.
+        - times: the input line(s) that mention when the deal applies. Use the line as written, e.g. 'FROM 11:30 TILL SOLD OUT.' or 'TUES - THURS 4PM - 6PM / FRI 3PM - 5PM'. If no input line mentions a time, set times to exactly ['all day'].
         - Do not split a single promotion into multiple deals.
-        - Ignore venue names, URLs, social media handles, and addresses.
-        - Output days as full lowercase English day names (monday, tuesday, etc.).
-        - Copy time strings verbatim from the poster, including ranges like '4 PM - 6 PM'.
-        - If a time appears without AM/PM, include it exactly as written (e.g. '11:30').
-        - If a deal does not mention any time or hours, set times to exactly ['all day'].
+        - Ignore venue names, URLs, social media handles, and addresses — leave them out of all fields.
         - Large text is typically the deal title; small/medium text is typically supporting details, times, or footers.
         """
 
@@ -60,7 +62,7 @@ struct DealTextAnalyzer {
         }.joined(separator: "\n")
 
         return """
-        Extract all deals from the following OCR text lines:
+        Categorize the following OCR text lines into deals. Copy each line verbatim — do not rewrite any text.
 
         \(numberedLines)
         """
@@ -73,7 +75,7 @@ struct DealTextAnalyzer {
             .filter { !$0.isEmpty }
         guard !title.isEmpty || !details.isEmpty else { return nil }
 
-        let days = deal.days.compactMap { DealDay.parse($0) }
+        let days = deal.days.flatMap { DealDay.parseAll(in: $0) }
         let times = parseTimes(deal.times)
 
         return Deal(
@@ -94,7 +96,15 @@ struct DealTextAnalyzer {
             return [.allDay]
         }
 
-        return trimmed.compactMap { DealHours.parse($0) }
+        var times: [DealHours] = []
+        for string in trimmed {
+            if let time = DealHours.parse(string) {
+                times.append(time)
+            } else {
+                times.append(contentsOf: timesInText(string))
+            }
+        }
+        return Array(Set(times))
     }
 
     private static func isAllDayToken(_ string: String) -> Bool {
