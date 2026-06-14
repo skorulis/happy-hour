@@ -12,41 +12,44 @@ struct DealImageExtractorTests {
         let imageURL = try getURL(name: "hive_$10_cheese_burger")
 
         let texts = try await DealImageExtractor().extractTexts(from: imageURL)
-        let combined = texts.joined(separator: " ").lowercased()
 
         #expect(!texts.isEmpty)
-        #expect(combined.contains("ten dollar"))
-        #expect(combined.contains("cheeseburger"))
-        #expect(combined.contains("tues"))
-        #expect(combined.contains("dine in"))
-        #expect(combined.contains("hive") || combined.contains("thehivebar"))
+        #expect(hasLine("CHEESEBURGER TUESDAYS", in: texts))
+        #expect(hasLine("TEN DOLLAR BEEF OR VEGAN", in: texts))
+        #expect(hasLine("CHEESEBURGERS WITH CHIPS", in: texts))
+        #expect(hasLine("(WITH ANY DRINK PURCHASE)", in: texts))
+        #expect(hasLine("EVERY TUES", in: texts))
+        #expect(hasLine("DINE IN ONLY", in: texts))
     }
 
     @Test func hiveBarHappyHourPosterExtractsExpectedText() async throws {
         let imageURL = try getURL(name: "hive_bar_happy_hour")
 
         let texts = try await DealImageExtractor().extractTexts(from: imageURL)
-        let combined = texts.joined(separator: " ").lowercased()
 
         #expect(!texts.isEmpty)
-        #expect(combined.contains("happy hour"))
-        #expect(combined.contains("hive"))
-        #expect(combined.contains("schooner") || combined.contains("reckless") || combined.contains("pale ale"))
-        #expect(combined.contains("tues") || combined.contains("thurs"))
-        #expect(combined.contains("4pm") || combined.contains("4 pm"))
+        #expect(hasLine("HAPPY HOUR AT", in: texts))
+        #expect(hasLine("$8 SCHOONERS OF RECKLESS", in: texts))
+        #expect(hasLine("PALE ALE & LAGER", in: texts))
+        #expect(hasLine("$8 WINES, S10 GIN & TONICS", in: texts))
+        #expect(hasLine("TUES - THURS 4PM - 6PM / FRI 3PM - 5PM", in: texts))
     }
 
     @Test func kurrajongRoastPosterExtractsExpectedText() async throws {
         let imageURL = try getURL(name: "kurrajon_roast")
 
         let texts = try await DealImageExtractor().extractTexts(from: imageURL)
-        let combined = texts.joined(separator: " ").lowercased()
 
         #expect(!texts.isEmpty)
-        #expect(combined.contains("sunday roast"))
-        #expect(combined.contains("$39"))
-        #expect(combined.contains("kurrajong") || combined.contains("kurrajon"))
-        #expect(combined.contains("11:30"))
+        #expect(hasLine("FROM 11:30 TILL SOLD OUT.", in: texts))
+        #expect(hasLine("$39PP", in: texts))
+        #expect(hasLine("SUNDAY", in: texts))
+        #expect(hasLine("ROAST", in: texts))
+        #expect(hasLine("ROAST, GRAVY, AND ZERO REGRETS.", in: texts))
+    }
+
+    private func hasLine(_ expected: String, in texts: [String]) -> Bool {
+        texts.contains { $0.caseInsensitiveCompare(expected) == .orderedSame }
     }
 
     private func getURL(name: String, extension ext: String = "jpeg") throws -> URL {

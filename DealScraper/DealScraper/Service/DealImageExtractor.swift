@@ -49,19 +49,66 @@ struct DealImageExtractor {
             return []
         }
 
-        let sortedObservations = observations.sorted { lhs, rhs in
-            let leftY = lhs.boundingBox.origin.y
-            let rightY = rhs.boundingBox.origin.y
-            if leftY != rightY {
-                return leftY > rightY
+        let fragments = observations.compactMap { observation -> TextFragment? in
+            let text = observation.topCandidates(1).first?.string.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard let text, !text.isEmpty else { return nil }
+            return TextFragment(text: text, boundingBox: observation.boundingBox)
+        }
+
+        return groupIntoLines(fragments).map { line in
+            line.map(\.text).joined(separator: " ")
+        }
+    }
+
+    private struct TextFragment {
+        let text: String
+        let boundingBox: CGRect
+    }
+
+    private static func groupIntoLines(_ fragments: [TextFragment]) -> [[TextFragment]] {
+        guard !fragments.isEmpty else { return [] }
+
+        let sorted = fragments.sorted { lhs, rhs in
+            if !belongsToLine(lhs.boundingBox, line: [rhs]) {
+                return lhs.boundingBox.midY > rhs.boundingBox.midY
             }
             return lhs.boundingBox.origin.x < rhs.boundingBox.origin.x
         }
 
-        return sortedObservations.compactMap { observation in
-            let text = observation.topCandidates(1).first?.string.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard let text, !text.isEmpty else { return nil }
-            return text
+        var lines: [[TextFragment]] = []
+        var currentLine = [sorted[0]]
+
+        for fragment in sorted.dropFirst() {
+            if belongsToLine(fragment.boundingBox, line: currentLine) {
+                currentLine.append(fragment)
+            } else {
+                lines.append(sortLineLeftToRight(currentLine))
+                currentLine = [fragment]
+            }
         }
+
+        lines.append(sortLineLeftToRight(currentLine))
+        return lines
+    }
+
+    private static func sortLineLeftToRight(_ line: [TextFragment]) -> [TextFragment] {
+        line.sorted { $0.boundingBox.origin.x < $1.boundingBox.origin.x }
+    }
+
+    private static func belongsToLine(_ box: CGRect, line: [TextFragment]) -> Bool {
+        let lineMinY = line.map(\.boundingBox.minY).min() ?? box.minY
+        let lineMaxY = line.map(\.boundingBox.maxY).max() ?? box.maxY
+        let lineBox = CGRect(x: 0, y: lineMinY, width: 1, height: lineMaxY - lineMinY)
+
+        let overlap = verticalOverlap(box, lineBox)
+        let minHeight = min(box.height, lineBox.height)
+        guard minHeight > 0 else {
+            return abs(box.midY - lineBox.midY) < 0.01
+        }
+        return overlap / minHeight >= 0.5
+    }
+
+    private static func verticalOverlap(_ a: CGRect, _ b: CGRect) -> CGFloat {
+        max(0, min(a.maxY, b.maxY) - max(a.minY, b.minY))
     }
 }
