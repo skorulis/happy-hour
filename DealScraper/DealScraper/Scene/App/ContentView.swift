@@ -14,6 +14,11 @@ struct ContentView: View {
                     Label("Import", systemImage: "photo.on.rectangle.angled")
                 }
 
+            VenueImportView(viewModel: resolver!.venueImportViewModel())
+                .tabItem {
+                    Label("Venues", systemImage: "mappin.and.ellipse")
+                }
+
             SettingsView(viewModel: resolver!.settingsViewModel())
                 .tabItem {
                     Label("Settings", systemImage: "gear")
