@@ -1,0 +1,5 @@
+{
+    "assemblyInputPaths": [
+        "Service/App/DealScraperAssembly.swift"
+    ]
+}

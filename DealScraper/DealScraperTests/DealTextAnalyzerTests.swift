@@ -41,6 +41,23 @@ struct DealTextAnalyzerTests {
         "ROAST, GRAVY, AND ZERO REGRETS.",
     ]
 
+    private static let goatDealsTexts = [
+        "GOAT",
+        "WHAT'S ON",
+        "MON STEAK NIGHT",
+        "$25 STEAK + SCHOONER, FREE POOL, HAPPY HOUR 4-6PM",
+        "TUE $20 BURGER + SCHOONER, HAPPY HOUR 4-6PM",
+        "WED HALF-PRICE PIZZA",
+        "HALF PRICE PIZZAS, $10 PINTS OF TPA, BILLY + VEB, HAPPY HOUR 4-6PM",
+        "THU SCHNITZ&BEER",
+        "$20 SCHNITZEL + SCHOONER ALL DAY, HAPPY HOUR 4-6PM",
+        "FRI HAPPY HOUR",
+        "SAT $12 ESPRESSO MARTINIS 6-8PM",
+        "SUN CHICKEN& BEER",
+        "$12 SPITZ + BEER CAN CHICKEN",
+        "FOLLOW US @GOATNEWTOWN",
+    ]
+
     @Test func hiveCheeseburgerPosterExtractsDeal() async throws {
         let texts = Self.hiveCheeseburgerTexts
         let results = try await DealTextAnalyzer().analyze(texts: texts)
@@ -98,6 +115,40 @@ struct DealTextAnalyzerTests {
         #expect(combinedText.contains("$39") || combinedText.contains("39"))
         #expect(results.flatMap(\.days).contains(.sunday))
         #expect(Self.containsTime(from: 690, in: results.flatMap(\.times)))
+    }
+
+    @Test func goatDealsPosterExtractsDeals() async throws {
+        let texts = Self.goatDealsTexts
+        let results = try await DealTextAnalyzer().analyze(texts: texts)
+
+        #expect(!results.isEmpty)
+        
+        print(results)
+
+        let combinedText = results
+            .map { [$0.title] + $0.details }
+            .flatMap { $0 }
+            .joined(separator: " ")
+            .lowercased()
+        let allDays = results.flatMap(\.days)
+        let allTimes = results.flatMap(\.times)
+
+        #expect(combinedText.contains("steak"))
+        #expect(combinedText.contains("burger") || combinedText.contains("schooner"))
+        #expect(combinedText.contains("pizza"))
+        #expect(combinedText.contains("schnitz"))
+        #expect(combinedText.contains("happy hour") || combinedText.contains("espresso martini"))
+        #expect(combinedText.contains("chicken"))
+
+        #expect(allDays.contains(.monday))
+        #expect(allDays.contains(.tuesday))
+        #expect(allDays.contains(.wednesday))
+        #expect(allDays.contains(.thursday))
+        #expect(allDays.contains(.friday))
+        #expect(allDays.contains(.saturday))
+        #expect(allDays.contains(.sunday))
+
+        #expect(Self.containsTime(from: 960, in: allTimes))
     }
 
     private static func containsTime(from minutes: Int, in times: [DealHours]) -> Bool {

@@ -6,6 +6,12 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		FA312A412FDF74A200D1DD06 /* Knit in Frameworks */ = {isa = PBXBuildFile; productRef = FA312A402FDF74A200D1DD06 /* Knit */; };
+		FA312A432FDF74A200D1DD06 /* KnitMacros in Frameworks */ = {isa = PBXBuildFile; productRef = FA312A422FDF74A200D1DD06 /* KnitMacros */; };
+		FA312A4F2FDF76DF00D1DD06 /* ASKCore in Frameworks */ = {isa = PBXBuildFile; productRef = FA312A4E2FDF76DF00D1DD06 /* ASKCore */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		FA57DC162FDE31D30040032F /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -39,6 +45,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FA312A4F2FDF76DF00D1DD06 /* ASKCore in Frameworks */,
+				FA312A412FDF74A200D1DD06 /* Knit in Frameworks */,
+				FA312A432FDF74A200D1DD06 /* KnitMacros in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -84,12 +93,16 @@
 			buildRules = (
 			);
 			dependencies = (
+				FA312A532FDF784400D1DD06 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				FA57DC022FDE31B40040032F /* DealScraper */,
 			);
 			name = DealScraper;
 			packageProductDependencies = (
+				FA312A402FDF74A200D1DD06 /* Knit */,
+				FA312A422FDF74A200D1DD06 /* KnitMacros */,
+				FA312A4E2FDF76DF00D1DD06 /* ASKCore */,
 			);
 			productName = DealScraper;
 			productReference = FA57DC002FDE31B40040032F /* DealScraper.app */;
@@ -146,6 +159,10 @@
 			);
 			mainGroup = FA57DBF72FDE31B40040032F;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				FA312A3F2FDF74A200D1DD06 /* XCRemoteSwiftPackageReference "knit" */,
+				FA312A4D2FDF76DF00D1DD06 /* XCRemoteSwiftPackageReference "ASKCore" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = FA57DC012FDE31B40040032F /* Products */;
 			projectDirPath = "";
@@ -192,6 +209,10 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		FA312A532FDF784400D1DD06 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			productRef = FA312A522FDF784400D1DD06 /* KnitBuildPlugin */;
+		};
 		FA57DC172FDE31D30040032F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = FA57DBFF2FDE31B40040032F /* DealScraper */;
@@ -456,6 +477,48 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		FA312A3F2FDF74A200D1DD06 /* XCRemoteSwiftPackageReference "knit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/skorulis/knit/";
+			requirement = {
+				branch = skorulis/ahead;
+				kind = branch;
+			};
+		};
+		FA312A4D2FDF76DF00D1DD06 /* XCRemoteSwiftPackageReference "ASKCore" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/skorulis/ASKCore";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		FA312A402FDF74A200D1DD06 /* Knit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FA312A3F2FDF74A200D1DD06 /* XCRemoteSwiftPackageReference "knit" */;
+			productName = Knit;
+		};
+		FA312A422FDF74A200D1DD06 /* KnitMacros */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FA312A3F2FDF74A200D1DD06 /* XCRemoteSwiftPackageReference "knit" */;
+			productName = KnitMacros;
+		};
+		FA312A4E2FDF76DF00D1DD06 /* ASKCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FA312A4D2FDF76DF00D1DD06 /* XCRemoteSwiftPackageReference "ASKCore" */;
+			productName = ASKCore;
+		};
+		FA312A522FDF784400D1DD06 /* KnitBuildPlugin */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FA312A3F2FDF74A200D1DD06 /* XCRemoteSwiftPackageReference "knit" */;
+			productName = "plugin:KnitBuildPlugin";
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = FA57DBF82FDE31B40040032F /* Project object */;
 }

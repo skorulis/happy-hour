@@ -1,21 +1,14 @@
-//
-//  ContentView.swift
-//  DealScraper
-//
 //  Created by Alexander Skorulis on 14/6/2026.
-//
 
 import SwiftUI
+import Knit
 
 struct ContentView: View {
+    
+    @Environment(\.resolver) private var resolver
+    
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
-        }
-        .padding()
+        ImageImportView(viewModel: resolver!.imageImportViewModel())
     }
 }
 
