@@ -1,9 +1,11 @@
 //Created by Alex Skorulis on 15/6/2026.
 
+import ASKCore
 import Foundation
 import Testing
 @testable import DealScraper
 
+@MainActor
 struct GooglePlacesClientTests {
 
     private static let sampleResponse = """
@@ -33,12 +35,7 @@ struct GooglePlacesClientTests {
         let client = GooglePlacesClient { request in
             captured.request = request
             let responseData = Self.sampleResponse.data(using: .utf8)!
-            return (responseData, HTTPURLResponse(
-                url: request.url!,
-                statusCode: 200,
-                httpVersion: nil,
-                headerFields: nil
-            )!)
+            return try JSONDecoder().decode(GooglePlacesSearchResponse.self, from: responseData)
         }
 
         let response = try await client.searchText(
@@ -48,13 +45,13 @@ struct GooglePlacesClientTests {
             regionCode: "AU"
         )
 
-        let request = try #require(captured.request)
-        #expect(request.url?.absoluteString == "https://places.googleapis.com/v1/places:searchText")
-        #expect(request.httpMethod == "POST")
-        #expect(request.value(forHTTPHeaderField: "X-Goog-Api-Key") == "google-test-key")
-        #expect(request.value(forHTTPHeaderField: "X-Goog-FieldMask") == GooglePlacesAPI.defaultFieldMask)
+        let request = try #require(captured.request as? HTTPJSONRequest<GooglePlacesSearchResponse>)
+        #expect(request.endpoint == "https://places.googleapis.com/v1/places:searchText")
+        #expect(request.method == "POST")
+        #expect(request.headers["X-Goog-Api-Key"] == "google-test-key")
+        #expect(request.headers["X-Goog-FieldMask"] == GooglePlacesAPI.defaultFieldMask)
 
-        let body = try #require(request.httpBody)
+        let body = try #require(request.body)
         let json = try #require(JSONSerialization.jsonObject(with: body) as? [String: Any])
         #expect(json["textQuery"] as? String == "pubs in Sydney")
         #expect(json["includedType"] as? String == "bar")
@@ -73,15 +70,7 @@ struct GooglePlacesClientTests {
 
         let client = GooglePlacesClient { request in
             captured.request = request
-            let responseData = """
-            {"places": []}
-            """.data(using: .utf8)!
-            return (responseData, HTTPURLResponse(
-                url: request.url!,
-                statusCode: 200,
-                httpVersion: nil,
-                headerFields: nil
-            )!)
+            return GooglePlacesSearchResponse(places: [], nextPageToken: nil)
         }
 
         _ = try await client.searchNearby(
@@ -92,10 +81,10 @@ struct GooglePlacesClientTests {
             includedTypes: ["bar"]
         )
 
-        let request = try #require(captured.request)
-        #expect(request.url?.absoluteString == "https://places.googleapis.com/v1/places:searchNearby")
+        let request = try #require(captured.request as? HTTPJSONRequest<GooglePlacesSearchResponse>)
+        #expect(request.endpoint == "https://places.googleapis.com/v1/places:searchNearby")
 
-        let body = try #require(request.httpBody)
+        let body = try #require(request.body)
         let json = try #require(JSONSerialization.jsonObject(with: body) as? [String: Any])
         #expect(json["includedTypes"] as? [String] == ["bar"])
         #expect(json["maxResultCount"] as? Int == 20)
@@ -109,16 +98,8 @@ struct GooglePlacesClientTests {
     }
 
     @Test func throwsAPIErrorOnNonSuccessStatus() async throws {
-        let client = GooglePlacesClient { request in
-            let responseData = """
-            {"error":{"message":"API key not valid"}}
-            """.data(using: .utf8)!
-            return (responseData, HTTPURLResponse(
-                url: request.url!,
-                statusCode: 403,
-                httpVersion: nil,
-                headerFields: nil
-            )!)
+        let client = GooglePlacesClient { _ in
+            throw GooglePlacesAPI.Error.apiError(statusCode: 403, message: "API key not valid")
         }
 
         do {
@@ -138,6 +119,6 @@ struct GooglePlacesClientTests {
     }
 }
 
-private final class RequestCapture: @unchecked Sendable {
-    var request: URLRequest?
+private final class RequestCapture {
+    var request: (any HTTPRequest)?
 }

@@ -36,14 +36,9 @@ struct VenueImportViewModelTests {
         let apiKeyStore = assembler.resolver.apiKeyStore()
         apiKeyStore.googlePlacesAPIKey = "google-test-key"
 
-        let client = GooglePlacesClient { request in
+        let client = GooglePlacesClient { _ in
             let responseData = Self.sampleResponse.data(using: .utf8)!
-            return (responseData, HTTPURLResponse(
-                url: request.url!,
-                statusCode: 200,
-                httpVersion: nil,
-                headerFields: nil
-            )!)
+            return try JSONDecoder().decode(GooglePlacesSearchResponse.self, from: responseData)
         }
 
         let viewModel = VenueImportViewModel(
@@ -67,15 +62,10 @@ struct VenueImportViewModelTests {
         let apiKeyStore = assembler.resolver.apiKeyStore()
         apiKeyStore.googlePlacesAPIKey = ""
 
-        let client = GooglePlacesClient { request in
+        let client = GooglePlacesClient { _ in
             Issue.record("Should not call API without key")
             let responseData = Self.sampleResponse.data(using: .utf8)!
-            return (responseData, HTTPURLResponse(
-                url: request.url!,
-                statusCode: 200,
-                httpVersion: nil,
-                headerFields: nil
-            )!)
+            return try JSONDecoder().decode(GooglePlacesSearchResponse.self, from: responseData)
         }
 
         let viewModel = VenueImportViewModel(
