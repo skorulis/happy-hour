@@ -5,6 +5,7 @@ import SwiftUI
 
 struct VenueImportView: View {
 
+    @Environment(\.resolver) private var resolver
     @State var viewModel: VenueImportViewModel
 
     var body: some View {
@@ -55,8 +56,11 @@ struct VenueImportView: View {
 
     @ViewBuilder
     private var detail: some View {
-        if let venue = selectedVenue {
-            VenueDetailsView(viewModel: VenueDetailsViewModel(venue: venue))
+        if let googleMapId = viewModel.selectedGoogleMapId {
+            VenueDetailsView(
+                viewModel: resolver!.venueDetailsViewModel(googleID: googleMapId)
+            )
+            .id(googleMapId)
         } else {
             ContentUnavailableView(
                 "Select a Venue",
@@ -64,11 +68,6 @@ struct VenueImportView: View {
                 description: Text("Choose a venue from the list to view its details.")
             )
         }
-    }
-
-    private var selectedVenue: Venue? {
-        guard let selectedGoogleMapId = viewModel.selectedGoogleMapId else { return nil }
-        return viewModel.savedVenues.first { $0.googleMapId == selectedGoogleMapId }
     }
 
     private var searchControls: some View {

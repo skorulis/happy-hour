@@ -1,5 +1,6 @@
 //Created by Alex Skorulis on 15/6/2026.
 
+import Knit
 import SwiftUI
 
 struct VenueDetailsView: View {
@@ -7,23 +8,37 @@ struct VenueDetailsView: View {
     @State var viewModel: VenueDetailsViewModel
 
     var body: some View {
+        Group {
+            if let venue = viewModel.venue {
+                venueContent(venue)
+            } else {
+                ContentUnavailableView(
+                    "Venue Not Found",
+                    systemImage: "building.2",
+                    description: Text("This venue is no longer saved locally.")
+                )
+            }
+        }
+        .frame(minWidth: 360, minHeight: 400)
+        .navigationTitle(viewModel.venue?.name ?? "Venue")
+    }
+
+    private func venueContent(_ venue: Venue) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                header
+                header(venue)
                 locationSection
-                linksSection
-                metadataSection
+                linksSection(venue)
+                metadataSection(venue)
             }
             .padding(24)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .frame(minWidth: 360, minHeight: 400)
-        .navigationTitle(viewModel.venue.name)
     }
 
-    private var header: some View {
+    private func header(_ venue: Venue) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(viewModel.venue.name)
+            Text(venue.name)
                 .font(.largeTitle.weight(.semibold))
 
             if let address = viewModel.formattedAddress {
@@ -37,7 +52,9 @@ struct VenueDetailsView: View {
     @ViewBuilder
     private var locationSection: some View {
         detailSection(title: "Location") {
-            LabeledContent("Coordinates", value: viewModel.coordinateDescription)
+            if let coordinateDescription = viewModel.coordinateDescription {
+                LabeledContent("Coordinates", value: coordinateDescription)
+            }
 
             if let mapsURL = viewModel.mapsURL {
                 Link("Open in Google Maps", destination: mapsURL)
@@ -46,8 +63,8 @@ struct VenueDetailsView: View {
     }
 
     @ViewBuilder
-    private var linksSection: some View {
-        if let websiteUri = viewModel.venue.websiteUri,
+    private func linksSection(_ venue: Venue) -> some View {
+        if let websiteUri = venue.websiteUri,
            let websiteURL = URL(string: websiteUri)
         {
             detailSection(title: "Links") {
@@ -56,9 +73,9 @@ struct VenueDetailsView: View {
         }
     }
 
-    private var metadataSection: some View {
+    private func metadataSection(_ venue: Venue) -> some View {
         detailSection(title: "Details") {
-            LabeledContent("Google Place ID", value: viewModel.venue.googleMapId)
+            LabeledContent("Google Place ID", value: venue.googleMapId)
 
             if !viewModel.types.isEmpty {
                 LabeledContent("Types", value: viewModel.types.joined(separator: ", "))
@@ -89,6 +106,8 @@ struct VenueDetailsView: View {
 }
 
 #Preview {
+    let assembler = DealScraperAssembly.testing()
+    let repository = assembler.resolver.venueRepository()
     let venue = Venue(
         googleMapId: "ChIJpreview",
         name: "The Local Pub",
@@ -100,6 +119,12 @@ struct VenueDetailsView: View {
         {"displayName":{"text":"The Local Pub"},"formattedAddress":"123 George St, Sydney","id":"ChIJpreview","location":{"latitude":-33.8688,"longitude":151.2093},"types":["bar","restaurant"],"websiteUri":"https://example.com"}
         """
     )
+    try! repository.upsert(venue)
 
-    VenueDetailsView(viewModel: VenueDetailsViewModel(venue: venue))
+    return VenueDetailsView(
+        viewModel: VenueDetailsViewModel(
+            googleMapId: venue.googleMapId,
+            venueRepository: repository
+        )
+    )
 }

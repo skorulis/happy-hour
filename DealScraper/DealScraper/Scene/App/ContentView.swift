@@ -1,5 +1,6 @@
 //  Created by Alexander Skorulis on 14/6/2026.
 
+import ASKCoordinator
 import SwiftUI
 import Knit
 
@@ -13,13 +14,15 @@ struct ContentView: View {
                 .tabItem {
                     Label("Import", systemImage: "photo.on.rectangle.angled")
                 }
-
-            VenueImportView(viewModel: resolver!.venueImportViewModel())
+            
+            CoordinatorView(coordinator: .init(root: MainPath.venueImport))
+                .withRenderers(resolver: resolver!)
                 .tabItem {
                     Label("Venues", systemImage: "mappin.and.ellipse")
                 }
-
-            SettingsView(viewModel: resolver!.settingsViewModel())
+            
+            CoordinatorView(coordinator: .init(root: MainPath.settings))
+                .withRenderers(resolver: resolver!)
                 .tabItem {
                     Label("Settings", systemImage: "gear")
                 }
