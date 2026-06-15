@@ -6,6 +6,7 @@ import WebKit
 struct LoadedPage: Sendable {
     let url: URL
     let html: String
+    let imageURLs: [URL]
 }
 
 enum WebPageLoaderError: LocalizedError {
@@ -31,6 +32,82 @@ final class WebPageLoader: NSObject {
     private static let defaultTimeout: TimeInterval = 15
     private static let safariUserAgent =
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
+
+    private static let scrollHeightScript =
+        "Math.max(document.body ? document.body.scrollHeight : 0, document.documentElement ? document.documentElement.scrollHeight : 0)"
+
+    private static let clickCarouselsScript = """
+    (function() {
+        var clicks = 0;
+        var selectors = [
+            '[aria-label*="Next"]',
+            '[aria-label*="next"]',
+            '[data-hook*="next"]',
+            'button[class*="next"]'
+        ];
+        for (var s = 0; s < selectors.length; s++) {
+            var buttons = document.querySelectorAll(selectors[s]);
+            for (var b = 0; b < buttons.length; b++) {
+                var button = buttons[b];
+                for (var i = 0; i < 10; i++) {
+                    if (typeof button.click === 'function') {
+                        button.click();
+                        clicks++;
+                    }
+                }
+            }
+        }
+        return clicks;
+    })()
+    """
+
+    private static let clickLoadMoreScript = """
+    (function() {
+        var clicks = 0;
+        var elements = document.querySelectorAll('button, a, [role="button"]');
+        for (var i = 0; i < elements.length; i++) {
+            var element = elements[i];
+            var text = (element.textContent || '').toLowerCase();
+            if (text.indexOf('load more') !== -1 && typeof element.click === 'function') {
+                element.click();
+                clicks++;
+            }
+        }
+        return clicks;
+    })()
+    """
+
+    private static let liveImageURLsScript = """
+    (function() {
+        var urls = [];
+        var images = document.querySelectorAll('img');
+        for (var i = 0; i < images.length; i++) {
+            var image = images[i];
+            if (image.currentSrc) {
+                urls.push(image.currentSrc);
+            }
+            if (image.src) {
+                urls.push(image.src);
+            }
+            var srcset = image.getAttribute('srcset') || image.getAttribute('srcSet');
+            if (srcset) {
+                var parts = srcset.split(',');
+                for (var p = 0; p < parts.length; p++) {
+                    var url = parts[p].trim().split(/\\s+/)[0];
+                    if (url) {
+                        urls.push(url);
+                    }
+                }
+            }
+        }
+        return JSON.stringify(urls);
+    })()
+    """
+
+    private static let wixStaticImagePattern = try! NSRegularExpression(
+        pattern: #"https://static\.wixstatic\.com/media/[^\s"'<>]+"#,
+        options: .caseInsensitive
+    )
 
     private let webView: WKWebView
     private var loadContinuation: CheckedContinuation<Void, Error>?
@@ -68,8 +145,10 @@ final class WebPageLoader: NSObject {
             group.cancelAll()
         }
 
-        let html = try await extractHTML()
-        guard !html.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+        try await preparePage()
+
+        let resolvedHTML = try await extractHTML()
+        guard !resolvedHTML.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             throw WebPageLoaderError.emptyContent
         }
 
@@ -77,7 +156,30 @@ final class WebPageLoader: NSObject {
             throw WebPageLoaderError.emptyContent
         }
 
-        return LoadedPage(url: finalURL, html: html)
+        let imageURLs = harvestImageURLs(html: resolvedHTML, liveDOMURLs: await harvestLiveImageURLStrings())
+
+        return LoadedPage(url: finalURL, html: resolvedHTML, imageURLs: imageURLs)
+    }
+
+    private func preparePage() async throws {
+        try await Task.sleep(for: .seconds(1))
+
+        let scrollHeight = try await evaluateJavaScriptNumber(Self.scrollHeightScript)
+        var y: Double = 0
+        while y < scrollHeight {
+            try await evaluateJavaScriptVoid("window.scrollTo(0, \(Int(y)))")
+            try await Task.sleep(for: .milliseconds(150))
+            y += 400
+        }
+
+        try await evaluateJavaScriptVoid("window.scrollTo(0, \(Int(scrollHeight)))")
+        try await Task.sleep(for: .milliseconds(300))
+        try await evaluateJavaScriptVoid("window.scrollTo(0, 0)")
+        try await Task.sleep(for: .milliseconds(500))
+
+        _ = try await evaluateJavaScriptNumber(Self.clickCarouselsScript)
+        _ = try await evaluateJavaScriptNumber(Self.clickLoadMoreScript)
+        try await Task.sleep(for: .milliseconds(500))
     }
 
     private func performLoad(url: URL) async throws {
@@ -88,19 +190,77 @@ final class WebPageLoader: NSObject {
     }
 
     private func extractHTML() async throws -> String {
+        let result: String = try await evaluateJavaScript("document.documentElement.outerHTML")
+        return result
+    }
+
+    private func harvestLiveImageURLStrings() async -> [String] {
+        guard let json: String = try? await evaluateJavaScript(Self.liveImageURLsScript),
+              let data = json.data(using: .utf8),
+              let strings = try? JSONDecoder().decode([String].self, from: data)
+        else {
+            return []
+        }
+        return strings
+    }
+
+    private func harvestImageURLs(html: String, liveDOMURLs: [String]) -> [URL] {
+        var urlStrings = Set(liveDOMURLs)
+        let range = NSRange(html.startIndex..., in: html)
+        Self.wixStaticImagePattern.enumerateMatches(in: html, options: [], range: range) { match, _, _ in
+            guard let match, let matchRange = Range(match.range, in: html) else { return }
+            urlStrings.insert(String(html[matchRange]))
+        }
+        return urlStrings.compactMap { URL(string: $0) }
+    }
+
+    private func evaluateJavaScriptVoid(_ script: String) async throws {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            webView.evaluateJavaScript(script) { _, error in
+                if let error {
+                    continuation.resume(throwing: error)
+                    return
+                }
+                continuation.resume()
+            }
+        }
+    }
+
+    private func evaluateJavaScriptNumber(_ script: String) async throws -> Double {
         try await withCheckedThrowingContinuation { continuation in
-            webView.evaluateJavaScript("document.documentElement.outerHTML") { result, error in
+            webView.evaluateJavaScript(script) { result, error in
+                if let error {
+                    continuation.resume(throwing: error)
+                    return
+                }
+                if let number = result as? NSNumber {
+                    continuation.resume(returning: number.doubleValue)
+                    return
+                }
+                continuation.resume(returning: 0)
+            }
+        }
+    }
+
+    private func evaluateJavaScript<T>(_ script: String) async throws -> T {
+        try await withCheckedThrowingContinuation { continuation in
+            webView.evaluateJavaScript(script) { result, error in
                 if let error {
                     continuation.resume(throwing: error)
                     return
                 }
 
-                guard let html = result as? String else {
-                    continuation.resume(throwing: WebPageLoaderError.emptyContent)
+                if let value = result as? T {
+                    continuation.resume(returning: value)
                     return
                 }
 
-                continuation.resume(returning: html)
+                if T.self == String.self, let value = result as? NSString {
+                    continuation.resume(returning: value as String as! T)
+                    return
+                }
+
+                continuation.resume(throwing: WebPageLoaderError.emptyContent)
             }
         }
     }

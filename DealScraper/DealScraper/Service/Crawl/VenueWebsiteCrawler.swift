@@ -92,7 +92,8 @@ final class VenueWebsiteCrawler {
                 extraction = try extractor.extract(
                     html: loadedPage.html,
                     pageURL: normalizedPageURL,
-                    baseURL: baseURL
+                    baseURL: baseURL,
+                    harvestedImageURLs: loadedPage.imageURLs
                 )
             } catch {
                 if visited.count == 1 {

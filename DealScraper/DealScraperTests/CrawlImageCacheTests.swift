@@ -1,7 +1,9 @@
 //Created by Alex Skorulis on 15/6/2026.
 
 import ASKCore
+import CoreGraphics
 import Foundation
+import ImageIO
 import Testing
 @testable import DealScraper
 
@@ -130,7 +132,7 @@ struct CrawlImageValidatorTests {
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
         let cache = CrawlImageCache(directory: directory)
         let hash = "blank-hash"
-        _ = try cache.store(data: Self.blankPNGData, hash: hash, fileExtension: "png")
+        _ = try cache.store(data: Self.largeBlankPNGData, hash: hash, fileExtension: "png")
 
         let validator = CrawlImageValidator(
             fetcher: CrawlImageFetcher(
@@ -150,9 +152,55 @@ struct CrawlImageValidatorTests {
         #expect(!isRelevant)
     }
 
-    private static let blankPNGData = Data(base64Encoded:
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
-    )!
+    @Test func rejectsImageBelowMinimumDimensions() async throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let cache = CrawlImageCache(directory: directory)
+        let hash = "small-hash"
+        _ = try cache.store(data: Self.smallPNGData, hash: hash, fileExtension: "png")
+
+        let validator = CrawlImageValidator(
+            fetcher: CrawlImageFetcher(
+                cache: cache,
+                urlSession: FakeURLSession { _ in
+                    throw CrawlImageFetcherError.invalidResponse
+                }
+            ),
+            imageExtractor: DealImageExtractor()
+        )
+
+        let isRelevant = await validator.isRelevantImage(
+            url: URL(string: "https://example.com/small-icon.png")!,
+            hash: hash
+        )
+
+        #expect(!isRelevant)
+    }
+
+    private static let largeBlankPNGData: Data = pngData(width: 600, height: 600)
+
+    private static let smallPNGData: Data = pngData(width: 400, height: 400)
+
+    private static func pngData(width: Int, height: Int) -> Data {
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        let context = CGContext(
+            data: nil,
+            width: width,
+            height: height,
+            bitsPerComponent: 8,
+            bytesPerRow: 0,
+            space: colorSpace,
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        )!
+        let image = context.makeImage()!
+        let mutableData = CFDataCreateMutable(nil, 0)!
+        guard let destination = CGImageDestinationCreateWithData(mutableData, "public.png" as CFString, 1, nil) else {
+            fatalError("Failed to create image destination")
+        }
+        CGImageDestinationAddImage(destination, image, nil)
+        CGImageDestinationFinalize(destination)
+        return mutableData as Data
+    }
 
     private func fixtureImageURL(named name: String) throws -> URL {
         let bundle = Bundle(for: BundleToken.self)

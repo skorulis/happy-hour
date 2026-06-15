@@ -27,7 +27,8 @@ struct DealSourceExtractor {
     func extract(
         html: String,
         pageURL: URL,
-        baseURL: URL
+        baseURL: URL,
+        harvestedImageURLs: [URL] = []
     ) throws -> (sources: [DiscoveredSource], crawlLinks: [URL]) {
         let document = try SwiftSoup.parse(html, pageURL.absoluteString)
         let pageHasDealKeywords = Self.containsDealKeyword(Self.pageText(document, pageURL: pageURL))
@@ -90,6 +91,12 @@ struct DealSourceExtractor {
                         appendSource(url: resolved, type: .image)
                     }
                 }
+            }
+
+            for imageURL in harvestedImageURLs {
+                guard let resolved = URLNormalizer.resolve(imageURL.absoluteString, relativeTo: pageURL) else { continue }
+                guard Self.isImageURL(resolved) else { continue }
+                appendSource(url: resolved, type: .image)
             }
         }
 

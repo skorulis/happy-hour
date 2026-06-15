@@ -4,7 +4,7 @@ import Foundation
 
 /// Describes the days a deal is valid
 nonisolated enum DealDay: String, CaseIterable {
-    case monday, tuesday, wednesday, thursday, friday, saturday, sunday
+    case monday, tuesday, wednesday, thursday, friday, saturday, sunday, everyDay
 
     private static let abbreviations: [String: DealDay] = [
         "mon": .monday,
@@ -17,6 +17,7 @@ nonisolated enum DealDay: String, CaseIterable {
         "fri": .friday,
         "sat": .saturday,
         "sun": .sunday,
+        "every Day": .everyDay,
     ]
 
     static func parse(_ string: String) -> DealDay? {
@@ -59,5 +60,9 @@ nonisolated enum DealDay: String, CaseIterable {
         }
 
         return DealDay.allCases.filter { found.contains($0) }
+    }
+
+    static func isMentioned(in string: String) -> Bool {
+        !parseAll(in: string).isEmpty
     }
 }

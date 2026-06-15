@@ -64,6 +64,31 @@ struct DealSourceExtractorTests {
         })
     }
 
+    @Test func extractsHarvestedImageURLsOnKeywordPage() throws {
+        let html = """
+        <html>
+        <head><title>Happy Hour</title></head>
+        <body></body>
+        </html>
+        """
+        let baseURL = URL(string: "https://pub.example.com")!
+        let pageURL = URL(string: "https://pub.example.com/happy-hour")!
+        let harvested = [
+            URL(string: "https://static.wixstatic.com/media/poster~mv2.png/v1/fill/w_524,h_554/poster.png")!,
+        ]
+
+        let result = try extractor.extract(
+            html: html,
+            pageURL: pageURL,
+            baseURL: baseURL,
+            harvestedImageURLs: harvested
+        )
+
+        #expect(result.sources.contains {
+            $0.type == .image && $0.url.lastPathComponent == "poster.png"
+        })
+    }
+
     @Test func ignoresExternalCrawlLinks() throws {
         let html = """
         <html><body>

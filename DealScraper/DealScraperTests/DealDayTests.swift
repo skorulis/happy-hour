@@ -29,4 +29,11 @@ struct DealDayTests {
         #expect(DealDay.parse("") == nil)
         #expect(DealDay.parse("notaday") == nil)
     }
+
+    @Test func isMentionedFindsFullNamesAndAbbreviations() {
+        #expect(DealDay.isMentioned(in: "Happy Hour every Friday"))
+        #expect(DealDay.isMentioned(in: "TUES - THURS 4PM - 6PM"))
+        #expect(!DealDay.isMentioned(in: "Special offers on selected drinks"))
+        #expect(!DealDay.isMentioned(in: ""))
+    }
 }
