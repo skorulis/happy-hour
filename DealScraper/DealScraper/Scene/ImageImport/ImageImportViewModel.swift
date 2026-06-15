@@ -24,19 +24,21 @@ final class ImageImportViewModel {
 
     private(set) var state: State = .idle
     var processingMode: DealProcessingMode = .onDevice
-    var apiKey: String = ""
     var openRouterModel: String = "openai/gpt-4o"
 
+    private let apiKeyStore: APIKeyStore
     private let onDeviceProcessor: OnDeviceDealProcessor
     private let visionProcessor: OpenAIVisionDealProcessor
     private let openRouterProcessor: OpenRouterVisionDealProcessor
 
     @Resolvable<Resolver>
     init(
+        apiKeyStore: APIKeyStore,
         onDeviceProcessor: OnDeviceDealProcessor,
         visionProcessor: OpenAIVisionDealProcessor,
         openRouterProcessor: OpenRouterVisionDealProcessor
     ) {
+        self.apiKeyStore = apiKeyStore
         self.onDeviceProcessor = onDeviceProcessor
         self.visionProcessor = visionProcessor
         self.openRouterProcessor = openRouterProcessor
@@ -79,12 +81,14 @@ final class ImageImportViewModel {
             case .onDevice:
                 deals = try await onDeviceProcessor.extractDeals(from: url)
             case .visionAPI:
+                let apiKey = apiKeyStore.openAIAPIKey
                 guard !apiKey.isEmpty else {
                     throw RemoteVisionDealProcessorError.missingAPIKey
                 }
                 visionProcessor.apiKey = apiKey
                 deals = try await visionProcessor.extractDeals(from: url)
             case .openRouter:
+                let apiKey = apiKeyStore.openRouterAPIKey
                 guard !apiKey.isEmpty else {
                     throw RemoteVisionDealProcessorError.missingAPIKey
                 }
@@ -111,9 +115,9 @@ final class ImageImportViewModel {
         case RemoteVisionDealProcessorError.missingAPIKey:
             switch processingMode {
             case .openRouter:
-                return "Enter an OpenRouter API key to use OpenRouter mode."
+                return "Configure an OpenRouter API key in Settings."
             case .visionAPI:
-                return "Enter an OpenAI API key to use OpenAI mode."
+                return "Configure an OpenAI API key in Settings."
             case .onDevice:
                 return "API key is required for remote processing."
             }

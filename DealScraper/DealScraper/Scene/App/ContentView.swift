@@ -8,7 +8,17 @@ struct ContentView: View {
     @Environment(\.resolver) private var resolver
     
     var body: some View {
-        ImageImportView(viewModel: resolver!.imageImportViewModel())
+        TabView {
+            ImageImportView(viewModel: resolver!.imageImportViewModel())
+                .tabItem {
+                    Label("Import", systemImage: "photo.on.rectangle.angled")
+                }
+
+            SettingsView(viewModel: resolver!.settingsViewModel())
+                .tabItem {
+                    Label("Settings", systemImage: "gear")
+                }
+        }
     }
 }
 

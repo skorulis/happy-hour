@@ -34,12 +34,7 @@ struct ImageImportView: View {
                 viewModel.reset()
             }
 
-            if viewModel.processingMode == .visionAPI {
-                SecureField("OpenAI API Key", text: $viewModel.apiKey)
-                    .textFieldStyle(.roundedBorder)
-            } else if viewModel.processingMode == .openRouter {
-                SecureField("OpenRouter API Key", text: $viewModel.apiKey)
-                    .textFieldStyle(.roundedBorder)
+            if viewModel.processingMode == .openRouter {
                 TextField("Model", text: $viewModel.openRouterModel)
                     .textFieldStyle(.roundedBorder)
             }

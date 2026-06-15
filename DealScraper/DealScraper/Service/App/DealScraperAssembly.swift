@@ -11,7 +11,7 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
     private let purpose: IOCPurpose
 
     init() {
-        self.purpose = .testing
+        self.purpose = .normal
     }
 
     init(purpose: IOCPurpose) {
@@ -19,10 +19,13 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
     }
     
     @MainActor func assemble(container: Container<TargetResolver>) {
+        ASKCoreAssembly(purpose: purpose).assemble(container: container)
+        
         registerStores(container: container)
         registerServices(container: container)
         
         container.register(ImageImportViewModel.self) { ImageImportViewModel.make(resolver: $0) }
+        container.register(SettingsViewModel.self) { SettingsViewModel.make(resolver: $0) }
     }
     
     @MainActor
@@ -63,11 +66,16 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
             VenueRepository(store: resolver.sqlStore())
         }
         .inObjectScope(.container)
+
+        container.register(APIKeyStore.self) { resolver in
+            APIKeyStore(secureStore: resolver.secureKeyValueStore())
+        }
+        .inObjectScope(.container)
     }
 }
 
 extension DealScraperAssembly {
     @MainActor static func testing() -> ScopedModuleAssembler<Resolver> {
-        ScopedModuleAssembler<Resolver>([DealScraperAssembly()])
+        ScopedModuleAssembler<Resolver>([DealScraperAssembly(purpose: .testing)])
     }
 }
