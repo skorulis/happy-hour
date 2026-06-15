@@ -5,6 +5,12 @@ import Knit
 import KnitMacros
 import UniformTypeIdentifiers
 
+enum DealProcessingMode: String, CaseIterable {
+    case onDevice = "On-Device"
+    case visionAPI = "OpenAI"
+    case openRouter = "OpenRouter"
+}
+
 @MainActor
 @Observable
 final class ImageImportViewModel {
@@ -17,17 +23,23 @@ final class ImageImportViewModel {
     }
 
     private(set) var state: State = .idle
+    var processingMode: DealProcessingMode = .onDevice
+    var apiKey: String = ""
+    var openRouterModel: String = "openai/gpt-4o"
 
-    private let imageExtractor: DealImageExtractor
-    private let textAnalyzer: DealTextAnalyzer
+    private let onDeviceProcessor: OnDeviceDealProcessor
+    private let visionProcessor: OpenAIVisionDealProcessor
+    private let openRouterProcessor: OpenRouterVisionDealProcessor
 
     @Resolvable<Resolver>
     init(
-        imageExtractor: DealImageExtractor,
-        textAnalyzer: DealTextAnalyzer
+        onDeviceProcessor: OnDeviceDealProcessor,
+        visionProcessor: OpenAIVisionDealProcessor,
+        openRouterProcessor: OpenRouterVisionDealProcessor
     ) {
-        self.imageExtractor = imageExtractor
-        self.textAnalyzer = textAnalyzer
+        self.onDeviceProcessor = onDeviceProcessor
+        self.visionProcessor = visionProcessor
+        self.openRouterProcessor = openRouterProcessor
     }
 
     static func isImageURL(_ url: URL) -> Bool {
@@ -62,8 +74,24 @@ final class ImageImportViewModel {
         }
 
         do {
-            let lines = try await imageExtractor.extractTexts(from: url)
-            let deals = try await textAnalyzer.analyze(lines: lines)
+            let deals: [Deal]
+            switch processingMode {
+            case .onDevice:
+                deals = try await onDeviceProcessor.extractDeals(from: url)
+            case .visionAPI:
+                guard !apiKey.isEmpty else {
+                    throw RemoteVisionDealProcessorError.missingAPIKey
+                }
+                visionProcessor.apiKey = apiKey
+                deals = try await visionProcessor.extractDeals(from: url)
+            case .openRouter:
+                guard !apiKey.isEmpty else {
+                    throw RemoteVisionDealProcessorError.missingAPIKey
+                }
+                openRouterProcessor.apiKey = apiKey
+                openRouterProcessor.model = openRouterModel
+                deals = try await openRouterProcessor.extractDeals(from: url)
+            }
             state = .completed(deals: deals, imageURL: url)
         } catch {
             state = .failed(message: localizedMessage(for: error))
@@ -80,6 +108,26 @@ final class ImageImportViewModel {
             return "No text was found in the image."
         case DealTextAnalyzer.Error.modelUnavailable:
             return "On-device language model is not available."
+        case RemoteVisionDealProcessorError.missingAPIKey:
+            switch processingMode {
+            case .openRouter:
+                return "Enter an OpenRouter API key to use OpenRouter mode."
+            case .visionAPI:
+                return "Enter an OpenAI API key to use OpenAI mode."
+            case .onDevice:
+                return "API key is required for remote processing."
+            }
+        case RemoteVisionDealProcessorError.missingModel:
+            return "Enter an OpenRouter model name."
+        case RemoteVisionDealProcessorError.invalidImage:
+            return "Could not read the image file."
+        case RemoteVisionDealProcessorError.decodingFailure:
+            return "Could not parse the vision model response."
+        case let RemoteVisionDealProcessorError.apiError(statusCode, message):
+            let provider = processingMode == .openRouter ? "OpenRouter" : "OpenAI"
+            return "\(provider) API error (\(statusCode)): \(message)"
+        case let RemoteVisionDealProcessorError.networkFailure(underlying):
+            return "Network error: \(underlying.localizedDescription)"
         default:
             return error.localizedDescription
         }

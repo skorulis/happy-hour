@@ -12,6 +12,7 @@ struct ImageImportView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
+                processingControls
                 dropZone
                 content
             }
@@ -19,6 +20,30 @@ struct ImageImportView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .frame(minWidth: 480, minHeight: 400)
+    }
+
+    private var processingControls: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Picker("Processing", selection: $viewModel.processingMode) {
+                ForEach(DealProcessingMode.allCases, id: \.self) { mode in
+                    Text(mode.rawValue).tag(mode)
+                }
+            }
+            .pickerStyle(.segmented)
+            .onChange(of: viewModel.processingMode) {
+                viewModel.reset()
+            }
+
+            if viewModel.processingMode == .visionAPI {
+                SecureField("OpenAI API Key", text: $viewModel.apiKey)
+                    .textFieldStyle(.roundedBorder)
+            } else if viewModel.processingMode == .openRouter {
+                SecureField("OpenRouter API Key", text: $viewModel.apiKey)
+                    .textFieldStyle(.roundedBorder)
+                TextField("Model", text: $viewModel.openRouterModel)
+                    .textFieldStyle(.roundedBorder)
+            }
+        }
     }
 
     private var dropZone: some View {
@@ -63,7 +88,7 @@ struct ImageImportView: View {
         case .processing:
             HStack(spacing: 12) {
                 ProgressView()
-                Text("Extracting text and analyzing deals…")
+                Text(processingStatusText)
                     .foregroundStyle(.secondary)
             }
 
@@ -73,6 +98,17 @@ struct ImageImportView: View {
         case let .failed(message):
             Label(message, systemImage: "exclamationmark.triangle.fill")
                 .foregroundStyle(.red)
+        }
+    }
+
+    private var processingStatusText: String {
+        switch viewModel.processingMode {
+        case .onDevice:
+            return "Extracting text and analyzing deals…"
+        case .visionAPI:
+            return "Analyzing image with OpenAI…"
+        case .openRouter:
+            return "Analyzing image with OpenRouter…"
         }
     }
 

@@ -17,6 +17,24 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
         container.register(DealTextAnalyzer.self) { _ in
             DealTextAnalyzer()
         }
+
+        container.register(OpenAIClient.self) { _ in
+            OpenAIClient()
+        }
+
+        container.register(OpenRouterClient.self) { _ in
+            OpenRouterClient()
+        }
+
+        container.register(OnDeviceDealProcessor.self) { OnDeviceDealProcessor.make(resolver: $0) }
+
+        container.register(OpenAIVisionDealProcessor.self) { resolver in
+            OpenAIVisionDealProcessor(client: resolver.openAIClient())
+        }
+
+        container.register(OpenRouterVisionDealProcessor.self) { resolver in
+            OpenRouterVisionDealProcessor(client: resolver.openRouterClient())
+        }
         
         container.register(ImageImportViewModel.self) { ImageImportViewModel.make(resolver: $0) }
     }
