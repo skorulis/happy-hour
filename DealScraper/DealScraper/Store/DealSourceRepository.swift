@@ -19,6 +19,19 @@ final class DealSourceRepository {
         }
     }
 
+    @discardableResult
+    func deleteAll(venueId: Int64) throws -> Int {
+        try store.dbQueue.write { db in
+            let count = try DealSource
+                .filter(Column("venue_id") == venueId)
+                .fetchCount(db)
+            try DealSource
+                .filter(Column("venue_id") == venueId)
+                .deleteAll(db)
+            return count
+        }
+    }
+
     /// Inserts new sources and refreshes `date` for existing rows. Preserves `.approved` status.
     @discardableResult
     func upsert(sources: [DealSource], forVenueId venueId: Int64) throws -> Int {

@@ -77,10 +77,17 @@ struct VenueDetailsView: View {
     @ViewBuilder
     private var actionsSection: some View {
         detailSection(title: "Actions") {
-            Button("Crawl Website") {
-                viewModel.crawlWebsite()
+            HStack {
+                Button("Crawl Website") {
+                    viewModel.crawlWebsite()
+                }
+                .disabled(!viewModel.canCrawl)
+
+                Button("Delete Sources", role: .destructive) {
+                    viewModel.deleteSources()
+                }
+                .disabled(!viewModel.canDeleteSources)
             }
-            .disabled(!viewModel.canCrawl)
 
             switch viewModel.crawlState {
             case .idle:
@@ -99,6 +106,19 @@ struct VenueDetailsView: View {
                 }
             case let .completed(found):
                 Text("Found \(found) new deal source\(found == 1 ? "" : "s").")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            case let .failed(message):
+                Text(message)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+            }
+
+            switch viewModel.deleteSourcesState {
+            case .idle:
+                EmptyView()
+            case let .completed(deleted):
+                Text("Deleted \(deleted) deal source\(deleted == 1 ? "" : "s").")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             case let .failed(message):

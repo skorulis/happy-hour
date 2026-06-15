@@ -83,4 +83,31 @@ struct DealSourceRepositoryTests {
         #expect(found.status == .approved)
         #expect(found.date == refreshedDate)
     }
+
+    @Test func deleteAllRemovesSourcesForVenue() throws {
+        let store = SQLStore.inMemory()
+        let venueRepository = VenueRepository(store: store)
+        let dealSourceRepository = DealSourceRepository(store: store)
+
+        try venueRepository.upsert(Venue(
+            googleMapId: "places/test",
+            name: "Test Pub",
+            lat: 0,
+            lng: 0,
+            websiteUri: "https://example.com",
+            json: "{}"
+        ))
+
+        let venue = try #require(try venueRepository.find(googleMapId: "places/test"))
+        let venueId = try #require(venue.id)
+
+        _ = try dealSourceRepository.upsert(sources: [
+            DealSource(venueId: venueId, url: "https://example.com/menu.pdf", type: .pdf, hash: "hash-1"),
+            DealSource(venueId: venueId, url: "https://example.com/specials", type: .webpage, hash: "hash-2"),
+        ], forVenueId: venueId)
+
+        let deleted = try dealSourceRepository.deleteAll(venueId: venueId)
+        #expect(deleted == 2)
+        #expect(try dealSourceRepository.find(venueId: venueId).isEmpty)
+    }
 }

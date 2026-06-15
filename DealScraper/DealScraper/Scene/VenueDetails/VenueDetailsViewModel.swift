@@ -15,27 +15,41 @@ final class VenueDetailsViewModel {
         case failed(message: String)
     }
 
+    enum DeleteSourcesState: Equatable {
+        case idle
+        case completed(deleted: Int)
+        case failed(message: String)
+    }
+
     let googleMapId: String
     private(set) var venue: Venue?
     private(set) var crawlState: CrawlState = .idle
+    private(set) var deleteSourcesState: DeleteSourcesState = .idle
 
     private let venueRepository: VenueRepository
+    private let dealSourceRepository: DealSourceRepository
     private let venueWebsiteCrawler: VenueWebsiteCrawler
 
     @Resolvable<Resolver>
     init(
         @Argument googleMapId: String,
         venueRepository: VenueRepository,
+        dealSourceRepository: DealSourceRepository,
         venueWebsiteCrawler: VenueWebsiteCrawler
     ) {
         self.googleMapId = googleMapId
         self.venueRepository = venueRepository
+        self.dealSourceRepository = dealSourceRepository
         self.venueWebsiteCrawler = venueWebsiteCrawler
         load()
     }
 
     var canCrawl: Bool {
         venue?.websiteUri != nil && !isCrawling
+    }
+
+    var canDeleteSources: Bool {
+        venue?.id != nil && !isCrawling
     }
 
     var isCrawling: Bool {
@@ -51,12 +65,25 @@ final class VenueDetailsViewModel {
         }
     }
 
+    func deleteSources() {
+        guard let venueId = venue?.id, canDeleteSources else { return }
+
+        do {
+            let deleted = try dealSourceRepository.deleteAll(venueId: venueId)
+            deleteSourcesState = .completed(deleted: deleted)
+            crawlState = .idle
+        } catch {
+            deleteSourcesState = .failed(message: error.localizedDescription)
+        }
+    }
+
     private func load() {
         venue = try? venueRepository.find(googleMapId: googleMapId)
     }
 
     private func performCrawl(venue: Venue) async {
         crawlState = .crawling(progress: "Starting crawl…")
+        deleteSourcesState = .idle
 
         do {
             let newCount = try await venueWebsiteCrawler.crawl(venue: venue) { [weak self] progress in
