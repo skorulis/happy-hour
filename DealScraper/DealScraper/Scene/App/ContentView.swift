@@ -14,6 +14,11 @@ struct ContentView: View {
                 .tabItem {
                     Label("Import", systemImage: "photo.on.rectangle.angled")
                 }
+
+            ExperimentView(viewModel: resolver!.experimentViewModel())
+                .tabItem {
+                    Label("Experiment", systemImage: "flask")
+                }
             
             CoordinatorView(coordinator: .init(root: MainPath.venueImport))
                 .withRenderers(resolver: resolver!)

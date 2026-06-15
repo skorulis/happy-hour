@@ -1,0 +1,38 @@
+//Created by Alex Skorulis on 15/6/2026.
+
+import Foundation
+
+struct ContentBlockLink: Equatable, Sendable, Codable {
+    let text: String
+    let url: URL
+}
+
+struct ContentBlock: Equatable, Sendable, Codable {
+    let title: String?
+    let text: String
+    let links: [ContentBlockLink]
+
+    func formattedOutput(index: Int) -> String {
+        var lines: [String] = []
+        lines.append("--- Block \(index + 1) ---")
+        lines.append("Title: \(title ?? "(none)")")
+        lines.append("Text: \(text)")
+        if links.isEmpty {
+            lines.append("Links: (none)")
+        } else {
+            lines.append("Links:")
+            for link in links {
+                lines.append("  - \(link.text): \(link.url.absoluteString)")
+            }
+        }
+        return lines.joined(separator: "\n")
+    }
+}
+
+extension Array where Element == ContentBlock {
+    func formattedConsoleOutput() -> String {
+        enumerated()
+            .map { $0.element.formattedOutput(index: $0.offset) }
+            .joined(separator: "\n\n")
+    }
+}

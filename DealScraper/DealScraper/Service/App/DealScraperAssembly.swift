@@ -31,6 +31,7 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
         container.register(MainPathRenderer.self) { MainPathRenderer(resolver: $0) }
         
         container.register(ImageImportViewModel.self) { ImageImportViewModel.make(resolver: $0) }
+        container.register(ExperimentViewModel.self) { ExperimentViewModel.make(resolver: $0) }
         container.register(SettingsViewModel.self) { SettingsViewModel.make(resolver: $0) }
         container.register(VenueImportViewModel.self) { VenueImportViewModel.make(resolver: $0) }
         container.register(VenueDetailsViewModel.self) { (resolver: Resolver, googleID: String) in
@@ -59,6 +60,8 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
             .inObjectScope(.container)
 
         container.register(DealSourceExtractor.self) { _ in DealSourceExtractor() }
+
+        container.register(ContentBlockGrouper.self) { _ in ContentBlockGrouper() }
 
         container.register(VenueLinkExtractor.self) { _ in VenueLinkExtractor() }
 
