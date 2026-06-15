@@ -4,6 +4,7 @@ import Foundation
 
 enum CrawlProgress: Sendable {
     case loadingPage(URL)
+    case validatingImage(URL)
     case saving
     case completed(newCount: Int)
     case failed(message: String)
@@ -30,17 +31,20 @@ final class VenueWebsiteCrawler {
 
     private let pageLoader: WebPageLoader
     private let extractor: DealSourceExtractor
+    private let imageValidator: CrawlImageValidator
     private let dealSourceRepository: DealSourceRepository
     private let venueRepository: VenueRepository
 
     init(
         pageLoader: WebPageLoader,
         extractor: DealSourceExtractor = DealSourceExtractor(),
+        imageValidator: CrawlImageValidator,
         dealSourceRepository: DealSourceRepository,
         venueRepository: VenueRepository
     ) {
         self.pageLoader = pageLoader
         self.extractor = extractor
+        self.imageValidator = imageValidator
         self.dealSourceRepository = dealSourceRepository
         self.venueRepository = venueRepository
     }
@@ -112,10 +116,23 @@ final class VenueWebsiteCrawler {
             }
         }
 
+        var validatedSources: [String: DiscoveredSource] = [:]
+        for (hash, source) in discoveredByHash {
+            if source.type == .image {
+                onProgress(.validatingImage(source.url))
+                let isRelevant = await imageValidator.isRelevantImage(url: source.url, hash: hash)
+                if isRelevant {
+                    validatedSources[hash] = source
+                }
+            } else {
+                validatedSources[hash] = source
+            }
+        }
+
         onProgress(.saving)
 
         let now = Date()
-        let dealSources = discoveredByHash.values.map { discovered in
+        let dealSources = validatedSources.values.map { discovered in
             DealSource(
                 venueId: venueId,
                 url: discovered.url.absoluteString,

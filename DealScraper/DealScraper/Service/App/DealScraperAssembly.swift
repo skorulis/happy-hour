@@ -60,10 +60,25 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
 
         container.register(DealSourceExtractor.self) { _ in DealSourceExtractor() }
 
+        container.register(CrawlImageCache.self) { _ in CrawlImageCache() }
+            .inObjectScope(.container)
+
+        container.register(CrawlImageFetcher.self) { resolver in
+            CrawlImageFetcher(cache: resolver.crawlImageCache())
+        }
+
+        container.register(CrawlImageValidator.self) { resolver in
+            CrawlImageValidator(
+                fetcher: resolver.crawlImageFetcher(),
+                imageExtractor: resolver.dealImageExtractor()
+            )
+        }
+
         container.register(VenueWebsiteCrawler.self) { resolver in
             VenueWebsiteCrawler(
                 pageLoader: resolver.webPageLoader(),
                 extractor: resolver.dealSourceExtractor(),
+                imageValidator: resolver.crawlImageValidator(),
                 dealSourceRepository: resolver.dealSourceRepository(),
                 venueRepository: resolver.venueRepository()
             )
