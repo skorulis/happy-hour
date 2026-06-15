@@ -12,6 +12,7 @@
 		FA312A4F2FDF76DF00D1DD06 /* ASKCore in Frameworks */ = {isa = PBXBuildFile; productRef = FA312A4E2FDF76DF00D1DD06 /* ASKCore */; };
 		FA312A992FDF81B800D1DD06 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = FA312A982FDF81B800D1DD06 /* GRDB */; };
 		FA312B5C2FDF957B00D1DD06 /* ASKCoordinator in Frameworks */ = {isa = PBXBuildFile; productRef = FA312B5B2FDF957B00D1DD06 /* ASKCoordinator */; };
+		FA312C102FE1000100D1DD06 /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = FA312C0F2FE1000100D1DD06 /* SwiftSoup */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -52,6 +53,7 @@
 				FA312A412FDF74A200D1DD06 /* Knit in Frameworks */,
 				FA312A432FDF74A200D1DD06 /* KnitMacros in Frameworks */,
 				FA312A992FDF81B800D1DD06 /* GRDB in Frameworks */,
+				FA312C102FE1000100D1DD06 /* SwiftSoup in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -109,6 +111,7 @@
 				FA312A4E2FDF76DF00D1DD06 /* ASKCore */,
 				FA312A982FDF81B800D1DD06 /* GRDB */,
 				FA312B5B2FDF957B00D1DD06 /* ASKCoordinator */,
+				FA312C0F2FE1000100D1DD06 /* SwiftSoup */,
 			);
 			productName = DealScraper;
 			productReference = FA57DC002FDE31B40040032F /* DealScraper.app */;
@@ -170,6 +173,7 @@
 				FA312A4D2FDF76DF00D1DD06 /* XCRemoteSwiftPackageReference "ASKCore" */,
 				FA312A972FDF81B800D1DD06 /* XCRemoteSwiftPackageReference "GRDB" */,
 				FA312B5A2FDF957B00D1DD06 /* XCRemoteSwiftPackageReference "ASKCoordinator" */,
+				FA312C0E2FE1000100D1DD06 /* XCRemoteSwiftPackageReference "SwiftSoup" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = FA57DC012FDE31B40040032F /* Products */;
@@ -519,6 +523,14 @@
 				kind = branch;
 			};
 		};
+		FA312C0E2FE1000100D1DD06 /* XCRemoteSwiftPackageReference "SwiftSoup" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/scinfu/SwiftSoup";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.7.6;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -551,6 +563,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = FA312B5A2FDF957B00D1DD06 /* XCRemoteSwiftPackageReference "ASKCoordinator" */;
 			productName = ASKCoordinator;
+		};
+		FA312C0F2FE1000100D1DD06 /* SwiftSoup */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FA312C0E2FE1000100D1DD06 /* XCRemoteSwiftPackageReference "SwiftSoup" */;
+			productName = SwiftSoup;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

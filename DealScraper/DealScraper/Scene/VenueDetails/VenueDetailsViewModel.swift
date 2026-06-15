@@ -8,20 +8,77 @@ import KnitMacros
 @Observable
 final class VenueDetailsViewModel {
 
+    enum CrawlState: Equatable {
+        case idle
+        case crawling(progress: String)
+        case completed(found: Int)
+        case failed(message: String)
+    }
+
     let googleMapId: String
     private(set) var venue: Venue?
+    private(set) var crawlState: CrawlState = .idle
 
     private let venueRepository: VenueRepository
+    private let venueWebsiteCrawler: VenueWebsiteCrawler
 
     @Resolvable<Resolver>
-    init(@Argument googleMapId: String, venueRepository: VenueRepository) {
+    init(
+        @Argument googleMapId: String,
+        venueRepository: VenueRepository,
+        venueWebsiteCrawler: VenueWebsiteCrawler
+    ) {
         self.googleMapId = googleMapId
         self.venueRepository = venueRepository
+        self.venueWebsiteCrawler = venueWebsiteCrawler
         load()
+    }
+
+    var canCrawl: Bool {
+        venue?.websiteUri != nil && !isCrawling
+    }
+
+    var isCrawling: Bool {
+        if case .crawling = crawlState { return true }
+        return false
+    }
+
+    func crawlWebsite() {
+        guard let venue, canCrawl else { return }
+
+        Task {
+            await performCrawl(venue: venue)
+        }
     }
 
     private func load() {
         venue = try? venueRepository.find(googleMapId: googleMapId)
+    }
+
+    private func performCrawl(venue: Venue) async {
+        crawlState = .crawling(progress: "Starting crawl…")
+
+        do {
+            let newCount = try await venueWebsiteCrawler.crawl(venue: venue) { [weak self] progress in
+                Task { @MainActor in
+                    switch progress {
+                    case let .loadingPage(url):
+                        self?.crawlState = .crawling(progress: "Loading \(url.host ?? url.absoluteString)…")
+                    case .saving:
+                        self?.crawlState = .crawling(progress: "Saving deal sources…")
+                    case let .completed(newCount):
+                        self?.crawlState = .completed(found: newCount)
+                    case let .failed(message):
+                        self?.crawlState = .failed(message: message)
+                    }
+                }
+            }
+
+            load()
+            crawlState = .completed(found: newCount)
+        } catch {
+            crawlState = .failed(message: error.localizedDescription)
+        }
     }
 
     var googlePlace: GooglePlace? {

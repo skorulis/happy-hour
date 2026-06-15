@@ -29,6 +29,7 @@ struct VenueDetailsView: View {
                 header(venue)
                 locationSection
                 linksSection(venue)
+                actionsSection
                 metadataSection(venue)
             }
             .padding(24)
@@ -73,6 +74,41 @@ struct VenueDetailsView: View {
         }
     }
 
+    @ViewBuilder
+    private var actionsSection: some View {
+        detailSection(title: "Actions") {
+            Button("Crawl Website") {
+                viewModel.crawlWebsite()
+            }
+            .disabled(!viewModel.canCrawl)
+
+            switch viewModel.crawlState {
+            case .idle:
+                if viewModel.venue?.websiteUri == nil {
+                    Text("Add a website URL via Google Places import to enable crawling.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            case let .crawling(progress):
+                HStack(spacing: 8) {
+                    ProgressView()
+                        .controlSize(.small)
+                    Text(progress)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            case let .completed(found):
+                Text("Found \(found) new deal source\(found == 1 ? "" : "s").")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            case let .failed(message):
+                Text(message)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+            }
+        }
+    }
+
     private func metadataSection(_ venue: Venue) -> some View {
         detailSection(title: "Details") {
             LabeledContent("Google Place ID", value: venue.googleMapId)
@@ -105,7 +141,8 @@ struct VenueDetailsView: View {
     }
 }
 
-#Preview {
+@MainActor
+private func venueDetailsPreview() -> some View {
     let assembler = DealScraperAssembly.testing()
     let repository = assembler.resolver.venueRepository()
     let venue = Venue(
@@ -122,9 +159,10 @@ struct VenueDetailsView: View {
     try! repository.upsert(venue)
 
     return VenueDetailsView(
-        viewModel: VenueDetailsViewModel(
-            googleMapId: venue.googleMapId,
-            venueRepository: repository
-        )
+        viewModel: assembler.resolver.venueDetailsViewModel(googleID: venue.googleMapId)
     )
+}
+
+#Preview {
+    venueDetailsPreview()
 }

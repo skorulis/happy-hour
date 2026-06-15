@@ -48,4 +48,13 @@ final class VenueRepository {
                 .fetchOne(db)
         }
     }
+
+    func updateLastCrawlDate(venueId: Int64, date: Date) throws {
+        try store.dbQueue.write { db in
+            try db.execute(
+                sql: "UPDATE venue SET last_crawl_date = ? WHERE id = ?",
+                arguments: [date, venueId]
+            )
+        }
+    }
 }

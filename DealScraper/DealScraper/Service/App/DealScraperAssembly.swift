@@ -54,6 +54,20 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
         container.register(OpenRouterVisionDealProcessor.self) { resolver in
             OpenRouterVisionDealProcessor(client: resolver.openRouterClient())
         }
+
+        container.register(WebPageLoader.self) { _ in WebPageLoader() }
+            .inObjectScope(.container)
+
+        container.register(DealSourceExtractor.self) { _ in DealSourceExtractor() }
+
+        container.register(VenueWebsiteCrawler.self) { resolver in
+            VenueWebsiteCrawler(
+                pageLoader: resolver.webPageLoader(),
+                extractor: resolver.dealSourceExtractor(),
+                dealSourceRepository: resolver.dealSourceRepository(),
+                venueRepository: resolver.venueRepository()
+            )
+        }
     }
     
     @MainActor
@@ -74,6 +88,11 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
 
         container.register(VenueRepository.self) { resolver in
             VenueRepository(store: resolver.sqlStore())
+        }
+        .inObjectScope(.container)
+
+        container.register(DealSourceRepository.self) { resolver in
+            DealSourceRepository(store: resolver.sqlStore())
         }
         .inObjectScope(.container)
 

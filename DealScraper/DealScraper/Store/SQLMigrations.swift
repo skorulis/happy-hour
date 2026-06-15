@@ -25,5 +25,20 @@ final class SQLMigrations {
                 t.add(column: "last_crawl_date", .datetime)
             }
         }
+
+        migrator.registerMigration("v3_create_deal_source") { db in
+            try db.create(table: "deal_source") { t in
+                t.autoIncrementedPrimaryKey("id")
+                t.column("venue_id", .integer)
+                    .notNull()
+                    .references("venue", onDelete: .cascade)
+                t.column("url", .text).notNull()
+                t.column("type", .text).notNull()
+                t.column("hash", .text).notNull()
+                t.column("status", .text).notNull()
+                t.column("date", .datetime).notNull()
+                t.uniqueKey(["venue_id", "hash"])
+            }
+        }
     }
 }
