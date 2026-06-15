@@ -60,6 +60,8 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
 
         container.register(DealSourceExtractor.self) { _ in DealSourceExtractor() }
 
+        container.register(VenueLinkExtractor.self) { _ in VenueLinkExtractor() }
+
         container.register(CrawlImageCache.self) { _ in CrawlImageCache() }
             .inObjectScope(.container)
 
@@ -78,9 +80,11 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
             VenueWebsiteCrawler(
                 pageLoader: resolver.webPageLoader(),
                 extractor: resolver.dealSourceExtractor(),
+                venueLinkExtractor: resolver.venueLinkExtractor(),
                 imageValidator: resolver.crawlImageValidator(),
                 dealSourceRepository: resolver.dealSourceRepository(),
-                venueRepository: resolver.venueRepository()
+                venueRepository: resolver.venueRepository(),
+                venueLinksRepository: resolver.venueLinksRepository()
             )
         }
     }
@@ -108,6 +112,11 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
 
         container.register(DealSourceRepository.self) { resolver in
             DealSourceRepository(store: resolver.sqlStore())
+        }
+        .inObjectScope(.container)
+
+        container.register(VenueLinksRepository.self) { resolver in
+            VenueLinksRepository(store: resolver.sqlStore())
         }
         .inObjectScope(.container)
 

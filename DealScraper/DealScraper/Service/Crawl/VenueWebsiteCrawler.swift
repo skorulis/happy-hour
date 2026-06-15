@@ -31,22 +31,28 @@ final class VenueWebsiteCrawler {
 
     private let pageLoader: WebPageLoader
     private let extractor: DealSourceExtractor
+    private let venueLinkExtractor: VenueLinkExtractor
     private let imageValidator: CrawlImageValidator
     private let dealSourceRepository: DealSourceRepository
     private let venueRepository: VenueRepository
+    private let venueLinksRepository: VenueLinksRepository
 
     init(
         pageLoader: WebPageLoader,
         extractor: DealSourceExtractor = DealSourceExtractor(),
+        venueLinkExtractor: VenueLinkExtractor = VenueLinkExtractor(),
         imageValidator: CrawlImageValidator,
         dealSourceRepository: DealSourceRepository,
-        venueRepository: VenueRepository
+        venueRepository: VenueRepository,
+        venueLinksRepository: VenueLinksRepository
     ) {
         self.pageLoader = pageLoader
         self.extractor = extractor
+        self.venueLinkExtractor = venueLinkExtractor
         self.imageValidator = imageValidator
         self.dealSourceRepository = dealSourceRepository
         self.venueRepository = venueRepository
+        self.venueLinksRepository = venueLinksRepository
     }
 
     func crawl(
@@ -104,6 +110,20 @@ final class VenueWebsiteCrawler {
 
             for source in extraction.sources {
                 discoveredByHash[source.hash] = source
+            }
+
+            if visited.count == 1 {
+                let discoveredLinks = try venueLinkExtractor.extract(
+                    html: loadedPage.html,
+                    pageURL: normalizedPageURL,
+                    baseURL: baseURL
+                )
+                try venueLinksRepository.setMissing(
+                    venueId: venueId,
+                    whatsOn: discoveredLinks.whatsOn?.absoluteString,
+                    instagram: discoveredLinks.instagram?.absoluteString,
+                    facebook: discoveredLinks.facebook?.absoluteString
+                )
             }
 
             for link in extraction.crawlLinks {

@@ -40,5 +40,16 @@ final class SQLMigrations {
                 t.uniqueKey(["venue_id", "hash"])
             }
         }
+
+        migrator.registerMigration("v4_create_venue_links") { db in
+            try db.create(table: "venue_links") { t in
+                t.column("venue_id", .integer)
+                    .primaryKey()
+                    .references("venue", onDelete: .cascade)
+                t.column("whats_on", .text)
+                t.column("instagram", .text)
+                t.column("facebook", .text)
+            }
+        }
     }
 }

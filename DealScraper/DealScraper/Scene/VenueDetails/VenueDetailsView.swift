@@ -65,11 +65,36 @@ struct VenueDetailsView: View {
 
     @ViewBuilder
     private func linksSection(_ venue: Venue) -> some View {
-        if let websiteUri = venue.websiteUri,
-           let websiteURL = URL(string: websiteUri)
-        {
+        let hasWebsite = venue.websiteUri.flatMap(URL.init(string:)) != nil
+        let hasWhatsOn = viewModel.venueLinks?.whatsOn.flatMap(URL.init(string:)) != nil
+        let hasInstagram = viewModel.venueLinks?.instagram.flatMap(URL.init(string:)) != nil
+        let hasFacebook = viewModel.venueLinks?.facebook.flatMap(URL.init(string:)) != nil
+
+        if hasWebsite || hasWhatsOn || hasInstagram || hasFacebook {
             detailSection(title: "Links") {
-                Link(websiteUri, destination: websiteURL)
+                if let websiteUri = venue.websiteUri,
+                   let websiteURL = URL(string: websiteUri)
+                {
+                    Link("Website", destination: websiteURL)
+                }
+
+                if let whatsOn = viewModel.venueLinks?.whatsOn,
+                   let whatsOnURL = URL(string: whatsOn)
+                {
+                    Link("What's On", destination: whatsOnURL)
+                }
+
+                if let instagram = viewModel.venueLinks?.instagram,
+                   let instagramURL = URL(string: instagram)
+                {
+                    Link("Instagram", destination: instagramURL)
+                }
+
+                if let facebook = viewModel.venueLinks?.facebook,
+                   let facebookURL = URL(string: facebook)
+                {
+                    Link("Facebook", destination: facebookURL)
+                }
             }
         }
     }
@@ -177,6 +202,13 @@ private func venueDetailsPreview() -> some View {
         """
     )
     try! repository.upsert(venue)
+    let venueId = try! repository.find(googleMapId: venue.googleMapId)!.id!
+    try! assembler.resolver.venueLinksRepository().setMissing(
+        venueId: venueId,
+        whatsOn: "https://example.com/whats-on",
+        instagram: "https://instagram.com/thelocalpub",
+        facebook: "https://facebook.com/thelocalpub"
+    )
 
     return VenueDetailsView(
         viewModel: assembler.resolver.venueDetailsViewModel(googleID: venue.googleMapId)

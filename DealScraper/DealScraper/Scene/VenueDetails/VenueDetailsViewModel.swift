@@ -23,11 +23,13 @@ final class VenueDetailsViewModel {
 
     let googleMapId: String
     private(set) var venue: Venue?
+    private(set) var venueLinks: VenueLinks?
     private(set) var crawlState: CrawlState = .idle
     private(set) var deleteSourcesState: DeleteSourcesState = .idle
 
     private let venueRepository: VenueRepository
     private let dealSourceRepository: DealSourceRepository
+    private let venueLinksRepository: VenueLinksRepository
     private let venueWebsiteCrawler: VenueWebsiteCrawler
 
     @Resolvable<Resolver>
@@ -35,11 +37,13 @@ final class VenueDetailsViewModel {
         @Argument googleMapId: String,
         venueRepository: VenueRepository,
         dealSourceRepository: DealSourceRepository,
+        venueLinksRepository: VenueLinksRepository,
         venueWebsiteCrawler: VenueWebsiteCrawler
     ) {
         self.googleMapId = googleMapId
         self.venueRepository = venueRepository
         self.dealSourceRepository = dealSourceRepository
+        self.venueLinksRepository = venueLinksRepository
         self.venueWebsiteCrawler = venueWebsiteCrawler
         load()
     }
@@ -79,6 +83,11 @@ final class VenueDetailsViewModel {
 
     private func load() {
         venue = try? venueRepository.find(googleMapId: googleMapId)
+        if let venueId = venue?.id {
+            venueLinks = try? venueLinksRepository.find(venueId: venueId)
+        } else {
+            venueLinks = nil
+        }
     }
 
     private func performCrawl(venue: Venue) async {
