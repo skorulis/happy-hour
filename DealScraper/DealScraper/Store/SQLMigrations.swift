@@ -18,5 +18,12 @@ final class SQLMigrations {
                 t.column("json", .text).notNull()
             }
         }
+
+        migrator.registerMigration("v2_venue_website_and_crawl_date") { db in
+            try db.alter(table: "venue") { t in
+                t.add(column: "website_uri", .text)
+                t.add(column: "last_crawl_date", .datetime)
+            }
+        }
     }
 }

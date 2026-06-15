@@ -66,6 +66,7 @@ struct VenueRepositoryTests {
             displayName: .init(text: "Harbour Pub", languageCode: "en"),
             location: .init(latitude: -33.8600, longitude: 151.2100),
             formattedAddress: "1 Circular Quay, Sydney",
+            websiteUri: "https://harbourpub.example.com",
             types: ["bar"]
         )
 
@@ -76,6 +77,8 @@ struct VenueRepositoryTests {
         #expect(found.lat == -33.8600)
         #expect(found.lng == 151.2100)
         #expect(found.googleMapId == "places/ChIJFromAPI")
+        #expect(found.websiteUri == "https://harbourpub.example.com")
+        #expect(found.lastCrawlDate == nil)
         #expect(found.json.contains("Harbour Pub"))
     }
 }

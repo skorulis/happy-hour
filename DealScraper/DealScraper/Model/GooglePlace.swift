@@ -12,6 +12,7 @@ nonisolated struct GooglePlace: Codable, Sendable {
     let displayName: LocalizedText
     let location: LatLng
     let formattedAddress: String?
+    let websiteUri: String?
     let types: [String]?
 
     struct LocalizedText: Codable, Sendable {

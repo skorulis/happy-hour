@@ -9,6 +9,8 @@ nonisolated struct Venue: Codable, Sendable {
     let name: String
     let lat: Double
     let lng: Double
+    let websiteUri: String?
+    let lastCrawlDate: Date?
     let json: String
 
     enum CodingKeys: String, CodingKey {
@@ -17,6 +19,8 @@ nonisolated struct Venue: Codable, Sendable {
         case name
         case lat
         case lng
+        case websiteUri = "website_uri"
+        case lastCrawlDate = "last_crawl_date"
         case json
     }
 
@@ -26,6 +30,8 @@ nonisolated struct Venue: Codable, Sendable {
         name: String,
         lat: Double,
         lng: Double,
+        websiteUri: String? = nil,
+        lastCrawlDate: Date? = nil,
         json: String
     ) {
         self.id = id
@@ -33,6 +39,8 @@ nonisolated struct Venue: Codable, Sendable {
         self.name = name
         self.lat = lat
         self.lng = lng
+        self.websiteUri = websiteUri
+        self.lastCrawlDate = lastCrawlDate
         self.json = json
     }
 
@@ -52,6 +60,7 @@ nonisolated struct Venue: Codable, Sendable {
             name: place.displayName.text,
             lat: place.location.latitude,
             lng: place.location.longitude,
+            websiteUri: place.websiteUri,
             json: jsonString
         )
     }

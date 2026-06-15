@@ -22,6 +22,7 @@ final class VenueImportViewModel {
 
     private(set) var state: State = .idle
     private(set) var savedVenues: [Venue] = []
+    var selectedGoogleMapId: String?
 
     var searchMode: VenueSearchMode = .text
     var textQuery: String = "pubs in Sydney"
@@ -48,6 +49,11 @@ final class VenueImportViewModel {
     func loadSavedVenues() {
         do {
             savedVenues = try venueRepository.all()
+            if let selectedGoogleMapId,
+               !savedVenues.contains(where: { $0.googleMapId == selectedGoogleMapId })
+            {
+                self.selectedGoogleMapId = nil
+            }
         } catch {
             state = .failed(message: "Could not load saved venues: \(error.localizedDescription)")
         }

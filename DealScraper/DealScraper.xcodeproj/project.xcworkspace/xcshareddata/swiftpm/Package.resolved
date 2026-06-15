@@ -1,6 +1,15 @@
 {
-  "originHash" : "eb6529629841640173adb78ed6bef5946f9bcae1629e69f92295d145929c635f",
+  "originHash" : "9df06655e0d7ad17df8d90d56e2805ffad570325407185edb9a80e6020504e34",
   "pins" : [
+    {
+      "identity" : "askcoordinator",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/skorulis/ASKCoordinator",
+      "state" : {
+        "branch" : "main",
+        "revision" : "347f128d4c2a2483234fb9ba2964a29c41f7c7c4"
+      }
+    },
     {
       "identity" : "askcore",
       "kind" : "remoteSourceControl",

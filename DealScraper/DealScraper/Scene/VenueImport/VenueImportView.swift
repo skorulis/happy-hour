@@ -8,23 +8,67 @@ struct VenueImportView: View {
     @State var viewModel: VenueImportViewModel
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                searchControls
-                searchButton
-                statusContent
-                savedVenuesSection
-            }
-            .padding(24)
-            .frame(maxWidth: .infinity, alignment: .leading)
+        NavigationSplitView {
+            sidebar
+        } detail: {
+            detail
         }
-        .frame(minWidth: 480, minHeight: 400)
+        .frame(minWidth: 720, minHeight: 400)
         .onAppear {
             viewModel.loadSavedVenues()
         }
         .onChange(of: viewModel.searchMode) {
             viewModel.reset()
         }
+    }
+
+    private var sidebar: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: 16) {
+                searchControls
+                searchButton
+                statusContent
+            }
+            .padding(16)
+
+            Divider()
+
+            if viewModel.savedVenues.isEmpty {
+                ContentUnavailableView(
+                    "No Saved Venues",
+                    systemImage: "building.2",
+                    description: Text("Search Google Places to add venues.")
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                List(selection: $viewModel.selectedGoogleMapId) {
+                    ForEach(viewModel.savedVenues, id: \.googleMapId) { venue in
+                        VenueRow(venue: venue)
+                            .tag(venue.googleMapId)
+                    }
+                }
+                .listStyle(.sidebar)
+            }
+        }
+        .navigationSplitViewColumnWidth(min: 280, ideal: 320)
+    }
+
+    @ViewBuilder
+    private var detail: some View {
+        if let venue = selectedVenue {
+            VenueDetailsView(viewModel: VenueDetailsViewModel(venue: venue))
+        } else {
+            ContentUnavailableView(
+                "Select a Venue",
+                systemImage: "building.2",
+                description: Text("Choose a venue from the list to view its details.")
+            )
+        }
+    }
+
+    private var selectedVenue: Venue? {
+        guard let selectedGoogleMapId = viewModel.selectedGoogleMapId else { return nil }
+        return viewModel.savedVenues.first { $0.googleMapId == selectedGoogleMapId }
     }
 
     private var searchControls: some View {
@@ -85,20 +129,6 @@ struct VenueImportView: View {
                 .foregroundStyle(.red)
         }
     }
-
-    @ViewBuilder
-    private var savedVenuesSection: some View {
-        if !viewModel.savedVenues.isEmpty {
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Saved Venues")
-                    .font(.headline)
-
-                ForEach(viewModel.savedVenues, id: \.googleMapId) { venue in
-                    VenueRow(venue: venue)
-                }
-            }
-        }
-    }
 }
 
 private struct VenueRow: View {
@@ -112,12 +142,7 @@ private struct VenueRow: View {
             Text(subtitle)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12)
-        .background {
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color(nsColor: .controlBackgroundColor))
+                .lineLimit(2)
         }
     }
 

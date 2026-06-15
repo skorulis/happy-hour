@@ -22,6 +22,7 @@ struct GooglePlacesClientTests {
             "longitude": 151.2093
           },
           "formattedAddress": "123 George St, Sydney NSW 2000",
+          "websiteUri": "https://theroyalpub.example.com",
           "types": ["bar", "point_of_interest"]
         }
       ],
@@ -62,6 +63,7 @@ struct GooglePlacesClientTests {
         #expect(response.places.first?.id == "places/ChIJTest123")
         #expect(response.places.first?.displayName.text == "The Royal Pub")
         #expect(response.places.first?.location.latitude == -33.8688)
+        #expect(response.places.first?.websiteUri == "https://theroyalpub.example.com")
         #expect(response.nextPageToken == "next-page-token")
     }
 

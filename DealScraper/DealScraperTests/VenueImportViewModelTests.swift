@@ -22,6 +22,7 @@ struct VenueImportViewModelTests {
             "longitude": 151.2093
           },
           "formattedAddress": "123 George St, Sydney NSW 2000",
+          "websiteUri": "https://theroyalpub.example.com",
           "types": ["bar", "point_of_interest"]
         }
       ],
@@ -91,6 +92,7 @@ struct VenueImportViewModelTests {
             displayName: .init(text: "Harbour Pub", languageCode: "en"),
             location: .init(latitude: -33.8600, longitude: 151.2100),
             formattedAddress: "1 Circular Quay, Sydney",
+            websiteUri: nil,
             types: ["bar"]
         )
         try repository.upsert(places: [place])

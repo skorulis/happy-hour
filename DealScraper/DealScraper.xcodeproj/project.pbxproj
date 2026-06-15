@@ -11,6 +11,7 @@
 		FA312A432FDF74A200D1DD06 /* KnitMacros in Frameworks */ = {isa = PBXBuildFile; productRef = FA312A422FDF74A200D1DD06 /* KnitMacros */; };
 		FA312A4F2FDF76DF00D1DD06 /* ASKCore in Frameworks */ = {isa = PBXBuildFile; productRef = FA312A4E2FDF76DF00D1DD06 /* ASKCore */; };
 		FA312A992FDF81B800D1DD06 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = FA312A982FDF81B800D1DD06 /* GRDB */; };
+		FA312B5C2FDF957B00D1DD06 /* ASKCoordinator in Frameworks */ = {isa = PBXBuildFile; productRef = FA312B5B2FDF957B00D1DD06 /* ASKCoordinator */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -46,6 +47,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FA312B5C2FDF957B00D1DD06 /* ASKCoordinator in Frameworks */,
 				FA312A4F2FDF76DF00D1DD06 /* ASKCore in Frameworks */,
 				FA312A412FDF74A200D1DD06 /* Knit in Frameworks */,
 				FA312A432FDF74A200D1DD06 /* KnitMacros in Frameworks */,
@@ -106,6 +108,7 @@
 				FA312A422FDF74A200D1DD06 /* KnitMacros */,
 				FA312A4E2FDF76DF00D1DD06 /* ASKCore */,
 				FA312A982FDF81B800D1DD06 /* GRDB */,
+				FA312B5B2FDF957B00D1DD06 /* ASKCoordinator */,
 			);
 			productName = DealScraper;
 			productReference = FA57DC002FDE31B40040032F /* DealScraper.app */;
@@ -166,6 +169,7 @@
 				FA312A3F2FDF74A200D1DD06 /* XCRemoteSwiftPackageReference "knit" */,
 				FA312A4D2FDF76DF00D1DD06 /* XCRemoteSwiftPackageReference "ASKCore" */,
 				FA312A972FDF81B800D1DD06 /* XCRemoteSwiftPackageReference "GRDB" */,
+				FA312B5A2FDF957B00D1DD06 /* XCRemoteSwiftPackageReference "ASKCoordinator" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = FA57DC012FDE31B40040032F /* Products */;
@@ -507,6 +511,14 @@
 				kind = branch;
 			};
 		};
+		FA312B5A2FDF957B00D1DD06 /* XCRemoteSwiftPackageReference "ASKCoordinator" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/skorulis/ASKCoordinator";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -534,6 +546,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = FA312A972FDF81B800D1DD06 /* XCRemoteSwiftPackageReference "GRDB" */;
 			productName = GRDB;
+		};
+		FA312B5B2FDF957B00D1DD06 /* ASKCoordinator */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FA312B5A2FDF957B00D1DD06 /* XCRemoteSwiftPackageReference "ASKCoordinator" */;
+			productName = ASKCoordinator;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
