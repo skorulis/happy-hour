@@ -15,7 +15,7 @@ final class SQLStore {
     init(inMemory: Bool = false) {
         print("SQL STARTED: \(Self.dbPath)")
         if inMemory {
-            self.dbQueue = try! DatabaseQueue(path: "file::memory")
+            self.dbQueue = try! DatabaseQueue()
         } else {
             self.dbQueue = try! DatabaseQueue(path: Self.dbPath)
         }

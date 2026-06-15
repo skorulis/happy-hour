@@ -31,6 +31,7 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
         container.register(DealTextAnalyzer.self) { _ in DealTextAnalyzer() }
         container.register(OpenAIClient.self) { _ in OpenAIClient() }
         container.register(OpenRouterClient.self) { _ in OpenRouterClient() }
+        container.register(GooglePlacesClient.self) { _ in GooglePlacesClient() }
         container.register(OnDeviceDealProcessor.self) { OnDeviceDealProcessor.make(resolver: $0) }
 
         container.register(OpenAIVisionDealProcessor.self) { resolver in
@@ -57,6 +58,11 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
             }
             .inObjectScope(.container)
         }
+
+        container.register(VenueRepository.self) { resolver in
+            VenueRepository(store: resolver.sqlStore())
+        }
+        .inObjectScope(.container)
     }
 }
 
