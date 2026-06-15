@@ -23,6 +23,12 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
         
         registerStores(container: container)
         registerServices(container: container)
+        registerViewModels(container: container)
+    }
+    
+    @MainActor
+    private func registerViewModels(container: Container<TargetResolver>) {
+        container.register(MainPathRenderer.self) { MainPathRenderer(resolver: $0) }
         
         container.register(ImageImportViewModel.self) { ImageImportViewModel.make(resolver: $0) }
         container.register(SettingsViewModel.self) { SettingsViewModel.make(resolver: $0) }
