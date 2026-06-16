@@ -84,6 +84,8 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
             )
         }
 
+        container.register(ImageDeduper.self) { _ in ImageDeduper() }
+
         container.register(VenueWebsiteCrawler.self) { VenueWebsiteCrawler.make(resolver: $0) }
     }
     

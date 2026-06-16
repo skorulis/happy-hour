@@ -35,6 +35,7 @@ final class VenueWebsiteCrawler {
     private let extractor: DealSourceExtractor
     private let venueLinkExtractor: VenueLinkExtractor
     private let imageValidator: CrawlImageValidator
+    private let imageDeduper: ImageDeduper
     private let dealSourceRepository: DealSourceRepository
     private let venueRepository: VenueRepository
     private let venueLinksRepository: VenueLinksRepository
@@ -45,6 +46,7 @@ final class VenueWebsiteCrawler {
         extractor: DealSourceExtractor,
         venueLinkExtractor: VenueLinkExtractor,
         imageValidator: CrawlImageValidator,
+        imageDeduper: ImageDeduper,
         dealSourceRepository: DealSourceRepository,
         venueRepository: VenueRepository,
         venueLinksRepository: VenueLinksRepository
@@ -53,6 +55,7 @@ final class VenueWebsiteCrawler {
         self.extractor = extractor
         self.venueLinkExtractor = venueLinkExtractor
         self.imageValidator = imageValidator
+        self.imageDeduper = imageDeduper
         self.dealSourceRepository = dealSourceRepository
         self.venueRepository = venueRepository
         self.venueLinksRepository = venueLinksRepository
@@ -160,7 +163,7 @@ final class VenueWebsiteCrawler {
             }
         }
         
-        discoveredByURL = dedupeImages(validatedSources: discoveredByURL)
+        discoveredByURL = imageDeduper.dedupe(validatedSources: discoveredByURL)
         
         onProgress(.saving)
         
@@ -187,66 +190,5 @@ final class VenueWebsiteCrawler {
         )
         onProgress(.completed(results))
         return results
-    }
-    
-    private func dedupeImages(validatedSources: [URL: DiscoveredSource]) -> [URL: DiscoveredSource] {
-        var result: [URL: DiscoveredSource] = [:]
-        var imageHashesByText: [String: URL] = [:]
-
-        for (hash, source) in validatedSources {
-            guard source.type == .image else {
-                result[hash] = source
-                continue
-            }
-
-            guard let textKey = normalizedTextKey(from: source.textPieces), !textKey.isEmpty else {
-                result[hash] = source
-                continue
-            }
-
-            guard let existingHash = imageHashesByText[textKey], let existing = result[existingHash] else {
-                imageHashesByText[textKey] = hash
-                result[hash] = source
-                continue
-            }
-
-            if shouldPreferImage(candidate: source, over: existing) {
-                result.removeValue(forKey: existingHash)
-                result[hash] = source
-                imageHashesByText[textKey] = hash
-            }
-        }
-
-        return result
-    }
-
-    private func normalizedTextKey(from textPieces: DealSourceTextPieces?) -> String? {
-        guard let textPieces else { return nil }
-        let lines: [String]
-        switch textPieces {
-        case let .textLines(textLines):
-            lines = textLines
-        case let .contentBlocks(blocks):
-            lines = blocks.map(\.text)
-        }
-
-        let normalized = lines
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
-            .joined(separator: " ")
-            .lowercased()
-
-        return normalized
-    }
-
-    private func shouldPreferImage(candidate: DiscoveredSource, over existing: DiscoveredSource) -> Bool {
-        let candidateArea = imageArea(candidate.imageDimensions)
-        let existingArea = imageArea(existing.imageDimensions)
-        return candidateArea > existingArea
-    }
-
-    private func imageArea(_ dimensions: CGSize?) -> CGFloat {
-        guard let dimensions else { return 0 }
-        return dimensions.width * dimensions.height
     }
 }
