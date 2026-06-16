@@ -24,30 +24,12 @@ struct DiscoveredSource: Equatable, Sendable {
 
 struct DealSourceExtractor {
 
-    static let dealKeywords = [
-        "happy hour",
-        "specials",
-        "what's on",
-        "whats on",
-        "events",
-        "promotions",
-        "deals",
-        "menu",
-        "drinks",
-        "food",
-        "happyhour"
-    ]
-
-    func extract(
-        page: LoadedPage,
-        baseURL: URL
-    ) throws -> (sources: [DiscoveredSource], crawlLinks: [URL]) {
+    func extract(page: LoadedPage) throws -> [DiscoveredSource] {
         let pageURL = page.url
         let document = try SwiftSoup.parse(page.html, pageURL.absoluteString)
-        let pageHasDealKeywords = Self.containsDealKeyword(Self.pageText(document, pageURL: pageURL))
+        let pageHasDealKeywords = PageLinkFilter.containsDealKeyword(Self.pageText(document, pageURL: pageURL))
 
         var sources: [DiscoveredSource] = []
-        var crawlLinks: [URL] = []
         var seenHashes = Set<String>()
 
         func appendSource(url: URL, type: DealSourceType) {
@@ -57,50 +39,23 @@ struct DealSourceExtractor {
             sources.append(DiscoveredSource(url: normalized, type: type))
         }
 
-        for link in try document.select("a[href]") {
-            let href = try link.attr("href")
-            guard let resolved = URLNormalizer.resolve(href, relativeTo: pageURL) else { continue }
-
-            let linkText = try link.text()
-            let hrefLower = href.lowercased()
-            let matchesKeyword = Self.containsDealKeyword("\(linkText) \(hrefLower) \(resolved.path)")
-
-            if hrefLower.hasSuffix(".pdf") || resolved.pathExtension.lowercased() == "pdf" {
-                if matchesKeyword || pageHasDealKeywords {
-                    appendSource(url: resolved, type: .pdf)
-                }
-                continue
-            }
-
-            if Self.isImageURL(resolved) {
-                if matchesKeyword || pageHasDealKeywords {
-                    appendSource(url: resolved, type: .image)
-                }
-                continue
-            }
-
-            if matchesKeyword, URLNormalizer.isSameOrigin(resolved, as: baseURL) {
-                crawlLinks.append(resolved)
-            }
-        }
-
         for image in try document.select("img[src], img[srcset]") {
             let candidates = try imageSources(from: image)
             for candidate in candidates {
                 guard let resolved = URLNormalizer.resolve(candidate, relativeTo: pageURL) else { continue }
-                guard Self.isImageURL(resolved) else { continue }
+                guard PageLinkFilter.isImageURL(resolved) else { continue }
 
                 let alt = (try? image.attr("alt")) ?? ""
                 let title = (try? image.attr("title")) ?? ""
                 let context = "\(alt) \(title) \(resolved.lastPathComponent)"
 
-                if Self.containsDealKeyword(context) || pageHasDealKeywords {
+                if PageLinkFilter.containsDealKeyword(context) || pageHasDealKeywords {
                     appendSource(url: resolved, type: .image)
                 }
             }
         }
 
-        return (sources, crawlLinks)
+        return sources
     }
 
     private func imageSources(from element: Element) throws -> [String] {
@@ -128,19 +83,5 @@ struct DealSourceExtractor {
     private static func pageText(_ document: Document, pageURL: URL) -> String {
         let title = (try? document.title()) ?? ""
         return "\(title) \(pageURL.absoluteString) \(pageURL.path)"
-    }
-
-    private static func containsDealKeyword(_ text: String) -> Bool {
-        let lowercased = text.lowercased()
-        return dealKeywords.contains { lowercased.contains($0) }
-    }
-
-    private static func isImageURL(_ url: URL) -> Bool {
-        let imageExtensions = ["jpg", "jpeg", "png", "gif", "webp", "svg", "avif"]
-        let ext = url.pathExtension.lowercased()
-        if imageExtensions.contains(ext) {
-            return true
-        }
-        return url.absoluteString.lowercased().contains("image")
     }
 }

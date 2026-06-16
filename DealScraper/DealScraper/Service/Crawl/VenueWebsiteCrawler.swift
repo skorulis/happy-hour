@@ -32,6 +32,7 @@ final class VenueWebsiteCrawler {
     private static let maxPages = 8
     
     private let pageLoader: WebPageLoader
+    private let pageLinkFilter: PageLinkFilter
     private let extractor: DealSourceExtractor
     private let venueLinkExtractor: VenueLinkExtractor
     private let imageValidator: CrawlImageValidator
@@ -43,6 +44,7 @@ final class VenueWebsiteCrawler {
     @Resolvable<Resolver>
     init(
         pageLoader: WebPageLoader,
+        pageLinkFilter: PageLinkFilter,
         extractor: DealSourceExtractor,
         venueLinkExtractor: VenueLinkExtractor,
         imageValidator: CrawlImageValidator,
@@ -52,6 +54,7 @@ final class VenueWebsiteCrawler {
         venueLinksRepository: VenueLinksRepository
     ) {
         self.pageLoader = pageLoader
+        self.pageLinkFilter = pageLinkFilter
         self.extractor = extractor
         self.venueLinkExtractor = venueLinkExtractor
         self.imageValidator = imageValidator
@@ -128,20 +131,22 @@ final class VenueWebsiteCrawler {
                 }
             }
             
-            for link in loadedPage.links {
-                print(link)
+            let filtered = pageLinkFilter.filter(links: loadedPage.links)
+
+            for pdfURL in filtered.pdfURLs {
+                discoveredByURL[pdfURL] = DiscoveredSource(url: pdfURL, type: .pdf)
             }
-            
-            let extraction: (sources: [DiscoveredSource], crawlLinks: [URL])
-            do {
-                extraction = try extractor.extract(page: loadedPage, baseURL: baseURL)
-            } catch {
-                if visited.count == 1 {
-                    throw error
+
+            for link in filtered.crawlURLs {
+                guard URLNormalizer.isSameOrigin(link, as: baseURL) else { continue }
+                guard let normalized = URLNormalizer.normalize(link) else { continue }
+                let linkKey = URLNormalizer.hash(normalized)
+                guard !visited.contains(linkKey) else { continue }
+                if !queue.contains(where: { URLNormalizer.hash($0) == linkKey }) {
+                    queue.append(normalized)
                 }
-                continue
             }
-            
+
             if visited.count == 1 {
                 let discoveredLinks = try venueLinkExtractor.extract(
                     html: loadedPage.html,
@@ -154,16 +159,6 @@ final class VenueWebsiteCrawler {
                     instagram: discoveredLinks.instagram?.absoluteString,
                     facebook: discoveredLinks.facebook?.absoluteString
                 )
-            }
-            
-            for link in extraction.crawlLinks {
-                guard URLNormalizer.isSameOrigin(link, as: baseURL) else { continue }
-                guard let normalized = URLNormalizer.normalize(link) else { continue }
-                let linkKey = URLNormalizer.hash(normalized)
-                guard !visited.contains(linkKey) else { continue }
-                if !queue.contains(where: { URLNormalizer.hash($0) == linkKey }) {
-                    queue.append(normalized)
-                }
             }
         }
         
