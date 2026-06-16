@@ -6,15 +6,18 @@ import SwiftSoup
 struct DiscoveredSource: Equatable, Sendable {
     let url: URL
     let type: DealSourceType
+    let imageDimensions: CGSize?
     let textPieces: DealSourceTextPieces?
 
     init(
         url: URL,
         type: DealSourceType,
+        imageDimensions: CGSize? = nil,
         textPieces: DealSourceTextPieces? = nil
     ) {
         self.url = url
         self.type = type
+        self.imageDimensions = imageDimensions
         self.textPieces = textPieces
     }
 }
@@ -95,12 +98,6 @@ struct DealSourceExtractor {
                     appendSource(url: resolved, type: .image)
                 }
             }
-        }
-
-        for imageURL in page.imageURLs {
-            guard let resolved = URLNormalizer.resolve(imageURL.absoluteString, relativeTo: pageURL) else { continue }
-            guard Self.isImageURL(resolved) else { continue }
-            appendSource(url: resolved, type: .image)
         }
 
         return (sources, crawlLinks)

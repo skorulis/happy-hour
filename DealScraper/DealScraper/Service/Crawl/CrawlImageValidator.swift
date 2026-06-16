@@ -17,32 +17,34 @@ final class CrawlImageValidator {
         self.imageExtractor = imageExtractor
     }
 
-    func validateImage(url: URL, hash: String) async -> [String]? {
+    func validateImage(url: URL, hash: String) async -> ImageValidationResult? {
         guard let localURL = try? await fetcher.localFileURL(for: url, hash: hash) else {
             return nil
         }
 
-        guard Self.meetsMinimumDimensions(at: localURL) else {
+        guard let dimensions = Self.imagePixelDimensions(at: localURL) else {
+            return nil
+        }
+        guard Self.meetsMinimumDimensions(dimensions: dimensions) else {
             return nil
         }
 
         guard let lines = try? await imageExtractor.extractTexts(from: localURL) else {
             return nil
         }
-
-        let combinedText = lines.map(\.text).joined(separator: " ")
-        guard DealDay.isMentioned(in: combinedText) else {
+        
+        let combinedText = lines.map(\.text).joined(separator: "\n")
+        guard DealTextFilter().isValidDeal(combinedText) else {
             return nil
         }
-
-        return lines.map(\.text)
+        
+        return .init(
+            lines: lines,
+            dimensions: dimensions
+        )
     }
 
-    private static func meetsMinimumDimensions(at url: URL) -> Bool {
-        guard let dimensions = imagePixelDimensions(at: url) else {
-            return false
-        }
-
+    private static func meetsMinimumDimensions(dimensions: CGSize) -> Bool {
         return dimensions.width >= minimumPixelDimension
             && dimensions.height >= minimumPixelDimension
     }
@@ -58,4 +60,9 @@ final class CrawlImageValidator {
 
         return CGSize(width: width, height: height)
     }
+}
+
+struct ImageValidationResult {
+    let lines: [ExtractedTextLine]
+    let dimensions: CGSize
 }

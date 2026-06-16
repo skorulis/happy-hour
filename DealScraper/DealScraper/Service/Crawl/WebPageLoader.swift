@@ -169,6 +169,8 @@ final class WebPageLoader: NSObject {
         guard let finalURL = webView.url else {
             throw WebPageLoaderError.emptyContent
         }
+        
+        print("LOADER: Final URL: \(finalURL)")
 
         let imageURLs = harvestImageURLs(html: resolvedHTML, liveDOMURLs: await harvestLiveImageURLStrings())
         let contentBlocks = (try? contentBlockGrouper.group(html: resolvedHTML, pageURL: finalURL)) ?? []
