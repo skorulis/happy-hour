@@ -8,6 +8,7 @@ import ImageIO
 final class CrawlImageValidator {
 
     private static let minimumPixelDimension: CGFloat = 500
+    private static let ignoredURLSubstrings = ["functions"]
 
     private let fetcher: CrawlImageFetcher
     private let imageExtractor: DealImageExtractor
@@ -18,6 +19,10 @@ final class CrawlImageValidator {
     }
 
     func validateImage(url: URL, hash: String) async -> ImageValidationResult? {
+        guard !Self.shouldIgnore(url: url) else {
+            return nil
+        }
+
         guard let localURL = try? await fetcher.localFileURL(for: url, hash: hash) else {
             return nil
         }
@@ -42,6 +47,11 @@ final class CrawlImageValidator {
             lines: lines,
             dimensions: dimensions
         )
+    }
+
+    private static func shouldIgnore(url: URL) -> Bool {
+        let absoluteString = url.absoluteString.lowercased()
+        return ignoredURLSubstrings.contains { absoluteString.contains($0) }
     }
 
     private static func meetsMinimumDimensions(dimensions: CGSize) -> Bool {

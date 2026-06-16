@@ -103,7 +103,7 @@ final class VenueDetailsViewModel {
                 Task { @MainActor in
                     switch progress {
                     case let .loadingPage(url):
-                        self?.crawlState = .crawling(progress: "Loading \(url.host ?? url.absoluteString)…")
+                        self?.crawlState = .crawling(progress: "Loading \(url.absoluteString)…")
                     case let .validatingImage(url):
                         self?.crawlState = .crawling(progress: "Checking image \(url.lastPathComponent)…")
                     case .saving:
