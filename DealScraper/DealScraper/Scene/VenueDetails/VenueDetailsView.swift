@@ -144,10 +144,8 @@ struct VenueDetailsView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-            case let .completed(found):
-                Text("Found \(found) new deal source\(found == 1 ? "" : "s").")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+            case let .completed(results):
+                crawlResultsView(results)
             case let .failed(message):
                 Text(message)
                     .font(.caption)
@@ -198,6 +196,41 @@ struct VenueDetailsView: View {
                     .fill(Color(nsColor: .controlBackgroundColor))
             }
         }
+    }
+
+    @ViewBuilder
+    private func crawlResultsView(_ results: VenueCrawlResults) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Found \(results.dealsFound) new deal source\(results.dealsFound == 1 ? "" : "s").")
+            Text("Analyzed \(results.imagesAnalyzed) image\(results.imagesAnalyzed == 1 ? "" : "s").")
+            Text("Completed in \(formattedCrawlDuration(results.duration)).")
+
+            if !results.visitedPages.isEmpty {
+                Text("Visited \(results.visitedPages.count) page\(results.visitedPages.count == 1 ? "" : "s"):")
+                    .padding(.top, 4)
+
+                ForEach(Array(results.visitedPages.enumerated()), id: \.offset) { _, url in
+                    Link(url.absoluteString, destination: url)
+                        .font(.caption)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
+            }
+        }
+        .font(.caption)
+        .foregroundStyle(.secondary)
+    }
+
+    private func formattedCrawlDuration(_ duration: TimeInterval) -> String {
+        if duration < 60 {
+            return String(format: "%.1f seconds", duration)
+        }
+        let minutes = Int(duration) / 60
+        let seconds = Int(duration) % 60
+        if seconds == 0 {
+            return "\(minutes) minute\(minutes == 1 ? "" : "s")"
+        }
+        return "\(minutes)m \(seconds)s"
     }
 
     @ViewBuilder

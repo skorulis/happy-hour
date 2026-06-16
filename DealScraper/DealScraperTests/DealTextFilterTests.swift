@@ -34,6 +34,24 @@ struct DealTextFilterTests {
         #expect(!filter.isValidDeal("Contact us at hello@example.com"))
         #expect(!filter.isValidDeal("Reserve your table"))
     }
+
+    @Test func rejectsTextWithSpecificDates() {
+        #expect(DealTextFilter.containsDate(in: "Live music June 21"))
+        #expect(DealTextFilter.containsDate(in: "Event on 17/06/2026"))
+        #expect(DealTextFilter.containsDate(in: "Special on June 17th"))
+        #expect(DealTextFilter.containsDate(in: "21st of March 2026"))
+        #expect(DealTextFilter.containsDate(in: "2026-06-17"))
+
+        #expect(!filter.isValidDeal("Live music June 21"))
+        #expect(!filter.isValidDeal("Comedy night 17/06/2026"))
+    }
+
+    @Test func acceptsTextWithoutSpecificDates() {
+        #expect(!DealTextFilter.containsDate(in: "Happy Hour every Friday"))
+        #expect(!DealTextFilter.containsDate(in: "TUES - THURS 4PM - 6PM"))
+        #expect(!DealTextFilter.containsDate(in: "FROM 11:30 TILL SOLD OUT."))
+        #expect(!DealTextFilter.containsDate(in: "HAPPY HOUR"))
+    }
     
     @Test func rejectsExamples() {
         // TODO: Think about how to fix this

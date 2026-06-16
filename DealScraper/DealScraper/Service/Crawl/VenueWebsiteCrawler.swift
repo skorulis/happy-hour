@@ -8,7 +8,7 @@ enum CrawlProgress: Sendable {
     case loadingPage(URL)
     case validatingImage(URL)
     case saving
-    case completed(newCount: Int)
+    case completed(VenueCrawlResults)
     case failed(message: String)
 }
 
@@ -61,7 +61,7 @@ final class VenueWebsiteCrawler {
     func crawl(
         venue: Venue,
         onProgress: @escaping @Sendable (CrawlProgress) -> Void = { _ in }
-    ) async throws -> Int {
+    ) async throws -> VenueCrawlResults {
         guard let websiteUri = venue.websiteUri,
               let startURL = URL(string: websiteUri),
               let baseURL = URLNormalizer.normalize(startURL)
@@ -73,8 +73,12 @@ final class VenueWebsiteCrawler {
             throw VenueWebsiteCrawlerError.missingVenueID
         }
         
+        let startTime = Date()
+        
         var queue: [URL] = [baseURL]
         var visited = Set<String>()
+        var visitedPages: [URL] = []
+        var imagesAnalyzed = 0
         var discoveredByURL: [URL: DiscoveredSource] = [:]
         
         while !queue.isEmpty, visited.count < Self.maxPages {
@@ -82,6 +86,7 @@ final class VenueWebsiteCrawler {
             let visitKey = URLNormalizer.hash(pageURL)
             print("CRAWL: Visiting \(pageURL)")
             guard visited.insert(visitKey).inserted else { continue }
+            visitedPages.append(pageURL)
             
             onProgress(.loadingPage(pageURL))
             
@@ -107,6 +112,7 @@ final class VenueWebsiteCrawler {
             }
             
             for imageURL in loadedPage.imageURLs {
+                imagesAnalyzed += 1
                 onProgress(.validatingImage(imageURL))
                 let hash = URLNormalizer.hash(imageURL)
                 if let validation = await imageValidator.validateImage(url: imageURL, hash: hash) {
@@ -173,8 +179,14 @@ final class VenueWebsiteCrawler {
         let newCount = try dealSourceRepository.upsert(sources: dealSources, forVenueId: venueId)
         try venueRepository.updateLastCrawlDate(venueId: venueId, date: now)
         
-        onProgress(.completed(newCount: newCount))
-        return newCount
+        let results = VenueCrawlResults(
+            dealsFound: newCount,
+            visitedPages: visitedPages,
+            imagesAnalyzed: imagesAnalyzed,
+            duration: Date().timeIntervalSince(startTime)
+        )
+        onProgress(.completed(results))
+        return results
     }
     
     private func dedupeImages(validatedSources: [URL: DiscoveredSource]) -> [URL: DiscoveredSource] {

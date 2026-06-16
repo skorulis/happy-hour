@@ -11,7 +11,7 @@ final class VenueDetailsViewModel {
     enum CrawlState: Equatable {
         case idle
         case crawling(progress: String)
-        case completed(found: Int)
+        case completed(VenueCrawlResults)
         case failed(message: String)
     }
 
@@ -99,7 +99,7 @@ final class VenueDetailsViewModel {
         deleteSourcesState = .idle
 
         do {
-            let newCount = try await venueWebsiteCrawler.crawl(venue: venue) { [weak self] progress in
+            let results = try await venueWebsiteCrawler.crawl(venue: venue) { [weak self] progress in
                 Task { @MainActor in
                     switch progress {
                     case let .loadingPage(url):
@@ -108,8 +108,8 @@ final class VenueDetailsViewModel {
                         self?.crawlState = .crawling(progress: "Checking image \(url.lastPathComponent)…")
                     case .saving:
                         self?.crawlState = .crawling(progress: "Saving deal sources…")
-                    case let .completed(newCount):
-                        self?.crawlState = .completed(found: newCount)
+                    case let .completed(results):
+                        self?.crawlState = .completed(results)
                     case let .failed(message):
                         self?.crawlState = .failed(message: message)
                     }
@@ -117,7 +117,7 @@ final class VenueDetailsViewModel {
             }
 
             load()
-            crawlState = .completed(found: newCount)
+            crawlState = .completed(results)
         } catch {
             crawlState = .failed(message: error.localizedDescription)
         }
