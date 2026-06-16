@@ -6,16 +6,14 @@ import Foundation
 struct ImageDeduper: Sendable {
 
     let matchThreshold: Double
-    let lineSimilarityThreshold: Double
 
-    init(matchThreshold: Double = 0.8, lineSimilarityThreshold: Double = 0.9) {
+    init(matchThreshold: Double = 0.8) {
         self.matchThreshold = matchThreshold
-        self.lineSimilarityThreshold = lineSimilarityThreshold
     }
 
     func dedupe(validatedSources: [URL: DiscoveredSource]) -> [URL: DiscoveredSource] {
         var result: [URL: DiscoveredSource] = [:]
-        var keptImages: [(url: URL, source: DiscoveredSource, lines: [String])] = []
+        var keptImages: [(url: URL, source: DiscoveredSource, text: String)] = []
 
         for (url, source) in validatedSources {
             guard source.type == .image else {
@@ -23,23 +21,23 @@ struct ImageDeduper: Sendable {
                 continue
             }
 
-            let lines = normalizedLines(from: source.textPieces)
-            guard !lines.isEmpty else {
+            let text = normalizedText(from: source.textPieces)
+            guard !text.isEmpty else {
                 result[url] = source
                 continue
             }
 
             if let matchIndex = keptImages.firstIndex(where: {
-                matchPercentage(lines, $0.lines) >= matchThreshold
+                textSimilarity(text, $0.text) >= matchThreshold
             }) {
                 let existing = keptImages[matchIndex]
                 if shouldPreferImage(candidate: source, over: existing.source) {
                     result.removeValue(forKey: existing.url)
-                    keptImages[matchIndex] = (url, source, lines)
+                    keptImages[matchIndex] = (url, source, text)
                     result[url] = source
                 }
             } else {
-                keptImages.append((url, source, lines))
+                keptImages.append((url, source, text))
                 result[url] = source
             }
         }
@@ -47,8 +45,8 @@ struct ImageDeduper: Sendable {
         return result
     }
 
-    private func normalizedLines(from textPieces: DealSourceTextPieces?) -> [String] {
-        guard let textPieces else { return [] }
+    private func normalizedText(from textPieces: DealSourceTextPieces?) -> String {
+        guard let textPieces else { return "" }
         let lines: [String]
         switch textPieces {
         case let .textLines(textLines):
@@ -60,6 +58,7 @@ struct ImageDeduper: Sendable {
         return lines
             .map(normalizeLine)
             .filter { !$0.isEmpty }
+            .joined(separator: " ")
     }
 
     private func normalizeLine(_ line: String) -> String {
@@ -70,31 +69,7 @@ struct ImageDeduper: Sendable {
             .joined(separator: " ")
     }
 
-    private func matchPercentage(_ a: [String], _ b: [String]) -> Double {
-        guard !a.isEmpty, !b.isEmpty else { return 0 }
-
-        var unmatchedB = b
-        var matched = 0
-
-        for lineA in a {
-            guard let matchIndex = unmatchedB.indices.max(by: { lhs, rhs in
-                lineSimilarity(lineA, unmatchedB[lhs]) < lineSimilarity(lineA, unmatchedB[rhs])
-            }) else { continue }
-
-            if linesMatch(lineA, unmatchedB[matchIndex]) {
-                matched += 1
-                unmatchedB.remove(at: matchIndex)
-            }
-        }
-
-        return Double(matched) / Double(max(a.count, b.count))
-    }
-
-    private func linesMatch(_ a: String, _ b: String) -> Bool {
-        lineSimilarity(a, b) >= lineSimilarityThreshold
-    }
-
-    private func lineSimilarity(_ a: String, _ b: String) -> Double {
+    private func textSimilarity(_ a: String, _ b: String) -> Double {
         if a == b { return 1 }
         let maxLength = max(a.count, b.count)
         guard maxLength > 0 else { return 1 }

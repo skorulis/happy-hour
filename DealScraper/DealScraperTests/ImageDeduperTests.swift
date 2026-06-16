@@ -132,6 +132,21 @@ struct ImageDeduperTests {
         #expect(result.count == 1)
     }
 
+    @Test func dedupesWhenLineSplitsDiffer() {
+        let first = imageSource(
+            url: "https://pub.example.com/a.png",
+            lines: ["HAPPY HOUR", "MON - FRI 4PM - 6PM", "$5 SCHOONERS", "$8 WINES"]
+        )
+        let second = imageSource(
+            url: "https://pub.example.com/b.png",
+            lines: ["HAPPY HOUR MON - FRI", "4PM - 6PM", "$5 SCHOONERS", "$8 WINES"]
+        )
+
+        let result = dedupe([first, second])
+
+        #expect(result.count == 1)
+    }
+
     @Test func keepsDifferentDealContent() {
         let first = imageSource(
             url: "https://pub.example.com/happy-hour.png",

@@ -64,7 +64,22 @@ struct DealImageExtractor {
             ExtractedTextLine(text: line.text, lineHeight: line.lineHeight, relativeSize: .medium)
         }
 
-        return assignRelativeSizes(to: lines)
+        return filterEstablishmentDates(from: assignRelativeSizes(to: lines))
+    }
+
+    private static let establishmentDateLinePattern =
+        #"(?i)^\s*(?:est(?:\.|ablished)?|esto)\s*\.?\s*\d{4}\s*$"#
+
+    static func isEstablishmentDateLine(_ text: String) -> Bool {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return false }
+        let range = NSRange(trimmed.startIndex..., in: trimmed)
+        guard let regex = try? NSRegularExpression(pattern: establishmentDateLinePattern) else { return false }
+        return regex.firstMatch(in: trimmed, range: range) != nil
+    }
+
+    private static func filterEstablishmentDates(from lines: [ExtractedTextLine]) -> [ExtractedTextLine] {
+        lines.filter { !isEstablishmentDateLine($0.text) }
     }
 
     private static func assignRelativeSizes(to lines: [ExtractedTextLine]) -> [ExtractedTextLine] {

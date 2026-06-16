@@ -84,6 +84,19 @@ struct DealImageExtractorTests {
         #expect(detailLine.relativeSize == .small)
     }
 
+    @Test func establishmentDateLineDetection() {
+        #expect(DealImageExtractor.isEstablishmentDateLine("EST. 1862"))
+        #expect(DealImageExtractor.isEstablishmentDateLine("ESTO 2005"))
+        #expect(DealImageExtractor.isEstablishmentDateLine("est 1999"))
+        #expect(DealImageExtractor.isEstablishmentDateLine("  ESTABLISHED 2010  "))
+        #expect(DealImageExtractor.isEstablishmentDateLine("EST.1862"))
+
+        #expect(!DealImageExtractor.isEstablishmentDateLine("HAPPY HOUR"))
+        #expect(!DealImageExtractor.isEstablishmentDateLine("THE GLEBE HOTEL EST. 1862"))
+        #expect(!DealImageExtractor.isEstablishmentDateLine("EST"))
+        #expect(!DealImageExtractor.isEstablishmentDateLine("1862"))
+    }
+
     private func hasLine(_ expected: String, in lines: [ExtractedTextLine]) -> Bool {
         line(expected, in: lines) != nil
     }
