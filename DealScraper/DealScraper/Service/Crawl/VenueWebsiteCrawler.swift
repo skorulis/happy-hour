@@ -75,12 +75,12 @@ final class VenueWebsiteCrawler {
 
         var queue: [URL] = [baseURL]
         var visited = Set<String>()
-        var discoveredByHash: [String: DiscoveredSource] = [:]
+        var discoveredByURL: [URL: DiscoveredSource] = [:]
 
         while !queue.isEmpty, visited.count < Self.maxPages {
             let pageURL = queue.removeFirst()
             let visitKey = URLNormalizer.hash(pageURL)
-            print("Visiting \(pageURL)")
+            print("CRAWL: Visiting \(pageURL)")
             guard visited.insert(visitKey).inserted else { continue }
 
             onProgress(.loadingPage(pageURL))
@@ -94,6 +94,17 @@ final class VenueWebsiteCrawler {
                 }
                 continue
             }
+            
+            print("CRAWL: Loaded. Blocks: \(loadedPage.contentBlocks.count)")
+            
+            if !loadedPage.dealContentBlocks.isEmpty {
+                let source = DiscoveredSource(
+                    url: loadedPage.normalizedURL,
+                    type: .webpage,
+                    textPieces: .contentBlocks(loadedPage.dealContentBlocks)
+                )
+                discoveredByURL[loadedPage.normalizedURL] = source
+            }
 
             let extraction: (sources: [DiscoveredSource], crawlLinks: [URL])
             do {
@@ -103,19 +114,6 @@ final class VenueWebsiteCrawler {
                     throw error
                 }
                 continue
-            }
-
-            for source in extraction.sources {
-                var discovered = source
-                if source.type == .webpage, source.url == loadedPage.normalizedURL, !loadedPage.contentBlocks.isEmpty {
-                    discovered = DiscoveredSource(
-                        url: source.url,
-                        type: source.type,
-                        hash: source.hash,
-                        textPieces: .contentBlocks(loadedPage.contentBlocks)
-                    )
-                }
-                discoveredByHash[discovered.hash] = discovered
             }
 
             if visited.count == 1 {
@@ -144,14 +142,14 @@ final class VenueWebsiteCrawler {
         }
 
         var validatedSources: [String: DiscoveredSource] = [:]
-        for (hash, source) in discoveredByHash {
+        for (url, source) in discoveredByURL {
+            let hash = URLNormalizer.hash(url)
             if source.type == .image {
                 onProgress(.validatingImage(source.url))
                 if let textLines = await imageValidator.validateImage(url: source.url, hash: hash) {
                     validatedSources[hash] = DiscoveredSource(
                         url: source.url,
                         type: source.type,
-                        hash: source.hash,
                         textPieces: .textLines(textLines)
                     )
                 }

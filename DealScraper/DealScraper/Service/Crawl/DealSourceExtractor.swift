@@ -6,18 +6,15 @@ import SwiftSoup
 struct DiscoveredSource: Equatable, Sendable {
     let url: URL
     let type: DealSourceType
-    let hash: String
     let textPieces: DealSourceTextPieces?
 
     init(
         url: URL,
         type: DealSourceType,
-        hash: String,
         textPieces: DealSourceTextPieces? = nil
     ) {
         self.url = url
         self.type = type
-        self.hash = hash
         self.textPieces = textPieces
     }
 }
@@ -53,11 +50,7 @@ struct DealSourceExtractor {
             guard let normalized = URLNormalizer.normalize(url) else { return }
             let hash = URLNormalizer.hash(normalized)
             guard seenHashes.insert(hash).inserted else { return }
-            sources.append(DiscoveredSource(url: normalized, type: type, hash: hash))
-        }
-
-        if pageHasDealKeywords {
-            appendSource(url: pageURL, type: .webpage)
+            sources.append(DiscoveredSource(url: normalized, type: type))
         }
 
         for link in try document.select("a[href]") {
@@ -88,28 +81,26 @@ struct DealSourceExtractor {
             }
         }
 
-        if pageHasDealKeywords {
-            for image in try document.select("img[src], img[srcset]") {
-                let candidates = try imageSources(from: image)
-                for candidate in candidates {
-                    guard let resolved = URLNormalizer.resolve(candidate, relativeTo: pageURL) else { continue }
-                    guard Self.isImageURL(resolved) else { continue }
+        for image in try document.select("img[src], img[srcset]") {
+            let candidates = try imageSources(from: image)
+            for candidate in candidates {
+                guard let resolved = URLNormalizer.resolve(candidate, relativeTo: pageURL) else { continue }
+                guard Self.isImageURL(resolved) else { continue }
 
-                    let alt = (try? image.attr("alt")) ?? ""
-                    let title = (try? image.attr("title")) ?? ""
-                    let context = "\(alt) \(title) \(resolved.lastPathComponent)"
+                let alt = (try? image.attr("alt")) ?? ""
+                let title = (try? image.attr("title")) ?? ""
+                let context = "\(alt) \(title) \(resolved.lastPathComponent)"
 
-                    if Self.containsDealKeyword(context) || pageHasDealKeywords {
-                        appendSource(url: resolved, type: .image)
-                    }
+                if Self.containsDealKeyword(context) || pageHasDealKeywords {
+                    appendSource(url: resolved, type: .image)
                 }
             }
+        }
 
-            for imageURL in page.imageURLs {
-                guard let resolved = URLNormalizer.resolve(imageURL.absoluteString, relativeTo: pageURL) else { continue }
-                guard Self.isImageURL(resolved) else { continue }
-                appendSource(url: resolved, type: .image)
-            }
+        for imageURL in page.imageURLs {
+            guard let resolved = URLNormalizer.resolve(imageURL.absoluteString, relativeTo: pageURL) else { continue }
+            guard Self.isImageURL(resolved) else { continue }
+            appendSource(url: resolved, type: .image)
         }
 
         return (sources, crawlLinks)
