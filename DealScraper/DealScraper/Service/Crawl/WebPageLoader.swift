@@ -7,6 +7,7 @@ struct LoadedPage: Sendable {
     let url: URL
     let html: String
     let imageURLs: [URL]
+    let contentBlocks: [ContentBlock]
 }
 
 enum WebPageLoaderError: LocalizedError {
@@ -109,10 +110,12 @@ final class WebPageLoader: NSObject {
         options: .caseInsensitive
     )
 
+    private let contentBlockGrouper: ContentBlockGrouper
     private let webView: WKWebView
     private var loadContinuation: CheckedContinuation<Void, Error>?
 
-    override init() {
+    init(contentBlockGrouper: ContentBlockGrouper) {
+        self.contentBlockGrouper = contentBlockGrouper
         let configuration = WKWebViewConfiguration()
         configuration.defaultWebpagePreferences.allowsContentJavaScript = true
 
@@ -157,8 +160,14 @@ final class WebPageLoader: NSObject {
         }
 
         let imageURLs = harvestImageURLs(html: resolvedHTML, liveDOMURLs: await harvestLiveImageURLStrings())
+        let contentBlocks = (try? contentBlockGrouper.group(html: resolvedHTML, pageURL: finalURL)) ?? []
 
-        return LoadedPage(url: finalURL, html: resolvedHTML, imageURLs: imageURLs)
+        return LoadedPage(
+            url: finalURL,
+            html: resolvedHTML,
+            imageURLs: imageURLs,
+            contentBlocks: contentBlocks
+        )
     }
 
     private func preparePage() async throws {

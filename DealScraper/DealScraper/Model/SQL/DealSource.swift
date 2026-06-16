@@ -52,7 +52,6 @@ nonisolated struct DealSource: Codable, Sendable {
     let venueId: Int64
     let url: String
     let type: DealSourceType
-    let hash: String
     var status: DealSourceStatus
     var date: Date
     var textPieces: DealSourceTextPieces?
@@ -62,7 +61,6 @@ nonisolated struct DealSource: Codable, Sendable {
         case venueId = "venue_id"
         case url
         case type
-        case hash
         case status
         case date
         case textPieces = "text_pieces"
@@ -73,7 +71,6 @@ nonisolated struct DealSource: Codable, Sendable {
         venueId: Int64,
         url: String,
         type: DealSourceType,
-        hash: String,
         status: DealSourceStatus = .new,
         date: Date = .now,
         textPieces: DealSourceTextPieces? = nil
@@ -82,7 +79,6 @@ nonisolated struct DealSource: Codable, Sendable {
         self.venueId = venueId
         self.url = url
         self.type = type
-        self.hash = hash
         self.status = status
         self.date = date
         self.textPieces = textPieces

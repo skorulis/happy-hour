@@ -57,5 +57,26 @@ final class SQLMigrations {
                 t.add(column: "text_pieces", .text)
             }
         }
+
+        migrator.registerMigration("v6_deal_source_drop_hash") { db in
+            try db.create(table: "deal_source_new") { t in
+                t.autoIncrementedPrimaryKey("id")
+                t.column("venue_id", .integer)
+                    .notNull()
+                    .references("venue", onDelete: .cascade)
+                t.column("url", .text).notNull()
+                t.column("type", .text).notNull()
+                t.column("status", .text).notNull()
+                t.column("date", .datetime).notNull()
+                t.column("text_pieces", .text)
+                t.uniqueKey(["venue_id", "url"])
+            }
+            try db.execute(sql: """
+                INSERT INTO deal_source_new (id, venue_id, url, type, status, date, text_pieces)
+                SELECT id, venue_id, url, type, status, date, text_pieces FROM deal_source
+                """)
+            try db.drop(table: "deal_source")
+            try db.rename(table: "deal_source_new", to: "deal_source")
+        }
     }
 }

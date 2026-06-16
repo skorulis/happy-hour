@@ -56,8 +56,10 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
             OpenRouterVisionDealProcessor(client: resolver.openRouterClient())
         }
 
-        container.register(WebPageLoader.self) { _ in WebPageLoader() }
-            .inObjectScope(.container)
+        container.register(WebPageLoader.self) { resolver in
+            WebPageLoader(contentBlockGrouper: resolver.contentBlockGrouper())
+        }
+        .inObjectScope(.container)
 
         container.register(DealSourceExtractor.self) { _ in DealSourceExtractor() }
 

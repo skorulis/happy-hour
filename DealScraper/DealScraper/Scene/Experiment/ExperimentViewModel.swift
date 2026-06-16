@@ -21,17 +21,14 @@ final class ExperimentViewModel {
     private(set) var state: State = .idle
 
     private let webPageLoader: WebPageLoader
-    private let contentBlockGrouper: ContentBlockGrouper
     private let pageLinkExtractor: PageLinkExtractor
 
     @Resolvable<Resolver>
     init(
         webPageLoader: WebPageLoader,
-        contentBlockGrouper: ContentBlockGrouper,
         pageLinkExtractor: PageLinkExtractor
     ) {
         self.webPageLoader = webPageLoader
-        self.contentBlockGrouper = contentBlockGrouper
         self.pageLinkExtractor = pageLinkExtractor
     }
 
@@ -71,12 +68,11 @@ final class ExperimentViewModel {
 
         do {
             let page = try await webPageLoader.load(url: url)
-            let blocks = try contentBlockGrouper.group(html: page.html, pageURL: page.url)
 
             print("Content blocks for \(page.url.absoluteString)")
-            print(blocks.formattedConsoleOutput())
+            print(page.contentBlocks.formattedConsoleOutput())
 
-            state = .completedBlocks(count: blocks.count)
+            state = .completedBlocks(count: page.contentBlocks.count)
         } catch {
             state = .failed(message: error.localizedDescription)
         }

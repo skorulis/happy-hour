@@ -26,8 +26,7 @@ struct DealSourceRepositoryTests {
         let source = DealSource(
             venueId: venueId,
             url: "https://example.com/menu.pdf",
-            type: .pdf,
-            hash: "abc123"
+            type: .pdf
         )
 
         let newCount = try dealSourceRepository.upsert(sources: [source], forVenueId: venueId)
@@ -38,7 +37,7 @@ struct DealSourceRepositoryTests {
         #expect(found[0].status == .new)
     }
 
-    @Test func upsertDedupesByHashAndPreservesApprovedStatus() throws {
+    @Test func upsertDedupesByURLAndPreservesApprovedStatus() throws {
         let store = SQLStore.inMemory()
         let venueRepository = VenueRepository(store: store)
         let dealSourceRepository = DealSourceRepository(store: store)
@@ -60,7 +59,6 @@ struct DealSourceRepositoryTests {
             venueId: venueId,
             url: "https://example.com/specials",
             type: .webpage,
-            hash: "hash-specials",
             status: .approved,
             date: originalDate
         )
@@ -71,7 +69,6 @@ struct DealSourceRepositoryTests {
             venueId: venueId,
             url: "https://example.com/specials",
             type: .webpage,
-            hash: "hash-specials",
             status: .new,
             date: refreshedDate
         )
@@ -108,7 +105,6 @@ struct DealSourceRepositoryTests {
             venueId: venueId,
             url: "https://example.com/specials",
             type: .webpage,
-            hash: "hash-specials",
             textPieces: .contentBlocks(blocks)
         )
 
@@ -136,8 +132,8 @@ struct DealSourceRepositoryTests {
         let venueId = try #require(venue.id)
 
         _ = try dealSourceRepository.upsert(sources: [
-            DealSource(venueId: venueId, url: "https://example.com/menu.pdf", type: .pdf, hash: "hash-1"),
-            DealSource(venueId: venueId, url: "https://example.com/specials", type: .webpage, hash: "hash-2"),
+            DealSource(venueId: venueId, url: "https://example.com/menu.pdf", type: .pdf),
+            DealSource(venueId: venueId, url: "https://example.com/specials", type: .webpage),
         ], forVenueId: venueId)
 
         let deleted = try dealSourceRepository.deleteAll(venueId: venueId)

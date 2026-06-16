@@ -34,7 +34,6 @@ final class VenueWebsiteCrawler {
     private let pageLoader: WebPageLoader
     private let extractor: DealSourceExtractor
     private let venueLinkExtractor: VenueLinkExtractor
-    private let contentBlockGrouper: ContentBlockGrouper
     private let imageValidator: CrawlImageValidator
     private let dealSourceRepository: DealSourceRepository
     private let venueRepository: VenueRepository
@@ -45,7 +44,6 @@ final class VenueWebsiteCrawler {
         pageLoader: WebPageLoader,
         extractor: DealSourceExtractor,
         venueLinkExtractor: VenueLinkExtractor,
-        contentBlockGrouper: ContentBlockGrouper,
         imageValidator: CrawlImageValidator,
         dealSourceRepository: DealSourceRepository,
         venueRepository: VenueRepository,
@@ -54,7 +52,6 @@ final class VenueWebsiteCrawler {
         self.pageLoader = pageLoader
         self.extractor = extractor
         self.venueLinkExtractor = venueLinkExtractor
-        self.contentBlockGrouper = contentBlockGrouper
         self.imageValidator = imageValidator
         self.dealSourceRepository = dealSourceRepository
         self.venueRepository = venueRepository
@@ -117,18 +114,13 @@ final class VenueWebsiteCrawler {
 
             for source in extraction.sources {
                 var discovered = source
-                if source.type == .webpage, source.url == normalizedPageURL {
-                    if let blocks = try? contentBlockGrouper.group(
-                        html: loadedPage.html,
-                        pageURL: normalizedPageURL
-                    ), !blocks.isEmpty {
-                        discovered = DiscoveredSource(
-                            url: source.url,
-                            type: source.type,
-                            hash: source.hash,
-                            textPieces: .contentBlocks(blocks)
-                        )
-                    }
+                if source.type == .webpage, source.url == normalizedPageURL, !loadedPage.contentBlocks.isEmpty {
+                    discovered = DiscoveredSource(
+                        url: source.url,
+                        type: source.type,
+                        hash: source.hash,
+                        textPieces: .contentBlocks(loadedPage.contentBlocks)
+                    )
                 }
                 discoveredByHash[discovered.hash] = discovered
             }
@@ -183,7 +175,6 @@ final class VenueWebsiteCrawler {
                 venueId: venueId,
                 url: discovered.url.absoluteString,
                 type: discovered.type,
-                hash: discovered.hash,
                 status: .new,
                 date: now,
                 textPieces: discovered.textPieces

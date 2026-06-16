@@ -42,7 +42,7 @@ final class DealSourceRepository {
 
             for source in sources {
                 let existing = try DealSource
-                    .filter(Column("venue_id") == venueId && Column("hash") == source.hash)
+                    .filter(Column("venue_id") == venueId && Column("url") == source.url)
                     .fetchOne(db)
 
                 if let existing {
