@@ -43,6 +43,7 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
     private func registerServices(container: Container<TargetResolver>) {
         container.register(DealImageExtractor.self) { _ in DealImageExtractor() }
         container.register(DealTextAnalyzer.self) { _ in DealTextAnalyzer() }
+        container.register(DealTextFilter.self) { _ in DealTextFilter() }
         container.register(OpenAIClient.self) { _ in OpenAIClient() }
         container.register(OpenRouterClient.self) { _ in OpenRouterClient() }
         container.register(GooglePlacesClient.self) { _ in GooglePlacesClient() }

@@ -1,0 +1,37 @@
+//Created by Alex Skorulis on 16/6/2026.
+
+import Foundation
+import Testing
+@testable import DealScraper
+
+struct DealTextFilterTests {
+
+    private let filter = DealTextFilter()
+
+    @Test func acceptsTextWithDays() {
+        #expect(filter.isValidDeal("EVERY TUES"))
+        #expect(filter.isValidDeal("CHEESEBURGER TUESDAYS"))
+        #expect(filter.isValidDeal("Happy Hour every Friday"))
+        #expect(filter.isValidDeal("TUES - THURS 4PM - 6PM / FRI 3PM - 5PM"))
+    }
+
+    @Test func acceptsTextWithTimes() {
+        #expect(filter.isValidDeal("4PM - 6PM"))
+        #expect(filter.isValidDeal("FROM 11:30 TILL SOLD OUT."))
+    }
+
+    @Test func acceptsDealHeadlines() {
+        #expect(filter.isValidDeal("HAPPY HOUR"))
+        #expect(filter.isValidDeal("Weekly Specials"))
+        #expect(filter.isValidDeal("Drink Promotions"))
+    }
+
+    @Test func rejectsNonDealText() {
+        #expect(!filter.isValidDeal(""))
+        #expect(!filter.isValidDeal("   "))
+        #expect(!filter.isValidDeal("Special offers on selected drinks"))
+        #expect(!filter.isValidDeal("$8 SCHOONERS"))
+        #expect(!filter.isValidDeal("Contact us at hello@example.com"))
+        #expect(!filter.isValidDeal("Reserve your table"))
+    }
+}
