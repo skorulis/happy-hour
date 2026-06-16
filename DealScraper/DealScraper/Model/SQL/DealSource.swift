@@ -12,6 +12,7 @@ nonisolated enum DealSourceType: String, Codable, Sendable {
 nonisolated enum DealSourceStatus: String, Codable, Sendable {
     case new
     case approved
+    case rejected
 }
 
 nonisolated enum DealSourceTextPieces: Codable, Sendable, Equatable {

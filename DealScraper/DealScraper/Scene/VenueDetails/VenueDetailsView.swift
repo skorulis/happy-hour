@@ -6,6 +6,7 @@ import SwiftUI
 struct VenueDetailsView: View {
 
     @State var viewModel: VenueDetailsViewModel
+    @State private var selectedTab: VenueDetailsTab = .details
 
     var body: some View {
         Group {
@@ -27,10 +28,16 @@ struct VenueDetailsView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 header(venue)
-                locationSection
-                linksSection(venue)
-                actionsSection
-                metadataSection(venue)
+
+                switch selectedTab {
+                case .details:
+                    locationSection
+                    linksSection(venue)
+                    actionsSection
+                    metadataSection(venue)
+                case .deals:
+                    dealsSection
+                }
             }
             .padding(24)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -47,6 +54,14 @@ struct VenueDetailsView: View {
                     .font(.title3)
                     .foregroundStyle(.secondary)
             }
+
+            Picker("Section", selection: $selectedTab) {
+                ForEach(VenueDetailsTab.allCases, id: \.self) { tab in
+                    Text(tab.rawValue).tag(tab)
+                }
+            }
+            .pickerStyle(.segmented)
+            .padding(.top, 8)
         }
     }
 
@@ -184,6 +199,108 @@ struct VenueDetailsView: View {
             }
         }
     }
+
+    @ViewBuilder
+    private var dealsSection: some View {
+        if viewModel.dealSources.isEmpty {
+            ContentUnavailableView(
+                "No Deal Sources",
+                systemImage: "doc.text.magnifyingglass",
+                description: Text("Crawl the venue website from the Details tab to discover deal sources.")
+            )
+        } else {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Deal Sources")
+                    .font(.headline)
+
+                ForEach(viewModel.dealSources, id: \.url) { source in
+                    DealSourceRow(source: source)
+                }
+            }
+        }
+    }
+}
+
+private enum VenueDetailsTab: String, CaseIterable {
+    case details = "Details"
+    case deals = "Deals"
+}
+
+private struct DealSourceRow: View {
+    let source: DealSource
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if let url = URL(string: source.url) {
+                Link(source.url, destination: url)
+                    .lineLimit(2)
+            } else {
+                Text(source.url)
+                    .lineLimit(2)
+            }
+
+            HStack(spacing: 16) {
+                Label(source.type.rawValue.capitalized, systemImage: typeIcon)
+                Label(source.status.rawValue.capitalized, systemImage: statusIcon)
+                Text(source.date.formatted(date: .abbreviated, time: .shortened))
+            }
+            .font(.subheadline)
+            .foregroundStyle(.secondary)
+
+            if let preview = textPreview {
+                Text(preview)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(3)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .background {
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color(nsColor: .controlBackgroundColor))
+        }
+    }
+
+    private var typeIcon: String {
+        switch source.type {
+        case .image:
+            return "photo"
+        case .webpage:
+            return "globe"
+        case .pdf:
+            return "doc.fill"
+        }
+    }
+
+    private var statusIcon: String {
+        switch source.status {
+        case .new:
+            return "sparkle"
+        case .approved:
+            return "checkmark.circle"
+        case .rejected:
+            return "xmark.circle"
+        }
+    }
+
+    private var textPreview: String? {
+        guard let textPieces = source.textPieces else { return nil }
+
+        switch textPieces {
+        case let .textLines(lines):
+            let preview = lines.prefix(3).joined(separator: "\n")
+            return preview.isEmpty ? nil : preview
+        case let .contentBlocks(blocks):
+            if let first = blocks.first {
+                let text = first.fullText.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !text.isEmpty {
+                    return text
+                }
+            }
+            return blocks.isEmpty ? nil : "\(blocks.count) content block\(blocks.count == 1 ? "" : "s")"
+        }
+    }
 }
 
 @MainActor
@@ -208,6 +325,27 @@ private func venueDetailsPreview() -> some View {
         whatsOn: "https://example.com/whats-on",
         instagram: "https://instagram.com/thelocalpub",
         facebook: "https://facebook.com/thelocalpub"
+    )
+    try! assembler.resolver.dealSourceRepository().upsert(
+        sources: [
+            DealSource(
+                venueId: venueId,
+                url: "https://example.com/happy-hour",
+                type: .webpage,
+                textPieces: .textLines([
+                    "Happy Hour Mon–Fri 4–6pm",
+                    "$8 house wines and schooners",
+                    "$12 cocktails"
+                ])
+            ),
+            DealSource(
+                venueId: venueId,
+                url: "https://example.com/menu.pdf",
+                type: .pdf,
+                status: .approved
+            ),
+        ],
+        forVenueId: venueId
     )
 
     return VenueDetailsView(

@@ -24,6 +24,7 @@ final class VenueDetailsViewModel {
     let googleMapId: String
     private(set) var venue: Venue?
     private(set) var venueLinks: VenueLinks?
+    private(set) var dealSources: [DealSource] = []
     private(set) var crawlState: CrawlState = .idle
     private(set) var deleteSourcesState: DeleteSourcesState = .idle
 
@@ -76,6 +77,7 @@ final class VenueDetailsViewModel {
             let deleted = try dealSourceRepository.deleteAll(venueId: venueId)
             deleteSourcesState = .completed(deleted: deleted)
             crawlState = .idle
+            load()
         } catch {
             deleteSourcesState = .failed(message: error.localizedDescription)
         }
@@ -85,8 +87,10 @@ final class VenueDetailsViewModel {
         venue = try? venueRepository.find(googleMapId: googleMapId)
         if let venueId = venue?.id {
             venueLinks = try? venueLinksRepository.find(venueId: venueId)
+            dealSources = (try? dealSourceRepository.find(venueId: venueId)) ?? []
         } else {
             venueLinks = nil
+            dealSources = []
         }
     }
 
