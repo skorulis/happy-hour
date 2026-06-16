@@ -1,6 +1,8 @@
 //Created by Alex Skorulis on 15/6/2026.
 
 import Foundation
+import KnitMacros
+import Knit
 
 enum CrawlProgress: Sendable {
     case loadingPage(URL)
@@ -38,11 +40,12 @@ final class VenueWebsiteCrawler {
     private let venueRepository: VenueRepository
     private let venueLinksRepository: VenueLinksRepository
 
+    @Resolvable<Resolver>
     init(
         pageLoader: WebPageLoader,
-        extractor: DealSourceExtractor = DealSourceExtractor(),
-        venueLinkExtractor: VenueLinkExtractor = VenueLinkExtractor(),
-        contentBlockGrouper: ContentBlockGrouper = ContentBlockGrouper(),
+        extractor: DealSourceExtractor,
+        venueLinkExtractor: VenueLinkExtractor,
+        contentBlockGrouper: ContentBlockGrouper,
         imageValidator: CrawlImageValidator,
         dealSourceRepository: DealSourceRepository,
         venueRepository: VenueRepository,
@@ -80,6 +83,7 @@ final class VenueWebsiteCrawler {
         while !queue.isEmpty, visited.count < Self.maxPages {
             let pageURL = queue.removeFirst()
             let visitKey = URLNormalizer.hash(pageURL)
+            print("Visiting \(pageURL)")
             guard visited.insert(visitKey).inserted else { continue }
 
             onProgress(.loadingPage(pageURL))

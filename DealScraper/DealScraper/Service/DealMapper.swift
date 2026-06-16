@@ -62,7 +62,7 @@ enum DealMapper {
         }
     }
 
-    private static func supplementTimes(from texts: [String], into deal: Deal) -> Deal {
+    private nonisolated static func supplementTimes(from texts: [String], into deal: Deal) -> Deal {
         guard deal.times.isEmpty else { return deal }
 
         var times: [DealHours] = []

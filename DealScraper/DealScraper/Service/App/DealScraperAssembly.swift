@@ -81,18 +81,7 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
             )
         }
 
-        container.register(VenueWebsiteCrawler.self) { resolver in
-            VenueWebsiteCrawler(
-                pageLoader: resolver.webPageLoader(),
-                extractor: resolver.dealSourceExtractor(),
-                venueLinkExtractor: resolver.venueLinkExtractor(),
-                contentBlockGrouper: resolver.contentBlockGrouper(),
-                imageValidator: resolver.crawlImageValidator(),
-                dealSourceRepository: resolver.dealSourceRepository(),
-                venueRepository: resolver.venueRepository(),
-                venueLinksRepository: resolver.venueLinksRepository()
-            )
-        }
+        container.register(VenueWebsiteCrawler.self) { VenueWebsiteCrawler.make(resolver: $0) }
     }
     
     @MainActor
