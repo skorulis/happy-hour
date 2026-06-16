@@ -7,6 +7,19 @@ struct DiscoveredSource: Equatable, Sendable {
     let url: URL
     let type: DealSourceType
     let hash: String
+    let textPieces: DealSourceTextPieces?
+
+    init(
+        url: URL,
+        type: DealSourceType,
+        hash: String,
+        textPieces: DealSourceTextPieces? = nil
+    ) {
+        self.url = url
+        self.type = type
+        self.hash = hash
+        self.textPieces = textPieces
+    }
 }
 
 struct DealSourceExtractor {

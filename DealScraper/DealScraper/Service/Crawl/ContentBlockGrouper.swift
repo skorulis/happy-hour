@@ -61,7 +61,7 @@ struct ContentBlockGrouper {
         }
 
         for element in try document.getAllElements() {
-            let text = try element.ownText()
+            let text = element.ownText()
                 .trimmingCharacters(in: .whitespacesAndNewlines)
                 .lowercased()
             if Self.pageMarkerTexts.contains(text) {

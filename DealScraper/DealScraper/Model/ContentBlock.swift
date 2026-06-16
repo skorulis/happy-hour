@@ -3,7 +3,7 @@
 import Foundation
 
 struct ContentBlockLink: Equatable, Sendable, Codable {
-    let text: String
+    let text: String?
     let url: URL
 }
 
@@ -22,7 +22,7 @@ struct ContentBlock: Equatable, Sendable, Codable {
         } else {
             lines.append("Links:")
             for link in links {
-                lines.append("  - \(link.text): \(link.url.absoluteString)")
+                lines.append("  - \(link.text ?? ""): \(link.url.absoluteString)")
             }
         }
         return lines.joined(separator: "\n")
@@ -34,5 +34,15 @@ extension Array where Element == ContentBlock {
         enumerated()
             .map { $0.element.formattedOutput(index: $0.offset) }
             .joined(separator: "\n\n")
+    }
+}
+
+extension Array where Element == ContentBlockLink {
+    func formattedConsoleOutput() -> String {
+        enumerated()
+            .map { index, link in
+                "\(index + 1). \(link.text ?? "(no text)"): \(link.url.absoluteString)"
+            }
+            .joined(separator: "\n")
     }
 }

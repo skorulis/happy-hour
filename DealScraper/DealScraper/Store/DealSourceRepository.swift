@@ -48,6 +48,7 @@ final class DealSourceRepository {
                 if let existing {
                     var updated = existing
                     updated.date = source.date
+                    updated.textPieces = source.textPieces
                     try updated.update(db)
                 } else {
                     var newSource = source

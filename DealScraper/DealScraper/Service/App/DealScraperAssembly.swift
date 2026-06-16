@@ -63,6 +63,8 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
 
         container.register(ContentBlockGrouper.self) { _ in ContentBlockGrouper() }
 
+        container.register(PageLinkExtractor.self) { _ in PageLinkExtractor() }
+
         container.register(VenueLinkExtractor.self) { _ in VenueLinkExtractor() }
 
         container.register(CrawlImageCache.self) { _ in CrawlImageCache() }
@@ -84,6 +86,7 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
                 pageLoader: resolver.webPageLoader(),
                 extractor: resolver.dealSourceExtractor(),
                 venueLinkExtractor: resolver.venueLinkExtractor(),
+                contentBlockGrouper: resolver.contentBlockGrouper(),
                 imageValidator: resolver.crawlImageValidator(),
                 dealSourceRepository: resolver.dealSourceRepository(),
                 venueRepository: resolver.venueRepository(),

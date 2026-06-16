@@ -32,6 +32,7 @@ final class VenueWebsiteCrawler {
     private let pageLoader: WebPageLoader
     private let extractor: DealSourceExtractor
     private let venueLinkExtractor: VenueLinkExtractor
+    private let contentBlockGrouper: ContentBlockGrouper
     private let imageValidator: CrawlImageValidator
     private let dealSourceRepository: DealSourceRepository
     private let venueRepository: VenueRepository
@@ -41,6 +42,7 @@ final class VenueWebsiteCrawler {
         pageLoader: WebPageLoader,
         extractor: DealSourceExtractor = DealSourceExtractor(),
         venueLinkExtractor: VenueLinkExtractor = VenueLinkExtractor(),
+        contentBlockGrouper: ContentBlockGrouper = ContentBlockGrouper(),
         imageValidator: CrawlImageValidator,
         dealSourceRepository: DealSourceRepository,
         venueRepository: VenueRepository,
@@ -49,6 +51,7 @@ final class VenueWebsiteCrawler {
         self.pageLoader = pageLoader
         self.extractor = extractor
         self.venueLinkExtractor = venueLinkExtractor
+        self.contentBlockGrouper = contentBlockGrouper
         self.imageValidator = imageValidator
         self.dealSourceRepository = dealSourceRepository
         self.venueRepository = venueRepository
@@ -109,7 +112,21 @@ final class VenueWebsiteCrawler {
             }
 
             for source in extraction.sources {
-                discoveredByHash[source.hash] = source
+                var discovered = source
+                if source.type == .webpage, source.url == normalizedPageURL {
+                    if let blocks = try? contentBlockGrouper.group(
+                        html: loadedPage.html,
+                        pageURL: normalizedPageURL
+                    ), !blocks.isEmpty {
+                        discovered = DiscoveredSource(
+                            url: source.url,
+                            type: source.type,
+                            hash: source.hash,
+                            textPieces: .contentBlocks(blocks)
+                        )
+                    }
+                }
+                discoveredByHash[discovered.hash] = discovered
             }
 
             if visited.count == 1 {
@@ -141,9 +158,13 @@ final class VenueWebsiteCrawler {
         for (hash, source) in discoveredByHash {
             if source.type == .image {
                 onProgress(.validatingImage(source.url))
-                let isRelevant = await imageValidator.isRelevantImage(url: source.url, hash: hash)
-                if isRelevant {
-                    validatedSources[hash] = source
+                if let textLines = await imageValidator.validateImage(url: source.url, hash: hash) {
+                    validatedSources[hash] = DiscoveredSource(
+                        url: source.url,
+                        type: source.type,
+                        hash: source.hash,
+                        textPieces: .textLines(textLines)
+                    )
                 }
             } else {
                 validatedSources[hash] = source
@@ -160,7 +181,8 @@ final class VenueWebsiteCrawler {
                 type: discovered.type,
                 hash: discovered.hash,
                 status: .new,
-                date: now
+                date: now,
+                textPieces: discovered.textPieces
             )
         }
 

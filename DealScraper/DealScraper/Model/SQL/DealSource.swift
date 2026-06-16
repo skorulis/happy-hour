@@ -14,6 +14,39 @@ nonisolated enum DealSourceStatus: String, Codable, Sendable {
     case approved
 }
 
+nonisolated enum DealSourceTextPieces: Codable, Sendable, Equatable {
+    case contentBlocks([ContentBlock])
+    case textLines([String])
+
+    private enum CodingKeys: String, CodingKey {
+        case contentBlocks
+        case textLines
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        if let blocks = try container.decodeIfPresent([ContentBlock].self, forKey: .contentBlocks) {
+            self = .contentBlocks(blocks)
+        } else if let lines = try container.decodeIfPresent([String].self, forKey: .textLines) {
+            self = .textLines(lines)
+        } else {
+            throw DecodingError.dataCorrupted(
+                .init(codingPath: decoder.codingPath, debugDescription: "Missing contentBlocks or textLines")
+            )
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        switch self {
+        case let .contentBlocks(blocks):
+            try container.encode(blocks, forKey: .contentBlocks)
+        case let .textLines(lines):
+            try container.encode(lines, forKey: .textLines)
+        }
+    }
+}
+
 nonisolated struct DealSource: Codable, Sendable {
     var id: Int64?
     let venueId: Int64
@@ -22,6 +55,7 @@ nonisolated struct DealSource: Codable, Sendable {
     let hash: String
     var status: DealSourceStatus
     var date: Date
+    var textPieces: DealSourceTextPieces?
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -31,6 +65,7 @@ nonisolated struct DealSource: Codable, Sendable {
         case hash
         case status
         case date
+        case textPieces = "text_pieces"
     }
 
     init(
@@ -40,7 +75,8 @@ nonisolated struct DealSource: Codable, Sendable {
         type: DealSourceType,
         hash: String,
         status: DealSourceStatus = .new,
-        date: Date = .now
+        date: Date = .now,
+        textPieces: DealSourceTextPieces? = nil
     ) {
         self.id = id
         self.venueId = venueId
@@ -49,6 +85,7 @@ nonisolated struct DealSource: Codable, Sendable {
         self.hash = hash
         self.status = status
         self.date = date
+        self.textPieces = textPieces
     }
 }
 
@@ -57,5 +94,25 @@ nonisolated extension DealSource: FetchableRecord, MutablePersistableRecord {
 
     mutating func didInsert(_ inserted: InsertionSuccess) {
         id = inserted.rowID
+    }
+}
+
+nonisolated extension DealSourceTextPieces: DatabaseValueConvertible {
+    var databaseValue: DatabaseValue {
+        guard let data = try? JSONEncoder().encode(self),
+              let string = String(data: data, encoding: .utf8)
+        else {
+            return .null
+        }
+        return string.databaseValue
+    }
+
+    static func fromDatabaseValue(_ dbValue: DatabaseValue) -> DealSourceTextPieces? {
+        guard let string = String.fromDatabaseValue(dbValue),
+              let data = string.data(using: .utf8)
+        else {
+            return nil
+        }
+        return try? JSONDecoder().decode(DealSourceTextPieces.self, from: data)
     }
 }

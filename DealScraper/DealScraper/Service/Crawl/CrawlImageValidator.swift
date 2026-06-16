@@ -17,21 +17,25 @@ final class CrawlImageValidator {
         self.imageExtractor = imageExtractor
     }
 
-    func isRelevantImage(url: URL, hash: String) async -> Bool {
+    func validateImage(url: URL, hash: String) async -> [String]? {
         guard let localURL = try? await fetcher.localFileURL(for: url, hash: hash) else {
-            return false
+            return nil
         }
 
         guard Self.meetsMinimumDimensions(at: localURL) else {
-            return false
+            return nil
         }
 
         guard let lines = try? await imageExtractor.extractTexts(from: localURL) else {
-            return false
+            return nil
         }
 
         let combinedText = lines.map(\.text).joined(separator: " ")
-        return DealDay.isMentioned(in: combinedText)
+        guard DealDay.isMentioned(in: combinedText) else {
+            return nil
+        }
+
+        return lines.map(\.text)
     }
 
     private static func meetsMinimumDimensions(at url: URL) -> Bool {

@@ -51,5 +51,11 @@ final class SQLMigrations {
                 t.column("facebook", .text)
             }
         }
+
+        migrator.registerMigration("v5_deal_source_text_pieces") { db in
+            try db.alter(table: "deal_source") { t in
+                t.add(column: "text_pieces", .text)
+            }
+        }
     }
 }

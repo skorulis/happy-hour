@@ -84,6 +84,40 @@ struct DealSourceRepositoryTests {
         #expect(found.date == refreshedDate)
     }
 
+    @Test func upsertPersistsTextPieces() throws {
+        let store = SQLStore.inMemory()
+        let venueRepository = VenueRepository(store: store)
+        let dealSourceRepository = DealSourceRepository(store: store)
+
+        try venueRepository.upsert(Venue(
+            googleMapId: "places/test",
+            name: "Test Pub",
+            lat: 0,
+            lng: 0,
+            websiteUri: "https://example.com",
+            json: "{}"
+        ))
+
+        let venue = try #require(try venueRepository.find(googleMapId: "places/test"))
+        let venueId = try #require(venue.id)
+
+        let blocks = [
+            ContentBlock(title: "Happy Hour", text: "$5 pints", links: []),
+        ]
+        let source = DealSource(
+            venueId: venueId,
+            url: "https://example.com/specials",
+            type: .webpage,
+            hash: "hash-specials",
+            textPieces: .contentBlocks(blocks)
+        )
+
+        _ = try dealSourceRepository.upsert(sources: [source], forVenueId: venueId)
+
+        let found = try #require(try dealSourceRepository.find(venueId: venueId).first)
+        #expect(found.textPieces == .contentBlocks(blocks))
+    }
+
     @Test func deleteAllRemovesSourcesForVenue() throws {
         let store = SQLStore.inMemory()
         let venueRepository = VenueRepository(store: store)

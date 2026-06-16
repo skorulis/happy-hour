@@ -119,10 +119,10 @@ struct CrawlImageValidatorTests {
             imageExtractor: DealImageExtractor()
         )
 
-        let isRelevant = await validator.isRelevantImage(
+        let isRelevant = await validator.validateImage(
             url: URL(string: "https://example.com/hive_bar_happy_hour.jpeg")!,
             hash: hash
-        )
+        ) != nil
 
         #expect(isRelevant)
     }
@@ -144,10 +144,10 @@ struct CrawlImageValidatorTests {
             imageExtractor: DealImageExtractor()
         )
 
-        let isRelevant = await validator.isRelevantImage(
+        let isRelevant = await validator.validateImage(
             url: URL(string: "https://example.com/blank.png")!,
             hash: hash
-        )
+        ) != nil
 
         #expect(!isRelevant)
     }
@@ -169,10 +169,10 @@ struct CrawlImageValidatorTests {
             imageExtractor: DealImageExtractor()
         )
 
-        let isRelevant = await validator.isRelevantImage(
+        let isRelevant = await validator.validateImage(
             url: URL(string: "https://example.com/small-icon.png")!,
             hash: hash
-        )
+        ) != nil
 
         #expect(!isRelevant)
     }

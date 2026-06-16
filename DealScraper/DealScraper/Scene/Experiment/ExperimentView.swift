@@ -21,16 +21,23 @@ struct ExperimentView: View {
 
     private var controls: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Content Block Extraction")
+            Text("Page Extraction")
                 .font(.headline)
 
             TextField("URL", text: $viewModel.urlString)
                 .textFieldStyle(.roundedBorder)
 
-            Button("Load & Extract") {
-                viewModel.loadAndExtract()
+            HStack(spacing: 12) {
+                Button("Load & Extract Blocks") {
+                    viewModel.loadAndExtract()
+                }
+                .disabled(isLoading)
+
+                Button("Load & Extract Links") {
+                    viewModel.loadAndExtractLinks()
+                }
+                .disabled(isLoading)
             }
-            .disabled(isLoading)
         }
     }
 
@@ -38,19 +45,33 @@ struct ExperimentView: View {
     private var status: some View {
         switch viewModel.state {
         case .idle:
-            Text("Enter a URL and press Load & Extract. Results are printed to the Xcode console.")
+            Text("Enter a URL and choose an extraction action. Results are printed to the Xcode console.")
                 .foregroundStyle(.secondary)
 
-        case .loading:
+        case .loadingContentBlocks:
             HStack(spacing: 8) {
                 ProgressView()
                     .controlSize(.small)
                 Text("Loading page and extracting content blocks…")
             }
 
-        case let .completed(blockCount):
+        case .loadingPageLinks:
+            HStack(spacing: 8) {
+                ProgressView()
+                    .controlSize(.small)
+                Text("Loading page and extracting links…")
+            }
+
+        case let .completedBlocks(blockCount):
             Label(
                 "Extracted \(blockCount) block\(blockCount == 1 ? "" : "s"). See Xcode console for output.",
+                systemImage: "checkmark.circle.fill"
+            )
+            .foregroundStyle(.green)
+
+        case let .completedLinks(linkCount):
+            Label(
+                "Extracted \(linkCount) link\(linkCount == 1 ? "" : "s"). See Xcode console for output.",
                 systemImage: "checkmark.circle.fill"
             )
             .foregroundStyle(.green)
@@ -62,8 +83,12 @@ struct ExperimentView: View {
     }
 
     private var isLoading: Bool {
-        if case .loading = viewModel.state { return true }
-        return false
+        switch viewModel.state {
+        case .loadingContentBlocks, .loadingPageLinks:
+            return true
+        default:
+            return false
+        }
     }
 }
 
