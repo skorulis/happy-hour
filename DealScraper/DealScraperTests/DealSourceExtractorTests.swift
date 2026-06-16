@@ -13,7 +13,7 @@ struct DealSourceExtractorTests {
         url: URL,
         imageURLs: [URL] = []
     ) -> LoadedPage {
-        LoadedPage(url: url, html: html, imageURLs: imageURLs, contentBlocks: [])
+        LoadedPage(url: url, html: html, imageURLs: imageURLs, contentBlocks: [], links: [])
     }
 
     @Test func extractsPDFMenuLink() throws {

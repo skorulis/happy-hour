@@ -128,6 +128,10 @@ final class VenueWebsiteCrawler {
                 }
             }
             
+            for link in loadedPage.links {
+                print(link)
+            }
+            
             let extraction: (sources: [DiscoveredSource], crawlLinks: [URL])
             do {
                 extraction = try extractor.extract(page: loadedPage, baseURL: baseURL)

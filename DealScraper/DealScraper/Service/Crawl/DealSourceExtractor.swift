@@ -35,6 +35,7 @@ struct DealSourceExtractor {
         "menu",
         "drinks",
         "food",
+        "happyhour"
     ]
 
     func extract(
@@ -79,7 +80,6 @@ struct DealSourceExtractor {
             }
 
             if matchesKeyword, URLNormalizer.isSameOrigin(resolved, as: baseURL) {
-                appendSource(url: resolved, type: .webpage)
                 crawlLinks.append(resolved)
             }
         }

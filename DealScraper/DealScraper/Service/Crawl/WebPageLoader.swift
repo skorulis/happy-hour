@@ -8,6 +8,7 @@ struct LoadedPage: Sendable {
     let html: String
     let imageURLs: [URL]
     let contentBlocks: [ContentBlock]
+    let links: [ContentBlockLink]
     
     var normalizedURL: URL {
         URLNormalizer.normalize(url) ?? url
@@ -122,11 +123,13 @@ final class WebPageLoader: NSObject {
     )
 
     private let contentBlockGrouper: ContentBlockGrouper
+    private let pageLinkExtractor: PageLinkExtractor
     private let webView: WKWebView
     private var loadContinuation: CheckedContinuation<Void, Error>?
 
-    init(contentBlockGrouper: ContentBlockGrouper) {
+    init(contentBlockGrouper: ContentBlockGrouper, pageLinkExtractor: PageLinkExtractor) {
         self.contentBlockGrouper = contentBlockGrouper
+        self.pageLinkExtractor = pageLinkExtractor
         let configuration = WKWebViewConfiguration()
         configuration.defaultWebpagePreferences.allowsContentJavaScript = true
 
@@ -174,12 +177,14 @@ final class WebPageLoader: NSObject {
 
         let imageURLs = harvestImageURLs(html: resolvedHTML, liveDOMURLs: await harvestLiveImageURLStrings())
         let contentBlocks = (try? contentBlockGrouper.group(html: resolvedHTML, pageURL: finalURL)) ?? []
+        let links = (try? pageLinkExtractor.extract(html: resolvedHTML, pageURL: finalURL)) ?? []
 
         return LoadedPage(
             url: URLNormalizer.normalize(finalURL) ?? finalURL,
             html: resolvedHTML,
             imageURLs: imageURLs,
-            contentBlocks: contentBlocks
+            contentBlocks: contentBlocks,
+            links: links
         )
     }
 
