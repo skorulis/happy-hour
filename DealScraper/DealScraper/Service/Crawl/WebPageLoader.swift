@@ -8,6 +8,17 @@ struct LoadedPage: Sendable {
     let html: String
     let imageURLs: [URL]
     let contentBlocks: [ContentBlock]
+    
+    var normalizedURL: URL {
+        URLNormalizer.normalize(url) ?? url
+    }
+    
+    var dealContentBlocks: [ContentBlock] {
+        let filter = DealTextFilter()
+        return contentBlocks.filter {
+            filter.isValidDeal($0.fullText)
+        }
+    }
 }
 
 enum WebPageLoaderError: LocalizedError {
@@ -163,7 +174,7 @@ final class WebPageLoader: NSObject {
         let contentBlocks = (try? contentBlockGrouper.group(html: resolvedHTML, pageURL: finalURL)) ?? []
 
         return LoadedPage(
-            url: finalURL,
+            url: URLNormalizer.normalize(finalURL) ?? finalURL,
             html: resolvedHTML,
             imageURLs: imageURLs,
             contentBlocks: contentBlocks

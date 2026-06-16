@@ -8,6 +8,14 @@ struct DealSourceExtractorTests {
 
     private let extractor = DealSourceExtractor()
 
+    private func loadedPage(
+        html: String,
+        url: URL,
+        imageURLs: [URL] = []
+    ) -> LoadedPage {
+        LoadedPage(url: url, html: html, imageURLs: imageURLs, contentBlocks: [])
+    }
+
     @Test func extractsPDFMenuLink() throws {
         let html = """
         <html>
@@ -19,7 +27,10 @@ struct DealSourceExtractorTests {
         let baseURL = URL(string: "https://pub.example.com")!
         let pageURL = URL(string: "https://pub.example.com/")!
 
-        let result = try extractor.extract(html: html, pageURL: pageURL, baseURL: baseURL)
+        let result = try extractor.extract(
+            page: loadedPage(html: html, url: pageURL),
+            baseURL: baseURL
+        )
 
         #expect(result.sources.count == 1)
         #expect(result.sources[0].type == .pdf)
@@ -38,7 +49,10 @@ struct DealSourceExtractorTests {
         let baseURL = URL(string: "https://pub.example.com")!
         let pageURL = URL(string: "https://pub.example.com/whats-on")!
 
-        let result = try extractor.extract(html: html, pageURL: pageURL, baseURL: baseURL)
+        let result = try extractor.extract(
+            page: loadedPage(html: html, url: pageURL),
+            baseURL: baseURL
+        )
 
         let types = Set(result.sources.map(\.type))
         #expect(types.contains(.webpage))
@@ -57,7 +71,10 @@ struct DealSourceExtractorTests {
         let baseURL = URL(string: "https://pub.example.com")!
         let pageURL = URL(string: "https://pub.example.com/happy-hour")!
 
-        let result = try extractor.extract(html: html, pageURL: pageURL, baseURL: baseURL)
+        let result = try extractor.extract(
+            page: loadedPage(html: html, url: pageURL),
+            baseURL: baseURL
+        )
 
         #expect(result.sources.contains {
             $0.type == .image && $0.url.lastPathComponent == "happy-hour-board.png"
@@ -78,10 +95,8 @@ struct DealSourceExtractorTests {
         ]
 
         let result = try extractor.extract(
-            html: html,
-            pageURL: pageURL,
-            baseURL: baseURL,
-            harvestedImageURLs: harvested
+            page: loadedPage(html: html, url: pageURL, imageURLs: harvested),
+            baseURL: baseURL
         )
 
         #expect(result.sources.contains {
@@ -98,7 +113,10 @@ struct DealSourceExtractorTests {
         let baseURL = URL(string: "https://pub.example.com")!
         let pageURL = URL(string: "https://pub.example.com/")!
 
-        let result = try extractor.extract(html: html, pageURL: pageURL, baseURL: baseURL)
+        let result = try extractor.extract(
+            page: loadedPage(html: html, url: pageURL),
+            baseURL: baseURL
+        )
 
         #expect(result.crawlLinks.isEmpty)
     }

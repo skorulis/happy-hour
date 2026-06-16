@@ -95,16 +95,9 @@ final class VenueWebsiteCrawler {
                 continue
             }
 
-            let normalizedPageURL = URLNormalizer.normalize(loadedPage.url) ?? loadedPage.url
-
             let extraction: (sources: [DiscoveredSource], crawlLinks: [URL])
             do {
-                extraction = try extractor.extract(
-                    html: loadedPage.html,
-                    pageURL: normalizedPageURL,
-                    baseURL: baseURL,
-                    harvestedImageURLs: loadedPage.imageURLs
-                )
+                extraction = try extractor.extract(page: loadedPage, baseURL: baseURL)
             } catch {
                 if visited.count == 1 {
                     throw error
@@ -114,7 +107,7 @@ final class VenueWebsiteCrawler {
 
             for source in extraction.sources {
                 var discovered = source
-                if source.type == .webpage, source.url == normalizedPageURL, !loadedPage.contentBlocks.isEmpty {
+                if source.type == .webpage, source.url == loadedPage.normalizedURL, !loadedPage.contentBlocks.isEmpty {
                     discovered = DiscoveredSource(
                         url: source.url,
                         type: source.type,
@@ -128,7 +121,7 @@ final class VenueWebsiteCrawler {
             if visited.count == 1 {
                 let discoveredLinks = try venueLinkExtractor.extract(
                     html: loadedPage.html,
-                    pageURL: normalizedPageURL,
+                    pageURL: loadedPage.normalizedURL,
                     baseURL: baseURL
                 )
                 try venueLinksRepository.setMissing(

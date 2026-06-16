@@ -11,6 +11,14 @@ struct ContentBlock: Equatable, Sendable, Codable {
     let title: String?
     let text: String
     let links: [ContentBlockLink]
+    
+    var fullText: String {
+        if let title {
+            return "\(title)\n\(text)"
+        } else {
+            return text
+        }
+    }
 
     func formattedOutput(index: Int) -> String {
         var lines: [String] = []
