@@ -46,7 +46,9 @@ final class VenueDetailsViewModel {
 
     var extractionProvider: VenueDealExtractionProvider = .openAI
     var openAIModel: String = "gpt-4o"
-    var openRouterModel: String = "google/gemini-2.5-pro"
+    var openRouterModel: String = OpenRouterModelStore.defaultModel {
+        didSet { openRouterModelStore.model = openRouterModel }
+    }
 
     private let venueRepository: VenueRepository
     private let dealSourceRepository: DealSourceRepository
@@ -54,6 +56,7 @@ final class VenueDetailsViewModel {
     private let venueLinksRepository: VenueLinksRepository
     private let venueWebsiteCrawler: VenueWebsiteCrawler
     private let venueDealExtractionService: VenueDealExtractionService
+    private let openRouterModelStore: OpenRouterModelStore
 
     @Resolvable<Resolver>
     init(
@@ -63,7 +66,8 @@ final class VenueDetailsViewModel {
         dealRepository: DealRepository,
         venueLinksRepository: VenueLinksRepository,
         venueWebsiteCrawler: VenueWebsiteCrawler,
-        venueDealExtractionService: VenueDealExtractionService
+        venueDealExtractionService: VenueDealExtractionService,
+        openRouterModelStore: OpenRouterModelStore
     ) {
         self.googleMapId = googleMapId
         self.venueRepository = venueRepository
@@ -72,6 +76,8 @@ final class VenueDetailsViewModel {
         self.venueLinksRepository = venueLinksRepository
         self.venueWebsiteCrawler = venueWebsiteCrawler
         self.venueDealExtractionService = venueDealExtractionService
+        self.openRouterModelStore = openRouterModelStore
+        openRouterModel = openRouterModelStore.model
         load()
     }
 

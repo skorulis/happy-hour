@@ -1,0 +1,116 @@
+//Created by Alex Skorulis on 18/6/2026.
+
+import Foundation
+import SwiftUI
+
+struct DealSourceRow: View {
+    let source: DealSource
+    let onStatusChange: (DealSourceStatus) -> Void
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 16) {
+            VStack(alignment: .leading, spacing: 8) {
+                if let url = URL(string: source.url) {
+                    Link(source.url, destination: url)
+                        .lineLimit(2)
+                } else {
+                    Text(source.url)
+                        .lineLimit(2)
+                }
+
+                HStack(spacing: 16) {
+                    Label(source.type.rawValue.capitalized, systemImage: typeIcon)
+                    Text(source.date.formatted(date: .abbreviated, time: .shortened))
+                }
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+
+                if let preview = textPreview {
+                    Text(preview)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(3)
+                }
+            }
+
+            Spacer(minLength: 8)
+
+            VStack(spacing: 8) {
+                statusButton(
+                    systemImage: "checkmark",
+                    color: .green,
+                    isSelected: source.status == .approved
+                ) {
+                    onStatusChange(.approved)
+                }
+
+                statusButton(
+                    systemImage: "xmark",
+                    color: .red,
+                    isSelected: source.status == .rejected
+                ) {
+                    onStatusChange(.rejected)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .background {
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color(nsColor: .controlBackgroundColor))
+        }
+    }
+
+    private func statusButton(
+        systemImage: String,
+        color: Color,
+        isSelected: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
+                .font(.body.weight(.semibold))
+                .foregroundStyle(isSelected ? .white : color)
+                .frame(width: 32, height: 32)
+                .background {
+                    Circle()
+                        .fill(isSelected ? color : .clear)
+                }
+                .overlay {
+                    Circle()
+                        .strokeBorder(color, lineWidth: 1.5)
+                }
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var typeIcon: String {
+        switch source.type {
+        case .image:
+            return "photo"
+        case .webpage:
+            return "globe"
+        case .pdf:
+            return "doc.fill"
+        }
+    }
+
+    private var textPreview: String? {
+        guard let textPieces = source.textPieces else { return nil }
+
+        switch textPieces {
+        case let .textLines(lines):
+            let preview = lines.prefix(3).joined(separator: "\n")
+            return preview.isEmpty ? nil : preview
+        case let .contentBlocks(blocks):
+            if let first = blocks.first {
+                let text = first.fullText.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !text.isEmpty {
+                    return text
+                }
+            }
+            return blocks.isEmpty ? nil : "\(blocks.count) content block\(blocks.count == 1 ? "" : "s")"
+        }
+    }
+}

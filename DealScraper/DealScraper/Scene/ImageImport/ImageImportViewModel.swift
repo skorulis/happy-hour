@@ -25,13 +25,21 @@ final class ImageImportViewModel {
     var sourceURLString: String = ""
     var extractionProvider: VenueDealExtractionProvider = .openAI
     var openAIModel: String = "gpt-4o"
-    var openRouterModel: String = "google/gemini-2.5-pro"
+    var openRouterModel: String = OpenRouterModelStore.defaultModel {
+        didSet { openRouterModelStore.model = openRouterModel }
+    }
 
     private let venueDealExtractionService: VenueDealExtractionService
+    private let openRouterModelStore: OpenRouterModelStore
 
     @Resolvable<Resolver>
-    init(venueDealExtractionService: VenueDealExtractionService) {
+    init(
+        venueDealExtractionService: VenueDealExtractionService,
+        openRouterModelStore: OpenRouterModelStore
+    ) {
         self.venueDealExtractionService = venueDealExtractionService
+        self.openRouterModelStore = openRouterModelStore
+        openRouterModel = openRouterModelStore.model
     }
 
     private var extractionModel: String {

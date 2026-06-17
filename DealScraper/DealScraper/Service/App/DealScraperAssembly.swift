@@ -148,6 +148,11 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
             APIKeyStore(secureStore: resolver.secureKeyValueStore())
         }
         .inObjectScope(.container)
+
+        container.register(OpenRouterModelStore.self) { resolver in
+            OpenRouterModelStore(keyValueStore: resolver.pKeyValueStore())
+        }
+        .inObjectScope(.container)
     }
 }
 
