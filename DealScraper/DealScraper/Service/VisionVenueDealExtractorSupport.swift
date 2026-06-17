@@ -37,14 +37,13 @@ enum VisionVenueDealExtractorSupport {
     ) -> String {
         let preamble = VenueDealInstructions.promptPreamble(
             venueName: venueName,
-            materials: [material]
+            material: material
         )
         return """
         \(instructions)
 
         \(preamble)
 
-        Only extract deals visible in Source \(material.index).
         Set sourceIndices to [\(material.index)] for each returned deal.
         """
     }

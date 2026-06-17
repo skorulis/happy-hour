@@ -9,6 +9,8 @@ struct DealSourceRow: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
+            maybeImage
+
             VStack(alignment: .leading, spacing: 8) {
                 if let url = URL(string: source.url) {
                     Link(source.url, destination: url)
@@ -83,6 +85,41 @@ struct DealSourceRow: View {
                 .contentShape(Circle())
         }
         .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private var maybeImage: some View {
+        if source.type == .image,
+           !source.url.isEmpty,
+           let imageURL = URL(string: source.url) {
+            Link(destination: imageURL) {
+                AsyncImage(url: imageURL) { phase in
+                    switch phase {
+                    case .empty:
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(Color.secondary.opacity(0.15))
+                            .overlay { ProgressView() }
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                    case .failure:
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(Color.secondary.opacity(0.15))
+                            .overlay {
+                                Image(systemName: "photo")
+                                    .foregroundStyle(.secondary)
+                            }
+                    @unknown default:
+                        EmptyView()
+                    }
+                }
+                .frame(maxWidth: 200, maxHeight: 120)
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+            }
+            .buttonStyle(.plain)
+            .help("Open image in browser")
+        }
     }
 
     private var typeIcon: String {
