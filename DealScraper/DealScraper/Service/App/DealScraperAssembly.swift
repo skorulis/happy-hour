@@ -65,8 +65,6 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
         }
         .inObjectScope(.container)
 
-        container.register(DealSourceExtractor.self) { _ in DealSourceExtractor() }
-
         container.register(ContentBlockGrouper.self) { _ in ContentBlockGrouper() }
 
         container.register(PageLinkExtractor.self) { _ in PageLinkExtractor() }

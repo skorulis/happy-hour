@@ -33,7 +33,6 @@ final class VenueWebsiteCrawler {
     
     private let pageLoader: WebPageLoader
     private let pageLinkFilter: PageLinkFilter
-    private let extractor: DealSourceExtractor
     private let venueLinkExtractor: VenueLinkExtractor
     private let imageValidator: CrawlImageValidator
     private let imageDeduper: ImageDeduper
@@ -45,7 +44,6 @@ final class VenueWebsiteCrawler {
     init(
         pageLoader: WebPageLoader,
         pageLinkFilter: PageLinkFilter,
-        extractor: DealSourceExtractor,
         venueLinkExtractor: VenueLinkExtractor,
         imageValidator: CrawlImageValidator,
         imageDeduper: ImageDeduper,
@@ -55,7 +53,6 @@ final class VenueWebsiteCrawler {
     ) {
         self.pageLoader = pageLoader
         self.pageLinkFilter = pageLinkFilter
-        self.extractor = extractor
         self.venueLinkExtractor = venueLinkExtractor
         self.imageValidator = imageValidator
         self.imageDeduper = imageDeduper
