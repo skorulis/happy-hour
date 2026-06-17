@@ -3,20 +3,26 @@
 import Foundation
 import Knit
 import KnitMacros
-import UniformTypeIdentifiers
 
 @MainActor
 @Observable
 final class ImageImportViewModel {
 
+    enum InputMode: String, CaseIterable {
+        case image = "Image"
+        case url = "URL"
+    }
+
     enum State {
         case idle
         case processing(progress: String)
-        case completed(deals: [DealWithSchedules], imageURL: URL)
+        case completed(deals: [DealWithSchedules], sourceURL: URL)
         case failed(message: String)
     }
 
     private(set) var state: State = .idle
+    var inputMode: InputMode = .image
+    var sourceURLString: String = ""
     var extractionProvider: VenueDealExtractionProvider = .cursor
     var cursorModel: String = "composer-2.5"
 
@@ -27,20 +33,33 @@ final class ImageImportViewModel {
         self.venueDealExtractionService = venueDealExtractionService
     }
 
-    static func isImageURL(_ url: URL) -> Bool {
+    static func isLocalImageURL(_ url: URL) -> Bool {
         guard url.isFileURL else { return false }
-        guard let type = UTType(filenameExtension: url.pathExtension) else { return false }
-        return type.conforms(to: .image)
+        return VenueDealSourceMaterialPreparer.isImageURL(url)
     }
 
     func processDroppedImage(at url: URL) {
-        guard Self.isImageURL(url) else {
+        guard Self.isLocalImageURL(url) else {
             state = .failed(message: "Please drop an image file.")
             return
         }
 
         Task {
-            await process(url: url)
+            await processLocalImage(at: url)
+        }
+    }
+
+    func processURL() {
+        let trimmed = sourceURLString.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let url = URL(string: trimmed),
+              VenueDealSourceMaterialPreparer.isRemoteURL(url)
+        else {
+            state = .failed(message: "Enter a valid HTTP or HTTPS URL.")
+            return
+        }
+
+        Task {
+            await processRemoteURL(at: url)
         }
     }
 
@@ -48,7 +67,7 @@ final class ImageImportViewModel {
         state = .idle
     }
 
-    private func process(url: URL) async {
+    private func processLocalImage(at url: URL) async {
         state = .processing(progress: "Preparing image…")
 
         let didAccess = url.startAccessingSecurityScopedResource()
@@ -68,7 +87,26 @@ final class ImageImportViewModel {
                     self?.state = .processing(progress: progress)
                 }
             }
-            state = .completed(deals: deals, imageURL: url)
+            state = .completed(deals: deals, sourceURL: url)
+        } catch {
+            state = .failed(message: error.localizedDescription)
+        }
+    }
+
+    private func processRemoteURL(at url: URL) async {
+        state = .processing(progress: "Preparing source…")
+
+        do {
+            let deals = try await venueDealExtractionService.extractDealsFromRemoteURL(
+                at: url,
+                provider: extractionProvider,
+                model: cursorModel
+            ) { [weak self] progress in
+                Task { @MainActor in
+                    self?.state = .processing(progress: progress)
+                }
+            }
+            state = .completed(deals: deals, sourceURL: url)
         } catch {
             state = .failed(message: error.localizedDescription)
         }

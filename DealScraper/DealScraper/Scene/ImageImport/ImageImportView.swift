@@ -2,7 +2,6 @@
 
 import Knit
 import SwiftUI
-import UniformTypeIdentifiers
 
 struct ImageImportView: View {
 
@@ -13,7 +12,7 @@ struct ImageImportView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 processingControls
-                dropZone
+                sourceInput
                 content
             }
             .padding(24)
@@ -37,6 +36,28 @@ struct ImageImportView: View {
             if viewModel.extractionProvider == .cursor {
                 TextField("Cursor model", text: $viewModel.cursorModel)
                     .textFieldStyle(.roundedBorder)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var sourceInput: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Picker("Source", selection: $viewModel.inputMode) {
+                ForEach(ImageImportViewModel.InputMode.allCases, id: \.self) { mode in
+                    Text(mode.rawValue).tag(mode)
+                }
+            }
+            .pickerStyle(.segmented)
+            .onChange(of: viewModel.inputMode) {
+                viewModel.reset()
+            }
+
+            switch viewModel.inputMode {
+            case .image:
+                dropZone
+            case .url:
+                urlInput
             }
         }
     }
@@ -74,6 +95,22 @@ struct ImageImportView: View {
         } isTargeted: { isDropTargeted = $0 }
     }
 
+    private var urlInput: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            TextField("https://example.com/deals", text: $viewModel.sourceURLString)
+                .textFieldStyle(.roundedBorder)
+
+            Text("Image URLs are fetched directly. Other URLs are treated as webpages.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            Button("Extract Deals") {
+                viewModel.processURL()
+            }
+            .disabled(viewModel.sourceURLString.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        }
+    }
+
     @ViewBuilder
     private var content: some View {
         switch viewModel.state {
@@ -87,8 +124,8 @@ struct ImageImportView: View {
                     .foregroundStyle(.secondary)
             }
 
-        case let .completed(deals, imageURL):
-            completedContent(deals: deals, imageURL: imageURL)
+        case let .completed(deals, sourceURL):
+            completedContent(deals: deals, sourceURL: sourceURL)
 
         case let .failed(message):
             Label(message, systemImage: "exclamationmark.triangle.fill")
@@ -96,18 +133,12 @@ struct ImageImportView: View {
         }
     }
 
-    private func completedContent(deals: [DealWithSchedules], imageURL: URL) -> some View {
+    private func completedContent(deals: [DealWithSchedules], sourceURL: URL) -> some View {
         VStack(alignment: .leading, spacing: 24) {
-            if let preview = imagePreview(for: imageURL) {
-                preview
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(maxHeight: 240)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-            }
+            sourcePreview(for: sourceURL)
 
             if deals.isEmpty {
-                Text("No deals were found in this image.")
+                Text("No deals were found in this source.")
                     .foregroundStyle(.secondary)
             } else {
                 VStack(alignment: .leading, spacing: 16) {
@@ -122,7 +153,46 @@ struct ImageImportView: View {
         }
     }
 
-    private func imagePreview(for url: URL) -> Image? {
+    @ViewBuilder
+    private func sourcePreview(for url: URL) -> some View {
+        if url.isFileURL, let preview = localImagePreview(for: url) {
+            preview
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(maxHeight: 240)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+        } else if VenueDealSourceMaterialPreparer.isImageURL(url) {
+            AsyncImage(url: url) { phase in
+                switch phase {
+                case .empty:
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.secondary.opacity(0.15))
+                        .frame(maxHeight: 240)
+                        .overlay { ProgressView() }
+                case .success(let image):
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(maxHeight: 240)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                case .failure:
+                    sourceLink(for: url)
+                @unknown default:
+                    EmptyView()
+                }
+            }
+        } else {
+            sourceLink(for: url)
+        }
+    }
+
+    private func sourceLink(for url: URL) -> some View {
+        Link(url.absoluteString, destination: url)
+            .font(.subheadline)
+            .lineLimit(2)
+    }
+
+    private func localImagePreview(for url: URL) -> Image? {
         guard let nsImage = NSImage(contentsOf: url) else { return nil }
         return Image(nsImage: nsImage)
     }

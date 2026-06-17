@@ -114,6 +114,33 @@ final class VenueDealExtractionService {
         )
     }
 
+    func extractDealsFromRemoteURL(
+        at url: URL,
+        provider: VenueDealExtractionProvider,
+        model: String,
+        onProgress: ProgressHandler? = nil
+    ) async throws -> [DealWithSchedules] {
+        onProgress?("Preparing source…")
+
+        let material = try await materialPreparer.prepareRemoteURL(at: url)
+        let materials = [material]
+
+        onProgress?("Analyzing with \(provider.rawValue)…")
+
+        let payload = try await extractPayload(
+            provider: provider,
+            model: model,
+            materials: materials,
+            venueName: "Preview"
+        )
+
+        return VenueDealPersistenceMapper.map(
+            payload: payload,
+            venueId: 0,
+            materials: materials
+        )
+    }
+
     private func extractPayload(
         provider: VenueDealExtractionProvider,
         model: String,

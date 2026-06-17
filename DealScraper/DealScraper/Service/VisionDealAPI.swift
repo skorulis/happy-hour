@@ -49,17 +49,13 @@ enum VisionDealAPI {
         "additionalProperties": false,
     ]
 
-    nonisolated static func extractDeals(
-        endpoint: URL,
+    nonisolated static func extractDealsRequestBody(
         model: String,
         imageBase64: String,
         mimeType: String,
-        apiKey: String,
-        instructions: String,
-        additionalHeaders: [String: String] = [:],
-        fetch: @escaping @Sendable (URLRequest) async throws -> (Data, URLResponse)
-    ) async throws -> DealExtractionPayload {
-        let requestBody: [String: Any] = [
+        instructions: String
+    ) -> [String: Any] {
+        [
             "model": model,
             "messages": [
                 [
@@ -91,6 +87,39 @@ enum VisionDealAPI {
                 ],
             ],
         ]
+    }
+
+    nonisolated static func parseDealExtractionPayload(from data: Data) throws -> DealExtractionPayload {
+        let completion = try JSONDecoder().decode(ChatCompletionResponse.self, from: data)
+        guard let content = completion.choices.first?.message.content else {
+            throw Error.decodingFailure
+        }
+
+        guard let payloadData = content.data(using: .utf8),
+              let payload = try? JSONDecoder().decode(DealExtractionPayload.self, from: payloadData)
+        else {
+            throw Error.decodingFailure
+        }
+
+        return payload
+    }
+
+    nonisolated static func extractDeals(
+        endpoint: URL,
+        model: String,
+        imageBase64: String,
+        mimeType: String,
+        apiKey: String,
+        instructions: String,
+        additionalHeaders: [String: String] = [:],
+        fetch: @escaping @Sendable (URLRequest) async throws -> (Data, URLResponse)
+    ) async throws -> DealExtractionPayload {
+        let requestBody = extractDealsRequestBody(
+            model: model,
+            imageBase64: imageBase64,
+            mimeType: mimeType,
+            instructions: instructions
+        )
 
         var request = URLRequest(url: endpoint)
         request.httpMethod = "POST"
@@ -113,21 +142,10 @@ enum VisionDealAPI {
             throw Error.apiError(statusCode: httpResponse.statusCode, message: message)
         }
 
-        let completion = try JSONDecoder().decode(ChatCompletionResponse.self, from: data)
-        guard let content = completion.choices.first?.message.content else {
-            throw Error.decodingFailure
-        }
-
-        guard let payloadData = content.data(using: .utf8),
-              let payload = try? JSONDecoder().decode(DealExtractionPayload.self, from: payloadData)
-        else {
-            throw Error.decodingFailure
-        }
-
-        return payload
+        return try parseDealExtractionPayload(from: data)
     }
 
-    nonisolated private static func errorMessage(from data: Data) -> String? {
+    nonisolated static func errorMessage(from data: Data) -> String? {
         struct APIError: Decodable {
             struct Detail: Decodable {
                 let message: String

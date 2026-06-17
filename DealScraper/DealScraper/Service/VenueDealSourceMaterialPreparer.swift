@@ -1,6 +1,7 @@
 //Created by Alex Skorulis on 17/6/2026.
 
 import Foundation
+import UniformTypeIdentifiers
 
 enum VenueDealSourceMaterialPreparerError: LocalizedError {
     case noMaterialsPrepared(failures: [String])
@@ -91,6 +92,44 @@ final class VenueDealSourceMaterialPreparer {
             type: .image,
             pngData: pngData
         )
+    }
+
+    func prepareRemoteURL(at url: URL) async throws -> VenueDealSourceMaterial {
+        if Self.isImageURL(url) {
+            let pngData = try await prepareImage(url: url)
+            return VenueDealSourceMaterial(
+                index: 1,
+                dealSourceId: 0,
+                url: url,
+                sourceURL: url,
+                type: .image,
+                pngData: pngData
+            )
+        }
+
+        return VenueDealSourceMaterial(
+            index: 1,
+            dealSourceId: 0,
+            url: url,
+            sourceURL: url,
+            type: .webpage,
+            pngData: nil
+        )
+    }
+
+    static func isRemoteURL(_ url: URL) -> Bool {
+        guard let scheme = url.scheme?.lowercased() else { return false }
+        return scheme == "http" || scheme == "https"
+    }
+
+    static func isImageURL(_ url: URL) -> Bool {
+        if url.isFileURL {
+            guard let type = UTType(filenameExtension: url.pathExtension) else { return false }
+            return type.conforms(to: .image)
+        }
+
+        guard let type = UTType(filenameExtension: url.pathExtension) else { return false }
+        return type.conforms(to: .image)
     }
 
     private func prepareImage(url: URL) async throws -> Data {
