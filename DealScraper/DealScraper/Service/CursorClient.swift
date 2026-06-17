@@ -17,7 +17,7 @@ final class CursorClient: HTTPService {
 
     init(
         urlSession: URLSessionProtocol = URLSession(configuration: .default),
-        logger: HTTPLogger? = .init(level: .errors),
+        logger: HTTPLogger? = .init(level: .full),
         sleep: @escaping @Sendable (Duration) async throws -> Void = { try await Task.sleep(for: $0) }
     ) {
         self.urlSession = urlSession
@@ -71,6 +71,63 @@ final class CursorClient: HTTPService {
         return payload
     }
 
+    func createAgentRun(
+        promptText: String,
+        imageURLs: [String],
+        model: String,
+        apiKey: String
+    ) async throws -> (agentID: String, runID: String) {
+        try await createAgent(
+            promptText: promptText,
+            imageURLs: imageURLs,
+            model: model,
+            apiKey: apiKey
+        )
+    }
+
+    func pollRunForPayload(
+        agentID: String,
+        runID: String,
+        apiKey: String
+    ) async throws -> DealExtractionPayload {
+        let resultText = try await pollRun(
+            agentID: agentID,
+            runID: runID,
+            apiKey: apiKey
+        )
+
+        guard let payload = VisionDealJSONSupport.parsePayload(from: resultText) else {
+            throw Error.decodingFailure
+        }
+        return payload
+    }
+
+    func extractVenueDeals(
+        agentID: String,
+        imageURLs: [String],
+        promptText: String,
+        model: String,
+        apiKey: String
+    ) async throws -> DealExtractionPayload {
+        let runID = try await createRun(
+            agentID: agentID,
+            promptText: promptText,
+            imageURLs: imageURLs,
+            model: model,
+            apiKey: apiKey
+        )
+
+        return try await pollRunForPayload(
+            agentID: agentID,
+            runID: runID,
+            apiKey: apiKey
+        )
+    }
+
+    func archiveAgent(id: String, apiKey: String) async {
+        try? await archiveAgentRequest(id: id, apiKey: apiKey)
+    }
+
     nonisolated static func jsonPrompt(from instructions: String) -> String {
         """
         \(instructions)
@@ -95,6 +152,25 @@ final class CursorClient: HTTPService {
             )
         )
         return (response.agent.id, response.run.id)
+    }
+
+    private func createRun(
+        agentID: String,
+        promptText: String,
+        imageURLs: [String],
+        model: String,
+        apiKey: String
+    ) async throws -> String {
+        let response = try await execute(request:
+            CursorAPI.createRunRequest(
+                agentID: agentID,
+                apiKey: apiKey,
+                promptText: promptText,
+                imageURLs: imageURLs,
+                model: model
+            )
+        )
+        return response.id
     }
 
     private func pollRun(
@@ -136,7 +212,7 @@ final class CursorClient: HTTPService {
         throw Error.apiError(statusCode: 0, message: "Agent run timed out")
     }
 
-    private func archiveAgent(id: String, apiKey: String) async throws {
+    private func archiveAgentRequest(id: String, apiKey: String) async throws {
         _ = try await execute(request: CursorAPI.archiveAgentRequest(agentID: id, apiKey: apiKey))
     }
 

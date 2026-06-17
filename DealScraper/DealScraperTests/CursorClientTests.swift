@@ -182,6 +182,148 @@ struct CursorClientTests {
         #expect(payload.deals.first?.sourceIndices == [1, 2])
     }
 
+    @Test func reusesCreatedAgentForMultipleRunsAndArchivesOnce() async throws {
+        let captured = RequestCapture()
+        let agentID = "bc-00000000-0000-0000-0000-000000000010"
+        let initialRunID = "run-00000000-0000-0000-0000-000000000010"
+        let runTwoID = "run-00000000-0000-0000-0000-000000000012"
+
+        let client = CursorClient(
+            urlSession: FakeURLSession { request in
+                captured.requests.append(request)
+
+                if request.httpMethod == "POST", request.url?.path == "/v1/agents" {
+                    let responseData = """
+                    {
+                      "agent": { "id": "\(agentID)" },
+                      "run": { "id": "\(initialRunID)" }
+                    }
+                    """.data(using: .utf8)!
+                    return (responseData, HTTPURLResponse(
+                        url: request.url!,
+                        statusCode: 200,
+                        httpVersion: nil,
+                        headerFields: nil
+                    )!)
+                }
+
+                if request.httpMethod == "POST", request.url?.path == "/v1/agents/\(agentID)/runs" {
+                    let responseData = """
+                    { "id": "\(runTwoID)" }
+                    """.data(using: .utf8)!
+                    return (responseData, HTTPURLResponse(
+                        url: request.url!,
+                        statusCode: 200,
+                        httpVersion: nil,
+                        headerFields: nil
+                    )!)
+                }
+
+                if request.httpMethod == "GET",
+                   request.url?.path == "/v1/agents/\(agentID)/runs/\(initialRunID)"
+                {
+                    let responseData = """
+                    {
+                      "id": "\(initialRunID)",
+                      "status": "FINISHED",
+                      "result": "{\\"deals\\":[{\\"title\\":\\"IMAGE DEAL\\",\\"details\\":[\\"$10\\"],\\"conditions\\":[],\\"days\\":[\\"MON\\"],\\"times\\":[\\"5PM - 7PM\\"],\\"sourceIndices\\":[1]}]}"
+                    }
+                    """.data(using: .utf8)!
+                    return (responseData, HTTPURLResponse(
+                        url: request.url!,
+                        statusCode: 200,
+                        httpVersion: nil,
+                        headerFields: nil
+                    )!)
+                }
+
+                if request.httpMethod == "GET",
+                   request.url?.path == "/v1/agents/\(agentID)/runs/\(runTwoID)"
+                {
+                    let responseData = """
+                    {
+                      "id": "\(runTwoID)",
+                      "status": "FINISHED",
+                      "result": "{\\"deals\\":[{\\"title\\":\\"WEB DEAL\\",\\"details\\":[\\"$12\\"],\\"conditions\\":[],\\"days\\":[\\"TUE\\"],\\"times\\":[\\"all day\\"],\\"sourceIndices\\":[2]}]}"
+                    }
+                    """.data(using: .utf8)!
+                    return (responseData, HTTPURLResponse(
+                        url: request.url!,
+                        statusCode: 200,
+                        httpVersion: nil,
+                        headerFields: nil
+                    )!)
+                }
+
+                if request.httpMethod == "POST",
+                   request.url?.path == "/v1/agents/\(agentID)/archive"
+                {
+                    return (Data(), HTTPURLResponse(
+                        url: request.url!,
+                        statusCode: 200,
+                        httpVersion: nil,
+                        headerFields: nil
+                    )!)
+                }
+
+                Issue.record("Unexpected request: \(request.httpMethod ?? "") \(request.url?.absoluteString ?? "")")
+                return (Data(), HTTPURLResponse(
+                    url: request.url!,
+                    statusCode: 404,
+                    httpVersion: nil,
+                    headerFields: nil
+                )!)
+            },
+            sleep: { _ in }
+        )
+
+        let (agentIDResult, firstRunID) = try await client.createAgentRun(
+            promptText: CursorClient.jsonPrompt(from: "source one"),
+            imageURLs: ["https://example.com/source-image.png"],
+            model: "composer-2.5",
+            apiKey: "test-key"
+        )
+        #expect(agentIDResult == agentID)
+
+        let firstPayload = try await client.pollRunForPayload(
+            agentID: agentID,
+            runID: firstRunID,
+            apiKey: "test-key"
+        )
+        let secondPayload = try await client.extractVenueDeals(
+            agentID: agentID,
+            imageURLs: [],
+            promptText: CursorClient.jsonPrompt(from: "source two"),
+            model: "composer-2.5",
+            apiKey: "test-key"
+        )
+        await client.archiveAgent(id: agentID, apiKey: "test-key")
+
+        #expect(firstPayload.deals.first?.title == "IMAGE DEAL")
+        #expect(secondPayload.deals.first?.title == "WEB DEAL")
+
+        let createAgentRequests = captured.requests.filter { $0.httpMethod == "POST" && $0.url?.path == "/v1/agents" }
+        let runCreationRequests = captured.requests.filter { $0.httpMethod == "POST" && $0.url?.path == "/v1/agents/\(agentID)/runs" }
+        let archiveRequests = captured.requests.filter { $0.httpMethod == "POST" && $0.url?.path == "/v1/agents/\(agentID)/archive" }
+
+        #expect(createAgentRequests.count == 1)
+        #expect(runCreationRequests.count == 1)
+        #expect(archiveRequests.count == 1)
+
+        let createAgentBody = try #require(createAgentRequests.first?.httpBody)
+        let createAgentJSON = try #require(JSONSerialization.jsonObject(with: createAgentBody) as? [String: Any])
+        let createAgentPrompt = try #require(createAgentJSON["prompt"] as? [String: Any])
+        let createAgentImages = try #require(createAgentPrompt["images"] as? [[String: Any]])
+        #expect(createAgentImages.count == 1)
+        #expect(createAgentImages.first?["url"] as? String == "https://example.com/source-image.png")
+
+        let secondRunBody = try #require(runCreationRequests.first?.httpBody)
+        let secondRunJSON = try #require(JSONSerialization.jsonObject(with: secondRunBody) as? [String: Any])
+        let secondPrompt = try #require(secondRunJSON["prompt"] as? [String: Any])
+        let secondImages = (secondPrompt["images"] as? [[String: Any]]) ?? []
+        #expect(secondImages.isEmpty)
+    }
+
     @Test func throwsAPIErrorOnNonSuccessStatus() async throws {
         let client = CursorClient(
             urlSession: FakeURLSession { request in

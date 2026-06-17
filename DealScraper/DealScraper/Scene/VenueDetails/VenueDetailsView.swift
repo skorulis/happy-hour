@@ -275,10 +275,17 @@ struct VenueDetailsView: View {
                     .textFieldStyle(.roundedBorder)
             }
 
-            Button("Extract Deals") {
-                viewModel.extractDeals()
+            HStack {
+                Button("Extract Deals") {
+                    viewModel.extractDeals()
+                }
+                .disabled(!viewModel.canExtractDeals)
+
+                Button("Delete Deals", role: .destructive) {
+                    viewModel.deleteDeals()
+                }
+                .disabled(!viewModel.canDeleteDeals)
             }
-            .disabled(!viewModel.canExtractDeals)
 
             Text("\(viewModel.approvedSourceCount) approved source\(viewModel.approvedSourceCount == 1 ? "" : "s") ready for extraction.")
                 .font(.caption)
@@ -297,6 +304,19 @@ struct VenueDetailsView: View {
                 }
             case let .completed(count):
                 Text("Saved \(count) deal\(count == 1 ? "" : "s").")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            case let .failed(message):
+                Text(message)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+            }
+
+            switch viewModel.deleteDealsState {
+            case .idle:
+                EmptyView()
+            case let .completed(deleted):
+                Text("Deleted \(deleted) deal\(deleted == 1 ? "" : "s").")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             case let .failed(message):

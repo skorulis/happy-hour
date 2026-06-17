@@ -35,6 +35,19 @@ final class DealRepository {
     }
 
     @discardableResult
+    func deleteAll(venueId: Int64) throws -> Int {
+        try store.dbQueue.write { db in
+            let count = try Deal
+                .filter(Column("venue_id") == venueId)
+                .fetchCount(db)
+            try Deal
+                .filter(Column("venue_id") == venueId)
+                .deleteAll(db)
+            return count
+        }
+    }
+
+    @discardableResult
     func replaceAll(venueId: Int64, deals: [DealWithSchedules]) throws -> Int {
         try store.dbQueue.write { db in
             try Deal

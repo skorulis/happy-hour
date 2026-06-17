@@ -37,6 +37,27 @@ enum CursorAPI {
         return request
     }
 
+    nonisolated static func createRunRequest(
+        agentID: String,
+        apiKey: String,
+        promptText: String,
+        imageURLs: [String],
+        model: String
+    ) -> HTTPJSONRequest<CreateRunResponse> {
+        var request = HTTPJSONRequest<CreateRunResponse>(
+            endpoint: "v1/agents/\(agentID)/runs",
+            body: CreateAgentBody(
+                prompt: .init(
+                    text: promptText,
+                    images: imageURLs.map { .init(url: $0) }
+                ),
+                model: .init(id: model)
+            )
+        )
+        request.headers["Authorization"] = "Bearer \(apiKey)"
+        return request
+    }
+
     nonisolated static func archiveAgentRequest(
         agentID: String,
         apiKey: String
@@ -64,6 +85,30 @@ nonisolated struct CreateAgentResponse: Decodable, Sendable {
 nonisolated struct RunResponse: Decodable, Sendable {
     let status: String
     let result: String?
+}
+
+nonisolated struct CreateRunResponse: Decodable, Sendable {
+    let id: String
+
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case run
+    }
+
+    private enum RunCodingKeys: String, CodingKey {
+        case id
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        if let id = try container.decodeIfPresent(String.self, forKey: .id) {
+            self.id = id
+            return
+        }
+
+        let runContainer = try container.nestedContainer(keyedBy: RunCodingKeys.self, forKey: .run)
+        self.id = try runContainer.decode(String.self, forKey: .id)
+    }
 }
 
 struct ArchiveAgentRequest: HTTPRequest {

@@ -21,6 +21,12 @@ final class VenueDetailsViewModel {
         case failed(message: String)
     }
 
+    enum DeleteDealsState: Equatable {
+        case idle
+        case completed(deleted: Int)
+        case failed(message: String)
+    }
+
     enum ExtractionState: Equatable {
         case idle
         case extracting(progress: String)
@@ -35,6 +41,7 @@ final class VenueDetailsViewModel {
     private(set) var deals: [DealWithSchedules] = []
     private(set) var crawlState: CrawlState = .idle
     private(set) var deleteSourcesState: DeleteSourcesState = .idle
+    private(set) var deleteDealsState: DeleteDealsState = .idle
     private(set) var extractionState: ExtractionState = .idle
 
     var extractionProvider: VenueDealExtractionProvider = .cursor
@@ -93,6 +100,10 @@ final class VenueDetailsViewModel {
         venue?.id != nil && approvedSourceCount > 0 && !isExtracting && !isCrawling
     }
 
+    var canDeleteDeals: Bool {
+        venue?.id != nil && !isExtracting && !isCrawling
+    }
+
     func crawlWebsite() {
         guard let venue, canCrawl else { return }
 
@@ -119,6 +130,19 @@ final class VenueDetailsViewModel {
 
         Task {
             await performExtraction(venue: venue)
+        }
+    }
+
+    func deleteDeals() {
+        guard let venueId = venue?.id, canDeleteDeals else { return }
+
+        do {
+            let deleted = try dealRepository.deleteAll(venueId: venueId)
+            deleteDealsState = .completed(deleted: deleted)
+            extractionState = .idle
+            load()
+        } catch {
+            deleteDealsState = .failed(message: error.localizedDescription)
         }
     }
 

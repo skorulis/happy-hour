@@ -84,4 +84,36 @@ struct DealRepositoryTests {
         #expect(found.count == 1)
         #expect(found[0].deal.title == "New Deal")
     }
+
+    @Test func deleteAllRemovesDealsForVenue() throws {
+        let store = SQLStore.inMemory()
+        let venueRepository = VenueRepository(store: store)
+        let dealRepository = DealRepository(store: store)
+
+        try venueRepository.upsert(Venue(
+            googleMapId: "places/test",
+            name: "Test Pub",
+            lat: 0,
+            lng: 0,
+            json: "{}"
+        ))
+
+        let venueId = try #require(try venueRepository.find(googleMapId: "places/test")?.id)
+
+        _ = try dealRepository.replaceAll(
+            venueId: venueId,
+            deals: [
+                DealWithSchedules(
+                    deal: Deal(venueId: venueId, title: "Happy Hour"),
+                    schedules: [
+                        DealSchedule(dealId: 0, dayOfWeek: 6, startMinute: 960, endMinute: 1_080),
+                    ]
+                ),
+            ]
+        )
+
+        let deleted = try dealRepository.deleteAll(venueId: venueId)
+        #expect(deleted == 1)
+        #expect(try dealRepository.find(venueId: venueId).isEmpty)
+    }
 }
