@@ -46,12 +46,7 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
         container.register(DealAdvancedTextFilter.self) { _ in DealAdvancedTextFilter() }
         container.register(OpenAIClient.self) { _ in OpenAIClient() }
         container.register(OpenRouterClient.self) { _ in OpenRouterClient() }
-        container.register(CursorClient.self) { _ in CursorClient() }
         container.register(GooglePlacesClient.self) { _ in GooglePlacesClient() }
-
-        container.register(CursorVenueDealExtractor.self) { resolver in
-            CursorVenueDealExtractor(client: resolver.cursorClient())
-        }
 
         container.register(OpenAIVenueDealExtractor.self) { resolver in
             OpenAIVenueDealExtractor(client: resolver.openAIClient())
@@ -72,7 +67,6 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
                 dealSourceRepository: resolver.dealSourceRepository(),
                 dealRepository: resolver.dealRepository(),
                 materialPreparer: resolver.venueDealSourceMaterialPreparer(),
-                cursorExtractor: resolver.cursorVenueDealExtractor(),
                 openAIExtractor: resolver.openAIVenueDealExtractor(),
                 openRouterExtractor: resolver.openRouterVenueDealExtractor(),
                 apiKeyStore: resolver.apiKeyStore()

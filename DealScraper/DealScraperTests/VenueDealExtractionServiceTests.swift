@@ -20,7 +20,7 @@ struct VenueDealExtractionServiceTests {
         )
 
         do {
-            _ = try await service.extractDeals(for: venue, provider: .cursor, model: "composer-2.5")
+            _ = try await service.extractDeals(for: venue, provider: .openAI, model: "gpt-4o")
             Issue.record("Expected missingVenueID error")
         } catch let error as VenueDealExtractionServiceError {
             #expect(error == .missingVenueID)
@@ -45,7 +45,7 @@ struct VenueDealExtractionServiceTests {
         var venue = try #require(try venueRepository.find(googleMapId: "places/test"))
 
         do {
-            _ = try await service.extractDeals(for: venue, provider: .cursor, model: "composer-2.5")
+            _ = try await service.extractDeals(for: venue, provider: .openAI, model: "gpt-4o")
             Issue.record("Expected noApprovedSources error")
         } catch let error as VenueDealExtractionServiceError {
             #expect(error == .noApprovedSources)

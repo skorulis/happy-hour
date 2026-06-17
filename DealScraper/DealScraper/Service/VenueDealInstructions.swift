@@ -3,7 +3,6 @@
 import Foundation
 
 enum VenueDealExtractionProvider: String, CaseIterable, Sendable {
-    case cursor = "Cursor"
     case openAI = "OpenAI"
     case openRouter = "OpenRouter"
 }

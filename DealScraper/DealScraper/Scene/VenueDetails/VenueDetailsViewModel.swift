@@ -44,8 +44,7 @@ final class VenueDetailsViewModel {
     private(set) var deleteDealsState: DeleteDealsState = .idle
     private(set) var extractionState: ExtractionState = .idle
 
-    var extractionProvider: VenueDealExtractionProvider = .cursor
-    var cursorModel: String = "composer-2.5"
+    var extractionProvider: VenueDealExtractionProvider = .openAI
     var openAIModel: String = "gpt-4o"
     var openRouterModel: String = "google/gemini-2.5-pro"
 
@@ -78,8 +77,6 @@ final class VenueDetailsViewModel {
 
     private var extractionModel: String {
         switch extractionProvider {
-        case .cursor:
-            cursorModel
         case .openAI:
             openAIModel
         case .openRouter:

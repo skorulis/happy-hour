@@ -23,8 +23,7 @@ final class ImageImportViewModel {
     private(set) var state: State = .idle
     var inputMode: InputMode = .image
     var sourceURLString: String = ""
-    var extractionProvider: VenueDealExtractionProvider = .cursor
-    var cursorModel: String = "composer-2.5"
+    var extractionProvider: VenueDealExtractionProvider = .openAI
     var openAIModel: String = "gpt-4o"
     var openRouterModel: String = "google/gemini-2.5-pro"
 
@@ -37,8 +36,6 @@ final class ImageImportViewModel {
 
     private var extractionModel: String {
         switch extractionProvider {
-        case .cursor:
-            cursorModel
         case .openAI:
             openAIModel
         case .openRouter:

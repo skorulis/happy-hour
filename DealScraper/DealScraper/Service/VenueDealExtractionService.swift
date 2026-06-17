@@ -33,7 +33,6 @@ final class VenueDealExtractionService {
     private let dealSourceRepository: DealSourceRepository
     private let dealRepository: DealRepository
     private let materialPreparer: VenueDealSourceMaterialPreparer
-    private let cursorExtractor: CursorVenueDealExtractor
     private let openAIExtractor: OpenAIVenueDealExtractor
     private let openRouterExtractor: OpenRouterVenueDealExtractor
     private let apiKeyStore: APIKeyStore
@@ -42,7 +41,6 @@ final class VenueDealExtractionService {
         dealSourceRepository: DealSourceRepository,
         dealRepository: DealRepository,
         materialPreparer: VenueDealSourceMaterialPreparer,
-        cursorExtractor: CursorVenueDealExtractor,
         openAIExtractor: OpenAIVenueDealExtractor,
         openRouterExtractor: OpenRouterVenueDealExtractor,
         apiKeyStore: APIKeyStore
@@ -50,7 +48,6 @@ final class VenueDealExtractionService {
         self.dealSourceRepository = dealSourceRepository
         self.dealRepository = dealRepository
         self.materialPreparer = materialPreparer
-        self.cursorExtractor = cursorExtractor
         self.openAIExtractor = openAIExtractor
         self.openRouterExtractor = openRouterExtractor
         self.apiKeyStore = apiKeyStore
@@ -158,21 +155,6 @@ final class VenueDealExtractionService {
         venueName: String
     ) async throws -> DealExtractionPayload {
         switch provider {
-        case .cursor:
-            let apiKey = apiKeyStore.cursorAPIKey
-            guard !apiKey.isEmpty else {
-                throw VenueDealExtractionServiceError.missingAPIKey
-            }
-            guard !model.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-                throw VenueDealExtractionServiceError.missingModel
-            }
-            return try await cursorExtractor.extractDeals(
-                materials: materials,
-                venueName: venueName,
-                instructions: VenueDealInstructions.multiSourceExtraction,
-                apiKey: apiKey,
-                model: model
-            )
         case .openAI:
             let apiKey = apiKeyStore.openAIAPIKey
             guard !apiKey.isEmpty else {
