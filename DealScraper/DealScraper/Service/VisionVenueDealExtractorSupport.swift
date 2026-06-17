@@ -43,25 +43,6 @@ enum VisionVenueDealExtractorSupport {
         \(instructions)
 
         \(preamble)
-
-        Set sourceIndices to [\(material.index)] for each returned deal.
         """
-    }
-
-    nonisolated static func normalizeSourceIndices(
-        _ deals: [DealExtractionPayload.RawDeal],
-        fallbackIndex: Int
-    ) -> [DealExtractionPayload.RawDeal] {
-        deals.map { deal in
-            let normalizedIndices = deal.sourceIndices.isEmpty ? [fallbackIndex] : deal.sourceIndices
-            return .init(
-                title: deal.title,
-                details: deal.details,
-                conditions: deal.conditions,
-                days: deal.days,
-                times: deal.times,
-                sourceIndices: normalizedIndices
-            )
-        }
     }
 }

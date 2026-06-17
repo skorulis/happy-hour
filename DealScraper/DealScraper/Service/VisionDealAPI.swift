@@ -40,12 +40,8 @@ enum VisionDealAPI {
                             "type": "array",
                             "items": ["type": "string"],
                         ],
-                        "sourceIndices": [
-                            "type": "array",
-                            "items": ["type": "integer"],
-                        ],
                     ],
-                    "required": ["title", "details", "conditions", "days", "times", "sourceIndices"],
+                    "required": ["title", "details", "conditions", "days", "times"],
                     "additionalProperties": false,
                 ],
             ],

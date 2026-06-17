@@ -74,18 +74,14 @@ final class VenueDealExtractionService {
 
         onProgress?("Analyzing with \(provider.rawValue)…")
 
-        let payload = try await extractPayload(
+        let sourced = try await extractPayload(
             provider: provider,
             model: model,
             materials: materials,
             venueName: venue.name
         )
 
-        let deals = VenueDealPersistenceMapper.map(
-            payload: payload,
-            venueId: venueId,
-            materials: materials
-        )
+        let deals = VenueDealPersistenceMapper.map(sourced: sourced, venueId: venueId)
 
         return try dealRepository.replaceAll(venueId: venueId, deals: deals)
     }
@@ -103,18 +99,14 @@ final class VenueDealExtractionService {
 
         onProgress?("Analyzing with \(provider.rawValue)…")
 
-        let payload = try await extractPayload(
+        let sourced = try await extractPayload(
             provider: provider,
             model: model,
             materials: materials,
             venueName: "Preview"
         )
 
-        return VenueDealPersistenceMapper.map(
-            payload: payload,
-            venueId: 0,
-            materials: materials
-        )
+        return VenueDealPersistenceMapper.map(sourced: sourced, venueId: 0)
     }
 
     func extractDealsFromRemoteURL(
@@ -134,18 +126,14 @@ final class VenueDealExtractionService {
 
         onProgress?("Analyzing with \(provider.rawValue)…")
 
-        let payload = try await extractPayload(
+        let sourced = try await extractPayload(
             provider: provider,
             model: model,
             materials: materials,
             venueName: "Preview"
         )
 
-        return VenueDealPersistenceMapper.map(
-            payload: payload,
-            venueId: 0,
-            materials: materials
-        )
+        return VenueDealPersistenceMapper.map(sourced: sourced, venueId: 0)
     }
 
     private func extractPayload(
@@ -153,7 +141,7 @@ final class VenueDealExtractionService {
         model: String,
         materials: [VenueDealSourceMaterial],
         venueName: String
-    ) async throws -> DealExtractionPayload {
+    ) async throws -> [SourcedDealExtraction] {
         switch provider {
         case .openAI:
             let apiKey = apiKeyStore.openAIAPIKey

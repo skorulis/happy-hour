@@ -5,28 +5,37 @@ import Foundation
 enum VenueDealPersistenceMapper {
 
     nonisolated static func map(
+        sourced: [SourcedDealExtraction],
+        venueId: Int64
+    ) -> [DealWithSchedules] {
+        sourced.flatMap { extraction in
+            map(
+                payload: DealExtractionPayload(deals: extraction.deals),
+                venueId: venueId,
+                material: extraction.material
+            )
+        }
+    }
+
+    nonisolated static func map(
         payload: DealExtractionPayload,
         venueId: Int64,
-        materials: [VenueDealSourceMaterial]
+        material: VenueDealSourceMaterial
     ) -> [DealWithSchedules] {
         payload.deals.compactMap { raw in
-            map(rawDeal: raw, venueId: venueId, materials: materials)
+            map(rawDeal: raw, venueId: venueId, material: material)
         }
     }
 
     nonisolated private static func map(
         rawDeal: DealExtractionPayload.RawDeal,
         venueId: Int64,
-        materials: [VenueDealSourceMaterial]
+        material: VenueDealSourceMaterial
     ) -> DealWithSchedules? {
         guard let legacyDeal = DealMapper.map(rawDeal) else { return nil }
 
-        let referenced = referencedMaterials(
-            sourceIndices: rawDeal.sourceIndices,
-            allMaterials: materials
-        )
-        let imageURL = referenced.first(where: { $0.type == .image })?.url.absoluteString
-        let sourceURL = referenced.first?.sourceURL.absoluteString
+        let imageURL = material.type == .image ? material.url.absoluteString : nil
+        let sourceURL = material.sourceURL.absoluteString
 
         let details = joinedNonEmpty(rawDeal.details)
         let conditions = joinedNonEmpty(rawDeal.conditions)
@@ -45,14 +54,6 @@ enum VenueDealPersistenceMapper {
 
         let schedules = schedules(for: legacyDeal)
         return DealWithSchedules(deal: deal, schedules: schedules)
-    }
-
-    nonisolated private static func referencedMaterials(
-        sourceIndices: [Int],
-        allMaterials: [VenueDealSourceMaterial]
-    ) -> [VenueDealSourceMaterial] {
-        let indices = Set(sourceIndices)
-        return allMaterials.filter { indices.contains($0.index) }
     }
 
     nonisolated private static func joinedNonEmpty(_ strings: [String]) -> String? {

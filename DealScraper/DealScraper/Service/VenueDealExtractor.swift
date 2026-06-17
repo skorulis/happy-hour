@@ -9,5 +9,5 @@ protocol VenueDealExtractor: Sendable {
         instructions: String,
         apiKey: String,
         model: String
-    ) async throws -> DealExtractionPayload
+    ) async throws -> [SourcedDealExtraction]
 }

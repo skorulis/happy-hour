@@ -5,6 +5,7 @@ import Knit
 import Testing
 @testable import DealScraper
 
+@MainActor
 struct OpenRouterModelStoreTests {
 
     @Test func returnsDefaultWhenNothingStored() {

@@ -16,8 +16,8 @@ final class OpenAIVenueDealExtractor: VenueDealExtractor, @unchecked Sendable {
         instructions: String,
         apiKey: String,
         model: String
-    ) async throws -> DealExtractionPayload {
-        var allDeals: [DealExtractionPayload.RawDeal] = []
+    ) async throws -> [SourcedDealExtraction] {
+        var extractions: [SourcedDealExtraction] = []
 
         for material in materials {
             switch material.type {
@@ -32,15 +32,12 @@ final class OpenAIVenueDealExtractor: VenueDealExtractor, @unchecked Sendable {
                         material: material
                     )
                 )
-                allDeals.append(contentsOf: VisionVenueDealExtractorSupport.normalizeSourceIndices(
-                    payload.deals,
-                    fallbackIndex: material.index
-                ))
+                extractions.append(SourcedDealExtraction(material: material, deals: payload.deals))
             case .webpage, .pdf:
                 throw VisionVenueDealExtractorError.unsupportedSourceType(material.type)
             }
         }
 
-        return DealExtractionPayload(deals: allDeals)
+        return extractions
     }
 }
