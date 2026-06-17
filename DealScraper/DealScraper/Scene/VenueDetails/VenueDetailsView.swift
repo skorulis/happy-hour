@@ -35,8 +35,8 @@ struct VenueDetailsView: View {
                     linksSection(venue)
                     actionsSection
                     metadataSection(venue)
-                case .deals:
-                    dealsSection
+                case .dealSources:
+                    dealSourcesSection
                 }
             }
             .padding(24)
@@ -234,7 +234,7 @@ struct VenueDetailsView: View {
     }
 
     @ViewBuilder
-    private var dealsSection: some View {
+    private var dealSourcesSection: some View {
         if viewModel.dealSources.isEmpty {
             ContentUnavailableView(
                 "No Deal Sources",
@@ -258,7 +258,7 @@ struct VenueDetailsView: View {
 
 private enum VenueDetailsTab: String, CaseIterable {
     case details = "Details"
-    case deals = "Deals"
+    case dealSources = "Deal Sources"
 }
 
 private struct DealSourceRow: View {
