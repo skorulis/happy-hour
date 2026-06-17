@@ -177,19 +177,19 @@ final class VenueDetailsViewModel {
         deleteSourcesState = .idle
 
         do {
-            let results = try await venueWebsiteCrawler.crawl(venue: venue) { [weak self] progress in
+            let results = try await venueWebsiteCrawler.crawl(venue: venue) { [unowned self] progress in
                 Task { @MainActor in
                     switch progress {
                     case let .loadingPage(url):
-                        self?.crawlState = .crawling(progress: "Loading \(url.absoluteString)…")
+                        self.crawlState = .crawling(progress: "Loading \(url.absoluteString)…")
                     case let .validatingImage(url):
-                        self?.crawlState = .crawling(progress: "Checking image \(url.lastPathComponent)…")
+                        self.crawlState = .crawling(progress: "Checking image \(url.lastPathComponent)…")
                     case .saving:
-                        self?.crawlState = .crawling(progress: "Saving deal sources…")
+                        self.crawlState = .crawling(progress: "Saving deal sources…")
                     case let .completed(results):
-                        self?.crawlState = .completed(results)
+                        self.crawlState = .completed(results)
                     case let .failed(message):
-                        self?.crawlState = .failed(message: message)
+                        self.crawlState = .failed(message: message)
                     }
                 }
             }

@@ -3,11 +3,6 @@
 import Foundation
 @preconcurrency import GRDB
 
-struct DealWithSchedules: Sendable {
-    let deal: Deal
-    let schedules: [DealSchedule]
-}
-
 final class DealRepository {
 
     private let store: SQLStore

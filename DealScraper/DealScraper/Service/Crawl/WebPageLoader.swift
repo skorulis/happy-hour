@@ -293,6 +293,7 @@ final class WebPageLoader: NSObject {
     }
 
     private func cancelPendingLoad() {
+        print("LOADER: Cancelling pending load")
         loadContinuation = nil
         webView.stopLoading()
     }
