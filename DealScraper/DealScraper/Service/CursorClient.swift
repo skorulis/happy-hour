@@ -26,14 +26,13 @@ final class CursorClient: HTTPService {
     }
 
     func extractDeals(
-        imageBase64: String,
-        mimeType: String,
+        imageURL: URL,
         apiKey: String,
         model: String,
         instructions: String
     ) async throws -> DealExtractionPayload {
-        try await extractVenueDeals(
-            images: [(base64: imageBase64, mimeType: mimeType)],
+        return try await extractVenueDeals(
+            imageURLs: [imageURL.absoluteString],
             promptText: Self.jsonPrompt(from: instructions),
             model: model,
             apiKey: apiKey
@@ -41,14 +40,14 @@ final class CursorClient: HTTPService {
     }
 
     func extractVenueDeals(
-        images: [(base64: String, mimeType: String)],
+        imageURLs: [String],
         promptText: String,
         model: String,
         apiKey: String
     ) async throws -> DealExtractionPayload {
         let (agentID, runID) = try await createAgent(
             promptText: promptText,
-            images: images,
+            imageURLs: imageURLs,
             model: model,
             apiKey: apiKey
         )
@@ -83,7 +82,7 @@ final class CursorClient: HTTPService {
 
     private func createAgent(
         promptText: String,
-        images: [(base64: String, mimeType: String)],
+        imageURLs: [String],
         model: String,
         apiKey: String
     ) async throws -> (agentID: String, runID: String) {
@@ -91,7 +90,7 @@ final class CursorClient: HTTPService {
             CursorAPI.createAgentRequest(
                 apiKey: apiKey,
                 promptText: promptText,
-                images: images,
+                imageURLs: imageURLs,
                 model: model
             )
         )

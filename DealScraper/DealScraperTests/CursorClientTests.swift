@@ -75,8 +75,7 @@ struct CursorClientTests {
         )
 
         let payload = try await client.extractDeals(
-            imageBase64: "abc123",
-            mimeType: "image/jpeg",
+            imageURL: URL(string: "https://example.com/poster.jpg")!,
             apiKey: "test-key",
             model: "composer-2.5",
             instructions: "test instructions"
@@ -97,8 +96,7 @@ struct CursorClientTests {
 
         let images = try #require(prompt["images"] as? [[String: Any]])
         #expect(images.count == 1)
-        #expect(images[0]["data"] as? String == "abc123")
-        #expect(images[0]["mimeType"] as? String == "image/jpeg")
+        #expect(images[0]["url"] as? String == "https://example.com/poster.jpg")
 
         let model = try #require(json["model"] as? [String: Any])
         #expect(model["id"] as? String == "composer-2.5")
@@ -163,9 +161,9 @@ struct CursorClientTests {
         )
 
         let payload = try await client.extractVenueDeals(
-            images: [
-                (base64: "image-one", mimeType: "image/png"),
-                (base64: "image-two", mimeType: "image/png"),
+            imageURLs: [
+                "https://example.com/image-one.png",
+                "https://example.com/image-two.png",
             ],
             promptText: CursorClient.jsonPrompt(from: "venue extraction"),
             model: "composer-2.5",
@@ -179,8 +177,8 @@ struct CursorClientTests {
         let images = try #require(prompt["images"] as? [[String: Any]])
 
         #expect(images.count == 2)
-        #expect(images[0]["data"] as? String == "image-one")
-        #expect(images[1]["data"] as? String == "image-two")
+        #expect(images[0]["url"] as? String == "https://example.com/image-one.png")
+        #expect(images[1]["url"] as? String == "https://example.com/image-two.png")
         #expect(payload.deals.first?.sourceIndices == [1, 2])
     }
 
@@ -201,8 +199,7 @@ struct CursorClientTests {
 
         do {
             _ = try await client.extractDeals(
-                imageBase64: "abc",
-                mimeType: "image/jpeg",
+                imageURL: URL(string: "https://example.com/image.jpg")!,
                 apiKey: "bad-key",
                 model: "composer-2.5",
                 instructions: "test"
@@ -270,8 +267,7 @@ struct CursorClientTests {
 
         do {
             _ = try await client.extractDeals(
-                imageBase64: "abc",
-                mimeType: "image/jpeg",
+                imageURL: URL(string: "https://example.com/image.jpg")!,
                 apiKey: "test-key",
                 model: "composer-2.5",
                 instructions: "test"

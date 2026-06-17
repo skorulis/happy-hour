@@ -22,13 +22,12 @@ final class CursorVenueDealExtractor: VenueDealExtractor, @unchecked Sendable {
             from: "\(instructions)\n\n\(preamble)"
         )
 
-        let images = materials.compactMap { material -> (base64: String, mimeType: String)? in
-            guard let pngData = material.pngData else { return nil }
-            return (base64: pngData.base64EncodedString(), mimeType: "image/png")
-        }
+        let imageURLs = materials
+            .filter { $0.type == .image }
+            .map { $0.url.absoluteString }
 
         return try await client.extractVenueDeals(
-            images: images,
+            imageURLs: imageURLs,
             promptText: promptText,
             model: model,
             apiKey: apiKey

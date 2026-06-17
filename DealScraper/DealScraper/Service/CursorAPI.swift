@@ -8,7 +8,7 @@ enum CursorAPI {
     nonisolated static func createAgentRequest(
         apiKey: String,
         promptText: String,
-        images: [(base64: String, mimeType: String)],
+        imageURLs: [String],
         model: String
     ) -> HTTPJSONRequest<CreateAgentResponse> {
         var request = HTTPJSONRequest<CreateAgentResponse>(
@@ -16,7 +16,7 @@ enum CursorAPI {
             body: CreateAgentBody(
                 prompt: .init(
                     text: promptText,
-                    images: images.map { .init(data: $0.base64, mimeType: $0.mimeType) }
+                    images: imageURLs.map { .init(url: $0) }
                 ),
                 model: .init(id: model)
             )
@@ -88,8 +88,7 @@ private struct CreateAgentBody: Encodable, Sendable {
     }
 
     struct Image: Encodable, Sendable {
-        let data: String
-        let mimeType: String
+        let url: String
     }
 
     struct Model: Encodable, Sendable {

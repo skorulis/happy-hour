@@ -24,9 +24,7 @@ final class CursorVisionDealProcessor: DealProcessing, @unchecked Sendable {
             throw Error.missingModel
         }
 
-        guard let imageData = try? Data(contentsOf: url),
-              !imageData.isEmpty,
-              let mimeType = VisionDealImageSupport.mimeType(for: url)
+        guard let mimeType = VisionDealImageSupport.mimeType(for: url)
         else {
             throw Error.invalidImage
         }
@@ -35,13 +33,10 @@ final class CursorVisionDealProcessor: DealProcessing, @unchecked Sendable {
             throw Error.invalidImage
         }
 
-        let imageBase64 = imageData.base64EncodedString()
-
         let payload: DealExtractionPayload
         do {
             payload = try await client.extractDeals(
-                imageBase64: imageBase64,
-                mimeType: mimeType,
+                imageURL: url,
                 apiKey: apiKey,
                 model: model,
                 instructions: VisionDealInstructions.posterExtraction
