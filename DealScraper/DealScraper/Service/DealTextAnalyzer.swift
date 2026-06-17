@@ -10,7 +10,7 @@ struct DealTextAnalyzer {
         case emptyInput
     }
 
-    func analyze(lines: [ExtractedTextLine]) async throws -> [Deal] {
+    func analyze(lines: [ExtractedTextLine]) async throws -> [LegacyDeal] {
         guard !lines.isEmpty else {
             throw Error.emptyInput
         }
@@ -36,7 +36,7 @@ struct DealTextAnalyzer {
         return DealMapper.map(rawDeals, supplementFrom: texts)
     }
 
-    func analyze(texts: [String]) async throws -> [Deal] {
+    func analyze(texts: [String]) async throws -> [LegacyDeal] {
         let lines = texts.map {
             ExtractedTextLine(text: $0, lineHeight: 0, relativeSize: .medium)
         }

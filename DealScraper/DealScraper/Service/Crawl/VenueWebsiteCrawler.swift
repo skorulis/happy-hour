@@ -108,6 +108,7 @@ final class VenueWebsiteCrawler {
             if !loadedPage.dealContentBlocks.isEmpty {
                 let source = DiscoveredSource(
                     url: loadedPage.normalizedURL,
+                    sourceURL: loadedPage.normalizedURL,
                     type: .webpage,
                     textPieces: .contentBlocks(loadedPage.dealContentBlocks)
                 )
@@ -121,6 +122,7 @@ final class VenueWebsiteCrawler {
                 if let validation = await imageValidator.validateImage(url: imageURL, hash: hash) {
                     discoveredByURL[imageURL] = DiscoveredSource(
                         url: imageURL,
+                        sourceURL: loadedPage.normalizedURL,
                         type: .image,
                         imageDimensions: validation.dimensions,
                         textPieces: .textLines(validation.lines.map(\.text))
@@ -131,7 +133,11 @@ final class VenueWebsiteCrawler {
             let filtered = pageLinkFilter.filter(links: loadedPage.links)
 
             for pdfURL in filtered.pdfURLs {
-                discoveredByURL[pdfURL] = DiscoveredSource(url: pdfURL, type: .pdf)
+                discoveredByURL[pdfURL] = DiscoveredSource(
+                    url: pdfURL,
+                    sourceURL: loadedPage.normalizedURL,
+                    type: .pdf
+                )
             }
 
             for link in filtered.crawlURLs {
@@ -168,6 +174,7 @@ final class VenueWebsiteCrawler {
             DealSource(
                 venueId: venueId,
                 url: discovered.url.absoluteString,
+                sourceURL: discovered.sourceURL.absoluteString,
                 type: discovered.type,
                 status: .new,
                 date: now,

@@ -3,5 +3,5 @@
 import Foundation
 
 protocol DealProcessing: Sendable {
-    func extractDeals(from url: URL) async throws -> [Deal]
+    func extractDeals(from url: URL) async throws -> [LegacyDeal]
 }

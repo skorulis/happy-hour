@@ -4,17 +4,20 @@ import Foundation
 
 struct DiscoveredSource: Equatable, Sendable {
     let url: URL
+    let sourceURL: URL
     let type: DealSourceType
     let imageDimensions: CGSize?
     let textPieces: DealSourceTextPieces?
 
     init(
         url: URL,
+        sourceURL: URL,
         type: DealSourceType,
         imageDimensions: CGSize? = nil,
         textPieces: DealSourceTextPieces? = nil
     ) {
         self.url = url
+        self.sourceURL = sourceURL
         self.type = type
         self.imageDimensions = imageDimensions
         self.textPieces = textPieces

@@ -7,14 +7,14 @@ enum DealMapper {
     nonisolated static func map(
         _ deals: [DealExtractionPayload.RawDeal],
         supplementFrom texts: [String] = []
-    ) -> [Deal] {
+    ) -> [LegacyDeal] {
         let mapped = deals
             .compactMap { map($0) }
             .map { supplementTimes(from: texts, into: $0) }
         return merge(mapped)
     }
 
-    nonisolated static func map(_ deal: DealExtractionPayload.RawDeal) -> Deal? {
+    nonisolated static func map(_ deal: DealExtractionPayload.RawDeal) -> LegacyDeal? {
         let title = deal.title.trimmingCharacters(in: .whitespacesAndNewlines)
         let details = deal.details
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
@@ -24,7 +24,7 @@ enum DealMapper {
         let days = deal.days.flatMap { DealDay.parseAll(in: $0) }
         let times = parseTimes(deal.times)
 
-        return Deal(
+        return LegacyDeal(
             title: title,
             details: details,
             days: days,
@@ -62,7 +62,7 @@ enum DealMapper {
         }
     }
 
-    private nonisolated static func supplementTimes(from texts: [String], into deal: Deal) -> Deal {
+    private nonisolated static func supplementTimes(from texts: [String], into deal: LegacyDeal) -> LegacyDeal {
         guard deal.times.isEmpty else { return deal }
 
         var times: [DealHours] = []
@@ -72,7 +72,7 @@ enum DealMapper {
 
         let resolvedTimes = times.isEmpty ? [DealHours.allDay] : Array(Set(times))
 
-        return Deal(
+        return LegacyDeal(
             title: deal.title,
             details: deal.details,
             days: deal.days,
@@ -97,13 +97,13 @@ enum DealMapper {
         }
     }
 
-    private static func merge(_ deals: [Deal]) -> [Deal] {
-        var merged: [Deal] = []
+    private static func merge(_ deals: [LegacyDeal]) -> [LegacyDeal] {
+        var merged: [LegacyDeal] = []
 
         for deal in deals {
             if let index = merged.firstIndex(where: { shouldMerge($0, deal) }) {
                 let existing = merged[index]
-                merged[index] = Deal(
+                merged[index] = LegacyDeal(
                     title: existing.title.isEmpty ? deal.title : existing.title,
                     details: Array(Set(existing.details + deal.details)),
                     days: Array(Set(existing.days + deal.days)),
@@ -117,7 +117,7 @@ enum DealMapper {
         return merged
     }
 
-    private static func shouldMerge(_ lhs: Deal, _ rhs: Deal) -> Bool {
+    private static func shouldMerge(_ lhs: LegacyDeal, _ rhs: LegacyDeal) -> Bool {
         let sharedText = Set(dealText(lhs).map { $0.lowercased() })
             .intersection(dealText(rhs).map { $0.lowercased() })
         if !sharedText.isEmpty {
@@ -134,7 +134,7 @@ enum DealMapper {
         return lhs.times.isEmpty || rhs.times.isEmpty || lhs.times == rhs.times
     }
 
-    private static func dealText(_ deal: Deal) -> [String] {
+    private static func dealText(_ deal: LegacyDeal) -> [String] {
         var text: [String] = []
         if !deal.title.isEmpty {
             text.append(deal.title)

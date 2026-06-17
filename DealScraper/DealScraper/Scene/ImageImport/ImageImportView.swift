@@ -114,7 +114,7 @@ struct ImageImportView: View {
         }
     }
 
-    private func completedContent(deals: [Deal], imageURL: URL) -> some View {
+    private func completedContent(deals: [LegacyDeal], imageURL: URL) -> some View {
         VStack(alignment: .leading, spacing: 24) {
             if let preview = imagePreview(for: imageURL) {
                 preview
@@ -147,7 +147,7 @@ struct ImageImportView: View {
 }
 
 private struct DealCard: View {
-    let deal: Deal
+    let deal: LegacyDeal
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {

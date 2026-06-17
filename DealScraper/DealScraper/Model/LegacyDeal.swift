@@ -2,7 +2,7 @@
 
 import Foundation
 
-nonisolated struct Deal {
+nonisolated struct LegacyDeal {
     let title: String
     
     let details: [String]

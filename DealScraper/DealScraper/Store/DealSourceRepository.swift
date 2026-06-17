@@ -49,6 +49,7 @@ final class DealSourceRepository {
                     var updated = existing
                     updated.date = source.date
                     updated.textPieces = source.textPieces
+                    updated.sourceURL = source.sourceURL
                     try updated.update(db)
                 } else {
                     var newSource = source

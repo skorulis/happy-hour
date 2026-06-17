@@ -19,7 +19,7 @@ final class ImageImportViewModel {
     enum State {
         case idle
         case processing
-        case completed(deals: [Deal], imageURL: URL)
+        case completed(deals: [LegacyDeal], imageURL: URL)
         case failed(message: String)
     }
 
@@ -81,7 +81,7 @@ final class ImageImportViewModel {
         }
 
         do {
-            let deals: [Deal]
+            let deals: [LegacyDeal]
             switch processingMode {
             case .onDevice:
                 deals = try await onDeviceProcessor.extractDeals(from: url)

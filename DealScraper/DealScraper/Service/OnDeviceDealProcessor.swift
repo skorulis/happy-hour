@@ -18,7 +18,7 @@ struct OnDeviceDealProcessor: DealProcessing, Sendable {
         self.textAnalyzer = textAnalyzer
     }
 
-    nonisolated func extractDeals(from url: URL) async throws -> [Deal] {
+    nonisolated func extractDeals(from url: URL) async throws -> [LegacyDeal] {
         let lines = try await imageExtractor.extractTexts(from: url)
         return try await textAnalyzer.analyze(lines: lines)
     }

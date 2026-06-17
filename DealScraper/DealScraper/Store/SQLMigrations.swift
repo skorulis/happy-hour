@@ -78,5 +78,12 @@ final class SQLMigrations {
             try db.drop(table: "deal_source")
             try db.rename(table: "deal_source_new", to: "deal_source")
         }
+
+        migrator.registerMigration("v7_deal_source_source_url") { db in
+            try db.alter(table: "deal_source") { t in
+                t.add(column: "source_url", .text)
+            }
+            try db.execute(sql: "UPDATE deal_source SET source_url = url WHERE source_url IS NULL")
+        }
     }
 }

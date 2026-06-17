@@ -12,16 +12,19 @@ struct ImageDeduperTests {
     private func imageSource(
         url: String,
         lines: [String],
-        dimensions: CGSize? = nil
+        dimensions: CGSize? = nil,
+        sourcePageURL: String = "https://pub.example.com/specials"
     ) -> (URL, DiscoveredSource) {
-        let sourceURL = URL(string: url)!
+        let imageURL = URL(string: url)!
+        let pageURL = URL(string: sourcePageURL)!
         let source = DiscoveredSource(
-            url: sourceURL,
+            url: imageURL,
+            sourceURL: pageURL,
             type: .image,
             imageDimensions: dimensions,
             textPieces: .textLines(lines)
         )
-        return (sourceURL, source)
+        return (imageURL, source)
     }
 
     private func dedupe(_ sources: [(URL, DiscoveredSource)]) -> [URL: DiscoveredSource] {
@@ -166,6 +169,7 @@ struct ImageDeduperTests {
         let webpageURL = URL(string: "https://pub.example.com/specials")!
         let webpage = DiscoveredSource(
             url: webpageURL,
+            sourceURL: webpageURL,
             type: .webpage,
             textPieces: .textLines(["Weekly Specials"])
         )
@@ -183,8 +187,9 @@ struct ImageDeduperTests {
     @Test func keepsImagesWithEmptyTextSeparately() {
         let firstURL = URL(string: "https://pub.example.com/a.png")!
         let secondURL = URL(string: "https://pub.example.com/b.png")!
-        let first = DiscoveredSource(url: firstURL, type: .image)
-        let second = DiscoveredSource(url: secondURL, type: .image)
+        let pageURL = URL(string: "https://pub.example.com/specials")!
+        let first = DiscoveredSource(url: firstURL, sourceURL: pageURL, type: .image)
+        let second = DiscoveredSource(url: secondURL, sourceURL: pageURL, type: .image)
 
         let result = deduper.dedupe(validatedSources: [
             firstURL: first,

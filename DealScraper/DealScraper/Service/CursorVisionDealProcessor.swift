@@ -15,7 +15,7 @@ final class CursorVisionDealProcessor: DealProcessing, @unchecked Sendable {
         self.client = client
     }
 
-    nonisolated func extractDeals(from url: URL) async throws -> [Deal] {
+    nonisolated func extractDeals(from url: URL) async throws -> [LegacyDeal] {
         guard !apiKey.isEmpty else {
             throw Error.missingAPIKey
         }
