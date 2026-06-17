@@ -5,7 +5,7 @@ import Foundation
 import ImageIO
 import Vision
 
-struct DealImageExtractor {
+nonisolated struct DealImageExtractor {
 
     enum Error: Swift.Error {
         case invalidImage
@@ -142,7 +142,7 @@ struct DealImageExtractor {
     private static let tightVerticalGapFactor: CGFloat = 0.35
     private static let horizontalOverlapThreshold: CGFloat = 0.4
 
-    private static func joinTightlyStackedLines(_ lines: [GroupedLine]) -> [GroupedLine] {
+    private nonisolated static func joinTightlyStackedLines(_ lines: [GroupedLine]) -> [GroupedLine] {
         guard !lines.isEmpty else { return [] }
 
         let sorted = lines.sorted { $0.boundingBox.midY > $1.boundingBox.midY }
@@ -165,7 +165,7 @@ struct DealImageExtractor {
         return result
     }
 
-    private static func shouldJoinVertically(upper: GroupedLine, lower: GroupedLine) -> Bool {
+    private nonisolated static func shouldJoinVertically(upper: GroupedLine, lower: GroupedLine) -> Bool {
         guard upper.boundingBox.midY > lower.boundingBox.midY else { return false }
         guard heightsAreSimilar(upper.lineHeight, lower.lineHeight) else { return false }
 
@@ -188,7 +188,7 @@ struct DealImageExtractor {
         max(0, min(a.maxX, b.maxX) - max(a.minX, b.minX))
     }
 
-    private static func groupIntoLines(_ fragments: [TextFragment]) -> [[TextFragment]] {
+    private nonisolated static func groupIntoLines(_ fragments: [TextFragment]) -> [[TextFragment]] {
         guard !fragments.isEmpty else { return [] }
 
         let sorted = fragments.sorted { lhs, rhs in
@@ -218,7 +218,7 @@ struct DealImageExtractor {
         line.sorted { $0.boundingBox.origin.x < $1.boundingBox.origin.x }
     }
 
-    private static func belongsToLine(_ box: CGRect, line: [TextFragment]) -> Bool {
+    private nonisolated static func belongsToLine(_ box: CGRect, line: [TextFragment]) -> Bool {
         let lineMinY = line.map(\.boundingBox.minY).min() ?? box.minY
         let lineMaxY = line.map(\.boundingBox.maxY).max() ?? box.maxY
         let lineBox = CGRect(x: 0, y: lineMinY, width: 1, height: lineMaxY - lineMinY)
@@ -231,7 +231,7 @@ struct DealImageExtractor {
         return overlap / minHeight >= 0.5
     }
 
-    private static func verticalOverlap(_ a: CGRect, _ b: CGRect) -> CGFloat {
+    private nonisolated static func verticalOverlap(_ a: CGRect, _ b: CGRect) -> CGFloat {
         max(0, min(a.maxY, b.maxY) - max(a.minY, b.minY))
     }
 }

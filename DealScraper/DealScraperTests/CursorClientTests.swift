@@ -1,9 +1,11 @@
 //Created by Alex Skorulis on 17/6/2026.
 
+import ASKCore
 import Foundation
 import Testing
 @testable import DealScraper
 
+@MainActor
 struct CursorClientTests {
 
     @Test func createsAgentAndPollsRunUntilFinished() async throws {
@@ -12,7 +14,7 @@ struct CursorClientTests {
         let runID = "run-00000000-0000-0000-0000-000000000001"
 
         let client = CursorClient(
-            fetch: { request in
+            urlSession: FakeURLSession { request in
                 captured.requests.append(request)
 
                 if request.httpMethod == "POST", request.url?.path.hasSuffix("/v1/agents") == true,
@@ -112,7 +114,7 @@ struct CursorClientTests {
         let runID = "run-00000000-0000-0000-0000-000000000003"
 
         let client = CursorClient(
-            fetch: { request in
+            urlSession: FakeURLSession { request in
                 captured.requests.append(request)
 
                 if request.httpMethod == "POST", request.url?.path.hasSuffix("/v1/agents") == true,
@@ -183,17 +185,19 @@ struct CursorClientTests {
     }
 
     @Test func throwsAPIErrorOnNonSuccessStatus() async throws {
-        let client = CursorClient { request in
-            let responseData = """
-            {"message":"Invalid API key"}
-            """.data(using: .utf8)!
-            return (responseData, HTTPURLResponse(
-                url: request.url!,
-                statusCode: 401,
-                httpVersion: nil,
-                headerFields: nil
-            )!)
-        }
+        let client = CursorClient(
+            urlSession: FakeURLSession { request in
+                let responseData = """
+                {"message":"Invalid API key"}
+                """.data(using: .utf8)!
+                return (responseData, HTTPURLResponse(
+                    url: request.url!,
+                    statusCode: 401,
+                    httpVersion: nil,
+                    headerFields: nil
+                )!)
+            }
+        )
 
         do {
             _ = try await client.extractDeals(
@@ -219,7 +223,7 @@ struct CursorClientTests {
         let runID = "run-00000000-0000-0000-0000-000000000002"
 
         let client = CursorClient(
-            fetch: { request in
+            urlSession: FakeURLSession { request in
                 if request.httpMethod == "POST", request.url?.path.hasSuffix("/v1/agents") == true,
                    !request.url!.path.contains("/archive")
                 {

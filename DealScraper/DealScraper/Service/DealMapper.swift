@@ -2,7 +2,7 @@
 
 import Foundation
 
-enum DealMapper {
+nonisolated enum DealMapper {
 
     nonisolated static func map(
         _ deals: [DealExtractionPayload.RawDeal],

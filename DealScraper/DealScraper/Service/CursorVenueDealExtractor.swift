@@ -2,7 +2,7 @@
 
 import Foundation
 
-final class CursorVenueDealExtractor: VenueDealExtractor, Sendable {
+final class CursorVenueDealExtractor: VenueDealExtractor, @unchecked Sendable {
 
     private let client: CursorClient
 

@@ -1,33 +1,31 @@
 //Created by Alex Skorulis on 17/6/2026.
 
+import ASKCore
 import Foundation
 
-final class CursorClient: Sendable {
+@MainActor
+final class CursorClient: HTTPService {
 
     typealias Error = VisionDealAPI.Error
 
-    private let fetch: @Sendable (URLRequest) async throws -> (Data, URLResponse)
+    private let urlSession: URLSessionProtocol
     private let sleep: @Sendable (Duration) async throws -> Void
-    private let baseURL = URL(string: "https://api.cursor.com")!
 
     private nonisolated static let pollTimeout: Duration = .seconds(120)
     private nonisolated static let initialPollDelay: Duration = .seconds(2)
     private nonisolated static let maxPollDelay: Duration = .seconds(8)
 
-    nonisolated init(session: URLSession = .shared) {
-        self.fetch = { try await session.data(for: $0) }
-        self.sleep = { try await Task.sleep(for: $0) }
-    }
-
-    nonisolated init(
-        fetch: @escaping @Sendable (URLRequest) async throws -> (Data, URLResponse),
+    init(
+        urlSession: URLSessionProtocol = URLSession(configuration: .default),
+        logger: HTTPLogger? = .init(level: .errors),
         sleep: @escaping @Sendable (Duration) async throws -> Void = { try await Task.sleep(for: $0) }
     ) {
-        self.fetch = fetch
+        self.urlSession = urlSession
         self.sleep = sleep
+        super.init(baseURL: "https://api.cursor.com" , logger: logger, urlSession: urlSession)
     }
 
-    nonisolated func extractDeals(
+    func extractDeals(
         imageBase64: String,
         mimeType: String,
         apiKey: String,
@@ -42,7 +40,7 @@ final class CursorClient: Sendable {
         )
     }
 
-    nonisolated func extractVenueDeals(
+    func extractVenueDeals(
         images: [(base64: String, mimeType: String)],
         promptText: String,
         model: String,
@@ -83,52 +81,24 @@ final class CursorClient: Sendable {
         """
     }
 
-    nonisolated private func createAgent(
+    private func createAgent(
         promptText: String,
         images: [(base64: String, mimeType: String)],
         model: String,
         apiKey: String
     ) async throws -> (agentID: String, runID: String) {
-        let imagePayload = images.map { image in
-            [
-                "data": image.base64,
-                "mimeType": image.mimeType,
-            ] as [String: Any]
-        }
-
-        let requestBody: [String: Any] = [
-            "prompt": [
-                "text": promptText,
-                "images": imagePayload,
-            ],
-            "model": [
-                "id": model,
-            ],
-        ]
-
-        let url = baseURL.appendingPathComponent("v1/agents")
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
-
-        let (data, response) = try await fetch(request)
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw Error.invalidResponse
-        }
-
-        guard (200 ... 299).contains(httpResponse.statusCode) else {
-            let message = Self.errorMessage(from: data) ?? String(data: data, encoding: .utf8) ?? "Unknown error"
-            throw Error.apiError(statusCode: httpResponse.statusCode, message: message)
-        }
-
-        let createResponse = try JSONDecoder().decode(CreateAgentResponse.self, from: data)
-        return (createResponse.agent.id, createResponse.run.id)
+        let response = try await execute(request:
+            CursorAPI.createAgentRequest(
+                apiKey: apiKey,
+                promptText: promptText,
+                images: images,
+                model: model
+            )
+        )
+        return (response.agent.id, response.run.id)
     }
 
-    nonisolated private func pollRun(
+    private func pollRun(
         agentID: String,
         runID: String,
         apiKey: String
@@ -140,24 +110,13 @@ final class CursorClient: Sendable {
             try await sleep(pollDelay)
             pollDelay = min(pollDelay * 2, Self.maxPollDelay)
 
-            let url = baseURL
-                .appendingPathComponent("v1/agents/\(agentID)/runs/\(runID)")
-            var request = URLRequest(url: url)
-            request.httpMethod = "GET"
-            request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-
-            let (data, response) = try await fetch(request)
-
-            guard let httpResponse = response as? HTTPURLResponse else {
-                throw Error.invalidResponse
-            }
-
-            guard (200 ... 299).contains(httpResponse.statusCode) else {
-                let message = Self.errorMessage(from: data) ?? String(data: data, encoding: .utf8) ?? "Unknown error"
-                throw Error.apiError(statusCode: httpResponse.statusCode, message: message)
-            }
-
-            let run = try JSONDecoder().decode(RunResponse.self, from: data)
+            let run = try await execute(request:
+                CursorAPI.getRunRequest(
+                    agentID: agentID,
+                    runID: runID,
+                    apiKey: apiKey
+                )
+            )
 
             switch run.status {
             case "FINISHED":
@@ -178,22 +137,34 @@ final class CursorClient: Sendable {
         throw Error.apiError(statusCode: 0, message: "Agent run timed out")
     }
 
-    nonisolated private func archiveAgent(id: String, apiKey: String) async throws {
-        let url = baseURL.appendingPathComponent("v1/agents/\(id)/archive")
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-
-        let (_, response) = try await fetch(request)
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              (200 ... 299).contains(httpResponse.statusCode)
-        else {
-            return
-        }
+    private func archiveAgent(id: String, apiKey: String) async throws {
+        _ = try await execute(request: CursorAPI.archiveAgentRequest(agentID: id, apiKey: apiKey))
     }
 
-    nonisolated private static func errorMessage(from data: Data) -> String? {
+    private static func makeURLRequest<R: HTTPRequest>(from request: R) throws -> URLRequest {
+        let url: URL
+        if request.endpoint.starts(with: "https://") || request.endpoint.starts(with: "http://") {
+            guard let parsed = URL(string: request.endpoint) else {
+                throw URLError(.badURL)
+            }
+            url = parsed
+        } else {
+            throw URLError(.badURL)
+        }
+
+        var components = URLComponents(url: url, resolvingAgainstBaseURL: true)!
+        if !request.params.isEmpty {
+            components.queryItems = request.params.map { URLQueryItem(name: $0.key, value: $0.value) }
+        }
+
+        var urlRequest = URLRequest(url: components.url!)
+        urlRequest.httpMethod = request.method
+        urlRequest.httpBody = request.body
+        urlRequest.allHTTPHeaderFields = request.headers
+        return urlRequest
+    }
+
+    private static func errorMessage(from data: Data) -> String? {
         struct APIError: Decodable {
             let message: String?
             let error: String?
@@ -202,22 +173,4 @@ final class CursorClient: Sendable {
         let decoded = try? JSONDecoder().decode(APIError.self, from: data)
         return decoded?.message ?? decoded?.error
     }
-}
-
-private nonisolated struct CreateAgentResponse: Decodable, Sendable {
-    let agent: AgentInfo
-    let run: RunInfo
-
-    struct AgentInfo: Decodable, Sendable {
-        let id: String
-    }
-
-    struct RunInfo: Decodable, Sendable {
-        let id: String
-    }
-}
-
-private nonisolated struct RunResponse: Decodable, Sendable {
-    let status: String
-    let result: String?
 }
