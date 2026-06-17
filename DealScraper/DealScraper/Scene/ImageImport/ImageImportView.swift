@@ -38,6 +38,11 @@ struct ImageImportView: View {
                 TextField("Model", text: $viewModel.openRouterModel)
                     .textFieldStyle(.roundedBorder)
             }
+
+            if viewModel.processingMode == .cursor {
+                TextField("Model", text: $viewModel.cursorModel)
+                    .textFieldStyle(.roundedBorder)
+            }
         }
     }
 
@@ -104,6 +109,8 @@ struct ImageImportView: View {
             return "Analyzing image with OpenAI…"
         case .openRouter:
             return "Analyzing image with OpenRouter…"
+        case .cursor:
+            return "Analyzing image with Cursor…"
         }
     }
 

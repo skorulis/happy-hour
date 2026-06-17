@@ -9,6 +9,7 @@ final class APIKeyStore {
         static let googlePlaces = "googlePlacesAPIKey"
         static let openAI = "openAIAPIKey"
         static let openRouter = "openRouterAPIKey"
+        static let cursor = "cursorAPIKey"
     }
 
     private let secureStore: SecureKeyValueStore
@@ -30,5 +31,10 @@ final class APIKeyStore {
     var openRouterAPIKey: String {
         get { secureStore.string(forKey: Key.openRouter) ?? "" }
         set { secureStore.set(newValue.isEmpty ? nil : newValue, forKey: Key.openRouter) }
+    }
+
+    var cursorAPIKey: String {
+        get { secureStore.string(forKey: Key.cursor) ?? "" }
+        set { secureStore.set(newValue.isEmpty ? nil : newValue, forKey: Key.cursor) }
     }
 }

@@ -46,6 +46,7 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
         container.register(DealTextFilter.self) { _ in DealTextFilter() }
         container.register(OpenAIClient.self) { _ in OpenAIClient() }
         container.register(OpenRouterClient.self) { _ in OpenRouterClient() }
+        container.register(CursorClient.self) { _ in CursorClient() }
         container.register(GooglePlacesClient.self) { _ in GooglePlacesClient() }
         container.register(OnDeviceDealProcessor.self) { OnDeviceDealProcessor.make(resolver: $0) }
 
@@ -55,6 +56,10 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
 
         container.register(OpenRouterVisionDealProcessor.self) { resolver in
             OpenRouterVisionDealProcessor(client: resolver.openRouterClient())
+        }
+
+        container.register(CursorVisionDealProcessor.self) { resolver in
+            CursorVisionDealProcessor(client: resolver.cursorClient())
         }
 
         container.register(WebPageLoader.self) { resolver in

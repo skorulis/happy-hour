@@ -67,6 +67,14 @@ enum URLNormalizer {
             return false
         }
 
-        return host == baseHost && normalized.scheme == normalizedBase.scheme
+        return canonicalHost(host) == canonicalHost(baseHost)
+            && normalized.scheme == normalizedBase.scheme
+    }
+
+    private static func canonicalHost(_ host: String) -> String {
+        if host.hasPrefix("www.") {
+            return String(host.dropFirst(4))
+        }
+        return host
     }
 }

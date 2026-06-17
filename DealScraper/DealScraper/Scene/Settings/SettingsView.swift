@@ -22,6 +22,10 @@ struct SettingsView: View {
                     title: "OpenRouter API Key",
                     text: $viewModel.openRouterAPIKey
                 )
+                apiKeyField(
+                    title: "Cursor API Key",
+                    text: $viewModel.cursorAPIKey
+                )
             } header: {
                 Text("API Keys")
             } footer: {
@@ -34,6 +38,7 @@ struct SettingsView: View {
         .onChange(of: viewModel.googlePlacesAPIKey) { viewModel.save() }
         .onChange(of: viewModel.openAIAPIKey) { viewModel.save() }
         .onChange(of: viewModel.openRouterAPIKey) { viewModel.save() }
+        .onChange(of: viewModel.cursorAPIKey) { viewModel.save() }
     }
 
     private func apiKeyField(title: String, text: Binding<String>) -> some View {

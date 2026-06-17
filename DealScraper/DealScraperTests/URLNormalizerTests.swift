@@ -53,4 +53,12 @@ struct URLNormalizerTests {
         let httpSameHost = URL(string: "http://pub.example.com/events")!
         #expect(URLNormalizer.isSameOrigin(httpSameHost, as: base))
     }
+
+    @Test func isSameOriginTreatsWWWAsEquivalent() throws {
+        let base = URL(string: "https://www.greatsouthernbar.com.au")!
+        let withoutWWW = URL(string: "https://greatsouthernbar.com.au/whats-on")!
+
+        #expect(URLNormalizer.isSameOrigin(withoutWWW, as: base))
+        #expect(URLNormalizer.isSameOrigin(base, as: withoutWWW))
+    }
 }

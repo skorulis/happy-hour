@@ -22,11 +22,14 @@ struct PageLinkFilter {
         "menu",
         "drinks",
         "food",
-        "happyhour"
+        "happyhour",
+        "eat-drink",
+        "weekly"
     ]
     
     static let excludedKeywords = [
         "functions",
+        "covid"
     ]
 
     func filter(links: [ContentBlockLink]) -> FilteredPageLinks {

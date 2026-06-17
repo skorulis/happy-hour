@@ -9,6 +9,7 @@ enum DealProcessingMode: String, CaseIterable {
     case onDevice = "On-Device"
     case visionAPI = "OpenAI"
     case openRouter = "OpenRouter"
+    case cursor = "Cursor"
 }
 
 @MainActor
@@ -25,23 +26,27 @@ final class ImageImportViewModel {
     private(set) var state: State = .idle
     var processingMode: DealProcessingMode = .onDevice
     var openRouterModel: String = "openai/gpt-4o"
+    var cursorModel: String = "composer-2.5"
 
     private let apiKeyStore: APIKeyStore
     private let onDeviceProcessor: OnDeviceDealProcessor
     private let visionProcessor: OpenAIVisionDealProcessor
     private let openRouterProcessor: OpenRouterVisionDealProcessor
+    private let cursorProcessor: CursorVisionDealProcessor
 
     @Resolvable<Resolver>
     init(
         apiKeyStore: APIKeyStore,
         onDeviceProcessor: OnDeviceDealProcessor,
         visionProcessor: OpenAIVisionDealProcessor,
-        openRouterProcessor: OpenRouterVisionDealProcessor
+        openRouterProcessor: OpenRouterVisionDealProcessor,
+        cursorProcessor: CursorVisionDealProcessor
     ) {
         self.apiKeyStore = apiKeyStore
         self.onDeviceProcessor = onDeviceProcessor
         self.visionProcessor = visionProcessor
         self.openRouterProcessor = openRouterProcessor
+        self.cursorProcessor = cursorProcessor
     }
 
     static func isImageURL(_ url: URL) -> Bool {
@@ -95,6 +100,14 @@ final class ImageImportViewModel {
                 openRouterProcessor.apiKey = apiKey
                 openRouterProcessor.model = openRouterModel
                 deals = try await openRouterProcessor.extractDeals(from: url)
+            case .cursor:
+                let apiKey = apiKeyStore.cursorAPIKey
+                guard !apiKey.isEmpty else {
+                    throw RemoteVisionDealProcessorError.missingAPIKey
+                }
+                cursorProcessor.apiKey = apiKey
+                cursorProcessor.model = cursorModel
+                deals = try await cursorProcessor.extractDeals(from: url)
             }
             state = .completed(deals: deals, imageURL: url)
         } catch {
@@ -118,17 +131,37 @@ final class ImageImportViewModel {
                 return "Configure an OpenRouter API key in Settings."
             case .visionAPI:
                 return "Configure an OpenAI API key in Settings."
+            case .cursor:
+                return "Configure a Cursor API key in Settings."
             case .onDevice:
                 return "API key is required for remote processing."
             }
         case RemoteVisionDealProcessorError.missingModel:
-            return "Enter an OpenRouter model name."
+            switch processingMode {
+            case .openRouter:
+                return "Enter an OpenRouter model name."
+            case .cursor:
+                return "Enter a Cursor model name."
+            default:
+                return "Enter a model name."
+            }
         case RemoteVisionDealProcessorError.invalidImage:
+            if processingMode == .cursor {
+                return "Cursor supports PNG, JPEG, GIF, and WebP images only."
+            }
             return "Could not read the image file."
         case RemoteVisionDealProcessorError.decodingFailure:
             return "Could not parse the vision model response."
         case let RemoteVisionDealProcessorError.apiError(statusCode, message):
-            let provider = processingMode == .openRouter ? "OpenRouter" : "OpenAI"
+            let provider: String
+            switch processingMode {
+            case .openRouter:
+                provider = "OpenRouter"
+            case .cursor:
+                provider = "Cursor"
+            default:
+                provider = "OpenAI"
+            }
             return "\(provider) API error (\(statusCode)): \(message)"
         case let RemoteVisionDealProcessorError.networkFailure(underlying):
             return "Network error: \(underlying.localizedDescription)"

@@ -10,10 +10,26 @@ struct DealTextFilter {
         #"\bpromotions?\b"#,
         #"\bdeals?\b"#,
     ]
+    
+    private static let excludedKeywords = [
+        "tonight",
+        "mothers day",
+        "mother's day",
+        "this week",
+        "state of origin",
+        "new years eve",
+        "new years",
+        "christmas in july",
+        "christmas",
+    ]
 
     func isValidDeal(_ text: String) -> Bool {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return false }
+
+        if Self.containsExcludedKeyword(in: trimmed) {
+            return false
+        }
 
         if Self.containsDate(in: trimmed) {
             return false
@@ -47,6 +63,11 @@ struct DealTextFilter {
         #"(?i)\b\d{4}[-/.]\d{1,2}[-/.]\d{1,2}\b"#,
         #"(?i)\b\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4}\b"#,
     ]
+
+    private static func containsExcludedKeyword(in text: String) -> Bool {
+        let lowercased = text.lowercased()
+        return excludedKeywords.contains { lowercased.contains($0) }
+    }
 
     private static func containsHeadlineKeyword(in text: String) -> Bool {
         let range = NSRange(text.startIndex..., in: text)

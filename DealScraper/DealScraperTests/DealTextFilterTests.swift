@@ -54,6 +54,12 @@ struct DealTextFilterTests {
         #expect(!DealTextFilter.containsDate(in: "HAPPY HOUR"))
     }
     
+    @Test func rejectsTextWithExcludedKeywords() {
+        #expect(!filter.isValidDeal("Happy Hour tonight"))
+        #expect(!filter.isValidDeal("Specials for Mother's Day"))
+        #expect(!filter.isValidDeal("Deals this week only"))
+    }
+
     @Test func rejectsExamples() {
         // TODO: Think about how to fix this
 //        #expect(!filter.isValidDeal(
