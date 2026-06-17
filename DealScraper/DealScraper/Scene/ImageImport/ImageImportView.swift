@@ -36,6 +36,12 @@ struct ImageImportView: View {
             if viewModel.extractionProvider == .cursor {
                 TextField("Cursor model", text: $viewModel.cursorModel)
                     .textFieldStyle(.roundedBorder)
+            } else if viewModel.extractionProvider == .openAI {
+                TextField("OpenAI model", text: $viewModel.openAIModel)
+                    .textFieldStyle(.roundedBorder)
+            } else if viewModel.extractionProvider == .openRouter {
+                TextField("OpenRouter model", text: $viewModel.openRouterModel)
+                    .textFieldStyle(.roundedBorder)
             }
         }
     }

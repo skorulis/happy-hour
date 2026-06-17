@@ -53,6 +53,14 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
             CursorVenueDealExtractor(client: resolver.cursorClient())
         }
 
+        container.register(OpenAIVenueDealExtractor.self) { resolver in
+            OpenAIVenueDealExtractor(client: resolver.openAIClient())
+        }
+
+        container.register(OpenRouterVenueDealExtractor.self) { resolver in
+            OpenRouterVenueDealExtractor(client: resolver.openRouterClient())
+        }
+
         container.register(VenueDealSourceMaterialPreparer.self) { resolver in
             VenueDealSourceMaterialPreparer(
                 imageFetcher: resolver.crawlImageFetcher()
@@ -65,6 +73,8 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
                 dealRepository: resolver.dealRepository(),
                 materialPreparer: resolver.venueDealSourceMaterialPreparer(),
                 cursorExtractor: resolver.cursorVenueDealExtractor(),
+                openAIExtractor: resolver.openAIVenueDealExtractor(),
+                openRouterExtractor: resolver.openRouterVenueDealExtractor(),
                 apiKeyStore: resolver.apiKeyStore()
             )
         }

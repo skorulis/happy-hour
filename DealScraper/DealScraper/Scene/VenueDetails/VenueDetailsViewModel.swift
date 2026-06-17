@@ -46,6 +46,8 @@ final class VenueDetailsViewModel {
 
     var extractionProvider: VenueDealExtractionProvider = .cursor
     var cursorModel: String = "composer-2.5"
+    var openAIModel: String = "gpt-4o"
+    var openRouterModel: String = "google/gemini-2.5-pro"
 
     private let venueRepository: VenueRepository
     private let dealSourceRepository: DealSourceRepository
@@ -72,6 +74,17 @@ final class VenueDetailsViewModel {
         self.venueWebsiteCrawler = venueWebsiteCrawler
         self.venueDealExtractionService = venueDealExtractionService
         load()
+    }
+
+    private var extractionModel: String {
+        switch extractionProvider {
+        case .cursor:
+            cursorModel
+        case .openAI:
+            openAIModel
+        case .openRouter:
+            openRouterModel
+        }
     }
 
     var canCrawl: Bool {
@@ -208,7 +221,7 @@ final class VenueDetailsViewModel {
             let count = try await venueDealExtractionService.extractDeals(
                 for: venue,
                 provider: extractionProvider,
-                model: cursorModel
+                model: extractionModel
             ) { [weak self] progress in
                 Task { @MainActor in
                     self?.extractionState = .extracting(progress: progress)

@@ -10,6 +10,11 @@ enum VisionDealAPI {
         case decodingFailure
     }
 
+    enum ImageReference: Sendable {
+        case base64(data: String, mimeType: String)
+        case url(String)
+    }
+
     nonisolated(unsafe) static let dealExtractionSchema: [String: Any] = [
         "type": "object",
         "properties": [
@@ -51,11 +56,18 @@ enum VisionDealAPI {
 
     nonisolated static func extractDealsRequestBody(
         model: String,
-        imageBase64: String,
-        mimeType: String,
+        imageReference: ImageReference,
         instructions: String
     ) -> [String: Any] {
-        [
+        let imageURLString: String
+        switch imageReference {
+        case let .base64(data, mimeType):
+            imageURLString = "data:\(mimeType);base64,\(data)"
+        case let .url(url):
+            imageURLString = url
+        }
+
+        return [
             "model": model,
             "messages": [
                 [
@@ -72,7 +84,7 @@ enum VisionDealAPI {
                         [
                             "type": "image_url",
                             "image_url": [
-                                "url": "data:\(mimeType);base64,\(imageBase64)",
+                                "url": imageURLString,
                             ],
                         ],
                     ],
@@ -87,6 +99,19 @@ enum VisionDealAPI {
                 ],
             ],
         ]
+    }
+
+    nonisolated static func extractDealsRequestBody(
+        model: String,
+        imageBase64: String,
+        mimeType: String,
+        instructions: String
+    ) -> [String: Any] {
+        extractDealsRequestBody(
+            model: model,
+            imageReference: .base64(data: imageBase64, mimeType: mimeType),
+            instructions: instructions
+        )
     }
 
     nonisolated static func parseDealExtractionPayload(from data: Data) throws -> DealExtractionPayload {
@@ -107,8 +132,7 @@ enum VisionDealAPI {
     nonisolated static func extractDeals(
         endpoint: URL,
         model: String,
-        imageBase64: String,
-        mimeType: String,
+        imageReference: ImageReference,
         apiKey: String,
         instructions: String,
         additionalHeaders: [String: String] = [:],
@@ -116,8 +140,7 @@ enum VisionDealAPI {
     ) async throws -> DealExtractionPayload {
         let requestBody = extractDealsRequestBody(
             model: model,
-            imageBase64: imageBase64,
-            mimeType: mimeType,
+            imageReference: imageReference,
             instructions: instructions
         )
 
@@ -143,6 +166,27 @@ enum VisionDealAPI {
         }
 
         return try parseDealExtractionPayload(from: data)
+    }
+
+    nonisolated static func extractDeals(
+        endpoint: URL,
+        model: String,
+        imageBase64: String,
+        mimeType: String,
+        apiKey: String,
+        instructions: String,
+        additionalHeaders: [String: String] = [:],
+        fetch: @escaping @Sendable (URLRequest) async throws -> (Data, URLResponse)
+    ) async throws -> DealExtractionPayload {
+        try await extractDeals(
+            endpoint: endpoint,
+            model: model,
+            imageReference: .base64(data: imageBase64, mimeType: mimeType),
+            apiKey: apiKey,
+            instructions: instructions,
+            additionalHeaders: additionalHeaders,
+            fetch: fetch
+        )
     }
 
     nonisolated static func errorMessage(from data: Data) -> String? {

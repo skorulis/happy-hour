@@ -7,15 +7,13 @@ enum OpenRouterAPI {
 
     nonisolated static func extractDealsRequest(
         model: String,
-        imageBase64: String,
-        mimeType: String,
+        imageReference: VisionDealAPI.ImageReference,
         apiKey: String,
         instructions: String
     ) throws -> ExtractDealsRequest {
         let requestBody = VisionDealAPI.extractDealsRequestBody(
             model: model,
-            imageBase64: imageBase64,
-            mimeType: mimeType,
+            imageReference: imageReference,
             instructions: instructions
         )
 
@@ -27,6 +25,21 @@ enum OpenRouterAPI {
                 "HTTP-Referer": "https://github.com/skorulis/happy-hour",
                 "X-Title": "DealScraper",
             ]
+        )
+    }
+
+    nonisolated static func extractDealsRequest(
+        model: String,
+        imageBase64: String,
+        mimeType: String,
+        apiKey: String,
+        instructions: String
+    ) throws -> ExtractDealsRequest {
+        try extractDealsRequest(
+            model: model,
+            imageReference: .base64(data: imageBase64, mimeType: mimeType),
+            apiKey: apiKey,
+            instructions: instructions
         )
     }
 }

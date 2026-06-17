@@ -34,6 +34,8 @@ final class VenueDealExtractionService {
     private let dealRepository: DealRepository
     private let materialPreparer: VenueDealSourceMaterialPreparer
     private let cursorExtractor: CursorVenueDealExtractor
+    private let openAIExtractor: OpenAIVenueDealExtractor
+    private let openRouterExtractor: OpenRouterVenueDealExtractor
     private let apiKeyStore: APIKeyStore
 
     init(
@@ -41,12 +43,16 @@ final class VenueDealExtractionService {
         dealRepository: DealRepository,
         materialPreparer: VenueDealSourceMaterialPreparer,
         cursorExtractor: CursorVenueDealExtractor,
+        openAIExtractor: OpenAIVenueDealExtractor,
+        openRouterExtractor: OpenRouterVenueDealExtractor,
         apiKeyStore: APIKeyStore
     ) {
         self.dealSourceRepository = dealSourceRepository
         self.dealRepository = dealRepository
         self.materialPreparer = materialPreparer
         self.cursorExtractor = cursorExtractor
+        self.openAIExtractor = openAIExtractor
+        self.openRouterExtractor = openRouterExtractor
         self.apiKeyStore = apiKeyStore
     }
 
@@ -167,8 +173,36 @@ final class VenueDealExtractionService {
                 apiKey: apiKey,
                 model: model
             )
-        case .openAI, .openRouter:
-            throw VenueDealExtractionServiceError.unsupportedProvider(provider)
+        case .openAI:
+            let apiKey = apiKeyStore.openAIAPIKey
+            guard !apiKey.isEmpty else {
+                throw VenueDealExtractionServiceError.missingAPIKey
+            }
+            let resolvedModel = model.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                ? "gpt-4o"
+                : model
+            return try await openAIExtractor.extractDeals(
+                materials: materials,
+                venueName: venueName,
+                instructions: VenueDealInstructions.multiSourceExtraction,
+                apiKey: apiKey,
+                model: resolvedModel
+            )
+        case .openRouter:
+            let apiKey = apiKeyStore.openRouterAPIKey
+            guard !apiKey.isEmpty else {
+                throw VenueDealExtractionServiceError.missingAPIKey
+            }
+            guard !model.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                throw VenueDealExtractionServiceError.missingModel
+            }
+            return try await openRouterExtractor.extractDeals(
+                materials: materials,
+                venueName: venueName,
+                instructions: VenueDealInstructions.multiSourceExtraction,
+                apiKey: apiKey,
+                model: model
+            )
         }
     }
 }

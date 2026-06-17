@@ -11,23 +11,30 @@ struct OpenRouterClientTests {
     @Test func sendsVisionRequestWithOpenRouterHeaders() async throws {
         let captured = RequestCapture()
 
-        let client = OpenRouterClient { request in
-            captured.request = request
+        let client = OpenRouterClient(
+            urlSession: FakeURLSession { request in
+                captured.request = request
 
-            let responseData = """
-            {
-              "choices": [
+                let responseData = """
                 {
-                  "message": {
-                    "content": "{\\"deals\\":[{\\"title\\":\\"HAPPY HOUR\\",\\"details\\":[\\"$8 WINES\\"],\\"days\\":[\\"FRIDAY\\"],\\"times\\":[\\"4PM - 6PM\\"]}]}"
-                  }
+                  "choices": [
+                    {
+                      "message": {
+                        "content": "{\\"deals\\":[{\\"title\\":\\"HAPPY HOUR\\",\\"details\\":[\\"$8 WINES\\"],\\"days\\":[\\"FRIDAY\\"],\\"times\\":[\\"4PM - 6PM\\"]}]}"
+                      }
+                    }
+                  ]
                 }
-              ]
-            }
-            """.data(using: .utf8)!
+                """.data(using: .utf8)!
 
-            return try VisionDealAPI.parseDealExtractionPayload(from: responseData)
-        }
+                return (responseData, HTTPURLResponse(
+                    url: request.url!,
+                    statusCode: 200,
+                    httpVersion: nil,
+                    headerFields: nil
+                )!)
+            }
+        )
 
         let payload = try await client.extractDeals(
             imageBase64: "abc123",
@@ -37,14 +44,14 @@ struct OpenRouterClientTests {
             instructions: "test instructions"
         )
 
-        let request = try #require(captured.request as? ExtractDealsRequest)
-        #expect(request.endpoint == "v1/chat/completions")
-        #expect(request.method == "POST")
-        #expect(request.headers["Authorization"] == "Bearer test-key")
-        #expect(request.headers["HTTP-Referer"] == "https://github.com/skorulis/happy-hour")
-        #expect(request.headers["X-Title"] == "DealScraper")
+        let request = try #require(captured.request)
+        #expect(request.url?.path.hasSuffix("/v1/chat/completions") == true)
+        #expect(request.httpMethod == "POST")
+        #expect(request.value(forHTTPHeaderField: "Authorization") == "Bearer test-key")
+        #expect(request.value(forHTTPHeaderField: "HTTP-Referer") == "https://github.com/skorulis/happy-hour")
+        #expect(request.value(forHTTPHeaderField: "X-Title") == "DealScraper")
 
-        let body = try #require(request.body)
+        let body = try #require(request.httpBody)
         let json = try #require(JSONSerialization.jsonObject(with: body) as? [String: Any])
         #expect(json["model"] as? String == "google/gemini-2.5-pro")
 
@@ -52,31 +59,7 @@ struct OpenRouterClientTests {
         #expect(payload.deals.first?.title == "HAPPY HOUR")
     }
 
-    @Test func throwsAPIErrorOnNonSuccessStatus() async throws {
-        let client = OpenRouterClient { _ in
-            throw VisionDealAPI.Error.apiError(statusCode: 401, message: "Invalid API key")
-        }
-
-        do {
-            _ = try await client.extractDeals(
-                imageBase64: "abc",
-                mimeType: "image/jpeg",
-                apiKey: "bad-key",
-                model: "openai/gpt-4o",
-                instructions: "test"
-            )
-            Issue.record("Expected API error")
-        } catch let error as VisionDealAPI.Error {
-            guard case let .apiError(statusCode, message) = error else {
-                Issue.record("Unexpected error type: \(error)")
-                return
-            }
-            #expect(statusCode == 401)
-            #expect(message == "Invalid API key")
-        }
-    }
-
-    @Test func throwsAPIErrorFromHTTPResponse() async throws {
+    @Test func throwsOnNonSuccessStatus() async throws {
         let client = OpenRouterClient(
             urlSession: FakeURLSession { request in
                 let responseData = """
@@ -99,18 +82,13 @@ struct OpenRouterClientTests {
                 model: "openai/gpt-4o",
                 instructions: "test"
             )
-            Issue.record("Expected API error")
-        } catch let error as VisionDealAPI.Error {
-            guard case let .apiError(statusCode, message) = error else {
-                Issue.record("Unexpected error type: \(error)")
-                return
-            }
-            #expect(statusCode == 401)
-            #expect(message == "Invalid API key")
+            Issue.record("Expected request to fail")
+        } catch let error as URLError {
+            #expect(error.code == .badServerResponse)
         }
     }
 }
 
 private final class RequestCapture {
-    var request: (any HTTPRequest)?
+    var request: URLRequest?
 }

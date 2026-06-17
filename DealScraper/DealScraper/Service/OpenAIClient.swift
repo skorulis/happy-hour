@@ -18,19 +18,33 @@ final class OpenAIClient: Sendable {
     }
 
     nonisolated func extractDeals(
-        imageBase64: String,
-        mimeType: String,
+        imageReference: VisionDealAPI.ImageReference,
         apiKey: String,
+        model: String,
         instructions: String
     ) async throws -> DealExtractionPayload {
         try await VisionDealAPI.extractDeals(
             endpoint: endpoint,
-            model: "gpt-4o",
-            imageBase64: imageBase64,
-            mimeType: mimeType,
+            model: model,
+            imageReference: imageReference,
             apiKey: apiKey,
             instructions: instructions,
             fetch: fetch
+        )
+    }
+
+    nonisolated func extractDeals(
+        imageBase64: String,
+        mimeType: String,
+        apiKey: String,
+        model: String = "gpt-4o",
+        instructions: String
+    ) async throws -> DealExtractionPayload {
+        try await extractDeals(
+            imageReference: .base64(data: imageBase64, mimeType: mimeType),
+            apiKey: apiKey,
+            model: model,
+            instructions: instructions
         )
     }
 }

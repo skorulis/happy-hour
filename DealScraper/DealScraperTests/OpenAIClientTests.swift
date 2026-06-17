@@ -36,6 +36,7 @@ struct OpenAIClientTests {
             imageBase64: "abc123",
             mimeType: "image/jpeg",
             apiKey: "test-key",
+            model: "gpt-4o",
             instructions: "test instructions"
         )
 
@@ -90,6 +91,7 @@ struct OpenAIClientTests {
                 imageBase64: "abc",
                 mimeType: "image/jpeg",
                 apiKey: "bad-key",
+                model: "gpt-4o",
                 instructions: "test"
             )
             Issue.record("Expected API error")

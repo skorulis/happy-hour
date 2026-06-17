@@ -25,12 +25,25 @@ final class ImageImportViewModel {
     var sourceURLString: String = ""
     var extractionProvider: VenueDealExtractionProvider = .cursor
     var cursorModel: String = "composer-2.5"
+    var openAIModel: String = "gpt-4o"
+    var openRouterModel: String = "google/gemini-2.5-pro"
 
     private let venueDealExtractionService: VenueDealExtractionService
 
     @Resolvable<Resolver>
     init(venueDealExtractionService: VenueDealExtractionService) {
         self.venueDealExtractionService = venueDealExtractionService
+    }
+
+    private var extractionModel: String {
+        switch extractionProvider {
+        case .cursor:
+            cursorModel
+        case .openAI:
+            openAIModel
+        case .openRouter:
+            openRouterModel
+        }
     }
 
     static func isLocalImageURL(_ url: URL) -> Bool {
@@ -81,7 +94,7 @@ final class ImageImportViewModel {
             let deals = try await venueDealExtractionService.extractDealsFromDroppedImage(
                 at: url,
                 provider: extractionProvider,
-                model: cursorModel
+                model: extractionModel
             ) { [weak self] progress in
                 Task { @MainActor in
                     self?.state = .processing(progress: progress)
@@ -104,7 +117,7 @@ final class ImageImportViewModel {
             let deals = try await venueDealExtractionService.extractDealsFromRemoteURL(
                 at: url,
                 provider: extractionProvider,
-                model: cursorModel
+                model: extractionModel
             ) { [unowned self] progress in
                 Task { @MainActor in
                     self.state = .processing(progress: progress)
