@@ -24,23 +24,18 @@ struct ImageImportView: View {
 
     private var processingControls: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Picker("Processing", selection: $viewModel.processingMode) {
-                ForEach(DealProcessingMode.allCases, id: \.self) { mode in
-                    Text(mode.rawValue).tag(mode)
+            Picker("Provider", selection: $viewModel.extractionProvider) {
+                ForEach(VenueDealExtractionProvider.allCases, id: \.self) { provider in
+                    Text(provider.rawValue).tag(provider)
                 }
             }
             .pickerStyle(.segmented)
-            .onChange(of: viewModel.processingMode) {
+            .onChange(of: viewModel.extractionProvider) {
                 viewModel.reset()
             }
 
-            if viewModel.processingMode == .openRouter {
-                TextField("Model", text: $viewModel.openRouterModel)
-                    .textFieldStyle(.roundedBorder)
-            }
-
-            if viewModel.processingMode == .cursor {
-                TextField("Model", text: $viewModel.cursorModel)
+            if viewModel.extractionProvider == .cursor {
+                TextField("Cursor model", text: $viewModel.cursorModel)
                     .textFieldStyle(.roundedBorder)
             }
         }
@@ -85,10 +80,10 @@ struct ImageImportView: View {
         case .idle:
             EmptyView()
 
-        case .processing:
+        case let .processing(progress):
             HStack(spacing: 12) {
                 ProgressView()
-                Text(processingStatusText)
+                Text(progress)
                     .foregroundStyle(.secondary)
             }
 
@@ -101,20 +96,7 @@ struct ImageImportView: View {
         }
     }
 
-    private var processingStatusText: String {
-        switch viewModel.processingMode {
-        case .onDevice:
-            return "Extracting text and analyzing deals…"
-        case .visionAPI:
-            return "Analyzing image with OpenAI…"
-        case .openRouter:
-            return "Analyzing image with OpenRouter…"
-        case .cursor:
-            return "Analyzing image with Cursor…"
-        }
-    }
-
-    private func completedContent(deals: [LegacyDeal], imageURL: URL) -> some View {
+    private func completedContent(deals: [DealWithSchedules], imageURL: URL) -> some View {
         VStack(alignment: .leading, spacing: 24) {
             if let preview = imagePreview(for: imageURL) {
                 preview
@@ -132,8 +114,8 @@ struct ImageImportView: View {
                     Text("\(deals.count) deal\(deals.count == 1 ? "" : "s") found")
                         .font(.headline)
 
-                    ForEach(Array(deals.enumerated()), id: \.offset) { _, deal in
-                        DealCard(deal: deal)
+                    ForEach(Array(deals.enumerated()), id: \.offset) { _, item in
+                        DealRow(item: item)
                     }
                 }
             }
@@ -143,77 +125,6 @@ struct ImageImportView: View {
     private func imagePreview(for url: URL) -> Image? {
         guard let nsImage = NSImage(contentsOf: url) else { return nil }
         return Image(nsImage: nsImage)
-    }
-}
-
-private struct DealCard: View {
-    let deal: LegacyDeal
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            if !deal.title.isEmpty {
-                Text(deal.title)
-                    .font(.title3.weight(.semibold))
-            }
-
-            if !deal.details.isEmpty {
-                VStack(alignment: .leading, spacing: 4) {
-                    ForEach(deal.details, id: \.self) { detail in
-                        Text(detail)
-                    }
-                }
-                .font(.body)
-            }
-
-            HStack(spacing: 16) {
-                if !deal.days.isEmpty {
-                    Label(deal.days.map(\.displayName).joined(separator: ", "), systemImage: "calendar")
-                }
-
-                if !deal.times.isEmpty {
-                    Label(deal.times.map(\.displayName).joined(separator: ", "), systemImage: "clock")
-                }
-            }
-            .font(.subheadline)
-            .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background {
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color(nsColor: .controlBackgroundColor))
-        }
-    }
-}
-
-private extension DealDay {
-    var displayName: String {
-        rawValue.capitalized
-    }
-}
-
-private extension DealHours {
-    var displayName: String {
-        switch self {
-        case .allDay:
-            return "All day"
-        case let .from(minutes):
-            return "From \(Self.formatMinutes(minutes))"
-        case let .between(start, end):
-            return "\(Self.formatMinutes(start)) – \(Self.formatMinutes(end))"
-        }
-    }
-
-    static func formatMinutes(_ minutes: Int) -> String {
-        let hour24 = minutes / 60
-        let minute = minutes % 60
-        let period = hour24 >= 12 ? "PM" : "AM"
-        let hour12 = hour24 % 12 == 0 ? 12 : hour24 % 12
-
-        if minute == 0 {
-            return "\(hour12) \(period)"
-        }
-        return String(format: "%d:%02d %@", hour12, minute, period)
     }
 }
 

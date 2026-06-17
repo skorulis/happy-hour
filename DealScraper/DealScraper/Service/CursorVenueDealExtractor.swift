@@ -72,7 +72,11 @@ final class CursorVenueDealExtractor: VenueDealExtractor, @unchecked Sendable {
     }
 
     private nonisolated static func imageURLs(for material: VenueDealSourceMaterial) -> [String] {
-        material.type == .image ? [material.url.absoluteString] : []
+        guard material.type == .image else { return [] }
+        if material.url.isFileURL, let pngData = material.pngData {
+            return ["data:image/png;base64,\(pngData.base64EncodedString())"]
+        }
+        return [material.url.absoluteString]
     }
 
     private nonisolated static func perSourcePrompt(

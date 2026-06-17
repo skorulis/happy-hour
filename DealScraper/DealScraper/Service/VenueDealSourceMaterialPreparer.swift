@@ -81,6 +81,18 @@ final class VenueDealSourceMaterialPreparer {
         return materials
     }
 
+    func prepareLocalImage(at url: URL) throws -> VenueDealSourceMaterial {
+        let pngData = try ImagePNGConverter.pngData(from: url)
+        return VenueDealSourceMaterial(
+            index: 1,
+            dealSourceId: 0,
+            url: url,
+            sourceURL: url,
+            type: .image,
+            pngData: pngData
+        )
+    }
+
     private func prepareImage(url: URL) async throws -> Data {
         let hash = URLNormalizer.hash(url)
         let localURL = try await imageFetcher.localFileURL(for: url, hash: hash)

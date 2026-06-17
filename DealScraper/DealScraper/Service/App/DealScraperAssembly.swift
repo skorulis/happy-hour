@@ -42,26 +42,12 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
     @MainActor
     private func registerServices(container: Container<TargetResolver>) {
         container.register(DealImageExtractor.self) { _ in DealImageExtractor() }
-        container.register(DealTextAnalyzer.self) { _ in DealTextAnalyzer() }
         container.register(DealTextFilter.self) { _ in DealTextFilter() }
         container.register(DealAdvancedTextFilter.self) { _ in DealAdvancedTextFilter() }
         container.register(OpenAIClient.self) { _ in OpenAIClient() }
         container.register(OpenRouterClient.self) { _ in OpenRouterClient() }
         container.register(CursorClient.self) { _ in CursorClient() }
         container.register(GooglePlacesClient.self) { _ in GooglePlacesClient() }
-        container.register(OnDeviceDealProcessor.self) { OnDeviceDealProcessor.make(resolver: $0) }
-
-        container.register(OpenAIVisionDealProcessor.self) { resolver in
-            OpenAIVisionDealProcessor(client: resolver.openAIClient())
-        }
-
-        container.register(OpenRouterVisionDealProcessor.self) { resolver in
-            OpenRouterVisionDealProcessor(client: resolver.openRouterClient())
-        }
-
-        container.register(CursorVisionDealProcessor.self) { resolver in
-            CursorVisionDealProcessor(client: resolver.cursorClient())
-        }
 
         container.register(CursorVenueDealExtractor.self) { resolver in
             CursorVenueDealExtractor(client: resolver.cursorClient())

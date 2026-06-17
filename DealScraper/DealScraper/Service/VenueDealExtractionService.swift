@@ -87,6 +87,33 @@ final class VenueDealExtractionService {
         return try dealRepository.replaceAll(venueId: venueId, deals: deals)
     }
 
+    func extractDealsFromDroppedImage(
+        at url: URL,
+        provider: VenueDealExtractionProvider,
+        model: String,
+        onProgress: ProgressHandler? = nil
+    ) async throws -> [DealWithSchedules] {
+        onProgress?("Preparing image…")
+
+        let material = try materialPreparer.prepareLocalImage(at: url)
+        let materials = [material]
+
+        onProgress?("Analyzing with \(provider.rawValue)…")
+
+        let payload = try await extractPayload(
+            provider: provider,
+            model: model,
+            materials: materials,
+            venueName: "Preview"
+        )
+
+        return VenueDealPersistenceMapper.map(
+            payload: payload,
+            venueId: 0,
+            materials: materials
+        )
+    }
+
     private func extractPayload(
         provider: VenueDealExtractionProvider,
         model: String,
