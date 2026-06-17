@@ -36,6 +36,7 @@ final class VenueWebsiteCrawler {
     private let venueLinkExtractor: VenueLinkExtractor
     private let imageValidator: CrawlImageValidator
     private let imageDeduper: ImageDeduper
+    private let dealAdvancedTextFilter: DealAdvancedTextFilter
     private let dealSourceRepository: DealSourceRepository
     private let venueRepository: VenueRepository
     private let venueLinksRepository: VenueLinksRepository
@@ -47,6 +48,7 @@ final class VenueWebsiteCrawler {
         venueLinkExtractor: VenueLinkExtractor,
         imageValidator: CrawlImageValidator,
         imageDeduper: ImageDeduper,
+        dealAdvancedTextFilter: DealAdvancedTextFilter,
         dealSourceRepository: DealSourceRepository,
         venueRepository: VenueRepository,
         venueLinksRepository: VenueLinksRepository
@@ -56,6 +58,7 @@ final class VenueWebsiteCrawler {
         self.venueLinkExtractor = venueLinkExtractor
         self.imageValidator = imageValidator
         self.imageDeduper = imageDeduper
+        self.dealAdvancedTextFilter = dealAdvancedTextFilter
         self.dealSourceRepository = dealSourceRepository
         self.venueRepository = venueRepository
         self.venueLinksRepository = venueLinksRepository
@@ -166,6 +169,7 @@ final class VenueWebsiteCrawler {
         }
         
         discoveredByURL = imageDeduper.dedupe(validatedSources: discoveredByURL)
+        discoveredByURL = await dealAdvancedTextFilter.filter(sources: discoveredByURL)
         
         onProgress(.saving)
         

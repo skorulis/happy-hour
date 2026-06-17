@@ -44,6 +44,7 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
         container.register(DealImageExtractor.self) { _ in DealImageExtractor() }
         container.register(DealTextAnalyzer.self) { _ in DealTextAnalyzer() }
         container.register(DealTextFilter.self) { _ in DealTextFilter() }
+        container.register(DealAdvancedTextFilter.self) { _ in DealAdvancedTextFilter() }
         container.register(OpenAIClient.self) { _ in OpenAIClient() }
         container.register(OpenRouterClient.self) { _ in OpenRouterClient() }
         container.register(CursorClient.self) { _ in CursorClient() }

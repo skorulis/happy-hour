@@ -2,7 +2,7 @@
 
 import Foundation
 
-struct DiscoveredSource: Equatable, Sendable {
+nonisolated struct DiscoveredSource: Equatable, Sendable {
     let url: URL
     let sourceURL: URL
     let type: DealSourceType
