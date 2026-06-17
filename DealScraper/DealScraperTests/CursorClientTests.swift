@@ -106,6 +106,82 @@ struct CursorClientTests {
         #expect(payload.deals.first?.details == ["$8 WINES"])
     }
 
+    @Test func extractVenueDealsSendsMultipleImages() async throws {
+        let captured = RequestCapture()
+        let agentID = "bc-00000000-0000-0000-0000-000000000003"
+        let runID = "run-00000000-0000-0000-0000-000000000003"
+
+        let client = CursorClient(
+            fetch: { request in
+                captured.requests.append(request)
+
+                if request.httpMethod == "POST", request.url?.path.hasSuffix("/v1/agents") == true,
+                   !request.url!.path.contains("/archive")
+                {
+                    let responseData = """
+                    {
+                      "agent": { "id": "\(agentID)" },
+                      "run": { "id": "\(runID)" }
+                    }
+                    """.data(using: .utf8)!
+                    return (responseData, HTTPURLResponse(
+                        url: request.url!,
+                        statusCode: 200,
+                        httpVersion: nil,
+                        headerFields: nil
+                    )!)
+                }
+
+                if request.httpMethod == "GET",
+                   request.url?.path == "/v1/agents/\(agentID)/runs/\(runID)"
+                {
+                    let responseData = """
+                    {
+                      "id": "\(runID)",
+                      "status": "FINISHED",
+                      "result": "{\\"deals\\":[{\\"title\\":\\"HAPPY HOUR\\",\\"details\\":[\\"$8 WINES\\"],\\"conditions\\":[],\\"days\\":[\\"FRIDAY\\"],\\"times\\":[\\"4PM - 6PM\\"],\\"sourceIndices\\":[1,2]}]}"
+                    }
+                    """.data(using: .utf8)!
+                    return (responseData, HTTPURLResponse(
+                        url: request.url!,
+                        statusCode: 200,
+                        httpVersion: nil,
+                        headerFields: nil
+                    )!)
+                }
+
+                return (Data(), HTTPURLResponse(
+                    url: request.url!,
+                    statusCode: 200,
+                    httpVersion: nil,
+                    headerFields: nil
+                )!)
+            },
+            sleep: { _ in }
+        )
+
+        let payload = try await client.extractVenueDeals(
+            images: [
+                (base64: "image-one", mimeType: "image/png"),
+                (base64: "image-two", mimeType: "image/png"),
+            ],
+            promptText: CursorClient.jsonPrompt(from: "venue extraction"),
+            model: "composer-2.5",
+            apiKey: "test-key"
+        )
+
+        let createRequest = try #require(captured.requests.first)
+        let body = try #require(createRequest.httpBody)
+        let json = try #require(JSONSerialization.jsonObject(with: body) as? [String: Any])
+        let prompt = try #require(json["prompt"] as? [String: Any])
+        let images = try #require(prompt["images"] as? [[String: Any]])
+
+        #expect(images.count == 2)
+        #expect(images[0]["data"] as? String == "image-one")
+        #expect(images[1]["data"] as? String == "image-two")
+        #expect(payload.deals.first?.sourceIndices == [1, 2])
+    }
+
     @Test func throwsAPIErrorOnNonSuccessStatus() async throws {
         let client = CursorClient { request in
             let responseData = """

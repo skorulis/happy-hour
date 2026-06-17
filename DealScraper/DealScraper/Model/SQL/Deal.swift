@@ -6,6 +6,7 @@ import Foundation
 nonisolated struct Deal: Codable, Sendable {
     var id: Int64?
     let venueId: Int64
+    let title: String?
     let imageURL: String?
     let sourceURL: String?
     let details: String?
@@ -14,6 +15,7 @@ nonisolated struct Deal: Codable, Sendable {
     enum CodingKeys: String, CodingKey {
         case id
         case venueId = "venue_id"
+        case title
         case imageURL = "image_url"
         case sourceURL = "source_url"
         case details
@@ -23,6 +25,7 @@ nonisolated struct Deal: Codable, Sendable {
     init(
         id: Int64? = nil,
         venueId: Int64,
+        title: String? = nil,
         imageURL: String? = nil,
         sourceURL: String? = nil,
         details: String? = nil,
@@ -30,6 +33,7 @@ nonisolated struct Deal: Codable, Sendable {
     ) {
         self.id = id
         self.venueId = venueId
+        self.title = title
         self.imageURL = imageURL
         self.sourceURL = sourceURL
         self.details = details

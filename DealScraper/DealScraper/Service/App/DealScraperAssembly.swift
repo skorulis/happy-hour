@@ -62,6 +62,26 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
             CursorVisionDealProcessor(client: resolver.cursorClient())
         }
 
+        container.register(CursorVenueDealExtractor.self) { resolver in
+            CursorVenueDealExtractor(client: resolver.cursorClient())
+        }
+
+        container.register(VenueDealSourceMaterialPreparer.self) { resolver in
+            VenueDealSourceMaterialPreparer(
+                imageFetcher: resolver.crawlImageFetcher()
+            )
+        }
+
+        container.register(VenueDealExtractionService.self) { resolver in
+            VenueDealExtractionService(
+                dealSourceRepository: resolver.dealSourceRepository(),
+                dealRepository: resolver.dealRepository(),
+                materialPreparer: resolver.venueDealSourceMaterialPreparer(),
+                cursorExtractor: resolver.cursorVenueDealExtractor(),
+                apiKeyStore: resolver.apiKeyStore()
+            )
+        }
+
         container.register(WebPageLoader.self) { resolver in
             WebPageLoader(
                 contentBlockGrouper: resolver.contentBlockGrouper(),
@@ -120,6 +140,11 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
 
         container.register(DealSourceRepository.self) { resolver in
             DealSourceRepository(store: resolver.sqlStore())
+        }
+        .inObjectScope(.container)
+
+        container.register(DealRepository.self) { resolver in
+            DealRepository(store: resolver.sqlStore())
         }
         .inObjectScope(.container)
 

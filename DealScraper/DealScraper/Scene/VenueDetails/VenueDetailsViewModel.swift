@@ -21,31 +21,49 @@ final class VenueDetailsViewModel {
         case failed(message: String)
     }
 
+    enum ExtractionState: Equatable {
+        case idle
+        case extracting(progress: String)
+        case completed(count: Int)
+        case failed(message: String)
+    }
+
     let googleMapId: String
     private(set) var venue: Venue?
     private(set) var venueLinks: VenueLinks?
     private(set) var dealSources: [DealSource] = []
+    private(set) var deals: [DealWithSchedules] = []
     private(set) var crawlState: CrawlState = .idle
     private(set) var deleteSourcesState: DeleteSourcesState = .idle
+    private(set) var extractionState: ExtractionState = .idle
+
+    var extractionProvider: VenueDealExtractionProvider = .cursor
+    var cursorModel: String = "composer-2.5"
 
     private let venueRepository: VenueRepository
     private let dealSourceRepository: DealSourceRepository
+    private let dealRepository: DealRepository
     private let venueLinksRepository: VenueLinksRepository
     private let venueWebsiteCrawler: VenueWebsiteCrawler
+    private let venueDealExtractionService: VenueDealExtractionService
 
     @Resolvable<Resolver>
     init(
         @Argument googleMapId: String,
         venueRepository: VenueRepository,
         dealSourceRepository: DealSourceRepository,
+        dealRepository: DealRepository,
         venueLinksRepository: VenueLinksRepository,
-        venueWebsiteCrawler: VenueWebsiteCrawler
+        venueWebsiteCrawler: VenueWebsiteCrawler,
+        venueDealExtractionService: VenueDealExtractionService
     ) {
         self.googleMapId = googleMapId
         self.venueRepository = venueRepository
         self.dealSourceRepository = dealSourceRepository
+        self.dealRepository = dealRepository
         self.venueLinksRepository = venueLinksRepository
         self.venueWebsiteCrawler = venueWebsiteCrawler
+        self.venueDealExtractionService = venueDealExtractionService
         load()
     }
 
@@ -60,6 +78,19 @@ final class VenueDetailsViewModel {
     var isCrawling: Bool {
         if case .crawling = crawlState { return true }
         return false
+    }
+
+    var isExtracting: Bool {
+        if case .extracting = extractionState { return true }
+        return false
+    }
+
+    var approvedSourceCount: Int {
+        dealSources.filter { $0.status == .approved && $0.type != .pdf }.count
+    }
+
+    var canExtractDeals: Bool {
+        venue?.id != nil && approvedSourceCount > 0 && !isExtracting && !isCrawling
     }
 
     func crawlWebsite() {
@@ -83,6 +114,14 @@ final class VenueDetailsViewModel {
         }
     }
 
+    func extractDeals() {
+        guard let venue, canExtractDeals else { return }
+
+        Task {
+            await performExtraction(venue: venue)
+        }
+    }
+
     func setDealSourceStatus(_ source: DealSource, status: DealSourceStatus) {
         guard let id = source.id else { return }
 
@@ -101,9 +140,11 @@ final class VenueDetailsViewModel {
         if let venueId = venue?.id {
             venueLinks = try? venueLinksRepository.find(venueId: venueId)
             dealSources = (try? dealSourceRepository.find(venueId: venueId)) ?? []
+            deals = (try? dealRepository.find(venueId: venueId)) ?? []
         } else {
             venueLinks = nil
             dealSources = []
+            deals = []
         }
     }
 
@@ -133,6 +174,27 @@ final class VenueDetailsViewModel {
             crawlState = .completed(results)
         } catch {
             crawlState = .failed(message: error.localizedDescription)
+        }
+    }
+
+    private func performExtraction(venue: Venue) async {
+        extractionState = .extracting(progress: "Preparing sources…")
+
+        do {
+            let count = try await venueDealExtractionService.extractDeals(
+                for: venue,
+                provider: extractionProvider,
+                model: cursorModel
+            ) { [weak self] progress in
+                Task { @MainActor in
+                    self?.extractionState = .extracting(progress: progress)
+                }
+            }
+
+            load()
+            extractionState = .completed(count: count)
+        } catch {
+            extractionState = .failed(message: error.localizedDescription)
         }
     }
 

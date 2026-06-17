@@ -19,6 +19,18 @@ final class DealSourceRepository {
         }
     }
 
+    func findApproved(venueId: Int64) throws -> [DealSource] {
+        try store.dbQueue.read { db in
+            try DealSource
+                .filter(
+                    Column("venue_id") == venueId
+                        && Column("status") == DealSourceStatus.approved.rawValue
+                        && Column("type") != DealSourceType.pdf.rawValue
+                )
+                .fetchAll(db)
+        }
+    }
+
     @discardableResult
     func deleteAll(venueId: Int64) throws -> Int {
         try store.dbQueue.write { db in

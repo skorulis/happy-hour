@@ -110,5 +110,11 @@ final class SQLMigrations {
                 t.column("end_minute", .integer).notNull()
             }
         }
+
+        migrator.registerMigration("v10_add_deal_title") { db in
+            try db.alter(table: "deal") { t in
+                t.add(column: "title", .text)
+            }
+        }
     }
 }

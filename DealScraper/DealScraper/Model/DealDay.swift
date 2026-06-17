@@ -42,6 +42,12 @@ nonisolated enum DealDay: String, CaseIterable {
             .lowercased()
         guard !normalized.isEmpty else { return [] }
 
+        if normalized.contains("every day")
+            || normalized.replacingOccurrences(of: " ", with: "") == "everyday"
+        {
+            return [.everyDay]
+        }
+
         var found = Set<DealDay>()
 
         for day in DealDay.allCases where normalized.contains(day.rawValue) {
@@ -64,5 +70,27 @@ nonisolated enum DealDay: String, CaseIterable {
 
     static func isMentioned(in string: String) -> Bool {
         !parseAll(in: string).isEmpty
+    }
+
+    var calendarWeekday: Int {
+        switch self {
+        case .sunday: return 1
+        case .monday: return 2
+        case .tuesday: return 3
+        case .wednesday: return 4
+        case .thursday: return 5
+        case .friday: return 6
+        case .saturday: return 7
+        case .everyDay: return 1
+        }
+    }
+
+    var scheduleDays: [DealDay] {
+        switch self {
+        case .everyDay:
+            return [.sunday, .monday, .tuesday, .wednesday, .thursday, .friday, .saturday]
+        default:
+            return [self]
+        }
     }
 }

@@ -37,6 +37,8 @@ struct VenueDetailsView: View {
                     metadataSection(venue)
                 case .dealSources:
                     dealSourcesSection
+                case .deals:
+                    dealsSection
                 }
             }
             .padding(24)
@@ -235,21 +237,91 @@ struct VenueDetailsView: View {
 
     @ViewBuilder
     private var dealSourcesSection: some View {
-        if viewModel.dealSources.isEmpty {
+        VStack(alignment: .leading, spacing: 16) {
+            extractionSection
+
+            if viewModel.dealSources.isEmpty {
+                ContentUnavailableView(
+                    "No Deal Sources",
+                    systemImage: "doc.text.magnifyingglass",
+                    description: Text("Crawl the venue website from the Details tab to discover deal sources.")
+                )
+            } else {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Deal Sources")
+                        .font(.headline)
+
+                    ForEach(viewModel.dealSources, id: \.url) { source in
+                        DealSourceRow(source: source) { status in
+                            viewModel.setDealSourceStatus(source, status: status)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var extractionSection: some View {
+        detailSection(title: "Extract Deals") {
+            Picker("Provider", selection: $viewModel.extractionProvider) {
+                ForEach(VenueDealExtractionProvider.allCases, id: \.self) { provider in
+                    Text(provider.rawValue).tag(provider)
+                }
+            }
+
+            if viewModel.extractionProvider == .cursor {
+                TextField("Cursor model", text: $viewModel.cursorModel)
+                    .textFieldStyle(.roundedBorder)
+            }
+
+            Button("Extract Deals") {
+                viewModel.extractDeals()
+            }
+            .disabled(!viewModel.canExtractDeals)
+
+            Text("\(viewModel.approvedSourceCount) approved source\(viewModel.approvedSourceCount == 1 ? "" : "s") ready for extraction.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            switch viewModel.extractionState {
+            case .idle:
+                EmptyView()
+            case let .extracting(progress):
+                HStack(spacing: 8) {
+                    ProgressView()
+                        .controlSize(.small)
+                    Text(progress)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            case let .completed(count):
+                Text("Saved \(count) deal\(count == 1 ? "" : "s").")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            case let .failed(message):
+                Text(message)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var dealsSection: some View {
+        if viewModel.deals.isEmpty {
             ContentUnavailableView(
-                "No Deal Sources",
-                systemImage: "doc.text.magnifyingglass",
-                description: Text("Crawl the venue website from the Details tab to discover deal sources.")
+                "No Deals",
+                systemImage: "tag",
+                description: Text("Approve deal sources and run extraction from the Deal Sources tab.")
             )
         } else {
             VStack(alignment: .leading, spacing: 12) {
-                Text("Deal Sources")
+                Text("Deals")
                     .font(.headline)
 
-                ForEach(viewModel.dealSources, id: \.url) { source in
-                    DealSourceRow(source: source) { status in
-                        viewModel.setDealSourceStatus(source, status: status)
-                    }
+                ForEach(Array(viewModel.deals.enumerated()), id: \.offset) { _, item in
+                    DealRow(item: item)
                 }
             }
         }
@@ -259,6 +331,80 @@ struct VenueDetailsView: View {
 private enum VenueDetailsTab: String, CaseIterable {
     case details = "Details"
     case dealSources = "Deal Sources"
+    case deals = "Deals"
+}
+
+private struct DealRow: View {
+    let item: DealWithSchedules
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if let title = item.deal.title, !title.isEmpty {
+                Text(title)
+                    .font(.headline)
+            }
+
+            if let details = item.deal.details, !details.isEmpty {
+                Text(details)
+                    .font(.body)
+            }
+
+            if let conditions = item.deal.conditions, !conditions.isEmpty {
+                Text(conditions)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            if !item.schedules.isEmpty {
+                Text(formattedSchedules)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            if let sourceURL = item.deal.sourceURL, let url = URL(string: sourceURL) {
+                Link("Source", destination: url)
+                    .font(.caption)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .background {
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color(nsColor: .controlBackgroundColor))
+        }
+    }
+
+    private var formattedSchedules: String {
+        item.schedules.map { schedule in
+            let day = dayName(for: schedule.dayOfWeek)
+            let start = formattedMinute(schedule.startMinute)
+            let end = formattedMinute(schedule.endMinute)
+            if schedule.startMinute == 0, schedule.endMinute == 1_440 {
+                return day
+            }
+            return "\(day) \(start)–\(end)"
+        }
+        .joined(separator: ", ")
+    }
+
+    private func dayName(for weekday: Int) -> String {
+        switch weekday {
+        case 1: return "Sun"
+        case 2: return "Mon"
+        case 3: return "Tue"
+        case 4: return "Wed"
+        case 5: return "Thu"
+        case 6: return "Fri"
+        case 7: return "Sat"
+        default: return "Day \(weekday)"
+        }
+    }
+
+    private func formattedMinute(_ minute: Int) -> String {
+        let hours = minute / 60
+        let minutes = minute % 60
+        return String(format: "%d:%02d", hours, minutes)
+    }
 }
 
 private struct DealSourceRow: View {

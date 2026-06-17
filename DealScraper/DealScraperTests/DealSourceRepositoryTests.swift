@@ -201,4 +201,52 @@ struct DealSourceRepositoryTests {
         #expect(deleted == 2)
         #expect(try dealSourceRepository.find(venueId: venueId).isEmpty)
     }
+
+    @Test func findApprovedExcludesNewRejectedAndPDFSources() throws {
+        let store = SQLStore.inMemory()
+        let venueRepository = VenueRepository(store: store)
+        let dealSourceRepository = DealSourceRepository(store: store)
+
+        try venueRepository.upsert(Venue(
+            googleMapId: "places/test",
+            name: "Test Pub",
+            lat: 0,
+            lng: 0,
+            websiteUri: "https://example.com",
+            json: "{}"
+        ))
+
+        let venueId = try #require(try venueRepository.find(googleMapId: "places/test")?.id)
+
+        _ = try dealSourceRepository.upsert(sources: [
+            DealSource(
+                venueId: venueId,
+                url: "https://example.com/approved-image.png",
+                type: .image,
+                status: .approved
+            ),
+            DealSource(
+                venueId: venueId,
+                url: "https://example.com/new-page",
+                type: .webpage,
+                status: .new
+            ),
+            DealSource(
+                venueId: venueId,
+                url: "https://example.com/rejected-page",
+                type: .webpage,
+                status: .rejected
+            ),
+            DealSource(
+                venueId: venueId,
+                url: "https://example.com/menu.pdf",
+                type: .pdf,
+                status: .approved
+            ),
+        ], forVenueId: venueId)
+
+        let approved = try dealSourceRepository.findApproved(venueId: venueId)
+        #expect(approved.count == 1)
+        #expect(approved[0].url == "https://example.com/approved-image.png")
+    }
 }

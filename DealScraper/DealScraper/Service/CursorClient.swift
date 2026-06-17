@@ -34,11 +34,23 @@ final class CursorClient: Sendable {
         model: String,
         instructions: String
     ) async throws -> DealExtractionPayload {
-        let promptText = Self.jsonPrompt(from: instructions)
+        try await extractVenueDeals(
+            images: [(base64: imageBase64, mimeType: mimeType)],
+            promptText: Self.jsonPrompt(from: instructions),
+            model: model,
+            apiKey: apiKey
+        )
+    }
+
+    nonisolated func extractVenueDeals(
+        images: [(base64: String, mimeType: String)],
+        promptText: String,
+        model: String,
+        apiKey: String
+    ) async throws -> DealExtractionPayload {
         let (agentID, runID) = try await createAgent(
             promptText: promptText,
-            imageBase64: imageBase64,
-            mimeType: mimeType,
+            images: images,
             model: model,
             apiKey: apiKey
         )
@@ -62,31 +74,32 @@ final class CursorClient: Sendable {
         return payload
     }
 
-    nonisolated private static func jsonPrompt(from instructions: String) -> String {
+    nonisolated static func jsonPrompt(from instructions: String) -> String {
         """
         \(instructions)
 
         Return ONLY valid JSON with this exact shape. Do not include markdown fences or any other text:
-        {"deals":[{"title":"...","details":["..."],"days":["..."],"times":["..."]}]}
+        {"deals":[{"title":"...","details":["..."],"conditions":["..."],"days":["..."],"times":["..."],"sourceIndices":[1]}]}
         """
     }
 
     nonisolated private func createAgent(
         promptText: String,
-        imageBase64: String,
-        mimeType: String,
+        images: [(base64: String, mimeType: String)],
         model: String,
         apiKey: String
     ) async throws -> (agentID: String, runID: String) {
+        let imagePayload = images.map { image in
+            [
+                "data": image.base64,
+                "mimeType": image.mimeType,
+            ] as [String: Any]
+        }
+
         let requestBody: [String: Any] = [
             "prompt": [
                 "text": promptText,
-                "images": [
-                    [
-                        "data": imageBase64,
-                        "mimeType": mimeType,
-                    ],
-                ],
+                "images": imagePayload,
             ],
             "model": [
                 "id": model,
