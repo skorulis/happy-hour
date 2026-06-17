@@ -35,9 +35,22 @@ struct DealMapperTests {
         let deals = DealMapper.map([raw])
         let deal = try #require(deals.first)
 
-        #expect(deal.days.contains(.tuesday))
-        #expect(deal.days.contains(.thursday))
+        #expect(deal.days == [.tuesday, .wednesday, .thursday])
         #expect(deal.times.contains(.between(16 * 60, 18 * 60)))
+    }
+
+    @Test func expandsMondayToFridayDayRange() throws {
+        let raw = DealExtractionPayload.RawDeal(
+            title: "HAPPY HOUR",
+            details: ["$8 SCHOONERS"],
+            days: ["MONDAY - FRIDAY"],
+            times: ["4PM - 6PM"]
+        )
+
+        let deals = DealMapper.map([raw])
+        let deal = try #require(deals.first)
+
+        #expect(deal.days == [.monday, .tuesday, .wednesday, .thursday, .friday])
     }
 
     @Test func supplementsMissingTimesFromContext() throws {

@@ -22,7 +22,15 @@ struct DealDayTests {
     @Test func parseAllFindsDaysInVerbatimLines() {
         #expect(DealDay.parseAll(in: "EVERY TUES") == [.tuesday])
         #expect(DealDay.parseAll(in: "CHEESEBURGER TUESDAYS") == [.tuesday])
-        #expect(DealDay.parseAll(in: "TUES - THURS 4PM - 6PM / FRI 3PM - 5PM") == [.tuesday, .thursday, .friday])
+        #expect(DealDay.parseAll(in: "TUES - THURS 4PM - 6PM / FRI 3PM - 5PM") == [.tuesday, .wednesday, .thursday, .friday])
+    }
+
+    @Test func parseAllExpandsDayRanges() {
+        #expect(DealDay.parseAll(in: "MONDAY - FRIDAY") == [.monday, .tuesday, .wednesday, .thursday, .friday])
+        #expect(DealDay.parseAll(in: "MONDAY to FRIDAY") == [.monday, .tuesday, .wednesday, .thursday, .friday])
+        #expect(DealDay.parseAll(in: "MON - FRI") == [.monday, .tuesday, .wednesday, .thursday, .friday])
+        #expect(DealDay.parseAll(in: "MON-FRI") == [.monday, .tuesday, .wednesday, .thursday, .friday])
+        #expect(DealDay.parseAll(in: "FRI - MON") == [.monday, .friday, .saturday, .sunday])
     }
 
     @Test func returnsNilForUnparseableInput() {

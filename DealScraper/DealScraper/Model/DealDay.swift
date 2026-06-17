@@ -20,6 +20,26 @@ nonisolated enum DealDay: String, CaseIterable {
         "every Day": .everyDay,
     ]
 
+    private static let weekdayOrder: [DealDay] = [
+        .monday, .tuesday, .wednesday, .thursday, .friday, .saturday, .sunday,
+    ]
+
+    private static let dayTokens: [String] = {
+        var tokens = Set(weekdayOrder.map(\.rawValue))
+        for (abbrev, day) in abbreviations where day != .everyDay {
+            tokens.insert(abbrev)
+        }
+        return tokens.sorted { $0.count > $1.count }
+    }()
+
+    private static let dayRangeRegex: NSRegularExpression? = {
+        let tokenPattern = dayTokens
+            .map { NSRegularExpression.escapedPattern(for: $0) }
+            .joined(separator: "|")
+        let pattern = #"\b(\#(tokenPattern))\s*(?:-|–|to)\s*(\#(tokenPattern))\b"#
+        return try? NSRegularExpression(pattern: pattern, options: .caseInsensitive)
+    }()
+
     static func parse(_ string: String) -> DealDay? {
         let normalized = string
             .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -50,6 +70,8 @@ nonisolated enum DealDay: String, CaseIterable {
 
         var found = Set<DealDay>()
 
+        parseDayRanges(in: normalized, into: &found)
+
         for day in DealDay.allCases where normalized.contains(day.rawValue) {
             found.insert(day)
         }
@@ -70,6 +92,39 @@ nonisolated enum DealDay: String, CaseIterable {
 
     static func isMentioned(in string: String) -> Bool {
         !parseAll(in: string).isEmpty
+    }
+
+    private static func parseDayRanges(in normalized: String, into found: inout Set<DealDay>) {
+        guard let regex = dayRangeRegex else { return }
+        let range = NSRange(normalized.startIndex..., in: normalized)
+        regex.enumerateMatches(in: normalized, range: range) { match, _, _ in
+            guard let match,
+                  match.numberOfRanges >= 3,
+                  let startRange = Range(match.range(at: 1), in: normalized),
+                  let endRange = Range(match.range(at: 2), in: normalized),
+                  let startDay = parse(String(normalized[startRange])),
+                  let endDay = parse(String(normalized[endRange])),
+                  startDay != .everyDay,
+                  endDay != .everyDay
+            else { return }
+
+            for day in expandRange(from: startDay, to: endDay) {
+                found.insert(day)
+            }
+        }
+    }
+
+    private static func expandRange(from start: DealDay, to end: DealDay) -> [DealDay] {
+        guard let startIndex = weekdayOrder.firstIndex(of: start),
+              let endIndex = weekdayOrder.firstIndex(of: end)
+        else {
+            return [start, end]
+        }
+
+        if startIndex <= endIndex {
+            return Array(weekdayOrder[startIndex...endIndex])
+        }
+        return Array(weekdayOrder[startIndex...]) + Array(weekdayOrder[...endIndex])
     }
 
     var calendarWeekday: Int {

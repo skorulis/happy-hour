@@ -12,13 +12,7 @@ struct DealSourceRow: View {
             maybeImage
 
             VStack(alignment: .leading, spacing: 8) {
-                if let url = URL(string: source.url) {
-                    Link(source.url, destination: url)
-                        .lineLimit(2)
-                } else {
-                    Text(source.url)
-                        .lineLimit(2)
-                }
+                sourceLink
 
                 HStack(spacing: 16) {
                     Label(source.type.rawValue.capitalized, systemImage: typeIcon)
@@ -60,6 +54,17 @@ struct DealSourceRow: View {
         .background {
             RoundedRectangle(cornerRadius: 8)
                 .fill(Color(nsColor: .controlBackgroundColor))
+        }
+    }
+    
+    @ViewBuilder
+    private var sourceLink: some View {
+        if let url = URL(string: source.sourceURL) {
+            Link("Source", destination: url)
+                .lineLimit(2)
+        } else {
+            Text(source.sourceURL)
+                .lineLimit(2)
         }
     }
 
