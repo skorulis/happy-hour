@@ -85,5 +85,30 @@ final class SQLMigrations {
             }
             try db.execute(sql: "UPDATE deal_source SET source_url = url WHERE source_url IS NULL")
         }
+
+        migrator.registerMigration("v8_create_deal") { db in
+            try db.create(table: "deal") { t in
+                t.autoIncrementedPrimaryKey("id")
+                t.column("venue_id", .integer)
+                    .notNull()
+                    .references("venue", onDelete: .cascade)
+                t.column("image_url", .text)
+                t.column("source_url", .text)
+                t.column("details", .text)
+                t.column("conditions", .text)
+            }
+        }
+
+        migrator.registerMigration("v9_create_deal_schedule") { db in
+            try db.create(table: "deal_schedule") { t in
+                t.autoIncrementedPrimaryKey("id")
+                t.column("deal_id", .integer)
+                    .notNull()
+                    .references("deal", onDelete: .cascade)
+                t.column("day_of_week", .integer).notNull()
+                t.column("start_minute", .integer).notNull()
+                t.column("end_minute", .integer).notNull()
+            }
+        }
     }
 }
