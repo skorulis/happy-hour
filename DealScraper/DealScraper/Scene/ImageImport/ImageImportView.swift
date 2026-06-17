@@ -100,10 +100,6 @@ struct ImageImportView: View {
             TextField("https://example.com/deals", text: $viewModel.sourceURLString)
                 .textFieldStyle(.roundedBorder)
 
-            Text("Image URLs are fetched directly. Other URLs are treated as webpages.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
             Button("Extract Deals") {
                 viewModel.processURL()
             }

@@ -120,9 +120,13 @@ final class VenueDealExtractionService {
         model: String,
         onProgress: ProgressHandler? = nil
     ) async throws -> [DealWithSchedules] {
-        onProgress?("Preparing source…")
+        if VenueDealSourceMaterialPreparer.isImageURL(url) {
+            onProgress?("Analyzing with \(provider.rawValue)…")
+        } else {
+            onProgress?("Preparing source…")
+        }
 
-        let material = try await materialPreparer.prepareRemoteURL(at: url)
+        let material = materialPreparer.prepareRemoteURL(at: url)
         let materials = [material]
 
         onProgress?("Analyzing with \(provider.rawValue)…")

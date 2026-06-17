@@ -94,25 +94,13 @@ final class VenueDealSourceMaterialPreparer {
         )
     }
 
-    func prepareRemoteURL(at url: URL) async throws -> VenueDealSourceMaterial {
-        if Self.isImageURL(url) {
-            let pngData = try await prepareImage(url: url)
-            return VenueDealSourceMaterial(
-                index: 1,
-                dealSourceId: 0,
-                url: url,
-                sourceURL: url,
-                type: .image,
-                pngData: pngData
-            )
-        }
-
+    func prepareRemoteURL(at url: URL) -> VenueDealSourceMaterial {
         return VenueDealSourceMaterial(
             index: 1,
             dealSourceId: 0,
             url: url,
             sourceURL: url,
-            type: .webpage,
+            type: Self.isImageURL(url) ? .image : .webpage,
             pngData: nil
         )
     }

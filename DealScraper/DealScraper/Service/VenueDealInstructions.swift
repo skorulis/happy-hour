@@ -15,7 +15,7 @@ enum VenueDealInstructions {
 
         Critical rule: never rewrite text. Every title, detail, condition, day, and time value must be copied character-for-character as shown in the sources. Do not combine lines, change capitalization, fix spelling, expand abbreviations, or paraphrase.
 
-        You receive multiple labeled sources (Source 1, Source 2, …) for the same venue. Image sources are attached as images. Webpage sources are provided as URLs — visit or read those pages to extract deal information.
+        You receive multiple labeled sources (Source 1, Source 2, …) for the same venue. Image sources are attached either as embedded image data or as image URLs — use whichever form is provided. Webpage sources are provided as URLs — visit or read those pages to extract deal information.
 
         Rules:
         - Merge across sources: if the same promotion appears in multiple sources, return one deal (not duplicates).
@@ -50,7 +50,7 @@ enum VenueDealInstructions {
         }
 
         lines.append("")
-        lines.append("Extract all deals from the attached source images and webpage links listed above.")
+        lines.append("Extract all deals from the attached image data, image URLs, and webpage links listed above.")
         return lines.joined(separator: "\n")
     }
 }

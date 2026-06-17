@@ -94,16 +94,20 @@ final class ImageImportViewModel {
     }
 
     private func processRemoteURL(at url: URL) async {
-        state = .processing(progress: "Preparing source…")
+        if VenueDealSourceMaterialPreparer.isImageURL(url) {
+            state = .processing(progress: "Analyzing with \(extractionProvider.rawValue)…")
+        } else {
+            state = .processing(progress: "Preparing source…")
+        }
 
         do {
             let deals = try await venueDealExtractionService.extractDealsFromRemoteURL(
                 at: url,
                 provider: extractionProvider,
                 model: cursorModel
-            ) { [weak self] progress in
+            ) { [unowned self] progress in
                 Task { @MainActor in
-                    self?.state = .processing(progress: progress)
+                    self.state = .processing(progress: progress)
                 }
             }
             state = .completed(deals: deals, sourceURL: url)
