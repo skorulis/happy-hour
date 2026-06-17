@@ -61,4 +61,12 @@ final class DealSourceRepository {
             return newCount
         }
     }
+
+    func updateStatus(id: Int64, status: DealSourceStatus) throws {
+        try store.dbQueue.write { db in
+            guard var source = try DealSource.fetchOne(db, key: id) else { return }
+            source.status = status
+            try source.update(db)
+        }
+    }
 }

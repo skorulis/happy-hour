@@ -83,6 +83,19 @@ final class VenueDetailsViewModel {
         }
     }
 
+    func setDealSourceStatus(_ source: DealSource, status: DealSourceStatus) {
+        guard let id = source.id else { return }
+
+        do {
+            try dealSourceRepository.updateStatus(id: id, status: status)
+            if let index = dealSources.firstIndex(where: { $0.id == id }) {
+                dealSources[index].status = status
+            }
+        } catch {
+            // Keep the current UI state if persistence fails.
+        }
+    }
+
     private func load() {
         venue = try? venueRepository.find(googleMapId: googleMapId)
         if let venueId = venue?.id {

@@ -114,6 +114,37 @@ struct DealSourceRepositoryTests {
         #expect(found.textPieces == .contentBlocks(blocks))
     }
 
+    @Test func updateStatusChangesSourceStatus() throws {
+        let store = SQLStore.inMemory()
+        let venueRepository = VenueRepository(store: store)
+        let dealSourceRepository = DealSourceRepository(store: store)
+
+        try venueRepository.upsert(Venue(
+            googleMapId: "places/test",
+            name: "Test Pub",
+            lat: 0,
+            lng: 0,
+            websiteUri: "https://example.com",
+            json: "{}"
+        ))
+
+        let venue = try #require(try venueRepository.find(googleMapId: "places/test"))
+        let venueId = try #require(venue.id)
+
+        _ = try dealSourceRepository.upsert(sources: [
+            DealSource(venueId: venueId, url: "https://example.com/specials", type: .webpage),
+        ], forVenueId: venueId)
+
+        let source = try #require(try dealSourceRepository.find(venueId: venueId).first)
+        let sourceId = try #require(source.id)
+
+        try dealSourceRepository.updateStatus(id: sourceId, status: .approved)
+        #expect(try dealSourceRepository.find(venueId: venueId).first?.status == .approved)
+
+        try dealSourceRepository.updateStatus(id: sourceId, status: .rejected)
+        #expect(try dealSourceRepository.find(venueId: venueId).first?.status == .rejected)
+    }
+
     @Test func deleteAllRemovesSourcesForVenue() throws {
         let store = SQLStore.inMemory()
         let venueRepository = VenueRepository(store: store)
