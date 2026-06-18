@@ -66,7 +66,8 @@ struct DealCondenser: Sendable {
             imageURL: imageURL,
             sourceURL: sourceURL,
             details: details,
-            conditions: conditions
+            conditions: conditions,
+            status: mergedStatus(lhsDeal.status, rhsDeal.status)
         )
 
         let schedules = mergedSchedules(lhs.schedules, rhs.schedules)
@@ -298,6 +299,12 @@ struct DealCondenser: Sendable {
         }
 
         return result
+    }
+
+    private func mergedStatus(_ lhs: DealStatus, _ rhs: DealStatus) -> DealStatus {
+        if lhs == .approved || rhs == .approved { return .approved }
+        if lhs == .rejected && rhs == .rejected { return .rejected }
+        return .new
     }
 }
 

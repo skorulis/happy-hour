@@ -18,9 +18,10 @@ final class OpenAIVenueDealExtractor: VenueDealExtractor, @unchecked Sendable {
         self.llmModelStore = llmModelStore
     }
 
-    nonisolated func extractDeals(
+    nonisolated func extractDeals<Result>(
         materials: [VenueDealSourceMaterial],
-        venueName: String
+        venueName: String,
+        progress: ProgressMonitor<Result> = .empty
     ) async -> VenueDealExtractionResult {
         let startTime = Date()
         let apiKey = apiKeyStore.openAIAPIKey
@@ -33,8 +34,12 @@ final class OpenAIVenueDealExtractor: VenueDealExtractor, @unchecked Sendable {
         let model = llmModelStore.openAIModel
         var extractions: [SourcedDealExtraction] = []
         var errors: [VenueDealSourceExtractionError] = []
+        let total = materials.count
 
-        for material in materials {
+        for (offset, material) in materials.enumerated() {
+            let index = offset + 1
+            await progress("Analyzing source \(index) of \(total)")
+
             do {
                 switch material.type {
                 case .image:

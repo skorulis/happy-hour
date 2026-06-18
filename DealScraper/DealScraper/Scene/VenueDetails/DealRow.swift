@@ -5,11 +5,34 @@ import SwiftUI
 
 struct DealRow: View {
     let item: DealWithSchedules
+    var onStatusChange: ((DealStatus) -> Void)?
 
     var body: some View {
         HStack(alignment: .top) {
             maybeImage
             mainContent
+
+            if let onStatusChange {
+                Spacer(minLength: 8)
+
+                VStack(spacing: 8) {
+                    statusButton(
+                        systemImage: "checkmark",
+                        color: .green,
+                        isSelected: item.deal.status == .approved
+                    ) {
+                        onStatusChange(.approved)
+                    }
+
+                    statusButton(
+                        systemImage: "xmark",
+                        color: .red,
+                        isSelected: item.deal.status == .rejected
+                    ) {
+                        onStatusChange(.rejected)
+                    }
+                }
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
@@ -115,5 +138,29 @@ struct DealRow: View {
         let hours = minute / 60
         let minutes = minute % 60
         return String(format: "%d:%02d", hours, minutes)
+    }
+
+    private func statusButton(
+        systemImage: String,
+        color: Color,
+        isSelected: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
+                .font(.body.weight(.semibold))
+                .foregroundStyle(isSelected ? .white : color)
+                .frame(width: 32, height: 32)
+                .background {
+                    Circle()
+                        .fill(isSelected ? color : .clear)
+                }
+                .overlay {
+                    Circle()
+                        .strokeBorder(color, lineWidth: 1.5)
+                }
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
     }
 }

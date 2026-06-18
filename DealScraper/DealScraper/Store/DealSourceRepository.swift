@@ -24,7 +24,7 @@ final class DealSourceRepository {
             try DealSource
                 .filter(
                     Column("venue_id") == venueId
-                        && Column("status") == DealSourceStatus.approved.rawValue
+                        && Column("status") == DealStatus.approved.rawValue
                         && Column("type") != DealSourceType.pdf.rawValue
                 )
                 .fetchAll(db)
@@ -75,7 +75,7 @@ final class DealSourceRepository {
         }
     }
 
-    func updateStatus(id: Int64, status: DealSourceStatus) throws {
+    func updateStatus(id: Int64, status: DealStatus) throws {
         try store.dbQueue.write { db in
             guard var source = try DealSource.fetchOne(db, key: id) else { return }
             source.status = status

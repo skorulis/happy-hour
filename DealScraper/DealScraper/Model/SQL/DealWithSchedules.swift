@@ -3,6 +3,6 @@
 import Foundation
 
 struct DealWithSchedules: Sendable {
-    let deal: Deal
+    var deal: Deal
     let schedules: [DealSchedule]
 }

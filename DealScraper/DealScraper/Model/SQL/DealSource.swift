@@ -9,12 +9,6 @@ nonisolated enum DealSourceType: String, Codable, Sendable {
     case pdf
 }
 
-nonisolated enum DealSourceStatus: String, Codable, Sendable {
-    case new
-    case approved
-    case rejected
-}
-
 nonisolated enum DealSourceTextPieces: Codable, Sendable, Equatable {
     case contentBlocks([ContentBlock])
     case textLines([String])
@@ -54,7 +48,7 @@ nonisolated struct DealSource: Codable, Sendable {
     let url: String
     var sourceURL: String
     let type: DealSourceType
-    var status: DealSourceStatus
+    var status: DealStatus
     var date: Date
     var textPieces: DealSourceTextPieces?
 
@@ -75,7 +69,7 @@ nonisolated struct DealSource: Codable, Sendable {
         url: String,
         sourceURL: String? = nil,
         type: DealSourceType,
-        status: DealSourceStatus = .new,
+        status: DealStatus = .new,
         date: Date = .now,
         textPieces: DealSourceTextPieces? = nil
     ) {

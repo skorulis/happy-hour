@@ -61,12 +61,11 @@ final class VenueDealExtractionService {
 
         let materials = try await materialPreparer.prepare(sources: sources, progress: progress)
 
-        await progress("Analyzing with \(provider.rawValue)…")
-
         let result = try await extractPayload(
             provider: provider,
             materials: materials,
-            venueName: venue.name
+            venueName: venue.name,
+            progress: progress
         )
 
         let mapped = VenueDealPersistenceMapper.map(sourced: result.extractions, venueId: venueId)
@@ -92,12 +91,11 @@ final class VenueDealExtractionService {
         let material = try materialPreparer.prepareLocalImage(at: url)
         let materials = [material]
 
-        await progress("Analyzing with \(provider.rawValue)…")
-
         let result = try await extractPayload(
             provider: provider,
             materials: materials,
-            venueName: "Preview"
+            venueName: "Preview",
+            progress: progress
         )
 
         let mapped = VenueDealPersistenceMapper.map(sourced: result.extractions, venueId: 0)
@@ -120,12 +118,11 @@ final class VenueDealExtractionService {
         let material = materialPreparer.prepareRemoteURL(at: url)
         let materials = [material]
 
-        await progress("Analyzing with \(provider.rawValue)…")
-
         let result = try await extractPayload(
             provider: provider,
             materials: materials,
-            venueName: "Preview"
+            venueName: "Preview",
+            progress: progress
         )
 
         let mapped = VenueDealPersistenceMapper.map(sourced: result.extractions, venueId: 0)
@@ -134,22 +131,25 @@ final class VenueDealExtractionService {
         return deals
     }
 
-    private func extractPayload(
+    private func extractPayload<Result>(
         provider: VenueDealExtractionProvider,
         materials: [VenueDealSourceMaterial],
-        venueName: String
+        venueName: String,
+        progress: ProgressMonitor<Result>
     ) async throws -> VenueDealExtractionResult {
         let result: VenueDealExtractionResult
         switch provider {
         case .openAI:
             result = await openAIExtractor.extractDeals(
                 materials: materials,
-                venueName: venueName
+                venueName: venueName,
+                progress: progress
             )
         case .openRouter:
             result = await openRouterExtractor.extractDeals(
                 materials: materials,
-                venueName: venueName
+                venueName: venueName,
+                progress: progress
             )
         }
 

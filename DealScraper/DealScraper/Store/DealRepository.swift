@@ -71,6 +71,14 @@ final class DealRepository {
             return deals.count
         }
     }
+
+    func updateStatus(id: Int64, status: DealStatus) throws {
+        try store.dbQueue.write { db in
+            guard var deal = try Deal.fetchOne(db, key: id) else { return }
+            deal.status = status
+            try deal.update(db)
+        }
+    }
 }
 
 enum DealRepositoryError: Error {

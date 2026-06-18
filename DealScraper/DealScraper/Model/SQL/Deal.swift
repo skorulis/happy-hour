@@ -3,6 +3,12 @@
 import Foundation
 @preconcurrency import GRDB
 
+nonisolated enum DealStatus: String, Codable, Sendable {
+    case new
+    case approved
+    case rejected
+}
+
 nonisolated struct Deal: Codable, Sendable {
     var id: Int64?
     let venueId: Int64
@@ -11,6 +17,7 @@ nonisolated struct Deal: Codable, Sendable {
     let sourceURL: String?
     let details: String?
     let conditions: String?
+    var status: DealStatus
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -20,6 +27,7 @@ nonisolated struct Deal: Codable, Sendable {
         case sourceURL = "source_url"
         case details
         case conditions
+        case status
     }
 
     init(
@@ -29,7 +37,8 @@ nonisolated struct Deal: Codable, Sendable {
         imageURL: String? = nil,
         sourceURL: String? = nil,
         details: String? = nil,
-        conditions: String? = nil
+        conditions: String? = nil,
+        status: DealStatus = .new
     ) {
         self.id = id
         self.venueId = venueId
@@ -38,6 +47,7 @@ nonisolated struct Deal: Codable, Sendable {
         self.sourceURL = sourceURL
         self.details = details
         self.conditions = conditions
+        self.status = status
     }
 }
 

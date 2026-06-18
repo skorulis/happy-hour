@@ -364,8 +364,10 @@ struct VenueDetailsView: View {
                 Text("Deals")
                     .font(.headline)
 
-                ForEach(Array(viewModel.deals.enumerated()), id: \.offset) { _, item in
-                    DealRow(item: item)
+                ForEach(viewModel.deals, id: \.deal.id) { item in
+                    DealRow(item: item) { status in
+                        viewModel.setDealStatus(item, status: status)
+                    }
                 }
             }
         }

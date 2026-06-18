@@ -3,8 +3,9 @@
 import Foundation
 
 protocol VenueDealExtractor: Sendable {
-    func extractDeals(
+    func extractDeals<Result>(
         materials: [VenueDealSourceMaterial],
-        venueName: String
+        venueName: String,
+        progress: ProgressMonitor<Result>
     ) async -> VenueDealExtractionResult
 }

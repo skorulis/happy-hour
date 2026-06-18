@@ -149,13 +149,26 @@ final class VenueDetailsViewModel {
         }
     }
 
-    func setDealSourceStatus(_ source: DealSource, status: DealSourceStatus) {
+    func setDealSourceStatus(_ source: DealSource, status: DealStatus) {
         guard let id = source.id else { return }
 
         do {
             try dealSourceRepository.updateStatus(id: id, status: status)
             if let index = dealSources.firstIndex(where: { $0.id == id }) {
                 dealSources[index].status = status
+            }
+        } catch {
+            // Keep the current UI state if persistence fails.
+        }
+    }
+
+    func setDealStatus(_ item: DealWithSchedules, status: DealStatus) {
+        guard let id = item.deal.id else { return }
+
+        do {
+            try dealRepository.updateStatus(id: id, status: status)
+            if let index = deals.firstIndex(where: { $0.deal.id == id }) {
+                deals[index].deal.status = status
             }
         } catch {
             // Keep the current UI state if persistence fails.

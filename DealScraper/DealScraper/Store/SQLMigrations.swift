@@ -116,5 +116,11 @@ final class SQLMigrations {
                 t.add(column: "title", .text)
             }
         }
+
+        migrator.registerMigration("v11_add_deal_status") { db in
+            try db.alter(table: "deal") { t in
+                t.add(column: "status", .text).notNull().defaults(to: DealStatus.new.rawValue)
+            }
+        }
     }
 }

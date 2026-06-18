@@ -5,7 +5,7 @@ import SwiftUI
 
 struct DealSourceRow: View {
     let source: DealSource
-    let onStatusChange: (DealSourceStatus) -> Void
+    let onStatusChange: (DealStatus) -> Void
 
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
