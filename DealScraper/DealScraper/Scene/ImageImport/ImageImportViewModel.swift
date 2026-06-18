@@ -16,7 +16,7 @@ final class ImageImportViewModel {
     enum State {
         case idle
         case processing(progress: String)
-        case completed(deals: [DealWithSchedules], sourceURL: URL)
+        case completed(deals: [DealWithSchedules], sourceURL: URL, duration: TimeInterval)
         case failed(message: String)
     }
 
@@ -86,6 +86,7 @@ final class ImageImportViewModel {
     }
 
     private func processLocalImage(at url: URL) async {
+        let startTime = Date()
         updateState(.processing(progress: "Preparing image…"))
 
         let didAccess = url.startAccessingSecurityScopedResource()
@@ -105,13 +106,18 @@ final class ImageImportViewModel {
                     self.state = .processing(progress: progress)
                 }
             }
-            updateState(.completed(deals: deals, sourceURL: url))
+            updateState(.completed(
+                deals: deals,
+                sourceURL: url,
+                duration: Date().timeIntervalSince(startTime)
+            ))
         } catch {
             updateState(.failed(message: error.localizedDescription))
         }
     }
 
     private func processRemoteURL(at url: URL) async {
+        let startTime = Date()
         if VenueDealSourceMaterialPreparer.isImageURL(url) {
             updateState(.processing(progress: "Analyzing with \(extractionProvider.rawValue)…"))
         } else {
@@ -128,12 +134,16 @@ final class ImageImportViewModel {
                     self.state = .processing(progress: progress)
                 }
             }
-            updateState(.completed(deals: deals, sourceURL: url))
+            updateState(.completed(
+                deals: deals,
+                sourceURL: url,
+                duration: Date().timeIntervalSince(startTime)
+            ))
         } catch {
             updateState(.failed(message: error.localizedDescription))
         }
     }
-    
+
     private func updateState(_ state: State) {
         Task { @MainActor in
             self.state = state

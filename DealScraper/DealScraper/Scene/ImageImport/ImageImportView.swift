@@ -123,8 +123,8 @@ struct ImageImportView: View {
                     .foregroundStyle(.secondary)
             }
 
-        case let .completed(deals, sourceURL):
-            completedContent(deals: deals, sourceURL: sourceURL)
+        case let .completed(deals, sourceURL, duration):
+            completedContent(deals: deals, sourceURL: sourceURL, duration: duration)
 
         case let .failed(message):
             Label(message, systemImage: "exclamationmark.triangle.fill")
@@ -132,16 +132,20 @@ struct ImageImportView: View {
         }
     }
 
-    private func completedContent(deals: [DealWithSchedules], sourceURL: URL) -> some View {
+    private func completedContent(
+        deals: [DealWithSchedules],
+        sourceURL: URL,
+        duration: TimeInterval
+    ) -> some View {
         VStack(alignment: .leading, spacing: 24) {
             sourcePreview(for: sourceURL)
 
             if deals.isEmpty {
-                Text("No deals were found in this source.")
+                Text("No deals were found in this source. Completed in \(formattedDuration(duration)).")
                     .foregroundStyle(.secondary)
             } else {
                 VStack(alignment: .leading, spacing: 16) {
-                    Text("\(deals.count) deal\(deals.count == 1 ? "" : "s") found")
+                    Text("\(deals.count) deal\(deals.count == 1 ? "" : "s") found in \(formattedDuration(duration))")
                         .font(.headline)
 
                     ForEach(Array(deals.enumerated()), id: \.offset) { _, item in
@@ -194,6 +198,18 @@ struct ImageImportView: View {
     private func localImagePreview(for url: URL) -> Image? {
         guard let nsImage = NSImage(contentsOf: url) else { return nil }
         return Image(nsImage: nsImage)
+    }
+
+    private func formattedDuration(_ duration: TimeInterval) -> String {
+        if duration < 60 {
+            return String(format: "%.1f seconds", duration)
+        }
+        let minutes = Int(duration) / 60
+        let seconds = Int(duration) % 60
+        if seconds == 0 {
+            return "\(minutes) minute\(minutes == 1 ? "" : "s")"
+        }
+        return "\(minutes)m \(seconds)s"
     }
 }
 

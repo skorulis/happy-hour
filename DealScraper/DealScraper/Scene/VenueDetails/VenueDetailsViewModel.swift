@@ -216,25 +216,31 @@ final class VenueDetailsViewModel {
             crawlState = .failed(message: error.localizedDescription)
         }
     }
+    
+    private func updateState(_ state: ExtractionState) {
+        Task { @MainActor in
+            self.extractionState = state
+        }
+    }
 
     private func performExtraction(venue: Venue) async {
-        extractionState = .extracting(progress: "Preparing sources…")
+        updateState(.extracting(progress: "Preparing sources…"))
 
         do {
             let count = try await venueDealExtractionService.extractDeals(
                 for: venue,
                 provider: extractionProvider,
                 model: extractionModel
-            ) { [weak self] progress in
+            ) { [unowned self] progress in
                 Task { @MainActor in
-                    self?.extractionState = .extracting(progress: progress)
+                    updateState(.extracting(progress: progress))
                 }
             }
 
             load()
-            extractionState = .completed(count: count)
+            updateState(.completed(count: count))
         } catch {
-            extractionState = .failed(message: error.localizedDescription)
+            updateState(.failed(message: error.localizedDescription))
         }
     }
 
