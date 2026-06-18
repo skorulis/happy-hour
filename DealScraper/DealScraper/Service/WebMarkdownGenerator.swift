@@ -73,10 +73,6 @@ struct MarkdownRequest: HTTPRequest {
     }
 
     func decode(data: Data, response: URLResponse) throws -> String {
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw WebMarkdownGeneratorError.invalidResponse
-        }
-
         let message = String(data: data, encoding: .utf8) ?? ""
         
         let trimmed = message.trimmingCharacters(in: .whitespacesAndNewlines)

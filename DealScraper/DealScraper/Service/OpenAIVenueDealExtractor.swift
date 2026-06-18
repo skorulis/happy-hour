@@ -24,14 +24,15 @@ final class OpenAIVenueDealExtractor: VenueDealExtractor, @unchecked Sendable {
         progress: ProgressMonitor<Result> = .empty
     ) async -> VenueDealExtractionResult {
         let startTime = Date()
-        let apiKey = apiKeyStore.openAIAPIKey
+        let apiKey = await apiKeyStore.openAIAPIKey
+        let model = await llmModelStore.openAIModel
         guard !apiKey.isEmpty else {
             return VisionVenueDealExtractorSupport.missingAPIKeyResult(
                 materials: materials,
                 startTime: startTime
             )
         }
-        let model = llmModelStore.openAIModel
+        
         var extractions: [SourcedDealExtraction] = []
         var errors: [VenueDealSourceExtractionError] = []
         let total = materials.count

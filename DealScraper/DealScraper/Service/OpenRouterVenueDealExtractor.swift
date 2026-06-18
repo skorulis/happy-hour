@@ -24,14 +24,15 @@ final class OpenRouterVenueDealExtractor: VenueDealExtractor, @unchecked Sendabl
         progress: ProgressMonitor<Result> = .empty
     ) async -> VenueDealExtractionResult {
         let startTime = Date()
-        let apiKey = apiKeyStore.openRouterAPIKey
+        let apiKey = await apiKeyStore.openRouterAPIKey
+        let model = await llmModelStore.openRouterModel
         guard !apiKey.isEmpty else {
             return VisionVenueDealExtractorSupport.missingAPIKeyResult(
                 materials: materials,
                 startTime: startTime
             )
         }
-        let model = llmModelStore.openRouterModel
+        
         var extractions: [SourcedDealExtraction] = []
         var errors: [VenueDealSourceExtractionError] = []
         let total = materials.count

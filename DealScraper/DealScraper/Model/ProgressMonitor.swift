@@ -34,7 +34,7 @@ struct ProgressMonitor<ResultType> {
         await update(progress: progress)
     }
     
-    static var empty: Self {
+    nonisolated static var empty: Self {
         .init(block: { _ in })
     }
 }
