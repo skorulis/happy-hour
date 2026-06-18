@@ -10,10 +10,8 @@ final class ExperimentViewModel {
 
     enum State {
         case idle
-        case loadingContentBlocks
-        case loadingPageLinks
-        case completedBlocks(count: Int)
-        case completedLinks(count: Int)
+        case loading
+        case loaded(LoadedPage)
         case failed(message: String)
     }
 
@@ -21,30 +19,17 @@ final class ExperimentViewModel {
     private(set) var state: State = .idle
 
     private let webPageLoader: WebPageLoader
-    private let pageLinkExtractor: PageLinkExtractor
 
     @Resolvable<Resolver>
-    init(
-        webPageLoader: WebPageLoader,
-        pageLinkExtractor: PageLinkExtractor
-    ) {
+    init(webPageLoader: WebPageLoader) {
         self.webPageLoader = webPageLoader
-        self.pageLinkExtractor = pageLinkExtractor
     }
 
-    func loadAndExtract() {
+    func loadPage() {
         guard let url = validatedURL() else { return }
 
         Task {
-            await performContentBlockExtraction(url: url)
-        }
-    }
-
-    func loadAndExtractLinks() {
-        guard let url = validatedURL() else { return }
-
-        Task {
-            await performPageLinkExtraction(url: url)
+            await performLoad(url: url)
         }
     }
 
@@ -63,32 +48,12 @@ final class ExperimentViewModel {
         return url
     }
 
-    private func performContentBlockExtraction(url: URL) async {
-        state = .loadingContentBlocks
+    private func performLoad(url: URL) async {
+        state = .loading
 
         do {
             let page = try await webPageLoader.load(url: url)
-
-            print("Content blocks for \(page.url.absoluteString)")
-            print(page.contentBlocks.formattedConsoleOutput())
-
-            state = .completedBlocks(count: page.contentBlocks.count)
-        } catch {
-            state = .failed(message: error.localizedDescription)
-        }
-    }
-
-    private func performPageLinkExtraction(url: URL) async {
-        state = .loadingPageLinks
-
-        do {
-            let page = try await webPageLoader.load(url: url)
-            let links = try pageLinkExtractor.extract(html: page.html, pageURL: page.url)
-
-            print("Page links for \(page.url.absoluteString)")
-            print(links.formattedConsoleOutput())
-
-            state = .completedLinks(count: links.count)
+            state = .loaded(page)
         } catch {
             state = .failed(message: error.localizedDescription)
         }
