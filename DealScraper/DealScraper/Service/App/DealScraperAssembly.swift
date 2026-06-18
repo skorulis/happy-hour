@@ -108,6 +108,17 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
             )
         }
 
+        container.register(CrawlPDFCache.self) { _ in CrawlPDFCache() }
+            .inObjectScope(.container)
+
+        container.register(CrawlPDFFetcher.self) { resolver in
+            CrawlPDFFetcher(cache: resolver.crawlPDFCache())
+        }
+
+        container.register(PDFTextExtractor.self) { _ in PDFTextExtractor() }
+
+        container.register(PDFValidator.self) { PDFValidator.make(resolver: $0) }
+
         container.register(ImageDeduper.self) { _ in ImageDeduper() }
 
         container.register(VenueWebsiteCrawler.self) { VenueWebsiteCrawler.make(resolver: $0) }

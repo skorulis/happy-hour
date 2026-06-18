@@ -35,6 +35,7 @@ final class VenueWebsiteCrawler {
     private let pageLinkFilter: PageLinkFilter
     private let venueLinkExtractor: VenueLinkExtractor
     private let imageValidator: CrawlImageValidator
+    private let pdfValidator: PDFValidator
     private let imageDeduper: ImageDeduper
     private let dealAdvancedTextFilter: DealAdvancedTextFilter
     private let dealSourceRepository: DealSourceRepository
@@ -47,6 +48,7 @@ final class VenueWebsiteCrawler {
         pageLinkFilter: PageLinkFilter,
         venueLinkExtractor: VenueLinkExtractor,
         imageValidator: CrawlImageValidator,
+        pdfValidator: PDFValidator,
         imageDeduper: ImageDeduper,
         dealAdvancedTextFilter: DealAdvancedTextFilter,
         dealSourceRepository: DealSourceRepository,
@@ -57,6 +59,7 @@ final class VenueWebsiteCrawler {
         self.pageLinkFilter = pageLinkFilter
         self.venueLinkExtractor = venueLinkExtractor
         self.imageValidator = imageValidator
+        self.pdfValidator = pdfValidator
         self.imageDeduper = imageDeduper
         self.dealAdvancedTextFilter = dealAdvancedTextFilter
         self.dealSourceRepository = dealSourceRepository
@@ -86,6 +89,8 @@ final class VenueWebsiteCrawler {
         var visitedPages: [URL] = []
         var imagesAnalyzed = 0
         var discoveredByURL: [URL: DiscoveredSource] = [:]
+        var pdfURLs: Set<URL> = []
+        var pdfSourceURLs: [URL: URL] = [:]
         
         while !queue.isEmpty, visited.count < Self.maxPages {
             let pageURL = queue.removeFirst()
@@ -134,11 +139,8 @@ final class VenueWebsiteCrawler {
             let filtered = pageLinkFilter.filter(links: loadedPage.links)
 
             for pdfURL in filtered.pdfURLs {
-                discoveredByURL[pdfURL] = DiscoveredSource(
-                    url: pdfURL,
-                    sourceURL: loadedPage.normalizedURL,
-                    type: .pdf
-                )
+                pdfURLs.insert(pdfURL)
+                pdfSourceURLs[pdfURL] = loadedPage.normalizedURL
             }
 
             for link in filtered.crawlURLs {
@@ -166,6 +168,21 @@ final class VenueWebsiteCrawler {
             }
         }
         
+        await progress("Checking \(pdfURLs.count) PDFs")
+        let pdfValidations = await pdfValidator.validatePDFs(urls: Array(pdfURLs))
+        for validation in pdfValidations {
+            discoveredByURL[validation.url] = DiscoveredSource(
+                url: validation.url,
+                sourceURL: pdfSourceURLs[validation.url] ?? baseURL,
+                type: .pdf,
+                textPieces: .textLines(
+                    validation.text
+                        .components(separatedBy: CharacterSet.newlines)
+                        .filter { !$0.isEmpty }
+                )
+            )
+        }
+
         discoveredByURL = imageDeduper.dedupe(validatedSources: discoveredByURL)
         discoveredByURL = await dealAdvancedTextFilter.filter(sources: discoveredByURL)
         
