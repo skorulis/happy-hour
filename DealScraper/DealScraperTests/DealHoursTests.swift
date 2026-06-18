@@ -20,6 +20,8 @@ struct DealHoursTests {
     @Test func parsesTimeWithMinutes() {
         #expect(DealHours.toMinutes(string: "4:30 PM") == 990)
         #expect(DealHours.toMinutes(string: "7:15am") == 435)
+        #expect(DealHours.toMinutes(string: "6.30pm") == 1110)
+        #expect(DealHours.toMinutes(string: "4.30 PM") == 990)
     }
 
     @Test func guessesAMWhenOnlyAMFitsInRange() {

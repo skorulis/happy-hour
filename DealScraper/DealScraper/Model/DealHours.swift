@@ -17,7 +17,7 @@ nonisolated enum DealHours: Equatable, Hashable {
             .lowercased()
         guard !normalized.isEmpty else { return nil }
 
-        let pattern = #"^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$"#
+        let pattern = #"^(\d{1,2})(?:[:.](\d{2}))?\s*(am|pm)?$"#
         guard let regex = try? NSRegularExpression(pattern: pattern),
               let match = regex.firstMatch(
                   in: normalized,

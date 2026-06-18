@@ -88,6 +88,20 @@ struct DealMapperTests {
         #expect(deals.first?.days.contains(.thursday) == true)
     }
 
+    @Test func parsesDotSeparatedTimeFromRawDeal() throws {
+        let raw = DealExtractionPayload.RawDeal(
+            title: "HAPPY HOUR",
+            details: ["$8 SCHOONERS"],
+            days: ["FRIDAY"],
+            times: ["6.30pm"]
+        )
+
+        let deals = DealMapper.map([raw])
+        let deal = try #require(deals.first)
+
+        #expect(deal.times == [.from(18 * 60 + 30)])
+    }
+
     @Test func filtersEmptyRawDeals() {
         let raw = DealExtractionPayload.RawDeal(
             title: "   ",

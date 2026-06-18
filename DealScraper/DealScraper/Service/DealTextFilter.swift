@@ -85,8 +85,8 @@ struct DealTextFilter {
         }
 
         let patterns = [
-            #"(?i)(?<!\d)(\d{1,2}(?::\d{2})?\s*(?:am|pm))(?!\d)"#,
-            #"(?i)\bfrom\s+\d{1,2}:\d{2}\b"#,
+            #"(?i)(?<!\d)(\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm))(?!\d)"#,
+            #"(?i)\bfrom\s+\d{1,2}[:.]\d{2}\b"#,
         ]
 
         let range = NSRange(text.startIndex..., in: text)

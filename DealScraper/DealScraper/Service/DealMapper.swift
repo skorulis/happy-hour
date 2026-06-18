@@ -85,7 +85,7 @@ nonisolated enum DealMapper {
             return [time]
         }
 
-        let pattern = #"(?i)(?<!\d)(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)(?!\d)"#
+        let pattern = #"(?i)(?<!\d)(\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?)(?!\d)"#
         guard let regex = try? NSRegularExpression(pattern: pattern) else { return [] }
 
         let range = NSRange(text.startIndex..., in: text)
