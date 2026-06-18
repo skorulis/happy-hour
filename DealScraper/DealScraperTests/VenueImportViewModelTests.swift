@@ -45,6 +45,8 @@ struct VenueImportViewModelTests {
         let viewModel = VenueImportViewModel(
             googlePlacesClient: client,
             venueRepository: repository,
+            dealSourceRepository: DealSourceRepository(store: store),
+            dealRepository: DealRepository(store: store),
             apiKeyStore: apiKeyStore
         )
 
@@ -72,6 +74,8 @@ struct VenueImportViewModelTests {
         let viewModel = VenueImportViewModel(
             googlePlacesClient: client,
             venueRepository: repository,
+            dealSourceRepository: DealSourceRepository(store: store),
+            dealRepository: DealRepository(store: store),
             apiKeyStore: apiKeyStore
         )
 
@@ -100,6 +104,8 @@ struct VenueImportViewModelTests {
         let viewModel = VenueImportViewModel(
             googlePlacesClient: GooglePlacesClient(),
             venueRepository: repository,
+            dealSourceRepository: DealSourceRepository(store: store),
+            dealRepository: DealRepository(store: store),
             apiKeyStore: apiKeyStore
         )
 

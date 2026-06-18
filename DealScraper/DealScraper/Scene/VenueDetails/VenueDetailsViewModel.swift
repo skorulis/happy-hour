@@ -37,7 +37,7 @@ final class VenueDetailsViewModel {
     private(set) var deleteDealsState: DeleteDealsState = .idle
     private(set) var extractionState: ExtractionState = .idle
 
-    var extractionProvider: VenueDealExtractionProvider = .openAI
+    var extractionProvider: VenueDealExtractionProvider = .openRouter
     var openAIModel: String = LLMModelStore.defaultOpenAIModel {
         didSet { llmModelStore.openAIModel = openAIModel }
     }

@@ -23,7 +23,7 @@ final class ImageImportViewModel {
     private(set) var state: State = .idle
     var inputMode: InputMode = .image
     var sourceURLString: String = ""
-    var extractionProvider: VenueDealExtractionProvider = .openAI
+    var extractionProvider: VenueDealExtractionProvider = .openRouter
     var openAIModel: String = LLMModelStore.defaultOpenAIModel {
         didSet { llmModelStore.openAIModel = openAIModel }
     }

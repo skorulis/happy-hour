@@ -3,8 +3,8 @@
 import Foundation
 
 enum VenueDealExtractionProvider: String, CaseIterable, Sendable {
-    case openAI = "OpenAI"
     case openRouter = "OpenRouter"
+    case openAI = "OpenAI"
 }
 
 nonisolated enum VenueDealInstructions {

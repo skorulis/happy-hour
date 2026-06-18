@@ -22,10 +22,14 @@ struct SettingsView: View {
                     title: "OpenRouter API Key",
                     text: $viewModel.openRouterAPIKey
                 )
+                apiKeyField(
+                    title: "Markdowner API Key",
+                    text: $viewModel.markdownerAPIKey
+                )
             } header: {
                 Text("API Keys")
             } footer: {
-                Text("Keys are stored securely in the keychain.")
+                Text("Keys are stored securely in the keychain. A Markdowner API key enables higher rate limits on md.dhr.wtf.")
             }
         }
         .formStyle(.grouped)
@@ -34,6 +38,7 @@ struct SettingsView: View {
         .onChange(of: viewModel.googlePlacesAPIKey) { viewModel.save() }
         .onChange(of: viewModel.openAIAPIKey) { viewModel.save() }
         .onChange(of: viewModel.openRouterAPIKey) { viewModel.save() }
+        .onChange(of: viewModel.markdownerAPIKey) { viewModel.save() }
     }
 
     private func apiKeyField(title: String, text: Binding<String>) -> some View {

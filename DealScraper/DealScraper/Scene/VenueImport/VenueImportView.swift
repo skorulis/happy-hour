@@ -50,8 +50,12 @@ struct VenueImportView: View {
             } else {
                 List(selection: $viewModel.selectedGoogleMapId) {
                     ForEach(viewModel.savedVenues, id: \.googleMapId) { venue in
-                        VenueRow(venue: venue)
-                            .tag(venue.googleMapId)
+                        VenueRow(
+                            venue: venue,
+                            sourceCount: viewModel.sourceCount(for: venue),
+                            dealCount: viewModel.dealCount(for: venue)
+                        )
+                        .tag(venue.googleMapId)
                     }
                 }
                 .listStyle(.sidebar)

@@ -5,6 +5,8 @@ import SwiftUI
 
 struct VenueRow: View {
     let venue: Venue
+    let sourceCount: Int
+    let dealCount: Int
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -15,7 +17,17 @@ struct VenueRow: View {
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .lineLimit(2)
+
+            Text(countsLabel)
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
+    }
+
+    private var countsLabel: String {
+        let sources = "\(sourceCount) source\(sourceCount == 1 ? "" : "s")"
+        let deals = "\(dealCount) deal\(dealCount == 1 ? "" : "s")"
+        return "\(sources) · \(deals)"
     }
 
     private var subtitle: String {

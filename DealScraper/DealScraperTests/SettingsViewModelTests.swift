@@ -13,21 +13,25 @@ struct SettingsViewModelTests {
         apiKeyStore.googlePlacesAPIKey = "google-key"
         apiKeyStore.openAIAPIKey = "openai-key"
         apiKeyStore.openRouterAPIKey = "openrouter-key"
+        apiKeyStore.markdownerAPIKey = "markdowner-key"
 
         let viewModel = assembler.resolver.settingsViewModel()
 
         #expect(viewModel.googlePlacesAPIKey == "google-key")
         #expect(viewModel.openAIAPIKey == "openai-key")
         #expect(viewModel.openRouterAPIKey == "openrouter-key")
+        #expect(viewModel.markdownerAPIKey == "markdowner-key")
 
         viewModel.googlePlacesAPIKey = "updated-google"
         viewModel.openAIAPIKey = "updated-openai"
         viewModel.openRouterAPIKey = "updated-openrouter"
+        viewModel.markdownerAPIKey = "updated-markdowner"
         viewModel.save()
 
         #expect(apiKeyStore.googlePlacesAPIKey == "updated-google")
         #expect(apiKeyStore.openAIAPIKey == "updated-openai")
         #expect(apiKeyStore.openRouterAPIKey == "updated-openrouter")
+        #expect(apiKeyStore.markdownerAPIKey == "updated-markdowner")
     }
 
     @Test func clearingKeyRemovesStoredValue() {
