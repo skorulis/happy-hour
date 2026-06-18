@@ -42,6 +42,57 @@ enum OpenRouterAPI {
             instructions: instructions
         )
     }
+
+    nonisolated static func extractWebpageDealsRequest(
+        model: String,
+        webpageURL: String,
+        apiKey: String,
+        instructions: String
+    ) throws -> ExtractDealsRequest {
+        let requestBody: [String: Any] = [
+            "model": model,
+            "messages": [
+                [
+                    "role": "system",
+                    "content": instructions,
+                ],
+                [
+                    "role": "user",
+                    "content": """
+                    \(VenueDealInstructions.webpageExtractionTask)
+
+                    \(webpageURL)
+                    """,
+                ],
+            ],
+            "tools": [
+                [
+                    "type": "openrouter:web_fetch",
+                    "parameters": [
+                        "max_uses": 1,
+                    ],
+                ],
+            ],
+            "response_format": [
+                "type": "json_schema",
+                "json_schema": [
+                    "name": "deal_extraction",
+                    "strict": true,
+                    "schema": VisionDealAPI.dealExtractionSchema,
+                ],
+            ],
+        ]
+
+        return ExtractDealsRequest(
+            body: try JSONSerialization.data(withJSONObject: requestBody),
+            headers: [
+                "Authorization": "Bearer \(apiKey)",
+                "Content-Type": "application/json",
+                "HTTP-Referer": "https://github.com/skorulis/happy-hour",
+                "X-Title": "DealScraper",
+            ]
+        )
+    }
 }
 
 struct ExtractDealsRequest: HTTPRequest {

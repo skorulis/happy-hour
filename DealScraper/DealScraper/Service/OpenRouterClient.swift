@@ -45,4 +45,20 @@ final class OpenRouterClient: HTTPService {
             instructions: instructions
         )
     }
+
+    func extractDealsFromWebpage(
+        url: String,
+        apiKey: String,
+        model: String,
+        instructions: String
+    ) async throws -> DealExtractionPayload {
+        try await execute(request:
+            OpenRouterAPI.extractWebpageDealsRequest(
+                model: model,
+                webpageURL: url,
+                apiKey: apiKey,
+                instructions: instructions
+            )
+        )
+    }
 }

@@ -59,6 +59,64 @@ struct OpenRouterClientTests {
         #expect(payload.deals.first?.title == "HAPPY HOUR")
     }
 
+    @Test func sendsWebpageRequestWithWebFetchTool() async throws {
+        let captured = RequestCapture()
+
+        let client = OpenRouterClient(
+            urlSession: FakeURLSession { request in
+                captured.request = request
+
+                let responseData = """
+                {
+                  "choices": [
+                    {
+                      "message": {
+                        "content": "{\\"deals\\":[{\\"title\\":\\"TACO TUESDAY\\",\\"details\\":[\\"$2 TACOS\\"],\\"conditions\\":[],\\"days\\":[\\"TUESDAY\\"],\\"times\\":[\\"all day\\"]}]}"
+                      }
+                    }
+                  ]
+                }
+                """.data(using: .utf8)!
+
+                return (responseData, HTTPURLResponse(
+                    url: request.url!,
+                    statusCode: 200,
+                    httpVersion: nil,
+                    headerFields: nil
+                )!)
+            }
+        )
+
+        let payload = try await client.extractDealsFromWebpage(
+            url: "https://pub.example.com/specials",
+            apiKey: "test-key",
+            model: "google/gemini-2.5-pro",
+            instructions: "test instructions"
+        )
+
+        let request = try #require(captured.request)
+        let body = try #require(request.httpBody)
+        let json = try #require(JSONSerialization.jsonObject(with: body) as? [String: Any])
+
+        let tools = try #require(json["tools"] as? [[String: Any]])
+        #expect(tools.count == 1)
+        #expect(tools[0]["type"] as? String == "openrouter:web_fetch")
+
+        let parameters = try #require(tools[0]["parameters"] as? [String: Any])
+        #expect(parameters["max_uses"] as? Int == 1)
+
+        let messages = try #require(json["messages"] as? [[String: Any]])
+        #expect(messages.count == 2)
+        #expect(messages[1]["content"] as? String == """
+        Extract all deals from the visible text on this webpage.
+
+        https://pub.example.com/specials
+        """)
+
+        #expect(payload.deals.count == 1)
+        #expect(payload.deals.first?.title == "TACO TUESDAY")
+    }
+
     @Test func throwsOnNonSuccessStatus() async throws {
         let client = OpenRouterClient(
             urlSession: FakeURLSession { request in

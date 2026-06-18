@@ -34,6 +34,12 @@ struct VenueImportView: View {
 
             Divider()
 
+            Text(venueCountLabel)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+
             if viewModel.savedVenues.isEmpty {
                 ContentUnavailableView(
                     "No Saved Venues",
@@ -101,6 +107,11 @@ struct VenueImportView: View {
             viewModel.search()
         }
         .disabled(viewModel.state == .searching)
+    }
+
+    private var venueCountLabel: String {
+        let count = viewModel.savedVenues.count
+        return "\(count) venue\(count == 1 ? "" : "s")"
     }
 
     @ViewBuilder

@@ -25,7 +25,6 @@ struct DealSourceRow: View {
                     Text(preview)
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                        .lineLimit(3)
                 }
             }
 
@@ -60,7 +59,7 @@ struct DealSourceRow: View {
     @ViewBuilder
     private var sourceLink: some View {
         if let url = URL(string: source.sourceURL) {
-            Link("Source", destination: url)
+            Link(url.lastPathComponent, destination: url)
                 .lineLimit(2)
         } else {
             Text(source.sourceURL)

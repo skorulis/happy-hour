@@ -82,11 +82,11 @@ final class ImageImportViewModel {
     }
 
     func reset() {
-        state = .idle
+        updateState(.idle)
     }
 
     private func processLocalImage(at url: URL) async {
-        state = .processing(progress: "Preparing image…")
+        updateState(.processing(progress: "Preparing image…"))
 
         let didAccess = url.startAccessingSecurityScopedResource()
         defer {
@@ -100,22 +100,22 @@ final class ImageImportViewModel {
                 at: url,
                 provider: extractionProvider,
                 model: extractionModel
-            ) { [weak self] progress in
+            ) { [unowned self] progress in
                 Task { @MainActor in
-                    self?.state = .processing(progress: progress)
+                    self.state = .processing(progress: progress)
                 }
             }
-            state = .completed(deals: deals, sourceURL: url)
+            updateState(.completed(deals: deals, sourceURL: url))
         } catch {
-            state = .failed(message: error.localizedDescription)
+            updateState(.failed(message: error.localizedDescription))
         }
     }
 
     private func processRemoteURL(at url: URL) async {
         if VenueDealSourceMaterialPreparer.isImageURL(url) {
-            state = .processing(progress: "Analyzing with \(extractionProvider.rawValue)…")
+            updateState(.processing(progress: "Analyzing with \(extractionProvider.rawValue)…"))
         } else {
-            state = .processing(progress: "Preparing source…")
+            updateState(.processing(progress: "Preparing source…"))
         }
 
         do {
@@ -128,9 +128,15 @@ final class ImageImportViewModel {
                     self.state = .processing(progress: progress)
                 }
             }
-            state = .completed(deals: deals, sourceURL: url)
+            updateState(.completed(deals: deals, sourceURL: url))
         } catch {
-            state = .failed(message: error.localizedDescription)
+            updateState(.failed(message: error.localizedDescription))
+        }
+    }
+    
+    private func updateState(_ state: State) {
+        Task { @MainActor in
+            self.state = state
         }
     }
 }

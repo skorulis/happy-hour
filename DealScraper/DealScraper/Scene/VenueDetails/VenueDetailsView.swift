@@ -21,7 +21,7 @@ struct VenueDetailsView: View {
             }
         }
         .frame(minWidth: 360, minHeight: 400)
-        .navigationTitle(viewModel.venue?.name ?? "Venue")
+        .navigationTitle(viewModel.venue.map(venueTitle) ?? "Venue")
     }
 
     private func venueContent(_ venue: Venue) -> some View {
@@ -46,10 +46,23 @@ struct VenueDetailsView: View {
         }
     }
 
+    private func venueTitle(_ venue: Venue) -> String {
+        guard let id = venue.id else { return venue.name }
+        return "\(venue.name) #\(id)"
+    }
+
     private func header(_ venue: Venue) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(venue.name)
-                .font(.largeTitle.weight(.semibold))
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text(venue.name)
+                    .font(.largeTitle.weight(.semibold))
+
+                if let id = venue.id {
+                    Text("#\(id)")
+                        .font(.title3.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                }
+            }
 
             if let address = viewModel.formattedAddress {
                 Text(address)
