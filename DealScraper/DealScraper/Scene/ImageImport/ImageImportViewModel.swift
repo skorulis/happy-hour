@@ -32,20 +32,17 @@ final class ImageImportViewModel {
     }
 
     private let venueDealExtractionService: VenueDealExtractionService
-    private let webMarkdownGenerator: WebMarkdownGenerator
-    private let apiKeyStore: APIKeyStore
+    private let webPageLoader: WebPageLoader
     private let llmModelStore: LLMModelStore
 
     @Resolvable<Resolver>
     init(
         venueDealExtractionService: VenueDealExtractionService,
-        webMarkdownGenerator: WebMarkdownGenerator,
-        apiKeyStore: APIKeyStore,
+        webPageLoader: WebPageLoader,
         llmModelStore: LLMModelStore
     ) {
         self.venueDealExtractionService = venueDealExtractionService
-        self.webMarkdownGenerator = webMarkdownGenerator
-        self.apiKeyStore = apiKeyStore
+        self.webPageLoader = webPageLoader
         self.llmModelStore = llmModelStore
         openAIModel = llmModelStore.openAIModel
         openRouterModel = llmModelStore.openRouterModel
@@ -134,18 +131,18 @@ final class ImageImportViewModel {
                 }
             }
 
-            async let deals = venueDealExtractionService.extractDealsFromRemoteURL(
+            let deals = try await venueDealExtractionService.extractDealsFromRemoteURL(
                 at: url,
                 provider: extractionProvider,
                 progress: extractionProgress
             )
-            async let markdown = fetchMarkdown(for: url)
+            let markdown = await fetchMarkdown(for: url)
 
             updateState(.completed(
-                deals: try await deals,
+                deals: deals,
                 sourceURL: url,
                 duration: Date().timeIntervalSince(startTime),
-                markdown: await markdown
+                markdown: markdown
             ))
         } catch {
             updateState(.failed(message: error.localizedDescription))
@@ -154,10 +151,7 @@ final class ImageImportViewModel {
 
     private func fetchMarkdown(for url: URL) async -> String? {
         guard !VenueDealSourceMaterialPreparer.isImageURL(url) else { return nil }
-        return try? await webMarkdownGenerator.markdown(
-            for: url,
-            apiKey: apiKeyStore.markdownerAPIKey
-        )
+        return try? await webPageLoader.load(url: url).markdown
     }
 
     private func updateState(_ state: State) {

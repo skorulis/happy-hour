@@ -1,5 +1,5 @@
 {
-  "originHash" : "9191876d7bf3c1b47d0f881f2a22c59e742c22754daf0b2049d8acf734be37ed",
+  "originHash" : "bc5b6d05f2ec8386685afb8d0ccfbd13e4b132a5fe8e1404303b354528a96e2d",
   "pins" : [
     {
       "identity" : "askcoordinator",
@@ -17,6 +17,15 @@
       "state" : {
         "branch" : "main",
         "revision" : "39794e9fa857c7cf9b7f304eeb202ff21fac3cb0"
+      }
+    },
+    {
+      "identity" : "demark",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/steipete/Demark",
+      "state" : {
+        "revision" : "9d12266c98f51099beec92e50483392869b12d77",
+        "version" : "1.1.0"
       }
     },
     {

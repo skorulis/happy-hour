@@ -128,7 +128,6 @@ final class WebPageLoader: NSObject {
     private let contentBlockGrouper: ContentBlockGrouper
     private let pageLinkExtractor: PageLinkExtractor
     private let webMarkdownGenerator: WebMarkdownGenerator
-    private let apiKeyStore: APIKeyStore
     private let webView: WKWebView
     private var loadContinuation: CheckedContinuation<Void, Error>?
 
@@ -136,13 +135,11 @@ final class WebPageLoader: NSObject {
     init(
         contentBlockGrouper: ContentBlockGrouper,
         pageLinkExtractor: PageLinkExtractor,
-        webMarkdownGenerator: WebMarkdownGenerator,
-        apiKeyStore: APIKeyStore
+        webMarkdownGenerator: WebMarkdownGenerator
     ) {
         self.contentBlockGrouper = contentBlockGrouper
         self.pageLinkExtractor = pageLinkExtractor
         self.webMarkdownGenerator = webMarkdownGenerator
-        self.apiKeyStore = apiKeyStore
         let configuration = WKWebViewConfiguration()
         configuration.defaultWebpagePreferences.allowsContentJavaScript = true
 
@@ -192,10 +189,7 @@ final class WebPageLoader: NSObject {
         let contentBlocks = (try? contentBlockGrouper.group(html: resolvedHTML, pageURL: finalURL)) ?? []
         let links = (try? pageLinkExtractor.extract(html: resolvedHTML, pageURL: finalURL)) ?? []
         let normalizedURL = URLNormalizer.normalize(finalURL) ?? finalURL
-        let markdown = try? await webMarkdownGenerator.markdown(
-            for: normalizedURL,
-            apiKey: apiKeyStore.markdownerAPIKey
-        )
+        let markdown = try? await webMarkdownGenerator.markdown(from: resolvedHTML)
 
         return LoadedPage(
             url: normalizedURL,

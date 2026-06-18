@@ -1,5 +1,6 @@
 //Created by Alex Skorulis on 15/6/2026.
 
+import AppKit
 import Knit
 import SwiftUI
 
@@ -7,6 +8,7 @@ struct ExperimentView: View {
 
     @State var viewModel: ExperimentViewModel
     @State private var linkDisplayMode: LinkDisplayMode = .filtered
+    @State private var isMarkdownExpanded = false
 
     private let pageLinkFilter = PageLinkFilter()
 
@@ -69,10 +71,64 @@ struct ExperimentView: View {
     @ViewBuilder
     private var results: some View {
         if case let .loaded(page) = viewModel.state {
+            if let markdown = page.markdown {
+                markdownSection(markdown)
+            }
             linksSection(page.links)
             imagesSection(page)
             dealContentBlocksSection(page.dealContentBlocks)
         }
+    }
+
+    private func markdownSection(_ markdown: String) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Button {
+                    isMarkdownExpanded.toggle()
+                } label: {
+                    HStack {
+                        Text("Markdown")
+                            .font(.headline)
+                        Image(systemName: isMarkdownExpanded ? "chevron.down" : "chevron.right")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .buttonStyle(.plain)
+
+                Spacer()
+
+                Button {
+                    copyMarkdownToClipboard(markdown)
+                } label: {
+                    Image(systemName: "doc.on.doc")
+                }
+                .buttonStyle(.plain)
+                .help("Copy markdown to clipboard")
+            }
+
+            if isMarkdownExpanded {
+                ScrollView {
+                    Text(markdown)
+                        .font(.system(.body, design: .monospaced))
+                        .textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .frame(maxHeight: 400)
+            }
+        }
+        .padding(16)
+        .background {
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color(nsColor: .controlBackgroundColor))
+        }
+        .onChange(of: markdown) {
+            isMarkdownExpanded = false
+        }
+    }
+
+    private func copyMarkdownToClipboard(_ markdown: String) {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(markdown, forType: .string)
     }
 
     private func linksSection(_ links: [ContentBlockLink]) -> some View {

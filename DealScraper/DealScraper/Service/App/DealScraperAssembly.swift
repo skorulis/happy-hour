@@ -48,6 +48,7 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
         container.register(OpenRouterClient.self) { _ in OpenRouterClient() }
         container.register(GooglePlacesClient.self) { _ in GooglePlacesClient() }
         container.register(WebMarkdownGenerator.self) { _ in WebMarkdownGenerator() }
+            .inObjectScope(.container)
 
         container.register(OpenAIVenueDealExtractor.self) { resolver in
             OpenAIVenueDealExtractor(
