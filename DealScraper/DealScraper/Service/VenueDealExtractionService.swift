@@ -109,13 +109,14 @@ final class VenueDealExtractionService {
         provider: VenueDealExtractionProvider,
         progress: ProgressMonitor<[DealWithSchedules]> = .empty
     ) async throws -> [DealWithSchedules] {
+        let material: VenueDealSourceMaterial
         if VenueDealSourceMaterialPreparer.isImageURL(url) {
             await progress("Analyzing with \(provider.rawValue)…")
+            material = materialPreparer.prepareRemoteURL(at: url)
         } else {
-            await progress("Preparing source…")
+            await progress("Loading webpage…")
+            material = try await materialPreparer.prepareWebpage(at: url)
         }
-
-        let material = materialPreparer.prepareRemoteURL(at: url)
         let materials = [material]
 
         let result = try await extractPayload(

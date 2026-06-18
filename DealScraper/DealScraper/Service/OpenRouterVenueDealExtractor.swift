@@ -55,15 +55,26 @@ final class OpenRouterVenueDealExtractor: VenueDealExtractor, @unchecked Sendabl
                     )
                     extractions.append(SourcedDealExtraction(material: material, deals: payload.deals))
                 case .webpage:
-                    let payload = try await client.extractDealsFromWebpage(
-                        url: material.url.absoluteString,
-                        apiKey: apiKey,
-                        model: model,
-                        instructions: VisionVenueDealExtractorSupport.perSourceInstructions(
-                            venueName: venueName,
-                            material: material
-                        )
+                    let instructions = VisionVenueDealExtractorSupport.perSourceInstructions(
+                        venueName: venueName,
+                        material: material
                     )
+                    let payload: DealExtractionPayload
+                    if let markdown = material.markdown {
+                        payload = try await client.extractDealsFromMarkdown(
+                            markdown: markdown,
+                            apiKey: apiKey,
+                            model: model,
+                            instructions: instructions
+                        )
+                    } else {
+                        payload = try await client.extractDealsFromWebpage(
+                            url: material.url.absoluteString,
+                            apiKey: apiKey,
+                            model: model,
+                            instructions: instructions
+                        )
+                    }
                     extractions.append(SourcedDealExtraction(material: material, deals: payload.deals))
                 case .pdf:
                     throw VisionVenueDealExtractorError.unsupportedSourceType(material.type)

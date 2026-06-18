@@ -61,4 +61,20 @@ final class OpenRouterClient: HTTPService {
             )
         )
     }
+
+    func extractDealsFromMarkdown(
+        markdown: String,
+        apiKey: String,
+        model: String,
+        instructions: String
+    ) async throws -> DealExtractionPayload {
+        try await execute(request:
+            OpenRouterAPI.extractMarkdownDealsRequest(
+                model: model,
+                markdown: markdown,
+                apiKey: apiKey,
+                instructions: instructions
+            )
+        )
+    }
 }

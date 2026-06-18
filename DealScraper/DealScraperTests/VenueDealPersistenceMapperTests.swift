@@ -13,7 +13,8 @@ struct VenueDealPersistenceMapperTests {
             url: URL(string: "https://example.com/poster.jpg")!,
             sourceURL: URL(string: "https://example.com/specials")!,
             type: .image,
-            pngData: Data()
+            pngData: Data(),
+            markdown: nil
         )
         let payload = DealExtractionPayload(deals: [
             DealExtractionPayload.RawDeal(
@@ -48,7 +49,8 @@ struct VenueDealPersistenceMapperTests {
             url: URL(string: "https://example.com/page")!,
             sourceURL: URL(string: "https://example.com/page")!,
             type: .webpage,
-            pngData: nil
+            pngData: nil,
+            markdown: nil
         )
         let payload = DealExtractionPayload(deals: [
             DealExtractionPayload.RawDeal(
@@ -76,7 +78,8 @@ struct VenueDealPersistenceMapperTests {
             url: URL(string: "https://example.com/poster-a.jpg")!,
             sourceURL: URL(string: "https://example.com/specials-a")!,
             type: .image,
-            pngData: Data()
+            pngData: Data(),
+            markdown: nil
         )
         let secondMaterial = VenueDealSourceMaterial(
             index: 2,
@@ -84,7 +87,8 @@ struct VenueDealPersistenceMapperTests {
             url: URL(string: "https://example.com/poster-b.jpg")!,
             sourceURL: URL(string: "https://example.com/specials-b")!,
             type: .image,
-            pngData: Data()
+            pngData: Data(),
+            markdown: nil
         )
 
         let mapped = VenueDealPersistenceMapper.map(

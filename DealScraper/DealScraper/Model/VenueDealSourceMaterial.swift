@@ -9,4 +9,5 @@ nonisolated struct VenueDealSourceMaterial: Sendable {
     let sourceURL: URL
     let type: DealSourceType
     let pngData: Data?
+    let markdown: String?
 }

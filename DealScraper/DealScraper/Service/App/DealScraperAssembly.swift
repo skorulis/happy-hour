@@ -68,7 +68,8 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
 
         container.register(VenueDealSourceMaterialPreparer.self) { resolver in
             VenueDealSourceMaterialPreparer(
-                imageFetcher: resolver.crawlImageFetcher()
+                imageFetcher: resolver.crawlImageFetcher(),
+                webPageLoader: resolver.webPageLoader()
             )
         }
 

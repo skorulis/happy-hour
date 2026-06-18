@@ -5,6 +5,7 @@ import UniformTypeIdentifiers
 
 enum VenueDealSourceMaterialPreparerError: LocalizedError {
     case noMaterialsPrepared(failures: [String])
+    case missingMarkdown
 
     var errorDescription: String? {
         switch self {
@@ -13,6 +14,8 @@ enum VenueDealSourceMaterialPreparerError: LocalizedError {
                 return "No deal sources could be prepared for extraction."
             }
             return "No deal sources could be prepared for extraction:\n" + failures.joined(separator: "\n")
+        case .missingMarkdown:
+            return "The webpage loaded but contained no convertible markdown content."
         }
     }
 }
@@ -23,9 +26,11 @@ final class VenueDealSourceMaterialPreparer {
     static let maxSources = 10
 
     private let imageFetcher: CrawlImageFetcher
+    private let webPageLoader: WebPageLoader
 
-    init(imageFetcher: CrawlImageFetcher) {
+    init(imageFetcher: CrawlImageFetcher, webPageLoader: WebPageLoader) {
         self.imageFetcher = imageFetcher
+        self.webPageLoader = webPageLoader
     }
 
     func prepare<Result>(
@@ -50,26 +55,31 @@ final class VenueDealSourceMaterialPreparer {
             let sourceURL = URL(string: source.sourceURL) ?? url
 
             do {
-                let pngData: Data?
+                let material: VenueDealSourceMaterial
                 switch source.type {
                 case .image:
-                    pngData = try await prepareImage(url: url)
-                case .webpage:
-                    pngData = nil
-                case .pdf:
-                    continue
-                }
-
-                materials.append(
-                    VenueDealSourceMaterial(
+                    let pngData = try await prepareImage(url: url)
+                    material = VenueDealSourceMaterial(
                         index: index,
                         dealSourceId: sourceID,
                         url: url,
                         sourceURL: sourceURL,
                         type: source.type,
-                        pngData: pngData
+                        pngData: pngData,
+                        markdown: nil
                     )
-                )
+                case .webpage:
+                    material = try await prepareWebpage(
+                        at: url,
+                        sourceURL: sourceURL,
+                        dealSourceId: sourceID,
+                        index: index
+                    )
+                case .pdf:
+                    continue
+                }
+
+                materials.append(material)
             } catch {
                 failures.append("Source \(index) (\(source.url)): \(error.localizedDescription)")
             }
@@ -90,7 +100,8 @@ final class VenueDealSourceMaterialPreparer {
             url: url,
             sourceURL: url,
             type: .image,
-            pngData: pngData
+            pngData: pngData,
+            markdown: nil
         )
     }
 
@@ -101,7 +112,32 @@ final class VenueDealSourceMaterialPreparer {
             url: url,
             sourceURL: url,
             type: Self.isImageURL(url) ? .image : .webpage,
-            pngData: nil
+            pngData: nil,
+            markdown: nil
+        )
+    }
+
+    func prepareWebpage(
+        at url: URL,
+        sourceURL: URL? = nil,
+        dealSourceId: Int64 = 0,
+        index: Int = 1
+    ) async throws -> VenueDealSourceMaterial {
+        let page = try await webPageLoader.load(url: url)
+        guard let markdown = page.markdown,
+              !markdown.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        else {
+            throw VenueDealSourceMaterialPreparerError.missingMarkdown
+        }
+
+        return VenueDealSourceMaterial(
+            index: index,
+            dealSourceId: dealSourceId,
+            url: page.normalizedURL,
+            sourceURL: sourceURL ?? page.normalizedURL,
+            type: .webpage,
+            pngData: nil,
+            markdown: markdown
         )
     }
 

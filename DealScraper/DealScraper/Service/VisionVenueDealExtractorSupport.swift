@@ -34,7 +34,7 @@ enum VisionVenueDealExtractorSupport {
         venueName: String,
         material: VenueDealSourceMaterial
     ) -> String {
-        let instructions = VenueDealInstructions.dealExtraction(for: material.type)
+        let instructions = VenueDealInstructions.dealExtraction(for: material)
         let preamble = VenueDealInstructions.promptPreamble(
             venueName: venueName,
             material: material
