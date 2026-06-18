@@ -62,6 +62,7 @@ struct ExperimentView: View {
     private var results: some View {
         if case let .loaded(page) = viewModel.state {
             linksSection(page.links)
+            imagesSection(page)
             dealContentBlocksSection(page.dealContentBlocks)
         }
     }
@@ -82,6 +83,73 @@ struct ExperimentView: View {
                 }
             }
         }
+    }
+
+    private func imagesSection(_ page: LoadedPage) -> some View {
+        let imageCount = page.imageURLs.count
+
+        return detailSection(title: "Images (\(imageCount))") {
+            Text("\(imageCount) image\(imageCount == 1 ? "" : "s") on page.")
+                .foregroundStyle(.secondary)
+
+            Button("Process images") {
+                viewModel.processImages()
+            }
+            .disabled(viewModel.isProcessingImages || imageCount == 0)
+
+            if viewModel.isProcessingImages {
+                HStack(spacing: 8) {
+                    ProgressView()
+                        .controlSize(.small)
+                    Text("Processing images…")
+                }
+            }
+
+            if let validatedImages = viewModel.validatedImages {
+                if validatedImages.isEmpty {
+                    Text("No valid images found.")
+                        .foregroundStyle(.secondary)
+                } else {
+                    ScrollView(.horizontal, showsIndicators: true) {
+                        HStack(spacing: 12) {
+                            ForEach(Array(validatedImages.enumerated()), id: \.offset) { _, result in
+                                validatedImageThumbnail(result)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private func validatedImageThumbnail(_ result: ImageValidationResult) -> some View {
+        Link(destination: result.url) {
+            AsyncImage(url: result.url) { phase in
+                switch phase {
+                case .empty:
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color.secondary.opacity(0.15))
+                        .overlay { ProgressView() }
+                case .success(let image):
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                case .failure:
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color.secondary.opacity(0.15))
+                        .overlay {
+                            Image(systemName: "photo")
+                                .foregroundStyle(.secondary)
+                        }
+                @unknown default:
+                    EmptyView()
+                }
+            }
+            .frame(width: 200, height: 120)
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+        }
+        .buttonStyle(.plain)
+        .help("Open image in browser")
     }
 
     private func dealContentBlocksSection(_ blocks: [ContentBlock]) -> some View {

@@ -17,12 +17,16 @@ final class ExperimentViewModel {
 
     var urlString = "https://www.thestrawbs.com.au/"
     private(set) var state: State = .idle
+    private(set) var validatedImages: [ImageValidationResult]?
+    private(set) var isProcessingImages = false
 
     private let webPageLoader: WebPageLoader
+    private let crawlImageValidator: CrawlImageValidator
 
     @Resolvable<Resolver>
-    init(webPageLoader: WebPageLoader) {
+    init(webPageLoader: WebPageLoader, crawlImageValidator: CrawlImageValidator) {
         self.webPageLoader = webPageLoader
+        self.crawlImageValidator = crawlImageValidator
     }
 
     func loadPage() {
@@ -30,6 +34,14 @@ final class ExperimentViewModel {
 
         Task {
             await performLoad(url: url)
+        }
+    }
+
+    func processImages() {
+        guard case let .loaded(page) = state else { return }
+
+        Task {
+            await performImageProcessing(urls: page.imageURLs)
         }
     }
 
@@ -50,6 +62,8 @@ final class ExperimentViewModel {
 
     private func performLoad(url: URL) async {
         state = .loading
+        validatedImages = nil
+        isProcessingImages = false
 
         do {
             let page = try await webPageLoader.load(url: url)
@@ -57,5 +71,11 @@ final class ExperimentViewModel {
         } catch {
             state = .failed(message: error.localizedDescription)
         }
+    }
+
+    private func performImageProcessing(urls: [URL]) async {
+        isProcessingImages = true
+        validatedImages = await crawlImageValidator.validateImages(urls: urls)
+        isProcessingImages = false
     }
 }
