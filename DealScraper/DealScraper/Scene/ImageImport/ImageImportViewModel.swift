@@ -16,7 +16,7 @@ final class ImageImportViewModel {
     enum State {
         case idle
         case processing(progress: String)
-        case completed(deals: [DealWithSchedules], sourceURL: URL, duration: TimeInterval, markdown: String?)
+        case completed(deals: [DealWithSchedules], sourceURL: URL, duration: TimeInterval)
         case failed(message: String)
     }
 
@@ -105,12 +105,13 @@ final class ImageImportViewModel {
                 provider: extractionProvider,
                 progress: extractionProgress
             )
-            updateState(.completed(
-                deals: deals,
-                sourceURL: url,
-                duration: Date().timeIntervalSince(startTime),
-                markdown: nil
-            ))
+            updateState(
+                .completed(
+                    deals: deals,
+                    sourceURL: url,
+                    duration: Date().timeIntervalSince(startTime),
+                )
+            )
         } catch {
             updateState(.failed(message: error.localizedDescription))
         }
@@ -136,22 +137,15 @@ final class ImageImportViewModel {
                 provider: extractionProvider,
                 progress: extractionProgress
             )
-            let markdown = await fetchMarkdown(for: url)
 
             updateState(.completed(
                 deals: deals,
                 sourceURL: url,
-                duration: Date().timeIntervalSince(startTime),
-                markdown: markdown
+                duration: Date().timeIntervalSince(startTime)
             ))
         } catch {
             updateState(.failed(message: error.localizedDescription))
         }
-    }
-
-    private func fetchMarkdown(for url: URL) async -> String? {
-        guard !VenueDealSourceMaterialPreparer.isImageURL(url) else { return nil }
-        return try? await webPageLoader.load(url: url).markdown
     }
 
     private func updateState(_ state: State) {

@@ -42,7 +42,7 @@ struct VenueDealExtractionServiceTests {
             json: "{}"
         ))
 
-        var venue = try #require(try venueRepository.find(googleMapId: "places/test"))
+        let venue = try #require(try venueRepository.find(googleMapId: "places/test"))
 
         do {
             _ = try await service.extractDeals(for: venue, provider: .openAI)
