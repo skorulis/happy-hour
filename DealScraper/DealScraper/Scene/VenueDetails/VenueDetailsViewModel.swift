@@ -30,7 +30,7 @@ final class VenueDetailsViewModel {
     enum ExtractionState: Equatable {
         case idle
         case extracting(progress: String)
-        case completed(count: Int)
+        case completed(VenueDealExtractionResults)
         case failed(message: String)
     }
 
@@ -227,7 +227,7 @@ final class VenueDetailsViewModel {
         updateState(.extracting(progress: "Preparing sources…"))
 
         do {
-            let count = try await venueDealExtractionService.extractDeals(
+            let results = try await venueDealExtractionService.extractDeals(
                 for: venue,
                 provider: extractionProvider,
                 model: extractionModel
@@ -238,7 +238,7 @@ final class VenueDetailsViewModel {
             }
 
             load()
-            updateState(.completed(count: count))
+            updateState(.completed(results))
         } catch {
             updateState(.failed(message: error.localizedDescription))
         }

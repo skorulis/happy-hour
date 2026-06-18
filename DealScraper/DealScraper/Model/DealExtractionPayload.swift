@@ -82,3 +82,19 @@ nonisolated struct SourcedDealExtraction: Sendable {
     let material: VenueDealSourceMaterial
     let deals: [DealExtractionPayload.RawDeal]
 }
+
+nonisolated struct VenueDealSourceExtractionError: Sendable {
+    let material: VenueDealSourceMaterial
+    let message: String
+}
+
+nonisolated struct VenueDealExtractionResult: Sendable {
+    let extractions: [SourcedDealExtraction]
+    let errors: [VenueDealSourceExtractionError]
+    let duration: TimeInterval
+
+    var failureMessage: String? {
+        guard extractions.isEmpty, !errors.isEmpty else { return nil }
+        return errors.map(\.message).joined(separator: "\n")
+    }
+}

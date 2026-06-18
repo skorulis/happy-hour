@@ -218,7 +218,7 @@ struct VenueDetailsView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Found \(results.dealsFound) new deal source\(results.dealsFound == 1 ? "" : "s").")
             Text("Analyzed \(results.imagesAnalyzed) image\(results.imagesAnalyzed == 1 ? "" : "s").")
-            Text("Completed in \(formattedCrawlDuration(results.duration)).")
+            Text("Completed in \(formattedDuration(results.duration)).")
 
             if !results.visitedPages.isEmpty {
                 Text("Visited \(results.visitedPages.count) page\(results.visitedPages.count == 1 ? "" : "s"):")
@@ -236,7 +236,7 @@ struct VenueDetailsView: View {
         .foregroundStyle(.secondary)
     }
 
-    private func formattedCrawlDuration(_ duration: TimeInterval) -> String {
+    private func formattedDuration(_ duration: TimeInterval) -> String {
         if duration < 60 {
             return String(format: "%.1f seconds", duration)
         }
@@ -246,6 +246,16 @@ struct VenueDetailsView: View {
             return "\(minutes) minute\(minutes == 1 ? "" : "s")"
         }
         return "\(minutes)m \(seconds)s"
+    }
+
+    private func extractionResultsView(_ results: VenueDealExtractionResults) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Found \(results.dealsFound) deal\(results.dealsFound == 1 ? "" : "s").")
+            Text("\(results.errorCount) error\(results.errorCount == 1 ? "" : "s").")
+            Text("Completed in \(formattedDuration(results.duration)).")
+        }
+        .font(.caption)
+        .foregroundStyle(.secondary)
     }
 
     @ViewBuilder
@@ -318,10 +328,8 @@ struct VenueDetailsView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-            case let .completed(count):
-                Text("Saved \(count) deal\(count == 1 ? "" : "s").")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+            case let .completed(results):
+                extractionResultsView(results)
             case let .failed(message):
                 Text(message)
                     .font(.caption)

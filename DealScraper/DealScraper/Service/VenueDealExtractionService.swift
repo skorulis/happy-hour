@@ -8,6 +8,7 @@ enum VenueDealExtractionServiceError: LocalizedError, Equatable {
     case unsupportedProvider(VenueDealExtractionProvider)
     case missingAPIKey
     case missingModel
+    case extractionFailed(message: String)
 
     var errorDescription: String? {
         switch self {
@@ -21,6 +22,8 @@ enum VenueDealExtractionServiceError: LocalizedError, Equatable {
             return "Configure an API key in Settings."
         case .missingModel:
             return "Enter a model name."
+        case let .extractionFailed(message):
+            return message
         }
     }
 }
@@ -58,7 +61,7 @@ final class VenueDealExtractionService {
         provider: VenueDealExtractionProvider,
         model: String,
         onProgress: ProgressHandler? = nil
-    ) async throws -> Int {
+    ) async throws -> VenueDealExtractionResults {
         guard let venueId = venue.id else {
             throw VenueDealExtractionServiceError.missingVenueID
         }
@@ -74,16 +77,21 @@ final class VenueDealExtractionService {
 
         onProgress?("Analyzing with \(provider.rawValue)…")
 
-        let sourced = try await extractPayload(
+        let result = try await extractPayload(
             provider: provider,
             model: model,
             materials: materials,
             venueName: venue.name
         )
 
-        let deals = VenueDealPersistenceMapper.map(sourced: sourced, venueId: venueId)
+        let deals = VenueDealPersistenceMapper.map(sourced: result.extractions, venueId: venueId)
+        let savedCount = try dealRepository.replaceAll(venueId: venueId, deals: deals)
 
-        return try dealRepository.replaceAll(venueId: venueId, deals: deals)
+        return VenueDealExtractionResults(
+            dealsFound: savedCount,
+            duration: result.duration,
+            errorCount: result.errors.count
+        )
     }
 
     func extractDealsFromDroppedImage(
@@ -99,14 +107,14 @@ final class VenueDealExtractionService {
 
         onProgress?("Analyzing with \(provider.rawValue)…")
 
-        let sourced = try await extractPayload(
+        let result = try await extractPayload(
             provider: provider,
             model: model,
             materials: materials,
             venueName: "Preview"
         )
 
-        return VenueDealPersistenceMapper.map(sourced: sourced, venueId: 0)
+        return VenueDealPersistenceMapper.map(sourced: result.extractions, venueId: 0)
     }
 
     func extractDealsFromRemoteURL(
@@ -126,14 +134,14 @@ final class VenueDealExtractionService {
 
         onProgress?("Analyzing with \(provider.rawValue)…")
 
-        let sourced = try await extractPayload(
+        let result = try await extractPayload(
             provider: provider,
             model: model,
             materials: materials,
             venueName: "Preview"
         )
 
-        return VenueDealPersistenceMapper.map(sourced: sourced, venueId: 0)
+        return VenueDealPersistenceMapper.map(sourced: result.extractions, venueId: 0)
     }
 
     private func extractPayload(
@@ -141,7 +149,8 @@ final class VenueDealExtractionService {
         model: String,
         materials: [VenueDealSourceMaterial],
         venueName: String
-    ) async throws -> [SourcedDealExtraction] {
+    ) async throws -> VenueDealExtractionResult {
+        let result: VenueDealExtractionResult
         switch provider {
         case .openAI:
             let apiKey = apiKeyStore.openAIAPIKey
@@ -151,7 +160,7 @@ final class VenueDealExtractionService {
             let resolvedModel = model.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                 ? "gpt-4o"
                 : model
-            return try await openAIExtractor.extractDeals(
+            result = await openAIExtractor.extractDeals(
                 materials: materials,
                 venueName: venueName,
                 apiKey: apiKey,
@@ -165,12 +174,18 @@ final class VenueDealExtractionService {
             guard !model.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
                 throw VenueDealExtractionServiceError.missingModel
             }
-            return try await openRouterExtractor.extractDeals(
+            result = await openRouterExtractor.extractDeals(
                 materials: materials,
                 venueName: venueName,
                 apiKey: apiKey,
                 model: model
             )
         }
+
+        if let message = result.failureMessage {
+            throw VenueDealExtractionServiceError.extractionFailed(message: message)
+        }
+
+        return result
     }
 }

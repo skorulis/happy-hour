@@ -15,38 +15,53 @@ final class OpenRouterVenueDealExtractor: VenueDealExtractor, @unchecked Sendabl
         venueName: String,
         apiKey: String,
         model: String
-    ) async throws -> [SourcedDealExtraction] {
+    ) async -> VenueDealExtractionResult {
+        let startTime = Date()
         var extractions: [SourcedDealExtraction] = []
+        var errors: [VenueDealSourceExtractionError] = []
 
         for material in materials {
-            switch material.type {
-            case .image:
-                let payload = try await client.extractDeals(
-                    imageReference: VisionVenueDealExtractorSupport.imageReference(for: material),
-                    apiKey: apiKey,
-                    model: model,
-                    instructions: VisionVenueDealExtractorSupport.perSourceInstructions(
-                        venueName: venueName,
-                        material: material
+            do {
+                switch material.type {
+                case .image:
+                    let payload = try await client.extractDeals(
+                        imageReference: VisionVenueDealExtractorSupport.imageReference(for: material),
+                        apiKey: apiKey,
+                        model: model,
+                        instructions: VisionVenueDealExtractorSupport.perSourceInstructions(
+                            venueName: venueName,
+                            material: material
+                        )
+                    )
+                    extractions.append(SourcedDealExtraction(material: material, deals: payload.deals))
+                case .webpage:
+                    let payload = try await client.extractDealsFromWebpage(
+                        url: material.url.absoluteString,
+                        apiKey: apiKey,
+                        model: model,
+                        instructions: VisionVenueDealExtractorSupport.perSourceInstructions(
+                            venueName: venueName,
+                            material: material
+                        )
+                    )
+                    extractions.append(SourcedDealExtraction(material: material, deals: payload.deals))
+                case .pdf:
+                    throw VisionVenueDealExtractorError.unsupportedSourceType(material.type)
+                }
+            } catch {
+                errors.append(
+                    VenueDealSourceExtractionError(
+                        material: material,
+                        message: error.localizedDescription
                     )
                 )
-                extractions.append(SourcedDealExtraction(material: material, deals: payload.deals))
-            case .webpage:
-                let payload = try await client.extractDealsFromWebpage(
-                    url: material.url.absoluteString,
-                    apiKey: apiKey,
-                    model: model,
-                    instructions: VisionVenueDealExtractorSupport.perSourceInstructions(
-                        venueName: venueName,
-                        material: material
-                    )
-                )
-                extractions.append(SourcedDealExtraction(material: material, deals: payload.deals))
-            case .pdf:
-                throw VisionVenueDealExtractorError.unsupportedSourceType(material.type)
             }
         }
 
-        return extractions
+        return VenueDealExtractionResult(
+            extractions: extractions,
+            errors: errors,
+            duration: Date().timeIntervalSince(startTime)
+        )
     }
 }

@@ -8,5 +8,5 @@ protocol VenueDealExtractor: Sendable {
         venueName: String,
         apiKey: String,
         model: String
-    ) async throws -> [SourcedDealExtraction]
+    ) async -> VenueDealExtractionResult
 }
