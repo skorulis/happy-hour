@@ -209,15 +209,18 @@ final class VenueDetailsViewModel {
         updateState(.extracting(progress: "Preparing sources…"))
 
         do {
+            let extractionProgress = ProgressMonitor<VenueDealExtractionResults> { newValue in
+                if case let .inProgress(progress) = newValue {
+                    self.extractionState = .extracting(progress: progress)
+                }
+            }
+
             let results = try await venueDealExtractionService.extractDeals(
                 for: venue,
                 provider: extractionProvider,
-                model: extractionModel
-            ) { [unowned self] progress in
-                Task { @MainActor in
-                    updateState(.extracting(progress: progress))
-                }
-            }
+                model: extractionModel,
+                progress: extractionProgress
+            )
 
             load()
             updateState(.completed(results))

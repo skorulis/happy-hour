@@ -31,8 +31,6 @@ enum VenueDealExtractionServiceError: LocalizedError, Equatable {
 @MainActor
 final class VenueDealExtractionService {
 
-    typealias ProgressHandler = @Sendable (String) -> Void
-
     private let dealSourceRepository: DealSourceRepository
     private let dealRepository: DealRepository
     private let materialPreparer: VenueDealSourceMaterialPreparer
@@ -60,7 +58,7 @@ final class VenueDealExtractionService {
         for venue: Venue,
         provider: VenueDealExtractionProvider,
         model: String,
-        onProgress: ProgressHandler? = nil
+        progress: ProgressMonitor<VenueDealExtractionResults> = .empty
     ) async throws -> VenueDealExtractionResults {
         guard let venueId = venue.id else {
             throw VenueDealExtractionServiceError.missingVenueID
@@ -71,11 +69,9 @@ final class VenueDealExtractionService {
             throw VenueDealExtractionServiceError.noApprovedSources
         }
 
-        let materials = try await materialPreparer.prepare(sources: sources) { message in
-            onProgress?(message)
-        }
+        let materials = try await materialPreparer.prepare(sources: sources, progress: progress)
 
-        onProgress?("Analyzing with \(provider.rawValue)…")
+        await progress("Analyzing with \(provider.rawValue)…")
 
         let result = try await extractPayload(
             provider: provider,
@@ -88,25 +84,27 @@ final class VenueDealExtractionService {
         let deals = DealCondenser().condense(mapped)
         let savedCount = try dealRepository.replaceAll(venueId: venueId, deals: deals)
 
-        return VenueDealExtractionResults(
+        let results = VenueDealExtractionResults(
             dealsFound: savedCount,
             duration: result.duration,
             errorCount: result.errors.count
         )
+        await progress.completed(results: results)
+        return results
     }
 
     func extractDealsFromDroppedImage(
         at url: URL,
         provider: VenueDealExtractionProvider,
         model: String,
-        onProgress: ProgressHandler? = nil
+        progress: ProgressMonitor<[DealWithSchedules]> = .empty
     ) async throws -> [DealWithSchedules] {
-        onProgress?("Preparing image…")
+        await progress("Preparing image…")
 
         let material = try materialPreparer.prepareLocalImage(at: url)
         let materials = [material]
 
-        onProgress?("Analyzing with \(provider.rawValue)…")
+        await progress("Analyzing with \(provider.rawValue)…")
 
         let result = try await extractPayload(
             provider: provider,
@@ -116,25 +114,27 @@ final class VenueDealExtractionService {
         )
 
         let mapped = VenueDealPersistenceMapper.map(sourced: result.extractions, venueId: 0)
-        return DealCondenser().condense(mapped)
+        let deals = DealCondenser().condense(mapped)
+        await progress.completed(results: deals)
+        return deals
     }
 
     func extractDealsFromRemoteURL(
         at url: URL,
         provider: VenueDealExtractionProvider,
         model: String,
-        onProgress: ProgressHandler? = nil
+        progress: ProgressMonitor<[DealWithSchedules]> = .empty
     ) async throws -> [DealWithSchedules] {
         if VenueDealSourceMaterialPreparer.isImageURL(url) {
-            onProgress?("Analyzing with \(provider.rawValue)…")
+            await progress("Analyzing with \(provider.rawValue)…")
         } else {
-            onProgress?("Preparing source…")
+            await progress("Preparing source…")
         }
 
         let material = materialPreparer.prepareRemoteURL(at: url)
         let materials = [material]
 
-        onProgress?("Analyzing with \(provider.rawValue)…")
+        await progress("Analyzing with \(provider.rawValue)…")
 
         let result = try await extractPayload(
             provider: provider,
@@ -144,7 +144,9 @@ final class VenueDealExtractionService {
         )
 
         let mapped = VenueDealPersistenceMapper.map(sourced: result.extractions, venueId: 0)
-        return DealCondenser().condense(mapped)
+        let deals = DealCondenser().condense(mapped)
+        await progress.completed(results: deals)
+        return deals
     }
 
     private func extractPayload(

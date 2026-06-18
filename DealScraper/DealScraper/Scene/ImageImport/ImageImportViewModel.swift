@@ -97,15 +97,18 @@ final class ImageImportViewModel {
         }
 
         do {
-            let deals = try await venueDealExtractionService.extractDealsFromDroppedImage(
-                at: url,
-                provider: extractionProvider,
-                model: extractionModel
-            ) { [unowned self] progress in
-                Task { @MainActor in
+            let extractionProgress = ProgressMonitor<[DealWithSchedules]> { newValue in
+                if case let .inProgress(progress) = newValue {
                     self.state = .processing(progress: progress)
                 }
             }
+
+            let deals = try await venueDealExtractionService.extractDealsFromDroppedImage(
+                at: url,
+                provider: extractionProvider,
+                model: extractionModel,
+                progress: extractionProgress
+            )
             updateState(.completed(
                 deals: deals,
                 sourceURL: url,
@@ -125,15 +128,18 @@ final class ImageImportViewModel {
         }
 
         do {
-            let deals = try await venueDealExtractionService.extractDealsFromRemoteURL(
-                at: url,
-                provider: extractionProvider,
-                model: extractionModel
-            ) { [unowned self] progress in
-                Task { @MainActor in
+            let extractionProgress = ProgressMonitor<[DealWithSchedules]> { newValue in
+                if case let .inProgress(progress) = newValue {
                     self.state = .processing(progress: progress)
                 }
             }
+
+            let deals = try await venueDealExtractionService.extractDealsFromRemoteURL(
+                at: url,
+                provider: extractionProvider,
+                model: extractionModel,
+                progress: extractionProgress
+            )
             updateState(.completed(
                 deals: deals,
                 sourceURL: url,

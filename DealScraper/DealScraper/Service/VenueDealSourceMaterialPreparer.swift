@@ -28,9 +28,9 @@ final class VenueDealSourceMaterialPreparer {
         self.imageFetcher = imageFetcher
     }
 
-    func prepare(
+    func prepare<Result>(
         sources: [DealSource],
-        onProgress: (@Sendable (String) -> Void)? = nil
+        progress: ProgressMonitor<Result> = .empty
     ) async throws -> [VenueDealSourceMaterial] {
         let capped = Array(sources.prefix(Self.maxSources))
         var materials: [VenueDealSourceMaterial] = []
@@ -38,7 +38,7 @@ final class VenueDealSourceMaterialPreparer {
 
         for (offset, source) in capped.enumerated() {
             let index = offset + 1
-            onProgress?("Preparing source \(index) of \(capped.count)…")
+            await progress("Preparing source \(index) of \(capped.count)…")
 
             guard let sourceID = source.id,
                   let url = URL(string: source.url)
