@@ -13,7 +13,6 @@ final class OpenAIVenueDealExtractor: VenueDealExtractor, @unchecked Sendable {
     nonisolated func extractDeals(
         materials: [VenueDealSourceMaterial],
         venueName: String,
-        instructions: String,
         apiKey: String,
         model: String
     ) async throws -> [SourcedDealExtraction] {
@@ -27,7 +26,6 @@ final class OpenAIVenueDealExtractor: VenueDealExtractor, @unchecked Sendable {
                     apiKey: apiKey,
                     model: model,
                     instructions: VisionVenueDealExtractorSupport.perSourceInstructions(
-                        instructions: instructions,
                         venueName: venueName,
                         material: material
                     )

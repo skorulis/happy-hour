@@ -13,7 +13,6 @@ final class OpenRouterVenueDealExtractor: VenueDealExtractor, @unchecked Sendabl
     nonisolated func extractDeals(
         materials: [VenueDealSourceMaterial],
         venueName: String,
-        instructions: String,
         apiKey: String,
         model: String
     ) async throws -> [SourcedDealExtraction] {
@@ -27,7 +26,6 @@ final class OpenRouterVenueDealExtractor: VenueDealExtractor, @unchecked Sendabl
                     apiKey: apiKey,
                     model: model,
                     instructions: VisionVenueDealExtractorSupport.perSourceInstructions(
-                        instructions: instructions,
                         venueName: venueName,
                         material: material
                     )

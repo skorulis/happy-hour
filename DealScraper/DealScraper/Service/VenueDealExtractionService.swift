@@ -154,7 +154,6 @@ final class VenueDealExtractionService {
             return try await openAIExtractor.extractDeals(
                 materials: materials,
                 venueName: venueName,
-                instructions: VenueDealInstructions.dealExtraction,
                 apiKey: apiKey,
                 model: resolvedModel
             )
@@ -169,7 +168,6 @@ final class VenueDealExtractionService {
             return try await openRouterExtractor.extractDeals(
                 materials: materials,
                 venueName: venueName,
-                instructions: VenueDealInstructions.dealExtraction,
                 apiKey: apiKey,
                 model: model
             )

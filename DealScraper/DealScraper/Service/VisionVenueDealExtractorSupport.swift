@@ -31,10 +31,10 @@ enum VisionVenueDealExtractorSupport {
     }
 
     nonisolated static func perSourceInstructions(
-        instructions: String,
         venueName: String,
         material: VenueDealSourceMaterial
     ) -> String {
+        let instructions = VenueDealInstructions.dealExtraction(for: material.type)
         let preamble = VenueDealInstructions.promptPreamble(
             venueName: venueName,
             material: material
