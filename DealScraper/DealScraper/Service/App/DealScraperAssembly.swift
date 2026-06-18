@@ -51,14 +51,16 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
         container.register(OpenAIVenueDealExtractor.self) { resolver in
             OpenAIVenueDealExtractor(
                 client: resolver.openAIClient(),
-                apiKeyStore: resolver.apiKeyStore()
+                apiKeyStore: resolver.apiKeyStore(),
+                llmModelStore: resolver.llmModelStore()
             )
         }
 
         container.register(OpenRouterVenueDealExtractor.self) { resolver in
             OpenRouterVenueDealExtractor(
                 client: resolver.openRouterClient(),
-                apiKeyStore: resolver.apiKeyStore()
+                apiKeyStore: resolver.apiKeyStore(),
+                llmModelStore: resolver.llmModelStore()
             )
         }
 

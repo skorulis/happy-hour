@@ -6,16 +6,21 @@ final class OpenRouterVenueDealExtractor: VenueDealExtractor, @unchecked Sendabl
 
     private let client: OpenRouterClient
     private let apiKeyStore: APIKeyStore
+    private let llmModelStore: LLMModelStore
 
-    nonisolated init(client: OpenRouterClient, apiKeyStore: APIKeyStore) {
+    nonisolated init(
+        client: OpenRouterClient,
+        apiKeyStore: APIKeyStore,
+        llmModelStore: LLMModelStore
+    ) {
         self.client = client
         self.apiKeyStore = apiKeyStore
+        self.llmModelStore = llmModelStore
     }
 
     nonisolated func extractDeals(
         materials: [VenueDealSourceMaterial],
-        venueName: String,
-        model: String
+        venueName: String
     ) async -> VenueDealExtractionResult {
         let startTime = Date()
         let apiKey = apiKeyStore.openRouterAPIKey
@@ -25,6 +30,7 @@ final class OpenRouterVenueDealExtractor: VenueDealExtractor, @unchecked Sendabl
                 startTime: startTime
             )
         }
+        let model = llmModelStore.openRouterModel
         var extractions: [SourcedDealExtraction] = []
         var errors: [VenueDealSourceExtractionError] = []
 

@@ -6,7 +6,6 @@ enum VenueDealExtractionServiceError: LocalizedError, Equatable {
     case missingVenueID
     case noApprovedSources
     case unsupportedProvider(VenueDealExtractionProvider)
-    case missingModel
     case extractionFailed(message: String)
 
     var errorDescription: String? {
@@ -17,8 +16,6 @@ enum VenueDealExtractionServiceError: LocalizedError, Equatable {
             return "Approve at least one image or webpage deal source before extracting deals."
         case let .unsupportedProvider(provider):
             return "\(provider.rawValue) extraction is not available yet."
-        case .missingModel:
-            return "Enter a model name."
         case let .extractionFailed(message):
             return message
         }
@@ -51,7 +48,6 @@ final class VenueDealExtractionService {
     func extractDeals(
         for venue: Venue,
         provider: VenueDealExtractionProvider,
-        model: String,
         progress: ProgressMonitor<VenueDealExtractionResults> = .empty
     ) async throws -> VenueDealExtractionResults {
         guard let venueId = venue.id else {
@@ -69,7 +65,6 @@ final class VenueDealExtractionService {
 
         let result = try await extractPayload(
             provider: provider,
-            model: model,
             materials: materials,
             venueName: venue.name
         )
@@ -90,7 +85,6 @@ final class VenueDealExtractionService {
     func extractDealsFromDroppedImage(
         at url: URL,
         provider: VenueDealExtractionProvider,
-        model: String,
         progress: ProgressMonitor<[DealWithSchedules]> = .empty
     ) async throws -> [DealWithSchedules] {
         await progress("Preparing image…")
@@ -102,7 +96,6 @@ final class VenueDealExtractionService {
 
         let result = try await extractPayload(
             provider: provider,
-            model: model,
             materials: materials,
             venueName: "Preview"
         )
@@ -116,7 +109,6 @@ final class VenueDealExtractionService {
     func extractDealsFromRemoteURL(
         at url: URL,
         provider: VenueDealExtractionProvider,
-        model: String,
         progress: ProgressMonitor<[DealWithSchedules]> = .empty
     ) async throws -> [DealWithSchedules] {
         if VenueDealSourceMaterialPreparer.isImageURL(url) {
@@ -132,7 +124,6 @@ final class VenueDealExtractionService {
 
         let result = try await extractPayload(
             provider: provider,
-            model: model,
             materials: materials,
             venueName: "Preview"
         )
@@ -145,29 +136,20 @@ final class VenueDealExtractionService {
 
     private func extractPayload(
         provider: VenueDealExtractionProvider,
-        model: String,
         materials: [VenueDealSourceMaterial],
         venueName: String
     ) async throws -> VenueDealExtractionResult {
         let result: VenueDealExtractionResult
         switch provider {
         case .openAI:
-            let resolvedModel = model.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                ? LLMModelStore.defaultOpenAIModel
-                : model
             result = await openAIExtractor.extractDeals(
                 materials: materials,
-                venueName: venueName,
-                model: resolvedModel
+                venueName: venueName
             )
         case .openRouter:
-            guard !model.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-                throw VenueDealExtractionServiceError.missingModel
-            }
             result = await openRouterExtractor.extractDeals(
                 materials: materials,
-                venueName: venueName,
-                model: model
+                venueName: venueName
             )
         }
 

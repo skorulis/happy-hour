@@ -6,16 +6,21 @@ final class OpenAIVenueDealExtractor: VenueDealExtractor, @unchecked Sendable {
 
     private let client: OpenAIClient
     private let apiKeyStore: APIKeyStore
+    private let llmModelStore: LLMModelStore
 
-    nonisolated init(client: OpenAIClient, apiKeyStore: APIKeyStore) {
+    nonisolated init(
+        client: OpenAIClient,
+        apiKeyStore: APIKeyStore,
+        llmModelStore: LLMModelStore
+    ) {
         self.client = client
         self.apiKeyStore = apiKeyStore
+        self.llmModelStore = llmModelStore
     }
 
     nonisolated func extractDeals(
         materials: [VenueDealSourceMaterial],
-        venueName: String,
-        model: String
+        venueName: String
     ) async -> VenueDealExtractionResult {
         let startTime = Date()
         let apiKey = apiKeyStore.openAIAPIKey
@@ -25,6 +30,7 @@ final class OpenAIVenueDealExtractor: VenueDealExtractor, @unchecked Sendable {
                 startTime: startTime
             )
         }
+        let model = llmModelStore.openAIModel
         var extractions: [SourcedDealExtraction] = []
         var errors: [VenueDealSourceExtractionError] = []
 

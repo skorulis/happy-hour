@@ -77,15 +77,6 @@ final class VenueDetailsViewModel {
         load()
     }
 
-    private var extractionModel: String {
-        switch extractionProvider {
-        case .openAI:
-            openAIModel
-        case .openRouter:
-            openRouterModel
-        }
-    }
-
     var canCrawl: Bool {
         venue?.websiteUri != nil && !isCrawling
     }
@@ -221,7 +212,6 @@ final class VenueDetailsViewModel {
             let results = try await venueDealExtractionService.extractDeals(
                 for: venue,
                 provider: extractionProvider,
-                model: extractionModel,
                 progress: extractionProgress
             )
 

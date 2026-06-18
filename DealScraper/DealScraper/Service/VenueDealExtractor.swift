@@ -5,7 +5,6 @@ import Foundation
 protocol VenueDealExtractor: Sendable {
     func extractDeals(
         materials: [VenueDealSourceMaterial],
-        venueName: String,
-        model: String
+        venueName: String
     ) async -> VenueDealExtractionResult
 }

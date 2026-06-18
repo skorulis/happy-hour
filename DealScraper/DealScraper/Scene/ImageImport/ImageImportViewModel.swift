@@ -45,15 +45,6 @@ final class ImageImportViewModel {
         openRouterModel = llmModelStore.openRouterModel
     }
 
-    private var extractionModel: String {
-        switch extractionProvider {
-        case .openAI:
-            openAIModel
-        case .openRouter:
-            openRouterModel
-        }
-    }
-
     static func isLocalImageURL(_ url: URL) -> Bool {
         guard url.isFileURL else { return false }
         return VenueDealSourceMaterialPreparer.isImageURL(url)
@@ -109,7 +100,6 @@ final class ImageImportViewModel {
             let deals = try await venueDealExtractionService.extractDealsFromDroppedImage(
                 at: url,
                 provider: extractionProvider,
-                model: extractionModel,
                 progress: extractionProgress
             )
             updateState(.completed(
@@ -140,7 +130,6 @@ final class ImageImportViewModel {
             let deals = try await venueDealExtractionService.extractDealsFromRemoteURL(
                 at: url,
                 provider: extractionProvider,
-                model: extractionModel,
                 progress: extractionProgress
             )
             updateState(.completed(
