@@ -5,18 +5,26 @@ import Foundation
 final class OpenRouterVenueDealExtractor: VenueDealExtractor, @unchecked Sendable {
 
     private let client: OpenRouterClient
+    private let apiKeyStore: APIKeyStore
 
-    nonisolated init(client: OpenRouterClient) {
+    nonisolated init(client: OpenRouterClient, apiKeyStore: APIKeyStore) {
         self.client = client
+        self.apiKeyStore = apiKeyStore
     }
 
     nonisolated func extractDeals(
         materials: [VenueDealSourceMaterial],
         venueName: String,
-        apiKey: String,
         model: String
     ) async -> VenueDealExtractionResult {
         let startTime = Date()
+        let apiKey = apiKeyStore.openRouterAPIKey
+        guard !apiKey.isEmpty else {
+            return VisionVenueDealExtractorSupport.missingAPIKeyResult(
+                materials: materials,
+                startTime: startTime
+            )
+        }
         var extractions: [SourcedDealExtraction] = []
         var errors: [VenueDealSourceExtractionError] = []
 

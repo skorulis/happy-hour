@@ -6,7 +6,6 @@ enum VenueDealExtractionServiceError: LocalizedError, Equatable {
     case missingVenueID
     case noApprovedSources
     case unsupportedProvider(VenueDealExtractionProvider)
-    case missingAPIKey
     case missingModel
     case extractionFailed(message: String)
 
@@ -18,8 +17,6 @@ enum VenueDealExtractionServiceError: LocalizedError, Equatable {
             return "Approve at least one image or webpage deal source before extracting deals."
         case let .unsupportedProvider(provider):
             return "\(provider.rawValue) extraction is not available yet."
-        case .missingAPIKey:
-            return "Configure an API key in Settings."
         case .missingModel:
             return "Enter a model name."
         case let .extractionFailed(message):
@@ -36,22 +33,19 @@ final class VenueDealExtractionService {
     private let materialPreparer: VenueDealSourceMaterialPreparer
     private let openAIExtractor: OpenAIVenueDealExtractor
     private let openRouterExtractor: OpenRouterVenueDealExtractor
-    private let apiKeyStore: APIKeyStore
 
     init(
         dealSourceRepository: DealSourceRepository,
         dealRepository: DealRepository,
         materialPreparer: VenueDealSourceMaterialPreparer,
         openAIExtractor: OpenAIVenueDealExtractor,
-        openRouterExtractor: OpenRouterVenueDealExtractor,
-        apiKeyStore: APIKeyStore
+        openRouterExtractor: OpenRouterVenueDealExtractor
     ) {
         self.dealSourceRepository = dealSourceRepository
         self.dealRepository = dealRepository
         self.materialPreparer = materialPreparer
         self.openAIExtractor = openAIExtractor
         self.openRouterExtractor = openRouterExtractor
-        self.apiKeyStore = apiKeyStore
     }
 
     func extractDeals(
@@ -158,31 +152,21 @@ final class VenueDealExtractionService {
         let result: VenueDealExtractionResult
         switch provider {
         case .openAI:
-            let apiKey = apiKeyStore.openAIAPIKey
-            guard !apiKey.isEmpty else {
-                throw VenueDealExtractionServiceError.missingAPIKey
-            }
             let resolvedModel = model.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                 ? "gpt-4o"
                 : model
             result = await openAIExtractor.extractDeals(
                 materials: materials,
                 venueName: venueName,
-                apiKey: apiKey,
                 model: resolvedModel
             )
         case .openRouter:
-            let apiKey = apiKeyStore.openRouterAPIKey
-            guard !apiKey.isEmpty else {
-                throw VenueDealExtractionServiceError.missingAPIKey
-            }
             guard !model.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
                 throw VenueDealExtractionServiceError.missingModel
             }
             result = await openRouterExtractor.extractDeals(
                 materials: materials,
                 venueName: venueName,
-                apiKey: apiKey,
                 model: model
             )
         }

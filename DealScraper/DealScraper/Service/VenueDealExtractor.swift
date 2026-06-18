@@ -6,7 +6,6 @@ protocol VenueDealExtractor: Sendable {
     func extractDeals(
         materials: [VenueDealSourceMaterial],
         venueName: String,
-        apiKey: String,
         model: String
     ) async -> VenueDealExtractionResult
 }

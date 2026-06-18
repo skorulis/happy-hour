@@ -45,4 +45,19 @@ enum VisionVenueDealExtractorSupport {
         \(preamble)
         """
     }
+
+    nonisolated static func missingAPIKeyResult(
+        materials: [VenueDealSourceMaterial],
+        startTime: Date
+    ) -> VenueDealExtractionResult {
+        let message = "Configure an API key in Settings."
+        let errors = materials.map {
+            VenueDealSourceExtractionError(material: $0, message: message)
+        }
+        return VenueDealExtractionResult(
+            extractions: [],
+            errors: errors,
+            duration: Date().timeIntervalSince(startTime)
+        )
+    }
 }

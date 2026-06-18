@@ -49,11 +49,17 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
         container.register(GooglePlacesClient.self) { _ in GooglePlacesClient() }
 
         container.register(OpenAIVenueDealExtractor.self) { resolver in
-            OpenAIVenueDealExtractor(client: resolver.openAIClient())
+            OpenAIVenueDealExtractor(
+                client: resolver.openAIClient(),
+                apiKeyStore: resolver.apiKeyStore()
+            )
         }
 
         container.register(OpenRouterVenueDealExtractor.self) { resolver in
-            OpenRouterVenueDealExtractor(client: resolver.openRouterClient())
+            OpenRouterVenueDealExtractor(
+                client: resolver.openRouterClient(),
+                apiKeyStore: resolver.apiKeyStore()
+            )
         }
 
         container.register(VenueDealSourceMaterialPreparer.self) { resolver in
@@ -68,8 +74,7 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
                 dealRepository: resolver.dealRepository(),
                 materialPreparer: resolver.venueDealSourceMaterialPreparer(),
                 openAIExtractor: resolver.openAIVenueDealExtractor(),
-                openRouterExtractor: resolver.openRouterVenueDealExtractor(),
-                apiKeyStore: resolver.apiKeyStore()
+                openRouterExtractor: resolver.openRouterVenueDealExtractor()
             )
         }
 
