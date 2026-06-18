@@ -84,7 +84,8 @@ final class VenueDealExtractionService {
             venueName: venue.name
         )
 
-        let deals = VenueDealPersistenceMapper.map(sourced: result.extractions, venueId: venueId)
+        let mapped = VenueDealPersistenceMapper.map(sourced: result.extractions, venueId: venueId)
+        let deals = DealCondenser().condense(mapped)
         let savedCount = try dealRepository.replaceAll(venueId: venueId, deals: deals)
 
         return VenueDealExtractionResults(
@@ -114,7 +115,8 @@ final class VenueDealExtractionService {
             venueName: "Preview"
         )
 
-        return VenueDealPersistenceMapper.map(sourced: result.extractions, venueId: 0)
+        let mapped = VenueDealPersistenceMapper.map(sourced: result.extractions, venueId: 0)
+        return DealCondenser().condense(mapped)
     }
 
     func extractDealsFromRemoteURL(
@@ -141,7 +143,8 @@ final class VenueDealExtractionService {
             venueName: "Preview"
         )
 
-        return VenueDealPersistenceMapper.map(sourced: result.extractions, venueId: 0)
+        let mapped = VenueDealPersistenceMapper.map(sourced: result.extractions, venueId: 0)
+        return DealCondenser().condense(mapped)
     }
 
     private func extractPayload(
