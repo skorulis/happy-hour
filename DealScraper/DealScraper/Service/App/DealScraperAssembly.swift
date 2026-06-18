@@ -81,13 +81,8 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
             )
         }
 
-        container.register(WebPageLoader.self) { resolver in
-            WebPageLoader(
-                contentBlockGrouper: resolver.contentBlockGrouper(),
-                pageLinkExtractor: resolver.pageLinkExtractor()
-            )
-        }
-        .inObjectScope(.container)
+        container.register(WebPageLoader.self) { WebPageLoader.make(resolver: $0) }
+            .inObjectScope(.container)
 
         container.register(ContentBlockGrouper.self) { _ in ContentBlockGrouper() }
 

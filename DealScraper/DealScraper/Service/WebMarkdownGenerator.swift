@@ -31,7 +31,7 @@ final class WebMarkdownGenerator: HTTPService {
 
     init(
         urlSession: URLSessionProtocol = URLSession(configuration: .default),
-        logger: HTTPLogger? = nil
+        logger: HTTPLogger? = .init(level: .full)
     ) {
         self.session = urlSession
         self.requestHandler = nil

@@ -16,7 +16,7 @@ final class ImageImportViewModel {
     enum State {
         case idle
         case processing(progress: String)
-        case completed(deals: [DealWithSchedules], sourceURL: URL, duration: TimeInterval)
+        case completed(deals: [DealWithSchedules], sourceURL: URL, duration: TimeInterval, markdown: String?)
         case failed(message: String)
     }
 
@@ -32,14 +32,20 @@ final class ImageImportViewModel {
     }
 
     private let venueDealExtractionService: VenueDealExtractionService
+    private let webMarkdownGenerator: WebMarkdownGenerator
+    private let apiKeyStore: APIKeyStore
     private let llmModelStore: LLMModelStore
 
     @Resolvable<Resolver>
     init(
         venueDealExtractionService: VenueDealExtractionService,
+        webMarkdownGenerator: WebMarkdownGenerator,
+        apiKeyStore: APIKeyStore,
         llmModelStore: LLMModelStore
     ) {
         self.venueDealExtractionService = venueDealExtractionService
+        self.webMarkdownGenerator = webMarkdownGenerator
+        self.apiKeyStore = apiKeyStore
         self.llmModelStore = llmModelStore
         openAIModel = llmModelStore.openAIModel
         openRouterModel = llmModelStore.openRouterModel
@@ -105,7 +111,8 @@ final class ImageImportViewModel {
             updateState(.completed(
                 deals: deals,
                 sourceURL: url,
-                duration: Date().timeIntervalSince(startTime)
+                duration: Date().timeIntervalSince(startTime),
+                markdown: nil
             ))
         } catch {
             updateState(.failed(message: error.localizedDescription))
@@ -127,19 +134,30 @@ final class ImageImportViewModel {
                 }
             }
 
-            let deals = try await venueDealExtractionService.extractDealsFromRemoteURL(
+            async let deals = venueDealExtractionService.extractDealsFromRemoteURL(
                 at: url,
                 provider: extractionProvider,
                 progress: extractionProgress
             )
+            async let markdown = fetchMarkdown(for: url)
+
             updateState(.completed(
-                deals: deals,
+                deals: try await deals,
                 sourceURL: url,
-                duration: Date().timeIntervalSince(startTime)
+                duration: Date().timeIntervalSince(startTime),
+                markdown: await markdown
             ))
         } catch {
             updateState(.failed(message: error.localizedDescription))
         }
+    }
+
+    private func fetchMarkdown(for url: URL) async -> String? {
+        guard !VenueDealSourceMaterialPreparer.isImageURL(url) else { return nil }
+        return try? await webMarkdownGenerator.markdown(
+            for: url,
+            apiKey: apiKeyStore.markdownerAPIKey
+        )
     }
 
     private func updateState(_ state: State) {

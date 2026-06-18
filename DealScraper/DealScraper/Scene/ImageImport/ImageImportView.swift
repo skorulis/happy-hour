@@ -7,6 +7,7 @@ struct ImageImportView: View {
 
     @State var viewModel: ImageImportViewModel
     @State private var isDropTargeted = false
+    @State private var isMarkdownExpanded = false
 
     var body: some View {
         ScrollView {
@@ -123,8 +124,8 @@ struct ImageImportView: View {
                     .foregroundStyle(.secondary)
             }
 
-        case let .completed(deals, sourceURL, duration):
-            completedContent(deals: deals, sourceURL: sourceURL, duration: duration)
+        case let .completed(deals, sourceURL, duration, markdown):
+            completedContent(deals: deals, sourceURL: sourceURL, duration: duration, markdown: markdown)
 
         case let .failed(message):
             Label(message, systemImage: "exclamationmark.triangle.fill")
@@ -135,10 +136,15 @@ struct ImageImportView: View {
     private func completedContent(
         deals: [DealWithSchedules],
         sourceURL: URL,
-        duration: TimeInterval
+        duration: TimeInterval,
+        markdown: String?
     ) -> some View {
         VStack(alignment: .leading, spacing: 24) {
             sourcePreview(for: sourceURL)
+
+            if let markdown {
+                markdownSection(markdown)
+            }
 
             if deals.isEmpty {
                 Text("No deals were found in this source. Completed in \(formattedDuration(duration)).")
@@ -153,6 +159,41 @@ struct ImageImportView: View {
                     }
                 }
             }
+        }
+    }
+
+    private func markdownSection(_ markdown: String) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Button {
+                isMarkdownExpanded.toggle()
+            } label: {
+                HStack {
+                    Text("Markdown")
+                        .font(.headline)
+                    Spacer()
+                    Image(systemName: isMarkdownExpanded ? "chevron.down" : "chevron.right")
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .buttonStyle(.plain)
+
+            if isMarkdownExpanded {
+                ScrollView {
+                    Text(markdown)
+                        .font(.system(.body, design: .monospaced))
+                        .textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .frame(maxHeight: 400)
+            }
+        }
+        .padding(16)
+        .background {
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color(nsColor: .controlBackgroundColor))
+        }
+        .onChange(of: markdown) {
+            isMarkdownExpanded = false
         }
     }
 

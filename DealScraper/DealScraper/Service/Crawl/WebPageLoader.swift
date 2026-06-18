@@ -1,11 +1,14 @@
 //Created by Alex Skorulis on 15/6/2026.
 
 import Foundation
+import Knit
+import KnitMacros
 import WebKit
 
 struct LoadedPage: Sendable {
     let url: URL
     let html: String
+    let markdown: String?
     let imageURLs: [URL]
     let contentBlocks: [ContentBlock]
     let links: [ContentBlockLink]
@@ -124,12 +127,22 @@ final class WebPageLoader: NSObject {
 
     private let contentBlockGrouper: ContentBlockGrouper
     private let pageLinkExtractor: PageLinkExtractor
+    private let webMarkdownGenerator: WebMarkdownGenerator
+    private let apiKeyStore: APIKeyStore
     private let webView: WKWebView
     private var loadContinuation: CheckedContinuation<Void, Error>?
 
-    init(contentBlockGrouper: ContentBlockGrouper, pageLinkExtractor: PageLinkExtractor) {
+    @Resolvable<Resolver>
+    init(
+        contentBlockGrouper: ContentBlockGrouper,
+        pageLinkExtractor: PageLinkExtractor,
+        webMarkdownGenerator: WebMarkdownGenerator,
+        apiKeyStore: APIKeyStore
+    ) {
         self.contentBlockGrouper = contentBlockGrouper
         self.pageLinkExtractor = pageLinkExtractor
+        self.webMarkdownGenerator = webMarkdownGenerator
+        self.apiKeyStore = apiKeyStore
         let configuration = WKWebViewConfiguration()
         configuration.defaultWebpagePreferences.allowsContentJavaScript = true
 
@@ -178,10 +191,16 @@ final class WebPageLoader: NSObject {
         let imageURLs = harvestImageURLs(html: resolvedHTML, liveDOMURLs: await harvestLiveImageURLStrings())
         let contentBlocks = (try? contentBlockGrouper.group(html: resolvedHTML, pageURL: finalURL)) ?? []
         let links = (try? pageLinkExtractor.extract(html: resolvedHTML, pageURL: finalURL)) ?? []
+        let normalizedURL = URLNormalizer.normalize(finalURL) ?? finalURL
+        let markdown = try? await webMarkdownGenerator.markdown(
+            for: normalizedURL,
+            apiKey: apiKeyStore.markdownerAPIKey
+        )
 
         return LoadedPage(
-            url: URLNormalizer.normalize(finalURL) ?? finalURL,
+            url: normalizedURL,
             html: resolvedHTML,
+            markdown: markdown,
             imageURLs: imageURLs,
             contentBlocks: contentBlocks,
             links: links
