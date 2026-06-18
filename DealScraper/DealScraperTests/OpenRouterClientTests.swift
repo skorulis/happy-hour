@@ -117,6 +117,44 @@ struct OpenRouterClientTests {
         #expect(payload.deals.first?.title == "TACO TUESDAY")
     }
 
+    @Test func parsesMarkdownWrappedBareArrayWebpageResponse() async throws {
+        let client = OpenRouterClient(
+            urlSession: FakeURLSession { request in
+                let responseData = """
+                {
+                  "choices": [
+                    {
+                      "message": {
+                        "content": "```json\\n[\\n    {\\n        \\"title\\": \\"Happy Hour\\",\\n        \\"details\\": \\"$10 house wines, beers and spirits\\",\\n        \\"conditions\\": \\"To avail of the 2-for-$30 spritzes, you must order 2 of the same spritz.\\",\\n        \\"days\\": \\"Monday - Friday\\",\\n        \\"times\\": \\"5-7pm\\"\\n    }\\n]\\n```"
+                      }
+                    }
+                  ]
+                }
+                """.data(using: .utf8)!
+
+                return (responseData, HTTPURLResponse(
+                    url: request.url!,
+                    statusCode: 200,
+                    httpVersion: nil,
+                    headerFields: nil
+                )!)
+            }
+        )
+
+        let payload = try await client.extractDealsFromWebpage(
+            url: "https://pub.example.com/specials",
+            apiKey: "test-key",
+            model: "google/gemini-2.5-pro",
+            instructions: "test instructions"
+        )
+
+        #expect(payload.deals.count == 1)
+        #expect(payload.deals.first?.title == "Happy Hour")
+        #expect(payload.deals.first?.details == ["$10 house wines, beers and spirits"])
+        #expect(payload.deals.first?.days == ["Monday - Friday"])
+        #expect(payload.deals.first?.times == ["5-7pm"])
+    }
+
     @Test func throwsOnNonSuccessStatus() async throws {
         let client = OpenRouterClient(
             urlSession: FakeURLSession { request in

@@ -116,13 +116,33 @@ enum VisionDealAPI {
             throw Error.decodingFailure
         }
 
-        guard let payloadData = content.data(using: .utf8),
-              let payload = try? JSONDecoder().decode(DealExtractionPayload.self, from: payloadData)
-        else {
+        let jsonString = stripMarkdownCodeFence(from: content)
+        guard let payloadData = jsonString.data(using: .utf8) else {
             throw Error.decodingFailure
         }
 
-        return payload
+        if let payload = try? JSONDecoder().decode(DealExtractionPayload.self, from: payloadData) {
+            return payload
+        }
+
+        if let deals = try? JSONDecoder().decode([DealExtractionPayload.RawDeal].self, from: payloadData) {
+            return DealExtractionPayload(deals: deals)
+        }
+
+        throw Error.decodingFailure
+    }
+
+    nonisolated static func stripMarkdownCodeFence(from content: String) -> String {
+        var trimmed = content.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.hasPrefix("```") else { return trimmed }
+
+        if let firstNewline = trimmed.firstIndex(of: "\n") {
+            trimmed = String(trimmed[trimmed.index(after: firstNewline)...])
+        }
+        if trimmed.hasSuffix("```") {
+            trimmed = String(trimmed.dropLast(3))
+        }
+        return trimmed.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     nonisolated static func extractDeals(
