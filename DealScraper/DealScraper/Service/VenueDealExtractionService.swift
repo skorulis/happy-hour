@@ -153,7 +153,7 @@ final class VenueDealExtractionService {
         switch provider {
         case .openAI:
             let resolvedModel = model.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                ? "gpt-4o"
+                ? LLMModelStore.defaultOpenAIModel
                 : model
             result = await openAIExtractor.extractDeals(
                 materials: materials,

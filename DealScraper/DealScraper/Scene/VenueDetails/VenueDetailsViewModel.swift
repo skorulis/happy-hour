@@ -38,9 +38,11 @@ final class VenueDetailsViewModel {
     private(set) var extractionState: ExtractionState = .idle
 
     var extractionProvider: VenueDealExtractionProvider = .openAI
-    var openAIModel: String = "gpt-4o"
-    var openRouterModel: String = OpenRouterModelStore.defaultModel {
-        didSet { openRouterModelStore.model = openRouterModel }
+    var openAIModel: String = LLMModelStore.defaultOpenAIModel {
+        didSet { llmModelStore.openAIModel = openAIModel }
+    }
+    var openRouterModel: String = LLMModelStore.defaultOpenRouterModel {
+        didSet { llmModelStore.openRouterModel = openRouterModel }
     }
 
     private let venueRepository: VenueRepository
@@ -49,7 +51,7 @@ final class VenueDetailsViewModel {
     private let venueLinksRepository: VenueLinksRepository
     private let venueWebsiteCrawler: VenueWebsiteCrawler
     private let venueDealExtractionService: VenueDealExtractionService
-    private let openRouterModelStore: OpenRouterModelStore
+    private let llmModelStore: LLMModelStore
 
     @Resolvable<Resolver>
     init(
@@ -60,7 +62,7 @@ final class VenueDetailsViewModel {
         venueLinksRepository: VenueLinksRepository,
         venueWebsiteCrawler: VenueWebsiteCrawler,
         venueDealExtractionService: VenueDealExtractionService,
-        openRouterModelStore: OpenRouterModelStore
+        llmModelStore: LLMModelStore
     ) {
         self.googleMapId = googleMapId
         self.venueRepository = venueRepository
@@ -69,8 +71,9 @@ final class VenueDetailsViewModel {
         self.venueLinksRepository = venueLinksRepository
         self.venueWebsiteCrawler = venueWebsiteCrawler
         self.venueDealExtractionService = venueDealExtractionService
-        self.openRouterModelStore = openRouterModelStore
-        openRouterModel = openRouterModelStore.model
+        self.llmModelStore = llmModelStore
+        openAIModel = llmModelStore.openAIModel
+        openRouterModel = llmModelStore.openRouterModel
         load()
     }
 

@@ -154,8 +154,8 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
         }
         .inObjectScope(.container)
 
-        container.register(OpenRouterModelStore.self) { resolver in
-            OpenRouterModelStore(keyValueStore: resolver.pKeyValueStore())
+        container.register(LLMModelStore.self) { resolver in
+            LLMModelStore(keyValueStore: resolver.pKeyValueStore())
         }
         .inObjectScope(.container)
     }
