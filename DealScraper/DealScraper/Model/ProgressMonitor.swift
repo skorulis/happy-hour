@@ -23,4 +23,18 @@ struct ProgressMonitor<ResultType> {
             block(.inProgress(progress: progress))
         }
     }
+    
+    func completed(results: ResultType) async {
+        await MainActor.run {
+            block(.completed(results))
+        }
+    }
+    
+    func callAsFunction(_ progress: String) async {
+        await update(progress: progress)
+    }
+    
+    static var empty: Self {
+        .init(block: { _ in })
+    }
 }

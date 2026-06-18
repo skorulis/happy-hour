@@ -190,22 +190,7 @@ final class VenueDetailsViewModel {
                 self.crawlState = newValue
             }
             
-            let results = try await venueWebsiteCrawler.crawl(venue: venue) { [unowned self] progress in
-                Task { @MainActor in
-                    switch progress {
-                    case let .loadingPage(url):
-                        self.crawlState = .inProgress(progress: "Loading \(url.absoluteString)…")
-                    case let .validatingImages(count):
-                        self.crawlState = .inProgress(progress: "Checking \(count) image\(count == 1 ? "" : "s")…")
-                    case .saving:
-                        self.crawlState = .inProgress(progress: "Saving deal sources…")
-                    case let .completed(results):
-                        self.crawlState = .completed(results)
-                    case let .failed(message):
-                        self.crawlState = .failed(message: message)
-                    }
-                }
-            }
+            let results = try await venueWebsiteCrawler.crawl(venue: venue, progress: crawlProgress)
 
             load()
             crawlState = .completed(results)

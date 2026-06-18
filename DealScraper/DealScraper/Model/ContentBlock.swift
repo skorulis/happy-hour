@@ -2,12 +2,12 @@
 
 import Foundation
 
-struct ContentBlockLink: Equatable, Sendable, Codable {
+nonisolated struct ContentBlockLink: Equatable, Sendable, Codable {
     let text: String?
     let url: URL
 }
 
-struct ContentBlock: Equatable, Sendable, Codable {
+nonisolated struct ContentBlock: Equatable, Sendable, Codable {
     let title: String?
     let text: String
     let links: [ContentBlockLink]

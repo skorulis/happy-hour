@@ -66,7 +66,7 @@ final class VenueWebsiteCrawler {
     
     func crawl(
         venue: Venue,
-        onProgress: @escaping @Sendable (CrawlProgress) -> Void = { _ in }
+        progress: ProgressMonitor<VenueCrawlResults> = .empty
     ) async throws -> VenueCrawlResults {
         guard let websiteUri = venue.websiteUri,
               let startURL = URL(string: websiteUri),
@@ -94,7 +94,7 @@ final class VenueWebsiteCrawler {
             guard visited.insert(visitKey).inserted else { continue }
             visitedPages.append(pageURL)
             
-            onProgress(.loadingPage(pageURL))
+            await progress("Loading \(pageURL)…")
             
             let loadedPage: LoadedPage
             do {
@@ -119,7 +119,7 @@ final class VenueWebsiteCrawler {
             }
             
             imagesAnalyzed += loadedPage.imageURLs.count
-            onProgress(.validatingImages(count: loadedPage.imageURLs.count))
+            await progress("Checking \(loadedPage.imageURLs.count) images")
             let validations = await imageValidator.validateImages(urls: loadedPage.imageURLs)
             for validation in validations {
                 discoveredByURL[validation.url] = DiscoveredSource(
@@ -169,7 +169,7 @@ final class VenueWebsiteCrawler {
         discoveredByURL = imageDeduper.dedupe(validatedSources: discoveredByURL)
         discoveredByURL = await dealAdvancedTextFilter.filter(sources: discoveredByURL)
         
-        onProgress(.saving)
+        await progress("Saving deal sources…")
         
         let now = Date()
         let dealSources = discoveredByURL.values.map { discovered in
@@ -193,7 +193,7 @@ final class VenueWebsiteCrawler {
             imagesAnalyzed: imagesAnalyzed,
             duration: Date().timeIntervalSince(startTime)
         )
-        onProgress(.completed(results))
+        await progress.completed(results: results)
         return results
     }
 }
