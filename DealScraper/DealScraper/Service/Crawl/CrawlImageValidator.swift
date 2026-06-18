@@ -44,9 +44,21 @@ final class CrawlImageValidator {
         }
         
         return .init(
+            url: url,
             lines: lines,
             dimensions: dimensions
         )
+    }
+
+    func validateImages(urls: [URL]) async -> [ImageValidationResult] {
+        var results: [ImageValidationResult] = []
+        for url in urls {
+            let hash = URLNormalizer.hash(url)
+            if let validation = await validateImage(url: url, hash: hash) {
+                results.append(validation)
+            }
+        }
+        return results
     }
 
     private static func shouldIgnore(url: URL) -> Bool {
@@ -73,6 +85,7 @@ final class CrawlImageValidator {
 }
 
 struct ImageValidationResult {
+    let url: URL
     let lines: [ExtractedTextLine]
     let dimensions: CGSize
 }

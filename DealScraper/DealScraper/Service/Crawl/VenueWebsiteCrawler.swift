@@ -6,7 +6,7 @@ import Knit
 
 enum CrawlProgress: Sendable {
     case loadingPage(URL)
-    case validatingImage(URL)
+    case validatingImages(count: Int)
     case saving
     case completed(VenueCrawlResults)
     case failed(message: String)
@@ -118,19 +118,17 @@ final class VenueWebsiteCrawler {
                 discoveredByURL[loadedPage.normalizedURL] = source
             }
             
-            for imageURL in loadedPage.imageURLs {
-                imagesAnalyzed += 1
-                onProgress(.validatingImage(imageURL))
-                let hash = URLNormalizer.hash(imageURL)
-                if let validation = await imageValidator.validateImage(url: imageURL, hash: hash) {
-                    discoveredByURL[imageURL] = DiscoveredSource(
-                        url: imageURL,
-                        sourceURL: loadedPage.normalizedURL,
-                        type: .image,
-                        imageDimensions: validation.dimensions,
-                        textPieces: .textLines(validation.lines.map(\.text))
-                    )
-                }
+            imagesAnalyzed += loadedPage.imageURLs.count
+            onProgress(.validatingImages(count: loadedPage.imageURLs.count))
+            let validations = await imageValidator.validateImages(urls: loadedPage.imageURLs)
+            for validation in validations {
+                discoveredByURL[validation.url] = DiscoveredSource(
+                    url: validation.url,
+                    sourceURL: loadedPage.normalizedURL,
+                    type: .image,
+                    imageDimensions: validation.dimensions,
+                    textPieces: .textLines(validation.lines.map(\.text))
+                )
             }
             
             let filtered = pageLinkFilter.filter(links: loadedPage.links)

@@ -198,8 +198,8 @@ final class VenueDetailsViewModel {
                     switch progress {
                     case let .loadingPage(url):
                         self.crawlState = .crawling(progress: "Loading \(url.absoluteString)…")
-                    case let .validatingImage(url):
-                        self.crawlState = .crawling(progress: "Checking image \(url.lastPathComponent)…")
+                    case let .validatingImages(count):
+                        self.crawlState = .crawling(progress: "Checking \(count) image\(count == 1 ? "" : "s")…")
                     case .saving:
                         self.crawlState = .crawling(progress: "Saving deal sources…")
                     case let .completed(results):
