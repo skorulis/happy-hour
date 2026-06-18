@@ -6,6 +6,14 @@ import SwiftUI
 struct ExperimentView: View {
 
     @State var viewModel: ExperimentViewModel
+    @State private var linkDisplayMode: LinkDisplayMode = .filtered
+
+    private let pageLinkFilter = PageLinkFilter()
+
+    private enum LinkDisplayMode: String, CaseIterable {
+        case filtered
+        case all
+    }
 
     var body: some View {
         ScrollView {
@@ -68,12 +76,21 @@ struct ExperimentView: View {
     }
 
     private func linksSection(_ links: [ContentBlockLink]) -> some View {
-        detailSection(title: "Links (\(links.count))") {
-            if links.isEmpty {
+        let displayedLinks = linksForDisplay(links)
+
+        return detailSection(title: "Links (\(displayedLinks.count))") {
+            Picker("Links", selection: $linkDisplayMode) {
+                Text("Filtered").tag(LinkDisplayMode.filtered)
+                Text("All").tag(LinkDisplayMode.all)
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+
+            if displayedLinks.isEmpty {
                 Text("No links found.")
                     .foregroundStyle(.secondary)
             } else {
-                ForEach(Array(links.enumerated()), id: \.offset) { _, link in
+                ForEach(Array(displayedLinks.enumerated()), id: \.offset) { _, link in
                     VStack(alignment: .leading, spacing: 2) {
                         Link(link.text ?? link.url.absoluteString, destination: link.url)
                         Text(link.url.absoluteString)
@@ -81,6 +98,22 @@ struct ExperimentView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
+            }
+        }
+    }
+
+    private func linksForDisplay(_ links: [ContentBlockLink]) -> [ContentBlockLink] {
+        switch linkDisplayMode {
+        case .all:
+            return links
+        case .filtered:
+            let filtered = pageLinkFilter.filter(links: links)
+            let filteredURLs = filtered.pdfURLs + filtered.crawlURLs
+            return filteredURLs.map { url in
+                links.first { link in
+                    guard let normalized = URLNormalizer.normalize(link.url) else { return false }
+                    return URLNormalizer.hash(normalized) == URLNormalizer.hash(url)
+                } ?? ContentBlockLink(text: nil, url: url)
             }
         }
     }
