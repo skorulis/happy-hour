@@ -8,13 +8,6 @@ import KnitMacros
 @Observable
 final class VenueDetailsViewModel {
 
-    enum CrawlState: Equatable {
-        case idle
-        case crawling(progress: String)
-        case completed(VenueCrawlResults)
-        case failed(message: String)
-    }
-
     enum DeleteSourcesState: Equatable {
         case idle
         case completed(deleted: Int)
@@ -39,7 +32,7 @@ final class VenueDetailsViewModel {
     private(set) var venueLinks: VenueLinks?
     private(set) var dealSources: [DealSource] = []
     private(set) var deals: [DealWithSchedules] = []
-    private(set) var crawlState: CrawlState = .idle
+    private(set) var crawlState: ProgressState<VenueCrawlResults> = .idle
     private(set) var deleteSourcesState: DeleteSourcesState = .idle
     private(set) var deleteDealsState: DeleteDealsState = .idle
     private(set) var extractionState: ExtractionState = .idle
@@ -99,7 +92,7 @@ final class VenueDetailsViewModel {
     }
 
     var isCrawling: Bool {
-        if case .crawling = crawlState { return true }
+        if case .inProgress = crawlState { return true }
         return false
     }
 
@@ -189,19 +182,23 @@ final class VenueDetailsViewModel {
     }
 
     private func performCrawl(venue: Venue) async {
-        crawlState = .crawling(progress: "Starting crawl…")
+        crawlState = .inProgress(progress: "Starting crawl…")
         deleteSourcesState = .idle
 
         do {
+            let crawlProgress = ProgressMonitor { newValue in
+                self.crawlState = newValue
+            }
+            
             let results = try await venueWebsiteCrawler.crawl(venue: venue) { [unowned self] progress in
                 Task { @MainActor in
                     switch progress {
                     case let .loadingPage(url):
-                        self.crawlState = .crawling(progress: "Loading \(url.absoluteString)…")
+                        self.crawlState = .inProgress(progress: "Loading \(url.absoluteString)…")
                     case let .validatingImages(count):
-                        self.crawlState = .crawling(progress: "Checking \(count) image\(count == 1 ? "" : "s")…")
+                        self.crawlState = .inProgress(progress: "Checking \(count) image\(count == 1 ? "" : "s")…")
                     case .saving:
-                        self.crawlState = .crawling(progress: "Saving deal sources…")
+                        self.crawlState = .inProgress(progress: "Saving deal sources…")
                     case let .completed(results):
                         self.crawlState = .completed(results)
                     case let .failed(message):

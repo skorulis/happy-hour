@@ -151,7 +151,7 @@ struct VenueDetailsView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-            case let .crawling(progress):
+            case let .inProgress(progress):
                 HStack(spacing: 8) {
                     ProgressView()
                         .controlSize(.small)

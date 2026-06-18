@@ -2,17 +2,25 @@
 
 import Foundation
 
-actor ProgressMonitor {
+enum ProgressState<ResultType> {
+    case idle
+    case inProgress(progress: String)
+    case completed(ResultType)
+    case failed(message: String)
+
+}
+
+struct ProgressMonitor<ResultType> {
     
-    let block: @MainActor (String) -> Void
+    let block: @MainActor (ProgressState<ResultType>) -> Void
     
-    init(block: @escaping @Sendable (String) -> Void) {
+    init(block: @escaping (ProgressState<ResultType>) -> Void) {
         self.block = block
     }
     
     func update(progress: String) async {
         await MainActor.run {
-            block(progress)
+            block(.inProgress(progress: progress))
         }
     }
 }
