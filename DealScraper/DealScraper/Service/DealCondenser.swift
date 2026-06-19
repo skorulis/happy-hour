@@ -24,7 +24,9 @@ struct DealCondenser: Sendable {
         return merged
     }
 
-    private func shouldMerge(_ lhs: DealWithSchedules, _ rhs: DealWithSchedules) -> Bool {
+    func shouldMerge(_ lhs: DealWithSchedules, _ rhs: DealWithSchedules) -> Bool {
+        guard hasSameDays(lhs, rhs) else { return false }
+
         if hasExactSharedLine(lhs, rhs) {
             return true
         }
@@ -42,7 +44,7 @@ struct DealCondenser: Sendable {
         }
 
         if schedulesOverlap(lhs.schedules, rhs.schedules),
-           hasTokenOverlap(lhs, rhs) {
+           hasAlignedTokenOverlap(lhs, rhs) {
             return !hasScheduleConflict(lhs, rhs, strongTextMatch: false)
         }
 
@@ -86,7 +88,6 @@ struct DealCondenser: Sendable {
             lines.append(title)
         }
         lines.append(contentsOf: splitLines(item.deal.details))
-        lines.append(contentsOf: splitLines(item.deal.conditions))
         return lines
     }
 
@@ -104,6 +105,12 @@ struct DealCondenser: Sendable {
             .lowercased()
             .split(whereSeparator: \.isWhitespace)
             .joined(separator: " ")
+    }
+
+    private func hasSameDays(_ lhs: DealWithSchedules, _ rhs: DealWithSchedules) -> Bool {
+        let lhsDays = Set(lhs.schedules.map(\.dayOfWeek))
+        let rhsDays = Set(rhs.schedules.map(\.dayOfWeek))
+        return lhsDays == rhsDays
     }
 
     private func hasExactSharedLine(_ lhs: DealWithSchedules, _ rhs: DealWithSchedules) -> Bool {
@@ -147,6 +154,20 @@ struct DealCondenser: Sendable {
         let lhsTokens = significantTokens(from: normalizedText(for: lhs))
         let rhsTokens = significantTokens(from: normalizedText(for: rhs))
         return !lhsTokens.intersection(rhsTokens).isEmpty
+    }
+
+    private func hasAlignedTokenOverlap(_ lhs: DealWithSchedules, _ rhs: DealWithSchedules) -> Bool {
+        let lhsTitleTokens = significantTokens(from: lhs.deal.title ?? "")
+        let rhsTitleTokens = significantTokens(from: rhs.deal.title ?? "")
+        if !lhsTitleTokens.intersection(rhsTitleTokens).isEmpty {
+            return true
+        }
+
+        let lhsDetailText = splitLines(lhs.deal.details).joined(separator: " ")
+        let rhsDetailText = splitLines(rhs.deal.details).joined(separator: " ")
+        let lhsDetailTokens = significantTokens(from: lhsDetailText)
+        let rhsDetailTokens = significantTokens(from: rhsDetailText)
+        return !lhsDetailTokens.intersection(rhsDetailTokens).isEmpty
     }
 
     private func schedulesOverlap(_ lhs: [DealSchedule], _ rhs: [DealSchedule]) -> Bool {
