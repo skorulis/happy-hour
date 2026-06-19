@@ -23,11 +23,12 @@ final class CrawlImageValidator {
         self.featurePrintGenerator = featurePrintGenerator
     }
 
-    func validateImage(url: URL, hash: String) async -> ImageValidationResult? {
+    func validateImage(url: URL) async -> ImageValidationResult? {
         guard !Self.shouldIgnore(url: url) else {
             return nil
         }
 
+        let hash = URLNormalizer.hash(url)
         guard let localURL = try? await fetcher.localFileURL(for: url, hash: hash) else {
             return nil
         }
@@ -61,8 +62,7 @@ final class CrawlImageValidator {
     func validateImages(urls: [URL]) async -> [ImageValidationResult] {
         var results: [ImageValidationResult] = []
         for url in urls {
-            let hash = URLNormalizer.hash(url)
-            if let validation = await validateImage(url: url, hash: hash) {
+            if let validation = await validateImage(url: url) {
                 results.append(validation)
             }
         }

@@ -102,10 +102,10 @@ struct CrawlImageValidatorTests {
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
         let cache = CrawlImageCache(directory: directory)
         let fixtureURL = try fixtureImageURL(named: "hive_bar_happy_hour")
-        let hash = "fixture-hash"
+        let url = URL(string: "https://example.com/hive_bar_happy_hour.jpeg")!
         _ = try cache.store(
             data: Data(contentsOf: fixtureURL),
-            hash: hash,
+            hash: URLNormalizer.hash(url),
             fileExtension: "jpeg"
         )
 
@@ -120,10 +120,7 @@ struct CrawlImageValidatorTests {
             featurePrintGenerator: ImageFeaturePrintGenerator()
         )
 
-        let isRelevant = await validator.validateImage(
-            url: URL(string: "https://example.com/hive_bar_happy_hour.jpeg")!,
-            hash: hash
-        ) != nil
+        let isRelevant = await validator.validateImage(url: url) != nil
 
         #expect(isRelevant)
     }
@@ -132,8 +129,8 @@ struct CrawlImageValidatorTests {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
         let cache = CrawlImageCache(directory: directory)
-        let hash = "blank-hash"
-        _ = try cache.store(data: Self.largeBlankPNGData, hash: hash, fileExtension: "png")
+        let url = URL(string: "https://example.com/blank.png")!
+        _ = try cache.store(data: Self.largeBlankPNGData, hash: URLNormalizer.hash(url), fileExtension: "png")
 
         let validator = CrawlImageValidator(
             fetcher: CrawlImageFetcher(
@@ -146,10 +143,7 @@ struct CrawlImageValidatorTests {
             featurePrintGenerator: ImageFeaturePrintGenerator()
         )
 
-        let isRelevant = await validator.validateImage(
-            url: URL(string: "https://example.com/blank.png")!,
-            hash: hash
-        ) != nil
+        let isRelevant = await validator.validateImage(url: url) != nil
 
         #expect(!isRelevant)
     }
@@ -158,8 +152,8 @@ struct CrawlImageValidatorTests {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
         let cache = CrawlImageCache(directory: directory)
-        let hash = "small-hash"
-        _ = try cache.store(data: Self.smallPNGData, hash: hash, fileExtension: "png")
+        let url = URL(string: "https://example.com/small-icon.png")!
+        _ = try cache.store(data: Self.smallPNGData, hash: URLNormalizer.hash(url), fileExtension: "png")
 
         let validator = CrawlImageValidator(
             fetcher: CrawlImageFetcher(
@@ -172,10 +166,7 @@ struct CrawlImageValidatorTests {
             featurePrintGenerator: ImageFeaturePrintGenerator()
         )
 
-        let isRelevant = await validator.validateImage(
-            url: URL(string: "https://example.com/small-icon.png")!,
-            hash: hash
-        ) != nil
+        let isRelevant = await validator.validateImage(url: url) != nil
 
         #expect(!isRelevant)
     }
