@@ -8,10 +8,16 @@ import KnitMacros
 @Observable
 final class ExperimentViewModel {
 
+    enum LoadedContent {
+        case page(LoadedPage)
+        case image(url: URL, lines: [ExtractedTextLine])
+        case pdf(url: URL, text: String)
+    }
+
     enum State {
         case idle
-        case loading
-        case loaded(LoadedPage)
+        case loading(message: String)
+        case loaded(LoadedContent)
         case failed(message: String)
     }
 
@@ -22,11 +28,26 @@ final class ExperimentViewModel {
 
     private let webPageLoader: WebPageLoader
     private let crawlImageValidator: CrawlImageValidator
+    private let imageFetcher: CrawlImageFetcher
+    private let imageExtractor: DealImageExtractor
+    private let pdfFetcher: CrawlPDFFetcher
+    private let pdfTextExtractor: PDFTextExtractor
 
     @Resolvable<Resolver>
-    init(webPageLoader: WebPageLoader, crawlImageValidator: CrawlImageValidator) {
+    init(
+        webPageLoader: WebPageLoader,
+        crawlImageValidator: CrawlImageValidator,
+        imageFetcher: CrawlImageFetcher,
+        imageExtractor: DealImageExtractor,
+        pdfFetcher: CrawlPDFFetcher,
+        pdfTextExtractor: PDFTextExtractor
+    ) {
         self.webPageLoader = webPageLoader
         self.crawlImageValidator = crawlImageValidator
+        self.imageFetcher = imageFetcher
+        self.imageExtractor = imageExtractor
+        self.pdfFetcher = pdfFetcher
+        self.pdfTextExtractor = pdfTextExtractor
     }
 
     func loadPage() {
@@ -38,7 +59,7 @@ final class ExperimentViewModel {
     }
 
     func processImages() {
-        guard case let .loaded(page) = state else { return }
+        guard case let .loaded(.page(page)) = state else { return }
 
         Task {
             await performImageProcessing(urls: page.imageURLs)
@@ -61,13 +82,51 @@ final class ExperimentViewModel {
     }
 
     private func performLoad(url: URL) async {
-        state = .loading
         validatedImages = nil
         isProcessingImages = false
 
+        switch PageLinkFilter.sourceType(for: url) {
+        case .webpage:
+            state = .loading(message: "Loading page…")
+            await loadWebpage(url: url)
+        case .image:
+            state = .loading(message: "Running OCR…")
+            await loadImage(url: url)
+        case .pdf:
+            state = .loading(message: "Extracting PDF text…")
+            await loadPDF(url: url)
+        }
+    }
+
+    private func loadWebpage(url: URL) async {
         do {
             let page = try await webPageLoader.load(url: url)
-            state = .loaded(page)
+            state = .loaded(.page(page))
+        } catch {
+            state = .failed(message: error.localizedDescription)
+        }
+    }
+
+    private func loadImage(url: URL) async {
+        do {
+            let hash = URLNormalizer.hash(url)
+            let localURL = try await imageFetcher.localFileURL(for: url, hash: hash)
+            let lines = try await imageExtractor.extractTexts(from: localURL)
+            state = .loaded(.image(url: url, lines: lines))
+        } catch {
+            state = .failed(message: error.localizedDescription)
+        }
+    }
+
+    private func loadPDF(url: URL) async {
+        do {
+            let hash = URLNormalizer.hash(url)
+            let localURL = try await pdfFetcher.localFileURL(for: url, hash: hash)
+            guard let text = pdfTextExtractor.extractText(from: localURL) else {
+                state = .failed(message: "No text could be extracted from the PDF.")
+                return
+            }
+            state = .loaded(.pdf(url: url, text: text))
         } catch {
             state = .failed(message: error.localizedDescription)
         }

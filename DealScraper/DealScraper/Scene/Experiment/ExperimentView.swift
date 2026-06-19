@@ -52,11 +52,11 @@ struct ExperimentView: View {
             Text("Enter a URL and tap Load page.")
                 .foregroundStyle(.secondary)
 
-        case .loading:
+        case let .loading(message):
             HStack(spacing: 8) {
                 ProgressView()
                     .controlSize(.small)
-                Text("Loading page…")
+                Text(message)
             }
 
         case .loaded:
@@ -70,13 +70,20 @@ struct ExperimentView: View {
 
     @ViewBuilder
     private var results: some View {
-        if case let .loaded(page) = viewModel.state {
-            if let markdown = page.markdown {
-                markdownSection(markdown)
+        if case let .loaded(content) = viewModel.state {
+            switch content {
+            case let .page(page):
+                if let markdown = page.markdown {
+                    markdownSection(markdown)
+                }
+                linksSection(page.links)
+                imagesSection(page)
+                dealContentBlocksSection(page.dealContentBlocks)
+            case let .image(url, lines):
+                imageOCRSection(url: url, lines: lines)
+            case let .pdf(url, text):
+                pdfTextSection(url: url, text: text)
             }
-            linksSection(page.links)
-            imagesSection(page)
-            dealContentBlocksSection(page.dealContentBlocks)
         }
     }
 
@@ -129,6 +136,59 @@ struct ExperimentView: View {
     private func copyMarkdownToClipboard(_ markdown: String) {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(markdown, forType: .string)
+    }
+
+    private func imageOCRSection(url: URL, lines: [ExtractedTextLine]) -> some View {
+        detailSection(title: "OCR (\(lines.count) line\(lines.count == 1 ? "" : "s"))") {
+            AsyncImage(url: url) { phase in
+                switch phase {
+                case .empty:
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.secondary.opacity(0.15))
+                        .frame(maxHeight: 240)
+                        .overlay { ProgressView() }
+                case .success(let image):
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(maxHeight: 240)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                case .failure:
+                    Link(url.absoluteString, destination: url)
+                        .font(.subheadline)
+                @unknown default:
+                    EmptyView()
+                }
+            }
+
+            if lines.isEmpty {
+                Text("No text was recognized in this image.")
+                    .foregroundStyle(.secondary)
+            } else {
+                ScrollView {
+                    Text(lines.map(\.text).joined(separator: "\n"))
+                        .font(.system(.body, design: .monospaced))
+                        .textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .frame(maxHeight: 400)
+            }
+        }
+    }
+
+    private func pdfTextSection(url: URL, text: String) -> some View {
+        detailSection(title: "PDF Text") {
+            Link(url.absoluteString, destination: url)
+                .font(.subheadline)
+
+            ScrollView {
+                Text(text)
+                    .font(.system(.body, design: .monospaced))
+                    .textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .frame(maxHeight: 400)
+        }
     }
 
     private func linksSection(_ links: [ContentBlockLink]) -> some View {
