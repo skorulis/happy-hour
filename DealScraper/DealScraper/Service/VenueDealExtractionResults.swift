@@ -3,6 +3,7 @@
 import Foundation
 
 struct VenueDealExtractionResults: Equatable, Sendable {
+    let dealsFoundBeforeCondensing: Int
     let dealsFound: Int
     let duration: TimeInterval
     let errorCount: Int

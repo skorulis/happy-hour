@@ -250,7 +250,7 @@ struct VenueDetailsView: View {
 
     private func extractionResultsView(_ results: VenueDealExtractionResults) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Found \(results.dealsFound) deal\(results.dealsFound == 1 ? "" : "s").")
+            Text("Found \(results.dealsFound) deals condensed from \(results.dealsFoundBeforeCondensing)")
             Text("\(results.errorCount) error\(results.errorCount == 1 ? "" : "s").")
             Text("Completed in \(formattedDuration(results.duration)).")
         }

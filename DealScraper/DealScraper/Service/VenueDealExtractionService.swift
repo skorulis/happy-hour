@@ -73,6 +73,7 @@ final class VenueDealExtractionService {
         let savedCount = try dealRepository.replaceAll(venueId: venueId, deals: deals)
 
         let results = VenueDealExtractionResults(
+            dealsFoundBeforeCondensing: mapped.count,
             dealsFound: savedCount,
             duration: result.duration,
             errorCount: result.errors.count
