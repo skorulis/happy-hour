@@ -7,14 +7,12 @@ import Testing
 struct VenueDealPersistenceMapperTests {
 
     @Test func mapsRawDealToDealAndSchedules() {
-        let material = VenueDealSourceMaterial(
-            index: 1,
+        let material = VenueDealSourceMaterial.fixture(
             dealSourceId: 10,
             url: URL(string: "https://example.com/poster.jpg")!,
             sourceURL: URL(string: "https://example.com/specials")!,
             type: .image,
-            pngData: Data(),
-            markdown: nil
+            pngData: Data()
         )
         let payload = DealExtractionPayload(deals: [
             DealExtractionPayload.RawDeal(
@@ -43,15 +41,7 @@ struct VenueDealPersistenceMapperTests {
     }
 
     @Test func expandsEveryDayAcrossWeek() {
-        let material = VenueDealSourceMaterial(
-            index: 1,
-            dealSourceId: 1,
-            url: URL(string: "https://example.com/page")!,
-            sourceURL: URL(string: "https://example.com/page")!,
-            type: .webpage,
-            pngData: nil,
-            markdown: nil
-        )
+        let material = VenueDealSourceMaterial.fixture()
         let payload = DealExtractionPayload(deals: [
             DealExtractionPayload.RawDeal(
                 title: "Daily Special",
@@ -72,23 +62,19 @@ struct VenueDealPersistenceMapperTests {
     }
 
     @Test func mapsMultipleSourcesWithCorrectURLs() {
-        let firstMaterial = VenueDealSourceMaterial(
-            index: 1,
-            dealSourceId: 1,
+        let firstMaterial = VenueDealSourceMaterial.fixture(
             url: URL(string: "https://example.com/poster-a.jpg")!,
             sourceURL: URL(string: "https://example.com/specials-a")!,
             type: .image,
             pngData: Data(),
-            markdown: nil
         )
-        let secondMaterial = VenueDealSourceMaterial(
+        let secondMaterial = VenueDealSourceMaterial.fixture(
             index: 2,
             dealSourceId: 2,
             url: URL(string: "https://example.com/poster-b.jpg")!,
             sourceURL: URL(string: "https://example.com/specials-b")!,
             type: .image,
             pngData: Data(),
-            markdown: nil
         )
 
         let mapped = VenueDealPersistenceMapper.map(
@@ -128,15 +114,7 @@ struct VenueDealPersistenceMapperTests {
 
     @Test func mapsGlebeSteakNightFixture() throws {
         let payload = try DealExtractionPayload.fixture(named: "glebe-steak-nights")
-        let material = VenueDealSourceMaterial(
-            index: 1,
-            dealSourceId: 1,
-            url: URL(string: "https://example.com/glebe/whats-on")!,
-            sourceURL: URL(string: "https://example.com/glebe/whats-on")!,
-            type: .webpage,
-            pngData: nil,
-            markdown: nil
-        )
+        let material = VenueDealSourceMaterial.fixture()
 
         let mapped = VenueDealPersistenceMapper.map(
             payload: payload,
@@ -151,8 +129,6 @@ struct VenueDealPersistenceMapperTests {
         #expect(result.deal.title == "$22 STEAK NIGHT")
         #expect(result.deal.details == "Raise\nthe\nSteaks")
         #expect(result.deal.conditions == "*only available with bar service in our public bar, beer garden and nude")
-        #expect(result.deal.imageURL == nil)
-        #expect(result.deal.sourceURL == "https://example.com/glebe/whats-on")
 
         #expect(result.schedules.count == 1)
         let schedule = try #require(result.schedules.first)

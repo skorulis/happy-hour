@@ -7,15 +7,7 @@ import Testing
 struct VenueDealInstructionsTests {
 
     @Test func usesMarkdownContextWhenMaterialHasMarkdown() {
-        let material = VenueDealSourceMaterial(
-            index: 1,
-            dealSourceId: 1,
-            url: URL(string: "https://example.com/specials")!,
-            sourceURL: URL(string: "https://example.com/specials")!,
-            type: .webpage,
-            pngData: nil,
-            markdown: "# Happy Hour\n\n$5 beers"
-        )
+        let material = VenueDealSourceMaterial.fixture(markdown: "# Happy Hour\n\n$5 beers")
 
         let instructions = VenueDealInstructions.dealExtraction(for: material)
         #expect(instructions.contains(VenueDealInstructions.markdownSourceContext))
@@ -26,15 +18,7 @@ struct VenueDealInstructionsTests {
     }
 
     @Test func usesWebpageLinkContextWhenMaterialHasNoMarkdown() {
-        let material = VenueDealSourceMaterial(
-            index: 1,
-            dealSourceId: 1,
-            url: URL(string: "https://example.com/specials")!,
-            sourceURL: URL(string: "https://example.com/specials")!,
-            type: .webpage,
-            pngData: nil,
-            markdown: nil
-        )
+        let material = VenueDealSourceMaterial.fixture()
 
         let instructions = VenueDealInstructions.dealExtraction(for: material)
         #expect(instructions.contains(VenueDealInstructions.webpageSourceContext))
@@ -45,15 +29,7 @@ struct VenueDealInstructionsTests {
     }
 
     @Test func usesPDFContextWhenMaterialIsPDF() {
-        let material = VenueDealSourceMaterial(
-            index: 1,
-            dealSourceId: 1,
-            url: URL(string: "https://example.com/menu.pdf")!,
-            sourceURL: URL(string: "https://example.com/")!,
-            type: .pdf,
-            pngData: nil,
-            markdown: "Monday happy hour 4pm to 6pm"
-        )
+        let material = VenueDealSourceMaterial.fixture(type: .pdf, markdown: "Monday happy hour 4pm to 6pm")
 
         let instructions = VenueDealInstructions.dealExtraction(for: material)
         #expect(instructions.contains(VenueDealInstructions.pdfSourceContext))
