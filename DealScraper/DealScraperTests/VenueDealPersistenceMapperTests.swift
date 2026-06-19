@@ -125,4 +125,39 @@ struct VenueDealPersistenceMapperTests {
         #expect(mapped.contains { $0.deal.title == "Deal A" && $0.deal.sourceURL == "https://example.com/specials-a" })
         #expect(mapped.contains { $0.deal.title == "Deal B" && $0.deal.sourceURL == "https://example.com/specials-b" })
     }
+
+    @Test func mapsGlebeSteakNightFixture() throws {
+        let payload = try DealExtractionPayload.fixture(named: "glebe-steak-nights")
+        let material = VenueDealSourceMaterial(
+            index: 1,
+            dealSourceId: 1,
+            url: URL(string: "https://example.com/glebe/whats-on")!,
+            sourceURL: URL(string: "https://example.com/glebe/whats-on")!,
+            type: .webpage,
+            pngData: nil,
+            markdown: nil
+        )
+
+        let mapped = VenueDealPersistenceMapper.map(
+            payload: payload,
+            venueId: 42,
+            material: material
+        )
+
+        #expect(mapped.count == 1)
+
+        let result = try #require(mapped.first)
+        #expect(result.deal.venueId == 42)
+        #expect(result.deal.title == "$22 STEAK NIGHT")
+        #expect(result.deal.details == "Raise\nthe\nSteaks")
+        #expect(result.deal.conditions == "*only available with bar service in our public bar, beer garden and nude")
+        #expect(result.deal.imageURL == nil)
+        #expect(result.deal.sourceURL == "https://example.com/glebe/whats-on")
+
+        #expect(result.schedules.count == 1)
+        let schedule = try #require(result.schedules.first)
+        #expect(schedule.dayOfWeek == 2)
+        #expect(schedule.startMinute == 0)
+        #expect(schedule.endMinute == 1_440)
+    }
 }
