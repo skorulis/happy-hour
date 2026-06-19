@@ -42,6 +42,7 @@ final class ApprovalViewModel {
     private let dealSourceRepository: DealSourceRepository
     private let venueRepository: VenueRepository
     private let pdfFetcher: CrawlPDFFetcher
+    private let experimentViewModel: ExperimentViewModel
 
     private var previewTask: Task<Void, Never>?
 
@@ -49,11 +50,13 @@ final class ApprovalViewModel {
     init(
         dealSourceRepository: DealSourceRepository,
         venueRepository: VenueRepository,
-        pdfFetcher: CrawlPDFFetcher
+        pdfFetcher: CrawlPDFFetcher,
+        experimentViewModel: ExperimentViewModel
     ) {
         self.dealSourceRepository = dealSourceRepository
         self.venueRepository = venueRepository
         self.pdfFetcher = pdfFetcher
+        self.experimentViewModel = experimentViewModel
     }
 
     var currentSource: DealSource? {
@@ -62,6 +65,21 @@ final class ApprovalViewModel {
 
     var remainingCount: Int {
         pendingSources.count
+    }
+
+    var currentSourceURL: String? {
+        guard let source = currentSource else { return nil }
+        switch source.type {
+        case .image, .pdf:
+            return source.url
+        case .webpage:
+            return source.sourceURL
+        }
+    }
+
+    func sendToExperiment() {
+        guard let url = currentSourceURL else { return }
+        experimentViewModel.load(urlString: url)
     }
 
     func load() {

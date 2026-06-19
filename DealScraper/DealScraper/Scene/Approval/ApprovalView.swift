@@ -6,6 +6,12 @@ import SwiftUI
 struct ApprovalView: View {
 
     @State var viewModel: ApprovalViewModel
+    var onOpenInExperiment: () -> Void
+
+    init(viewModel: ApprovalViewModel, onOpenInExperiment: @escaping () -> Void = {}) {
+        _viewModel = State(initialValue: viewModel)
+        self.onOpenInExperiment = onOpenInExperiment
+    }
 
     var body: some View {
         Group {
@@ -101,6 +107,16 @@ struct ApprovalView: View {
 
     private var actionBar: some View {
         HStack(spacing: 32) {
+            statusButton(
+                systemImage: "flask",
+                color: .accentColor,
+                action: {
+                    viewModel.sendToExperiment()
+                    onOpenInExperiment()
+                }
+            )
+            .disabled(viewModel.currentSourceURL == nil)
+
             statusButton(
                 systemImage: "checkmark",
                 color: .green,

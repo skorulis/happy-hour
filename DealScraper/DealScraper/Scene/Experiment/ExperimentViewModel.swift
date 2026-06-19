@@ -58,6 +58,11 @@ final class ExperimentViewModel {
         }
     }
 
+    func load(urlString: String) {
+        self.urlString = urlString
+        loadPage()
+    }
+
     func processImages() {
         guard case let .loaded(.page(page)) = state else { return }
 

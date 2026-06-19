@@ -6,37 +6,53 @@ import SwiftUI
 import Knit
 
 struct ContentView: View {
-    
+
+    private enum Tab: Hashable {
+        case imageImport
+        case experiment
+        case venues
+        case approval
+        case settings
+    }
+
     @Environment(\.resolver) private var resolver
-    
+    @State private var selectedTab: Tab = .imageImport
+
     var body: some View {
-        TabView {
+        TabView(selection: $selectedTab) {
             ImageImportView(viewModel: resolver!.imageImportViewModel())
                 .tabItem {
                     Label("Import", systemImage: "photo.on.rectangle.angled")
                 }
+                .tag(Tab.imageImport)
 
             ExperimentView(viewModel: resolver!.experimentViewModel())
                 .tabItem {
                     Label("Experiment", systemImage: "flask")
                 }
-            
+                .tag(Tab.experiment)
+
             CoordinatorView(coordinator: .init(root: MainPath.venueImport))
                 .withRenderers(resolver: resolver!)
                 .tabItem {
                     Label("Venues", systemImage: "mappin.and.ellipse")
                 }
+                .tag(Tab.venues)
 
-            ApprovalView(viewModel: resolver!.approvalViewModel())
-                .tabItem {
-                    Label("Approval", systemImage: "checkmark.seal")
-                }
-            
+            ApprovalView(viewModel: resolver!.approvalViewModel()) {
+                selectedTab = .experiment
+            }
+            .tabItem {
+                Label("Approval", systemImage: "checkmark.seal")
+            }
+            .tag(Tab.approval)
+
             CoordinatorView(coordinator: .init(root: MainPath.settings))
                 .withRenderers(resolver: resolver!)
                 .tabItem {
                     Label("Settings", systemImage: "gear")
                 }
+                .tag(Tab.settings)
         }
     }
 }

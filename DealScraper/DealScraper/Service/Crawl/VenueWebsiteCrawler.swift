@@ -184,7 +184,8 @@ final class VenueWebsiteCrawler {
             )
         }
 
-        await progress("Deduping Images")
+        let imageCount = discoveredByURL.values.filter { $0.type == .image}.count
+        await progress("Deduping \(imageCount) images")
         discoveredByURL = imageDeduper.dedupe(validatedSources: discoveredByURL)
         discoveredByURL = await dealAdvancedTextFilter.filter(sources: discoveredByURL)
         
