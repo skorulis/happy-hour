@@ -45,19 +45,10 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
         container.register(ImageFeaturePrintGenerator.self) { _ in ImageFeaturePrintGenerator() }
         container.register(DealTextFilter.self) { _ in DealTextFilter() }
         container.register(DealAdvancedTextFilter.self) { _ in DealAdvancedTextFilter() }
-        container.register(OpenAIClient.self) { _ in OpenAIClient() }
         container.register(OpenRouterClient.self) { _ in OpenRouterClient() }
         container.register(GooglePlacesClient.self) { _ in GooglePlacesClient() }
         container.register(WebMarkdownGenerator.self) { _ in WebMarkdownGenerator() }
             .inObjectScope(.container)
-
-        container.register(OpenAIVenueDealExtractor.self) { resolver in
-            OpenAIVenueDealExtractor(
-                client: resolver.openAIClient(),
-                apiKeyStore: resolver.apiKeyStore(),
-                llmModelStore: resolver.llmModelStore()
-            )
-        }
 
         container.register(OpenRouterVenueDealExtractor.self) { resolver in
             OpenRouterVenueDealExtractor(
@@ -81,8 +72,7 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
                 dealSourceRepository: resolver.dealSourceRepository(),
                 dealRepository: resolver.dealRepository(),
                 materialPreparer: resolver.venueDealSourceMaterialPreparer(),
-                openAIExtractor: resolver.openAIVenueDealExtractor(),
-                openRouterExtractor: resolver.openRouterVenueDealExtractor()
+                extractor: resolver.openRouterVenueDealExtractor()
             )
         }
 

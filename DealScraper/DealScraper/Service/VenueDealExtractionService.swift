@@ -5,7 +5,6 @@ import Foundation
 enum VenueDealExtractionServiceError: LocalizedError, Equatable {
     case missingVenueID
     case noApprovedSources
-    case unsupportedProvider(VenueDealExtractionProvider)
     case extractionFailed(message: String)
 
     var errorDescription: String? {
@@ -13,9 +12,7 @@ enum VenueDealExtractionServiceError: LocalizedError, Equatable {
         case .missingVenueID:
             return "The venue must be saved before extracting deals."
         case .noApprovedSources:
-            return "Approve at least one image or webpage deal source before extracting deals."
-        case let .unsupportedProvider(provider):
-            return "\(provider.rawValue) extraction is not available yet."
+            return "Approve at least one image, webpage, or PDF deal source before extracting deals."
         case let .extractionFailed(message):
             return message
         }
@@ -28,26 +25,22 @@ final class VenueDealExtractionService {
     private let dealSourceRepository: DealSourceRepository
     private let dealRepository: DealRepository
     private let materialPreparer: VenueDealSourceMaterialPreparer
-    private let openAIExtractor: OpenAIVenueDealExtractor
-    private let openRouterExtractor: OpenRouterVenueDealExtractor
+    private let extractor: OpenRouterVenueDealExtractor
 
     init(
         dealSourceRepository: DealSourceRepository,
         dealRepository: DealRepository,
         materialPreparer: VenueDealSourceMaterialPreparer,
-        openAIExtractor: OpenAIVenueDealExtractor,
-        openRouterExtractor: OpenRouterVenueDealExtractor
+        extractor: OpenRouterVenueDealExtractor
     ) {
         self.dealSourceRepository = dealSourceRepository
         self.dealRepository = dealRepository
         self.materialPreparer = materialPreparer
-        self.openAIExtractor = openAIExtractor
-        self.openRouterExtractor = openRouterExtractor
+        self.extractor = extractor
     }
 
     func extractDeals(
         for venue: Venue,
-        provider: VenueDealExtractionProvider,
         progress: ProgressMonitor<VenueDealExtractionResults> = .empty
     ) async throws -> VenueDealExtractionResults {
         guard let venueId = venue.id else {
@@ -62,14 +55,13 @@ final class VenueDealExtractionService {
         let materials = try await materialPreparer.prepare(sources: sources, progress: progress)
 
         let result = try await extractPayload(
-            provider: provider,
             materials: materials,
             venueName: venue.name,
             progress: progress
         )
 
         let mapped = VenueDealPersistenceMapper.map(sourced: result.extractions, venueId: venueId)
-        let deals = DealCondenser().condense(mapped)
+        let deals =  mapped // DealCondenser().condense(mapped)
         let savedCount = try dealRepository.replaceAll(venueId: venueId, deals: deals)
 
         let results = VenueDealExtractionResults(
@@ -84,7 +76,6 @@ final class VenueDealExtractionService {
 
     func extractDealsFromDroppedImage(
         at url: URL,
-        provider: VenueDealExtractionProvider,
         progress: ProgressMonitor<[DealWithSchedules]> = .empty
     ) async throws -> [DealWithSchedules] {
         await progress("Preparing image…")
@@ -93,7 +84,6 @@ final class VenueDealExtractionService {
         let materials = [material]
 
         let result = try await extractPayload(
-            provider: provider,
             materials: materials,
             venueName: "Preview",
             progress: progress
@@ -107,21 +97,24 @@ final class VenueDealExtractionService {
 
     func extractDealsFromRemoteURL(
         at url: URL,
-        provider: VenueDealExtractionProvider,
         progress: ProgressMonitor<[DealWithSchedules]> = .empty
     ) async throws -> [DealWithSchedules] {
         let material: VenueDealSourceMaterial
-        if VenueDealSourceMaterialPreparer.isImageURL(url) {
-            await progress("Analyzing with \(provider.rawValue)…")
+        switch PageLinkFilter.sourceType(for: url) {
+        case .image:
+            await progress("Analyzing image")
             material = materialPreparer.prepareRemoteURL(at: url)
-        } else {
+        case .webpage:
             await progress("Loading webpage…")
             material = try await materialPreparer.prepareWebpage(at: url)
+        case .pdf:
+            await progress("Extracting PDF text…")
+            material = try await materialPreparer.preparePDF(at: url)
         }
+        
         let materials = [material]
 
         let result = try await extractPayload(
-            provider: provider,
             materials: materials,
             venueName: "Preview",
             progress: progress
@@ -134,26 +127,15 @@ final class VenueDealExtractionService {
     }
 
     private func extractPayload<Result>(
-        provider: VenueDealExtractionProvider,
         materials: [VenueDealSourceMaterial],
         venueName: String,
         progress: ProgressMonitor<Result>
     ) async throws -> VenueDealExtractionResult {
-        let result: VenueDealExtractionResult
-        switch provider {
-        case .openAI:
-            result = await openAIExtractor.extractDeals(
-                materials: materials,
-                venueName: venueName,
-                progress: progress
-            )
-        case .openRouter:
-            result = await openRouterExtractor.extractDeals(
-                materials: materials,
-                venueName: venueName,
-                progress: progress
-            )
-        }
+        let result = await extractor.extractDeals(
+            materials: materials,
+            venueName: venueName,
+            progress: progress
+        )
 
         if let message = result.failureMessage {
             throw VenueDealExtractionServiceError.extractionFailed(message: message)

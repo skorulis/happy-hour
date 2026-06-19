@@ -5,21 +5,14 @@ import Foundation
 
 final class LLMModelStore {
 
-    static let defaultOpenAIModel = "gpt-4o"
     static let defaultOpenRouterModel = "google/gemini-2.5-pro"
 
-    private static let openAIKey = "dealScraper.openAIModel"
     private static let openRouterKey = "dealScraper.openRouterModel"
 
     private let keyValueStore: PKeyValueStore
 
     init(keyValueStore: PKeyValueStore) {
         self.keyValueStore = keyValueStore
-    }
-
-    var openAIModel: String {
-        get { storedModel(forKey: Self.openAIKey, default: Self.defaultOpenAIModel) }
-        set { storeModel(newValue, forKey: Self.openAIKey) }
     }
 
     var openRouterModel: String {

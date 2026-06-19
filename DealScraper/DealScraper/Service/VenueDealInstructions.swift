@@ -2,11 +2,6 @@
 
 import Foundation
 
-enum VenueDealExtractionProvider: String, CaseIterable, Sendable {
-    case openRouter = "OpenRouter"
-    case openAI = "OpenAI"
-}
-
 nonisolated enum VenueDealInstructions {
 
     static let introduction = """

@@ -23,23 +23,8 @@ struct ImageImportView: View {
 
     private var processingControls: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Picker("Provider", selection: $viewModel.extractionProvider) {
-                ForEach(VenueDealExtractionProvider.allCases, id: \.self) { provider in
-                    Text(provider.rawValue).tag(provider)
-                }
-            }
-            .pickerStyle(.segmented)
-            .onChange(of: viewModel.extractionProvider) {
-                viewModel.reset()
-            }
-
-            if viewModel.extractionProvider == .openAI {
-                TextField("OpenAI model", text: $viewModel.openAIModel)
-                    .textFieldStyle(.roundedBorder)
-            } else if viewModel.extractionProvider == .openRouter {
-                TextField("OpenRouter model", text: $viewModel.openRouterModel)
-                    .textFieldStyle(.roundedBorder)
-            }
+            TextField("OpenRouter model", text: $viewModel.openRouterModel)
+                .textFieldStyle(.roundedBorder)
         }
     }
 

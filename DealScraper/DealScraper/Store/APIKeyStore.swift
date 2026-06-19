@@ -7,7 +7,6 @@ final class APIKeyStore {
 
     private enum Key {
         static let googlePlaces = "googlePlacesAPIKey"
-        static let openAI = "openAIAPIKey"
         static let openRouter = "openRouterAPIKey"
         static let markdowner = "markdownerAPIKey"
     }
@@ -21,11 +20,6 @@ final class APIKeyStore {
     var googlePlacesAPIKey: String {
         get { secureStore.string(forKey: Key.googlePlaces) ?? "" }
         set { secureStore.set(newValue.isEmpty ? nil : newValue, forKey: Key.googlePlaces) }
-    }
-
-    var openAIAPIKey: String {
-        get { secureStore.string(forKey: Key.openAI) ?? "" }
-        set { secureStore.set(newValue.isEmpty ? nil : newValue, forKey: Key.openAI) }
     }
 
     var openRouterAPIKey: String {

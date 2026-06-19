@@ -287,19 +287,8 @@ struct VenueDetailsView: View {
     @ViewBuilder
     private var extractionSection: some View {
         detailSection(title: "Extract Deals") {
-            Picker("Provider", selection: $viewModel.extractionProvider) {
-                ForEach(VenueDealExtractionProvider.allCases, id: \.self) { provider in
-                    Text(provider.rawValue).tag(provider)
-                }
-            }
-
-            if viewModel.extractionProvider == .openAI {
-                TextField("OpenAI model", text: $viewModel.openAIModel)
-                    .textFieldStyle(.roundedBorder)
-            } else if viewModel.extractionProvider == .openRouter {
-                TextField("OpenRouter model", text: $viewModel.openRouterModel)
-                    .textFieldStyle(.roundedBorder)
-            }
+            TextField("OpenRouter model", text: $viewModel.openRouterModel)
+                .textFieldStyle(.roundedBorder)
 
             HStack {
                 Button("Extract Deals") {

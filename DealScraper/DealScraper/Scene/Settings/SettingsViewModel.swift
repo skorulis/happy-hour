@@ -9,7 +9,6 @@ import KnitMacros
 final class SettingsViewModel {
 
     var googlePlacesAPIKey: String = ""
-    var openAIAPIKey: String = ""
     var openRouterAPIKey: String = ""
     var markdownerAPIKey: String = ""
 
@@ -23,14 +22,12 @@ final class SettingsViewModel {
 
     func load() {
         googlePlacesAPIKey = apiKeyStore.googlePlacesAPIKey
-        openAIAPIKey = apiKeyStore.openAIAPIKey
         openRouterAPIKey = apiKeyStore.openRouterAPIKey
         markdownerAPIKey = apiKeyStore.markdownerAPIKey
     }
 
     func save() {
         apiKeyStore.googlePlacesAPIKey = googlePlacesAPIKey
-        apiKeyStore.openAIAPIKey = openAIAPIKey
         apiKeyStore.openRouterAPIKey = openRouterAPIKey
         apiKeyStore.markdownerAPIKey = markdownerAPIKey
     }

@@ -37,10 +37,6 @@ final class VenueDetailsViewModel {
     private(set) var deleteDealsState: DeleteDealsState = .idle
     private(set) var extractionState: ExtractionState = .idle
 
-    var extractionProvider: VenueDealExtractionProvider = .openRouter
-    var openAIModel: String = LLMModelStore.defaultOpenAIModel {
-        didSet { llmModelStore.openAIModel = openAIModel }
-    }
     var openRouterModel: String = LLMModelStore.defaultOpenRouterModel {
         didSet { llmModelStore.openRouterModel = openRouterModel }
     }
@@ -72,7 +68,6 @@ final class VenueDetailsViewModel {
         self.venueWebsiteCrawler = venueWebsiteCrawler
         self.venueDealExtractionService = venueDealExtractionService
         self.llmModelStore = llmModelStore
-        openAIModel = llmModelStore.openAIModel
         openRouterModel = llmModelStore.openRouterModel
         load()
     }
@@ -224,7 +219,6 @@ final class VenueDetailsViewModel {
 
             let results = try await venueDealExtractionService.extractDeals(
                 for: venue,
-                provider: extractionProvider,
                 progress: extractionProgress
             )
 

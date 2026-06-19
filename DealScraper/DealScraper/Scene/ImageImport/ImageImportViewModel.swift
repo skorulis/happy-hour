@@ -23,10 +23,6 @@ final class ImageImportViewModel {
     private(set) var state: State = .idle
     var inputMode: InputMode = .image
     var sourceURLString: String = ""
-    var extractionProvider: VenueDealExtractionProvider = .openRouter
-    var openAIModel: String = LLMModelStore.defaultOpenAIModel {
-        didSet { llmModelStore.openAIModel = openAIModel }
-    }
     var openRouterModel: String = LLMModelStore.defaultOpenRouterModel {
         didSet { llmModelStore.openRouterModel = openRouterModel }
     }
@@ -44,7 +40,6 @@ final class ImageImportViewModel {
         self.venueDealExtractionService = venueDealExtractionService
         self.webPageLoader = webPageLoader
         self.llmModelStore = llmModelStore
-        openAIModel = llmModelStore.openAIModel
         openRouterModel = llmModelStore.openRouterModel
     }
 
@@ -102,7 +97,6 @@ final class ImageImportViewModel {
 
             let deals = try await venueDealExtractionService.extractDealsFromDroppedImage(
                 at: url,
-                provider: extractionProvider,
                 progress: extractionProgress
             )
             updateState(
@@ -130,7 +124,6 @@ final class ImageImportViewModel {
 
             let deals = try await venueDealExtractionService.extractDealsFromRemoteURL(
                 at: url,
-                provider: extractionProvider,
                 progress: extractionProgress
             )
 

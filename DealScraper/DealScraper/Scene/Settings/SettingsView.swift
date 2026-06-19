@@ -15,10 +15,6 @@ struct SettingsView: View {
                     text: $viewModel.googlePlacesAPIKey
                 )
                 apiKeyField(
-                    title: "OpenAI API Key",
-                    text: $viewModel.openAIAPIKey
-                )
-                apiKeyField(
                     title: "OpenRouter API Key",
                     text: $viewModel.openRouterAPIKey
                 )
@@ -36,7 +32,6 @@ struct SettingsView: View {
         .padding(24)
         .frame(minWidth: 480, minHeight: 320)
         .onChange(of: viewModel.googlePlacesAPIKey) { viewModel.save() }
-        .onChange(of: viewModel.openAIAPIKey) { viewModel.save() }
         .onChange(of: viewModel.openRouterAPIKey) { viewModel.save() }
         .onChange(of: viewModel.markdownerAPIKey) { viewModel.save() }
     }
