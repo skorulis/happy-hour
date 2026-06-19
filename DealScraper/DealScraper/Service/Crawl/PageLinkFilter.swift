@@ -19,14 +19,17 @@ struct PageLinkFilter {
             guard shouldInclude(link) else { continue }
             guard let normalized = URLNormalizer.normalize(link.url) else { continue }
 
-            if Self.isPDF(normalized) {
+            switch Self.sourceType(for: normalized) {
+            case .pdf:
                 let hash = URLNormalizer.hash(normalized)
                 guard seenPDFHashes.insert(hash).inserted else { continue }
                 pdfURLs.append(normalized)
-            } else if !Self.isImageURL(normalized) {
+            case .webpage:
                 let hash = URLNormalizer.hash(normalized)
                 guard seenCrawlHashes.insert(hash).inserted else { continue }
                 crawlURLs.append(normalized)
+            case .image:
+                continue
             }
         }
 
@@ -38,7 +41,7 @@ struct PageLinkFilter {
         if Self.containsExcludedKeyword(context) {
             return false
         }
-        if Self.isPDF(link.url) {
+        if Self.sourceType(for: link.url) == .pdf {
             return true
         }
         if DealDay.isMentioned(in: context) {
@@ -60,18 +63,20 @@ struct PageLinkFilter {
         return FilterKeywords.excludedKeywords.contains { lowercased.contains($0) }
     }
 
-    static func isPDF(_ url: URL) -> Bool {
-        url.pathExtension.lowercased() == "pdf"
-            || url.absoluteString.lowercased().hasSuffix(".pdf")
-    }
+    static func sourceType(for url: URL) -> DealSourceType {
+        if url.pathExtension.lowercased() == "pdf"
+            || url.absoluteString.lowercased().hasSuffix(".pdf") {
+            return .pdf
+        }
 
-    static func isImageURL(_ url: URL) -> Bool {
         let imageExtensions = ["jpg", "jpeg", "png", "gif", "webp", "svg", "avif"]
         let ext = url.pathExtension.lowercased()
-        if imageExtensions.contains(ext) {
-            return true
+        if imageExtensions.contains(ext)
+            || url.absoluteString.lowercased().contains("image") {
+            return .image
         }
-        return url.absoluteString.lowercased().contains("image")
+
+        return .webpage
     }
 
     private func linkContext(_ link: ContentBlockLink) -> String {
