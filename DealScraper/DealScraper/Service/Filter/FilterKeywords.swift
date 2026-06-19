@@ -37,5 +37,6 @@ nonisolated enum FilterKeywords {
         "new-years",
         "christmas in july",
         "christmas",
+        "parties"
     ]
 }

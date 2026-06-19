@@ -29,7 +29,7 @@ enum VenueWebsiteCrawlerError: LocalizedError {
 @MainActor
 final class VenueWebsiteCrawler {
     
-    private static let maxPages = 8
+    private static let maxPages = 15
     
     private let pageLoader: WebPageLoader
     private let pageLinkFilter: PageLinkFilter
