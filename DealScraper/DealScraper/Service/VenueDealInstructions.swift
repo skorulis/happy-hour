@@ -42,19 +42,27 @@ nonisolated enum VenueDealInstructions {
         You receive markdown converted from a venue webpage. Only use the visible promotional text in the markdown. Do not invent content. Ignore navigation, footers, and images.
         """
 
+    static let pdfSourceContext = """
+        You receive promotional text extracted from a venue PDF document. Only use the visible promotional text provided. Do not invent content. Ignore headers, footers, and page numbers.
+        """
+
     static let imageExtractionTask = "Extract all deals from the attached image."
 
     static let webpageExtractionTask = "Extract all deals from the visible text on this webpage."
 
     static let markdownExtractionTask = "Extract all deals from the webpage markdown below."
 
+    static let pdfExtractionTask = "Extract all deals from the PDF text below. Ignore standard pricing"
+
     nonisolated static func dealExtraction(for type: DealSourceType) -> String {
         let sourceContext: String
         switch type {
         case .image:
             sourceContext = imageSourceContext
-        case .webpage, .pdf:
+        case .webpage:
             sourceContext = webpageSourceContext
+        case .pdf:
+            sourceContext = pdfSourceContext
         }
 
         return """
@@ -69,6 +77,18 @@ nonisolated enum VenueDealInstructions {
     }
 
     nonisolated static func dealExtraction(for material: VenueDealSourceMaterial) -> String {
+        if material.type == .pdf {
+            return """
+            \(introduction)
+
+            \(verbatimRule)
+
+            \(pdfSourceContext)
+
+            \(fieldRules)
+            """
+        }
+
         if material.markdown != nil {
             return """
             \(introduction)
@@ -93,6 +113,9 @@ nonisolated enum VenueDealInstructions {
         if material.type == .image {
             typeLabel = "image"
             extractionTask = imageExtractionTask
+        } else if material.type == .pdf {
+            typeLabel = "PDF text"
+            extractionTask = pdfExtractionTask
         } else if material.markdown != nil {
             typeLabel = "webpage markdown"
             extractionTask = markdownExtractionTask

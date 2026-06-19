@@ -100,31 +100,28 @@ enum OpenRouterAPI {
         apiKey: String,
         instructions: String
     ) throws -> ExtractDealsRequest {
-        let requestBody: [String: Any] = [
-            "model": model,
-            "messages": [
-                [
-                    "role": "system",
-                    "content": instructions,
-                ],
-                [
-                    "role": "user",
-                    "content": """
-                    \(VenueDealInstructions.markdownExtractionTask)
+        try extractTextDealsRequest(
+            model: model,
+            text: markdown,
+            extractionTask: VenueDealInstructions.markdownExtractionTask,
+            apiKey: apiKey,
+            instructions: instructions
+        )
+    }
 
-                    \(markdown)
-                    """,
-                ],
-            ],
-            "response_format": [
-                "type": "json_schema",
-                "json_schema": [
-                    "name": "deal_extraction",
-                    "strict": true,
-                    "schema": VisionDealAPI.dealExtractionSchema,
-                ],
-            ],
-        ]
+    nonisolated static func extractTextDealsRequest(
+        model: String,
+        text: String,
+        extractionTask: String,
+        apiKey: String,
+        instructions: String
+    ) throws -> ExtractDealsRequest {
+        let requestBody = VisionDealAPI.extractTextDealsRequestBody(
+            model: model,
+            text: text,
+            extractionTask: extractionTask,
+            instructions: instructions
+        )
 
         return ExtractDealsRequest(
             body: try JSONSerialization.data(withJSONObject: requestBody),

@@ -73,6 +73,60 @@ struct OpenAIClientTests {
         #expect(payload.deals.first?.details == ["$8 WINES"])
     }
 
+    @Test func sendsTextRequestWithJsonSchema() async throws {
+        let captured = RequestCapture()
+
+        let client = OpenAIClient { request in
+            captured.request = request
+
+            let responseData = """
+            {
+              "choices": [
+                {
+                  "message": {
+                    "content": "{\\"deals\\":[{\\"title\\":\\"HAPPY HOUR\\",\\"details\\":[\\"$5 BEERS\\"],\\"conditions\\":[],\\"days\\":[\\"MONDAY\\"],\\"times\\":[\\"4PM - 6PM\\"]}]}"
+                  }
+                }
+              ]
+            }
+            """.data(using: .utf8)!
+
+            return (responseData, HTTPURLResponse(
+                url: request.url!,
+                statusCode: 200,
+                httpVersion: nil,
+                headerFields: nil
+            )!)
+        }
+
+        let pdfText = "Monday happy hour $5 beers 4pm to 6pm"
+        let payload = try await client.extractDealsFromText(
+            text: pdfText,
+            extractionTask: VenueDealInstructions.pdfExtractionTask,
+            apiKey: "test-key",
+            model: "gpt-4o",
+            instructions: "test instructions"
+        )
+
+        let request = try #require(captured.request)
+        let body = try #require(request.httpBody)
+        let json = try #require(JSONSerialization.jsonObject(with: body) as? [String: Any])
+
+        let responseFormat = try #require(json["response_format"] as? [String: Any])
+        #expect(responseFormat["type"] as? String == "json_schema")
+
+        let messages = try #require(json["messages"] as? [[String: Any]])
+        #expect(messages.count == 2)
+        #expect(messages[1]["content"] as? String == """
+        \(VenueDealInstructions.pdfExtractionTask)
+
+        \(pdfText)
+        """)
+
+        #expect(payload.deals.count == 1)
+        #expect(payload.deals.first?.title == "HAPPY HOUR")
+    }
+
     @Test func throwsAPIErrorOnNonSuccessStatus() async throws {
         let client = OpenAIClient { request in
             let responseData = """

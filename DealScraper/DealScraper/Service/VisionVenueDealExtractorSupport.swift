@@ -4,6 +4,7 @@ import Foundation
 
 enum VisionVenueDealExtractorError: LocalizedError, Sendable {
     case unsupportedSourceType(DealSourceType)
+    case missingSourceText(DealSourceType)
 
     var errorDescription: String? {
         switch self {
@@ -14,6 +15,13 @@ enum VisionVenueDealExtractorError: LocalizedError, Sendable {
             case .pdf:
                 return "Vision model extraction does not support PDF sources."
             case .image:
+                return nil
+            }
+        case let .missingSourceText(type):
+            switch type {
+            case .pdf:
+                return "No text could be extracted from the PDF."
+            case .image, .webpage:
                 return nil
             }
         }

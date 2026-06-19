@@ -202,7 +202,7 @@ struct DealSourceRepositoryTests {
         #expect(try dealSourceRepository.find(venueId: venueId).isEmpty)
     }
 
-    @Test func findApprovedExcludesNewRejectedAndPDFSources() throws {
+    @Test func findApprovedExcludesNewAndRejectedSources() throws {
         let store = SQLStore.inMemory()
         let venueRepository = VenueRepository(store: store)
         let dealSourceRepository = DealSourceRepository(store: store)
@@ -246,7 +246,8 @@ struct DealSourceRepositoryTests {
         ], forVenueId: venueId)
 
         let approved = try dealSourceRepository.findApproved(venueId: venueId)
-        #expect(approved.count == 1)
-        #expect(approved[0].url == "https://example.com/approved-image.png")
+        #expect(approved.count == 2)
+        #expect(Set(approved.map(\.url)).contains("https://example.com/approved-image.png"))
+        #expect(Set(approved.map(\.url)).contains("https://example.com/menu.pdf"))
     }
 }

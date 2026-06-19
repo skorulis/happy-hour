@@ -119,11 +119,7 @@ final class ImageImportViewModel {
 
     private func processRemoteURL(at url: URL) async {
         let startTime = Date()
-        if VenueDealSourceMaterialPreparer.isImageURL(url) {
-            updateState(.processing(progress: "Analyzing with \(extractionProvider.rawValue)…"))
-        } else {
-            updateState(.processing(progress: "Preparing source…"))
-        }
+        updateState(.processing(progress: "Preparing source…"))
 
         do {
             let extractionProgress = ProgressMonitor<[DealWithSchedules]> { newValue in

@@ -47,4 +47,22 @@ final class OpenAIClient: Sendable {
             instructions: instructions
         )
     }
+
+    nonisolated func extractDealsFromText(
+        text: String,
+        extractionTask: String,
+        apiKey: String,
+        model: String,
+        instructions: String
+    ) async throws -> DealExtractionPayload {
+        try await VisionDealAPI.extractDealsFromText(
+            endpoint: endpoint,
+            model: model,
+            text: text,
+            extractionTask: extractionTask,
+            apiKey: apiKey,
+            instructions: instructions,
+            fetch: fetch
+        )
+    }
 }

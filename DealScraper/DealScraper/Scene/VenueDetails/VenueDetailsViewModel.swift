@@ -96,7 +96,7 @@ final class VenueDetailsViewModel {
     }
 
     var approvedSourceCount: Int {
-        dealSources.filter { $0.status == .approved && $0.type != .pdf }.count
+        dealSources.filter { $0.status == .approved }.count
     }
 
     var canExtractDeals: Bool {

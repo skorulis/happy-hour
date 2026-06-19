@@ -43,4 +43,24 @@ struct VenueDealInstructionsTests {
         #expect(preamble.contains("webpage link"))
         #expect(preamble.contains(VenueDealInstructions.webpageExtractionTask))
     }
+
+    @Test func usesPDFContextWhenMaterialIsPDF() {
+        let material = VenueDealSourceMaterial(
+            index: 1,
+            dealSourceId: 1,
+            url: URL(string: "https://example.com/menu.pdf")!,
+            sourceURL: URL(string: "https://example.com/")!,
+            type: .pdf,
+            pngData: nil,
+            markdown: "Monday happy hour 4pm to 6pm"
+        )
+
+        let instructions = VenueDealInstructions.dealExtraction(for: material)
+        #expect(instructions.contains(VenueDealInstructions.pdfSourceContext))
+        #expect(!instructions.contains(VenueDealInstructions.markdownSourceContext))
+
+        let preamble = VenueDealInstructions.promptPreamble(venueName: "Test Pub", material: material)
+        #expect(preamble.contains("PDF text"))
+        #expect(preamble.contains(VenueDealInstructions.pdfExtractionTask))
+    }
 }

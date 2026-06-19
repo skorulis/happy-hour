@@ -54,8 +54,24 @@ final class OpenAIVenueDealExtractor: VenueDealExtractor, @unchecked Sendable {
                         )
                     )
                     extractions.append(SourcedDealExtraction(material: material, deals: payload.deals))
-                case .webpage, .pdf:
+                case .webpage:
                     throw VisionVenueDealExtractorError.unsupportedSourceType(material.type)
+                case .pdf:
+                    let instructions = VisionVenueDealExtractorSupport.perSourceInstructions(
+                        venueName: venueName,
+                        material: material
+                    )
+                    guard let text = material.markdown else {
+                        throw VisionVenueDealExtractorError.missingSourceText(.pdf)
+                    }
+                    let payload = try await client.extractDealsFromText(
+                        text: text,
+                        extractionTask: VenueDealInstructions.pdfExtractionTask,
+                        apiKey: apiKey,
+                        model: model,
+                        instructions: instructions
+                    )
+                    extractions.append(SourcedDealExtraction(material: material, deals: payload.deals))
                 }
             } catch {
                 errors.append(

@@ -3,9 +3,10 @@
 import Foundation
 import UniformTypeIdentifiers
 
-enum VenueDealSourceMaterialPreparerError: LocalizedError {
+enum VenueDealSourceMaterialPreparerError: LocalizedError, Equatable {
     case noMaterialsPrepared(failures: [String])
     case missingMarkdown
+    case missingPDFText
 
     var errorDescription: String? {
         switch self {
@@ -16,6 +17,8 @@ enum VenueDealSourceMaterialPreparerError: LocalizedError {
             return "No deal sources could be prepared for extraction:\n" + failures.joined(separator: "\n")
         case .missingMarkdown:
             return "The webpage loaded but contained no convertible markdown content."
+        case .missingPDFText:
+            return "No text could be extracted from the PDF."
         }
     }
 }
@@ -27,10 +30,19 @@ final class VenueDealSourceMaterialPreparer {
 
     private let imageFetcher: CrawlImageFetcher
     private let webPageLoader: WebPageLoader
+    private let pdfFetcher: CrawlPDFFetcher
+    private let pdfTextExtractor: PDFTextExtractor
 
-    init(imageFetcher: CrawlImageFetcher, webPageLoader: WebPageLoader) {
+    init(
+        imageFetcher: CrawlImageFetcher,
+        webPageLoader: WebPageLoader,
+        pdfFetcher: CrawlPDFFetcher,
+        pdfTextExtractor: PDFTextExtractor
+    ) {
         self.imageFetcher = imageFetcher
         self.webPageLoader = webPageLoader
+        self.pdfFetcher = pdfFetcher
+        self.pdfTextExtractor = pdfTextExtractor
     }
 
     func prepare<Result>(
@@ -76,7 +88,12 @@ final class VenueDealSourceMaterialPreparer {
                         index: index
                     )
                 case .pdf:
-                    continue
+                    material = try await preparePDF(
+                        at: url,
+                        sourceURL: sourceURL,
+                        dealSourceId: sourceID,
+                        index: index
+                    )
                 }
 
                 materials.append(material)
@@ -114,6 +131,31 @@ final class VenueDealSourceMaterialPreparer {
             type: Self.isImageURL(url) ? .image : .webpage,
             pngData: nil,
             markdown: nil
+        )
+    }
+
+    func preparePDF(
+        at url: URL,
+        sourceURL: URL? = nil,
+        dealSourceId: Int64 = 0,
+        index: Int = 1
+    ) async throws -> VenueDealSourceMaterial {
+        let hash = URLNormalizer.hash(url)
+        let localURL = try await pdfFetcher.localFileURL(for: url, hash: hash)
+        guard let text = pdfTextExtractor.extractText(from: localURL),
+              !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        else {
+            throw VenueDealSourceMaterialPreparerError.missingPDFText
+        }
+
+        return VenueDealSourceMaterial(
+            index: index,
+            dealSourceId: dealSourceId,
+            url: url,
+            sourceURL: sourceURL ?? url,
+            type: .pdf,
+            pngData: nil,
+            markdown: text
         )
     }
 

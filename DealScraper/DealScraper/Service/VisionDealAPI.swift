@@ -110,6 +110,39 @@ enum VisionDealAPI {
         )
     }
 
+    nonisolated static func extractTextDealsRequestBody(
+        model: String,
+        text: String,
+        extractionTask: String,
+        instructions: String
+    ) -> [String: Any] {
+        [
+            "model": model,
+            "messages": [
+                [
+                    "role": "system",
+                    "content": instructions,
+                ],
+                [
+                    "role": "user",
+                    "content": """
+                    \(extractionTask)
+
+                    \(text)
+                    """,
+                ],
+            ],
+            "response_format": [
+                "type": "json_schema",
+                "json_schema": [
+                    "name": "deal_extraction",
+                    "strict": true,
+                    "schema": dealExtractionSchema,
+                ],
+            ],
+        ]
+    }
+
     nonisolated static func parseDealExtractionPayload(from data: Data) throws -> DealExtractionPayload {
         let completion = try JSONDecoder().decode(ChatCompletionResponse.self, from: data)
         guard let content = completion.choices.first?.message.content else {
@@ -203,6 +236,47 @@ enum VisionDealAPI {
             additionalHeaders: additionalHeaders,
             fetch: fetch
         )
+    }
+
+    nonisolated static func extractDealsFromText(
+        endpoint: URL,
+        model: String,
+        text: String,
+        extractionTask: String,
+        apiKey: String,
+        instructions: String,
+        additionalHeaders: [String: String] = [:],
+        fetch: @escaping @Sendable (URLRequest) async throws -> (Data, URLResponse)
+    ) async throws -> DealExtractionPayload {
+        let requestBody = extractTextDealsRequestBody(
+            model: model,
+            text: text,
+            extractionTask: extractionTask,
+            instructions: instructions
+        )
+
+        var request = URLRequest(url: endpoint)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        for (key, value) in additionalHeaders {
+            request.setValue(value, forHTTPHeaderField: key)
+        }
+        request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
+
+        let (data, response) = try await fetch(request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw Error.invalidResponse
+        }
+
+        guard (200 ... 299).contains(httpResponse.statusCode) else {
+            let message = errorMessage(from: data) ?? String(data: data, encoding: .utf8) ?? "Unknown error"
+            print("VisionDealAPI Error: \(message)")
+            throw Error.apiError(statusCode: httpResponse.statusCode, message: message)
+        }
+
+        return try parseDealExtractionPayload(from: data)
     }
 
     nonisolated static func errorMessage(from data: Data) -> String? {

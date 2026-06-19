@@ -37,7 +37,6 @@ final class DealSourceRepository {
                 .filter(
                     Column("venue_id") == venueId
                         && Column("status") == DealStatus.approved.rawValue
-                        && Column("type") != DealSourceType.pdf.rawValue
                 )
                 .fetchAll(db)
         }
