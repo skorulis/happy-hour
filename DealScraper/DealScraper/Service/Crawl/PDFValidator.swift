@@ -22,10 +22,6 @@ final class PDFValidator {
     }
 
     func validatePDF(url: URL, hash: String) async -> PDFValidationResult? {
-        guard !Self.shouldIgnore(url: url) else {
-            return nil
-        }
-
         guard let localURL = try? await fetcher.localFileURL(for: url, hash: hash) else {
             return nil
         }
@@ -50,11 +46,6 @@ final class PDFValidator {
             }
         }
         return results
-    }
-
-    private static func shouldIgnore(url: URL) -> Bool {
-        let absoluteString = url.absoluteString.lowercased()
-        return PageLinkFilter.excludedKeywords.contains { absoluteString.contains($0) }
     }
 }
 

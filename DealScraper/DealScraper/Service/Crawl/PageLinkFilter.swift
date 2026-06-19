@@ -9,29 +9,6 @@ struct FilteredPageLinks: Equatable, Sendable {
 
 struct PageLinkFilter {
 
-    static let dealKeywords = [
-        "happy hour",
-        "specials",
-        "what's on",
-        "whats on",
-        "whats-on",
-        "whatson",
-        "events",
-        "promotions",
-        "deals",
-        "menu",
-        "drinks",
-        "food",
-        "happyhour",
-        "eat-drink",
-        "weekly"
-    ]
-    
-    static let excludedKeywords = [
-        "functions",
-        "covid"
-    ]
-
     func filter(links: [ContentBlockLink]) -> FilteredPageLinks {
         var pdfURLs: [URL] = []
         var crawlURLs: [URL] = []
@@ -75,12 +52,12 @@ struct PageLinkFilter {
 
     static func containsDealKeyword(_ text: String) -> Bool {
         let lowercased = text.lowercased()
-        return dealKeywords.contains { lowercased.contains($0) }
+        return FilterKeywords.dealKeywords.contains { lowercased.contains($0) }
     }
     
     private static func containsExcludedKeyword(_ text: String) -> Bool {
         let lowercased = text.lowercased()
-        return Self.excludedKeywords.contains { lowercased.contains($0) }
+        return FilterKeywords.excludedKeywords.contains { lowercased.contains($0) }
     }
 
     static func isPDF(_ url: URL) -> Bool {
