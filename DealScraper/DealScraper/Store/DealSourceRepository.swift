@@ -42,6 +42,15 @@ final class DealSourceRepository {
         }
     }
 
+    func findNew() throws -> [DealSource] {
+        try store.dbQueue.read { db in
+            try DealSource
+                .filter(Column("status") == DealStatus.new.rawValue)
+                .order(Column("date").asc)
+                .fetchAll(db)
+        }
+    }
+
     @discardableResult
     func deleteAll(venueId: Int64) throws -> Int {
         try store.dbQueue.write { db in

@@ -26,6 +26,11 @@ struct ContentView: View {
                 .tabItem {
                     Label("Venues", systemImage: "mappin.and.ellipse")
                 }
+
+            ApprovalView(viewModel: resolver!.approvalViewModel())
+                .tabItem {
+                    Label("Approval", systemImage: "checkmark.seal")
+                }
             
             CoordinatorView(coordinator: .init(root: MainPath.settings))
                 .withRenderers(resolver: resolver!)

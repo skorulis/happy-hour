@@ -250,4 +250,68 @@ struct DealSourceRepositoryTests {
         #expect(Set(approved.map(\.url)).contains("https://example.com/approved-image.png"))
         #expect(Set(approved.map(\.url)).contains("https://example.com/menu.pdf"))
     }
+
+    @Test func findNewReturnsOnlyNewSourcesAcrossVenues() throws {
+        let store = SQLStore.inMemory()
+        let venueRepository = VenueRepository(store: store)
+        let dealSourceRepository = DealSourceRepository(store: store)
+
+        try venueRepository.upsert(Venue(
+            googleMapId: "places/a",
+            name: "Venue A",
+            lat: 0,
+            lng: 0,
+            websiteUri: "https://a.example.com",
+            json: "{}"
+        ))
+        try venueRepository.upsert(Venue(
+            googleMapId: "places/b",
+            name: "Venue B",
+            lat: 0,
+            lng: 0,
+            websiteUri: "https://b.example.com",
+            json: "{}"
+        ))
+
+        let venueAId = try #require(try venueRepository.find(googleMapId: "places/a")?.id)
+        let venueBId = try #require(try venueRepository.find(googleMapId: "places/b")?.id)
+
+        _ = try dealSourceRepository.upsert(sources: [
+            DealSource(
+                venueId: venueAId,
+                url: "https://a.example.com/new.png",
+                type: .image,
+                status: .new,
+                date: Date(timeIntervalSince1970: 100)
+            ),
+            DealSource(
+                venueId: venueAId,
+                url: "https://a.example.com/approved.png",
+                type: .image,
+                status: .approved
+            ),
+        ], forVenueId: venueAId)
+        _ = try dealSourceRepository.upsert(sources: [
+            DealSource(
+                venueId: venueBId,
+                url: "https://b.example.com/new.pdf",
+                type: .pdf,
+                status: .new,
+                date: Date(timeIntervalSince1970: 200)
+            ),
+            DealSource(
+                venueId: venueBId,
+                url: "https://b.example.com/rejected.pdf",
+                type: .pdf,
+                status: .rejected
+            ),
+        ], forVenueId: venueBId)
+
+        let pending = try dealSourceRepository.findNew()
+        #expect(pending.count == 2)
+        #expect(pending.map(\.url) == [
+            "https://a.example.com/new.png",
+            "https://b.example.com/new.pdf",
+        ])
+    }
 }
