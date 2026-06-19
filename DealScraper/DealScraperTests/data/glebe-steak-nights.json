@@ -1,0 +1,21 @@
+{
+  "deals": [
+    {
+      "title": "$22 STEAK NIGHT",
+      "days": [
+        "Monday Nights"
+      ],
+      "times": [
+        "all day"
+      ],
+      "details": [
+        "Raise",
+        "the",
+        "Steaks"
+      ],
+      "conditions": [
+        "*only available with bar service in our public bar, beer garden and nude"
+      ]
+    }
+  ]
+}

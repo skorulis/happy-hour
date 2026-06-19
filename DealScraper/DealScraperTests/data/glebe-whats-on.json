@@ -1,0 +1,135 @@
+{
+  "deals": [
+    {
+      "times": [
+        "all day"
+      ],
+      "title": "$15 LUNCH SPECIALS",
+      "conditions": [
+        "Conditions Apply"
+      ],
+      "days": [
+        "MONDAY-THURSDAY"
+      ],
+      "details": []
+    },
+    {
+      "times": [
+        "all day"
+      ],
+      "title": "$22 STEAK NIGHT",
+      "conditions": [
+        "Conditions Apply"
+      ],
+      "days": [
+        "MONDAY"
+      ],
+      "details": []
+    },
+    {
+      "times": [
+        "all day"
+      ],
+      "title": "2-4-1 MEAL DEAL",
+      "conditions": [
+        "Conditions Apply"
+      ],
+      "days": [
+        "TUESDAY"
+      ],
+      "details": []
+    },
+    {
+      "times": [
+        "all day"
+      ],
+      "title": "TRIVIA NIGHT",
+      "conditions": [],
+      "days": [
+        "WEDNESDAY"
+      ],
+      "details": [
+        "+",
+        "+$20 SCHNITZEL"
+      ]
+    },
+    {
+      "times": [
+        "all day"
+      ],
+      "title": "PICK THE JOKER",
+      "conditions": [],
+      "days": [
+        "THURSDAY"
+      ],
+      "details": [
+        "$28 CURRY & A CAN"
+      ]
+    },
+    {
+      "times": [
+        "all day"
+      ],
+      "title": "$18 BURGERS",
+      "conditions": [],
+      "days": [
+        "FRIDAY"
+      ],
+      "details": [
+        "Members Meat tray & Manicure draw at 6pm"
+      ]
+    },
+    {
+      "times": [
+        "all day"
+      ],
+      "title": "$13 APEROL SPRITZ & $15 ESPRESSO MARTINIS",
+      "conditions": [],
+      "days": [
+        "FRIDAY / SATURDAY / SUNDAY"
+      ],
+      "details": []
+    },
+    {
+      "times": [
+        "all day"
+      ],
+      "title": "SUNDAY ROAST $35",
+      "conditions": [],
+      "days": [
+        "SUNDAY"
+      ],
+      "details": [
+        "ADD A DESSERT $7"
+      ]
+    },
+    {
+      "times": [
+        "all day"
+      ],
+      "title": "PETS WELCOME",
+      "conditions": [],
+      "days": [
+        "EVERYDAY"
+      ],
+      "details": [
+        "OWNERS TOLERATED"
+      ]
+    },
+    {
+      "times": [
+        "4pm to 6pm"
+      ],
+      "title": "MEMBERS HAPPY HOUR",
+      "conditions": [
+        "See our bar staff for your FREE membership card"
+      ],
+      "days": [
+        "MONDAY - FRIDAY"
+      ],
+      "details": [
+        "Beer & wine from $6"
+      ]
+    }
+  ]
+}

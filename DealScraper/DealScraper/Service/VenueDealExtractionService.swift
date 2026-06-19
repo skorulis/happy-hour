@@ -61,7 +61,7 @@ final class VenueDealExtractionService {
         )
 
         let mapped = VenueDealPersistenceMapper.map(sourced: result.extractions, venueId: venueId)
-        let deals =  mapped // DealCondenser().condense(mapped)
+        let deals = mapped // DealCondenser().condense(mapped)
         let savedCount = try dealRepository.replaceAll(venueId: venueId, deals: deals)
 
         let results = VenueDealExtractionResults(
