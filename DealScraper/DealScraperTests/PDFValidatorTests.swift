@@ -81,72 +81,48 @@ struct CrawlPDFFetcherTests {
 
 struct PDFValidatorYearFilterTests {
 
-    @Test func keepsLatestYearWithinStem() {
-        let results = [
-            PDFValidationResult(
-                url: URL(string: "https://example.com/menus/happy-hour-2024.pdf")!,
-                text: "happy hour"
-            ),
-            PDFValidationResult(
-                url: URL(string: "https://example.com/menus/happy-hour-2026.pdf")!,
-                text: "happy hour"
-            ),
+    @Test func filtersOutYearsBeforeCurrent() {
+        let urls = [
+            URL(string: "https://example.com/menus/happy-hour-2024.pdf")!,
+            URL(string: "https://example.com/menus/happy-hour-2026.pdf")!,
         ]
 
-        let filtered = PDFVersionFilter.filterToLatestVersions(results)
+        let filtered = PDFVersionFilter.filterToLatestVersions(urls, currentYear: 2026)
 
         #expect(filtered.count == 1)
-        #expect(filtered[0].url.lastPathComponent == "happy-hour-2026.pdf")
+        #expect(filtered[0].lastPathComponent == "happy-hour-2026.pdf")
     }
 
-    @Test func dropsUnversionedSiblingWhenNewerYearExists() {
-        let results = [
-            PDFValidationResult(
-                url: URL(string: "https://example.com/files/menu.pdf")!,
-                text: "happy hour"
-            ),
-            PDFValidationResult(
-                url: URL(string: "https://example.com/files/menu-2026.pdf")!,
-                text: "happy hour"
-            ),
+    @Test func keepsUnversionedURLs() {
+        let urls = [
+            URL(string: "https://example.com/files/menu.pdf")!,
+            URL(string: "https://example.com/files/menu-2026.pdf")!,
         ]
 
-        let filtered = PDFVersionFilter.filterToLatestVersions(results)
-
-        #expect(filtered.count == 1)
-        #expect(filtered[0].url.lastPathComponent == "menu-2026.pdf")
-    }
-
-    @Test func keepsIndependentStems() {
-        let results = [
-            PDFValidationResult(
-                url: URL(string: "https://example.com/drinks-2024.pdf")!,
-                text: "drinks"
-            ),
-            PDFValidationResult(
-                url: URL(string: "https://example.com/events-2026.pdf")!,
-                text: "events"
-            ),
-        ]
-
-        let filtered = PDFVersionFilter.filterToLatestVersions(results)
+        let filtered = PDFVersionFilter.filterToLatestVersions(urls, currentYear: 2026)
 
         #expect(filtered.count == 2)
     }
 
-    @Test func keepsAllWhenNoYearsPresent() {
-        let results = [
-            PDFValidationResult(
-                url: URL(string: "https://example.com/happy-hour.pdf")!,
-                text: "happy hour"
-            ),
-            PDFValidationResult(
-                url: URL(string: "https://example.com/specials.pdf")!,
-                text: "specials"
-            ),
+    @Test func filtersOldYearsIndependently() {
+        let urls = [
+            URL(string: "https://example.com/drinks-2024.pdf")!,
+            URL(string: "https://example.com/events-2026.pdf")!,
         ]
 
-        let filtered = PDFVersionFilter.filterToLatestVersions(results)
+        let filtered = PDFVersionFilter.filterToLatestVersions(urls, currentYear: 2026)
+
+        #expect(filtered.count == 1)
+        #expect(filtered[0].lastPathComponent == "events-2026.pdf")
+    }
+
+    @Test func keepsAllWhenNoYearsPresent() {
+        let urls = [
+            URL(string: "https://example.com/happy-hour.pdf")!,
+            URL(string: "https://example.com/specials.pdf")!,
+        ]
+
+        let filtered = PDFVersionFilter.filterToLatestVersions(urls, currentYear: 2026)
 
         #expect(filtered.count == 2)
     }

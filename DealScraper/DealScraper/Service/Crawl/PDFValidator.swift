@@ -41,14 +41,15 @@ final class PDFValidator {
     }
 
     func validatePDFs(urls: [URL]) async -> [PDFValidationResult] {
+        let urlsToProcess = PDFVersionFilter.filterToLatestVersions(urls)
         var results: [PDFValidationResult] = []
-        for url in urls {
+        for url in urlsToProcess {
             let hash = URLNormalizer.hash(url)
             if let validation = await validatePDF(url: url, hash: hash) {
                 results.append(validation)
             }
         }
-        return PDFVersionFilter.filterToLatestVersions(results)
+        return results
     }
 
     private static func shouldIgnore(url: URL) -> Bool {
@@ -59,21 +60,15 @@ final class PDFValidator {
 
 enum PDFVersionFilter {
 
-    static func filterToLatestVersions(_ results: [PDFValidationResult]) -> [PDFValidationResult] {
-        let grouped = Dictionary(grouping: results) { versionStem(for: $0.url) }
-
-        return grouped.values.flatMap { group in
-            let years = group.map { year(from: $0.url) }
-            guard years.contains(where: { $0 != nil }) else {
-                return group
+    static func filterToLatestVersions(
+        _ urls: [URL],
+        currentYear: Int = Calendar.current.component(.year, from: Date())
+    ) -> [URL] {
+        urls.filter { url in
+            guard let year = year(from: url) else {
+                return true
             }
-
-            let maxYear = years.compactMap(\.self).max()
-            guard let maxYear else {
-                return group
-            }
-
-            return group.filter { year(from: $0.url) == maxYear }
+            return year >= currentYear
         }
     }
 
@@ -86,22 +81,5 @@ enum PDFVersionFilter {
             return nil
         }
         return Int(url.path[yearRange])
-    }
-
-    static func versionStem(for url: URL) -> String {
-        var stem = url.deletingPathExtension().path.lowercased()
-        let range = NSRange(stem.startIndex..., in: stem)
-        guard let regex = try? NSRegularExpression(pattern: #"\b20\d{2}\b"#) else {
-            return stem
-        }
-        stem = regex.stringByReplacingMatches(
-            in: stem,
-            range: range,
-            withTemplate: ""
-        )
-        while stem.hasSuffix("-") {
-            stem.removeLast()
-        }
-        return stem
     }
 }

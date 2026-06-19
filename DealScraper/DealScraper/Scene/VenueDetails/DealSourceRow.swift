@@ -59,8 +59,12 @@ struct DealSourceRow: View {
     @ViewBuilder
     private var sourceLink: some View {
         if let url = URL(string: source.sourceURL) {
-            Link(url.lastPathComponent, destination: url)
-                .lineLimit(2)
+            HStack {
+                Text("Source: ")
+                Link(url.lastPathComponent, destination: url)
+                    .lineLimit(2)
+            }
+            
         } else {
             Text(source.sourceURL)
                 .lineLimit(2)
