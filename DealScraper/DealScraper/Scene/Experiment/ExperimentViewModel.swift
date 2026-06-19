@@ -11,7 +11,7 @@ final class ExperimentViewModel {
     enum LoadedContent {
         case page(LoadedPage)
         case image(url: URL, lines: [ExtractedTextLine])
-        case pdf(url: URL, text: String)
+        case pdf(url: URL, extraction: PDFTextExtractionResult)
     }
 
     enum State {
@@ -122,11 +122,11 @@ final class ExperimentViewModel {
         do {
             let hash = URLNormalizer.hash(url)
             let localURL = try await pdfFetcher.localFileURL(for: url, hash: hash)
-            guard let text = pdfTextExtractor.extractText(from: localURL) else {
-                state = .failed(message: "No text could be extracted from the PDF.")
+            guard let extraction = pdfTextExtractor.extractText(from: localURL) else {
+                state = .failed(message: "No deal-related text could be extracted from the PDF.")
                 return
             }
-            state = .loaded(.pdf(url: url, text: text))
+            state = .loaded(.pdf(url: url, extraction: extraction))
         } catch {
             state = .failed(message: error.localizedDescription)
         }

@@ -8,6 +8,7 @@ struct ExperimentView: View {
 
     @State var viewModel: ExperimentViewModel
     @State private var linkDisplayMode: LinkDisplayMode = .filtered
+    @State private var pdfTextDisplayMode: PDFTextDisplayMode = .filtered
     @State private var isMarkdownExpanded = false
 
     private let pageLinkFilter = PageLinkFilter()
@@ -15,6 +16,11 @@ struct ExperimentView: View {
     private enum LinkDisplayMode: String, CaseIterable {
         case filtered
         case all
+    }
+
+    private enum PDFTextDisplayMode: String, CaseIterable {
+        case filtered
+        case full
     }
 
     var body: some View {
@@ -81,8 +87,8 @@ struct ExperimentView: View {
                 dealContentBlocksSection(page.dealContentBlocks)
             case let .image(url, lines):
                 imageOCRSection(url: url, lines: lines)
-            case let .pdf(url, text):
-                pdfTextSection(url: url, text: text)
+            case let .pdf(url, extraction):
+                pdfTextSection(url: url, extraction: extraction)
             }
         }
     }
@@ -176,8 +182,17 @@ struct ExperimentView: View {
         }
     }
 
-    private func pdfTextSection(url: URL, text: String) -> some View {
-        detailSection(title: "PDF Text") {
+    private func pdfTextSection(url: URL, extraction: PDFTextExtractionResult) -> some View {
+        let text = pdfTextDisplayMode == .filtered ? extraction.filteredText : extraction.fullText
+
+        return detailSection(title: "PDF Text") {
+            Picker("PDF text", selection: $pdfTextDisplayMode) {
+                Text("Filtered").tag(PDFTextDisplayMode.filtered)
+                Text("Full").tag(PDFTextDisplayMode.full)
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+
             Link(url.absoluteString, destination: url)
                 .font(.subheadline)
 
@@ -188,6 +203,9 @@ struct ExperimentView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             .frame(maxHeight: 400)
+        }
+        .onChange(of: url) {
+            pdfTextDisplayMode = .filtered
         }
     }
 

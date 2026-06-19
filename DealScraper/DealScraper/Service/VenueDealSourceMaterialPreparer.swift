@@ -142,9 +142,7 @@ final class VenueDealSourceMaterialPreparer {
     ) async throws -> VenueDealSourceMaterial {
         let hash = URLNormalizer.hash(url)
         let localURL = try await pdfFetcher.localFileURL(for: url, hash: hash)
-        guard let text = pdfTextExtractor.extractText(from: localURL),
-              !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        else {
+        guard let extraction = pdfTextExtractor.extractText(from: localURL) else {
             throw VenueDealSourceMaterialPreparerError.missingPDFText
         }
 
@@ -155,7 +153,7 @@ final class VenueDealSourceMaterialPreparer {
             sourceURL: sourceURL ?? url,
             type: .pdf,
             pngData: nil,
-            markdown: text
+            markdown: extraction.filteredText
         )
     }
 

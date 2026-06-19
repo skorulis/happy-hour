@@ -3,14 +3,20 @@
 import Foundation
 import PDFKit
 
+struct PDFTextExtractionResult: Equatable, Sendable {
+    let fullText: String
+    let filteredText: String
+}
+
 struct PDFTextExtractor {
 
-    func extractText(from localURL: URL) -> String? {
+    func extractText(from localURL: URL) -> PDFTextExtractionResult? {
         guard let document = PDFDocument(url: localURL) else {
             return nil
         }
 
-        var parts: [String] = []
+        var allParts: [String] = []
+        var filteredParts: [String] = []
         for index in 0..<document.pageCount {
             guard let page = document.page(at: index),
                   let pageText = page.string?.trimmingCharacters(in: .whitespacesAndNewlines),
@@ -18,10 +24,20 @@ struct PDFTextExtractor {
             else {
                 continue
             }
-            parts.append(pageText)
+            allParts.append(pageText)
+            if FilterKeywords.containsDealKeyword(pageText) {
+                filteredParts.append(pageText)
+            }
         }
 
-        let text = parts.joined(separator: "\n")
-        return text.isEmpty ? nil : text
+        let filteredText = filteredParts.joined(separator: "\n")
+        guard !filteredText.isEmpty else {
+            return nil
+        }
+
+        return PDFTextExtractionResult(
+            fullText: allParts.joined(separator: "\n"),
+            filteredText: filteredText
+        )
     }
 }

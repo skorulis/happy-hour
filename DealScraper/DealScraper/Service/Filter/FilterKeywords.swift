@@ -41,4 +41,14 @@ nonisolated enum FilterKeywords {
         "christmas",
         "parties"
     ]
+    
+    static func containsDealKeyword(_ text: String) -> Bool {
+        let lowercased = text.lowercased()
+        return dealKeywords.contains { lowercased.contains($0) }
+    }
+    
+    static func containsExcludedKeyword(_ text: String) -> Bool {
+        let lowercased = text.lowercased()
+        return excludedKeywords.contains { lowercased.contains($0) }
+    }
 }

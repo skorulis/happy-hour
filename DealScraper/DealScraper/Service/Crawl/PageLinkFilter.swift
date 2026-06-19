@@ -38,7 +38,7 @@ struct PageLinkFilter {
 
     func shouldInclude(_ link: ContentBlockLink) -> Bool {
         let context = linkContext(link)
-        if Self.containsExcludedKeyword(context) {
+        if FilterKeywords.containsExcludedKeyword(context) {
             return false
         }
         if Self.sourceType(for: link.url) == .pdf {
@@ -47,20 +47,10 @@ struct PageLinkFilter {
         if DealDay.isMentioned(in: context) {
             return true
         }
-        if Self.containsDealKeyword(context) {
+        if FilterKeywords.containsDealKeyword(context) {
             return true
         }
         return false
-    }
-
-    static func containsDealKeyword(_ text: String) -> Bool {
-        let lowercased = text.lowercased()
-        return FilterKeywords.dealKeywords.contains { lowercased.contains($0) }
-    }
-    
-    private static func containsExcludedKeyword(_ text: String) -> Bool {
-        let lowercased = text.lowercased()
-        return FilterKeywords.excludedKeywords.contains { lowercased.contains($0) }
     }
 
     static func sourceType(for url: URL) -> DealSourceType {

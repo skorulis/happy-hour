@@ -26,14 +26,11 @@ final class PDFValidator {
             return nil
         }
 
-        guard let text = textExtractor.extractText(from: localURL),
-              !text.isEmpty,
-              PageLinkFilter.containsDealKeyword(text)
-        else {
+        guard let extraction = textExtractor.extractText(from: localURL) else {
             return nil
         }
 
-        return PDFValidationResult(url: url, text: text)
+        return PDFValidationResult(url: url, text: extraction.filteredText)
     }
 
     func validatePDFs(urls: [URL]) async -> [PDFValidationResult] {
