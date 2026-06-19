@@ -70,6 +70,11 @@ nonisolated enum DealDay: String, CaseIterable {
 
         var found = Set<DealDay>()
 
+        if normalized.range(of: #"\bweekends?\b"#, options: .regularExpression) != nil {
+            found.insert(.saturday)
+            found.insert(.sunday)
+        }
+
         parseDayRanges(in: normalized, into: &found)
 
         for day in DealDay.allCases where normalized.contains(day.rawValue) {

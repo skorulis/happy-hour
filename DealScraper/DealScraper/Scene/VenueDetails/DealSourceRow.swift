@@ -127,6 +127,21 @@ struct DealSourceRow: View {
             }
             .buttonStyle(.plain)
             .help("Open image in browser")
+        } else if source.type == .pdf,
+                  !source.url.isEmpty,
+                  let pdfURL = URL(string: source.url) {
+            Link(destination: pdfURL) {
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(Color.secondary.opacity(0.15))
+                    .overlay {
+                        Image(systemName: "richtext.page.fill")
+                            .font(.largeTitle)
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: 200, maxHeight: 120)
+            }
+            .buttonStyle(.plain)
+            .help("Open PDF in browser")
         }
     }
 

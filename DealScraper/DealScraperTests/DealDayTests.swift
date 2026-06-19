@@ -25,6 +25,12 @@ struct DealDayTests {
         #expect(DealDay.parseAll(in: "TUES - THURS 4PM - 6PM / FRI 3PM - 5PM") == [.tuesday, .wednesday, .thursday, .friday])
     }
 
+    @Test func parseAllExpandsWeekends() {
+        #expect(DealDay.parseAll(in: "WEEKENDS") == [.saturday, .sunday])
+        #expect(DealDay.parseAll(in: "weekend") == [.saturday, .sunday])
+        #expect(DealDay.parseAll(in: "Happy hour on weekends 5PM - 7PM") == [.saturday, .sunday])
+    }
+
     @Test func parseAllExpandsDayRanges() {
         #expect(DealDay.parseAll(in: "MONDAY - FRIDAY") == [.monday, .tuesday, .wednesday, .thursday, .friday])
         #expect(DealDay.parseAll(in: "MONDAY to FRIDAY") == [.monday, .tuesday, .wednesday, .thursday, .friday])

@@ -184,6 +184,7 @@ final class VenueWebsiteCrawler {
             )
         }
 
+        await progress("Deduping Images")
         discoveredByURL = imageDeduper.dedupe(validatedSources: discoveredByURL)
         discoveredByURL = await dealAdvancedTextFilter.filter(sources: discoveredByURL)
         
