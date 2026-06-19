@@ -6,14 +6,16 @@ import Foundation
 struct ImageDeduper: Sendable {
 
     let matchThreshold: Double
+    let featurePrintDistanceThreshold: Float
 
-    init(matchThreshold: Double = 0.8) {
+    init(matchThreshold: Double = 0.8, featurePrintDistanceThreshold: Float = 0.35) {
         self.matchThreshold = matchThreshold
+        self.featurePrintDistanceThreshold = featurePrintDistanceThreshold
     }
 
     func dedupe(validatedSources: [URL: DiscoveredSource]) -> [URL: DiscoveredSource] {
         var result: [URL: DiscoveredSource] = [:]
-        var keptImages: [(url: URL, source: DiscoveredSource, text: String)] = []
+        var keptImages: [KeptImage] = []
 
         for (url, source) in validatedSources {
             guard source.type == .image else {
@@ -22,27 +24,62 @@ struct ImageDeduper: Sendable {
             }
 
             let text = normalizedText(from: source.textPieces)
-            guard !text.isEmpty else {
+            let featurePrint = source.imageFeaturePrint
+
+            if text.isEmpty && featurePrint == nil {
                 result[url] = source
                 continue
             }
 
             if let matchIndex = keptImages.firstIndex(where: {
-                textSimilarity(text, $0.text) >= matchThreshold
+                isDuplicate(
+                    candidateFeaturePrint: featurePrint,
+                    candidateText: text,
+                    kept: $0
+                )
             }) {
                 let existing = keptImages[matchIndex]
                 if shouldPreferImage(candidate: source, over: existing.source) {
                     result.removeValue(forKey: existing.url)
-                    keptImages[matchIndex] = (url, source, text)
+                    keptImages[matchIndex] = KeptImage(url: url, source: source, text: text, featurePrint: featurePrint)
                     result[url] = source
                 }
             } else {
-                keptImages.append((url, source, text))
+                keptImages.append(KeptImage(url: url, source: source, text: text, featurePrint: featurePrint))
                 result[url] = source
             }
         }
 
         return result
+    }
+
+    private struct KeptImage {
+        let url: URL
+        let source: DiscoveredSource
+        let text: String
+        let featurePrint: Data?
+    }
+
+    private func isDuplicate(
+        candidateFeaturePrint: Data?,
+        candidateText: String,
+        kept: KeptImage
+    ) -> Bool {
+        if let candidateFeaturePrint,
+           let keptFeaturePrint = kept.featurePrint,
+           ImageFeaturePrintGenerator.areSimilar(
+               candidateFeaturePrint,
+               keptFeaturePrint,
+               threshold: featurePrintDistanceThreshold
+           ) {
+            return true
+        }
+
+        guard !candidateText.isEmpty, !kept.text.isEmpty else {
+            return false
+        }
+
+        return textSimilarity(candidateText, kept.text) >= matchThreshold
     }
 
     private func normalizedText(from textPieces: DealSourceTextPieces?) -> String {

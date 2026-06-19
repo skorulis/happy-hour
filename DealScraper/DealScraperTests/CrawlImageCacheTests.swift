@@ -116,7 +116,8 @@ struct CrawlImageValidatorTests {
                     throw CrawlImageFetcherError.invalidResponse
                 }
             ),
-            imageExtractor: DealImageExtractor()
+            imageExtractor: DealImageExtractor(),
+            featurePrintGenerator: ImageFeaturePrintGenerator()
         )
 
         let isRelevant = await validator.validateImage(
@@ -141,7 +142,8 @@ struct CrawlImageValidatorTests {
                     throw CrawlImageFetcherError.invalidResponse
                 }
             ),
-            imageExtractor: DealImageExtractor()
+            imageExtractor: DealImageExtractor(),
+            featurePrintGenerator: ImageFeaturePrintGenerator()
         )
 
         let isRelevant = await validator.validateImage(
@@ -166,7 +168,8 @@ struct CrawlImageValidatorTests {
                     throw CrawlImageFetcherError.invalidResponse
                 }
             ),
-            imageExtractor: DealImageExtractor()
+            imageExtractor: DealImageExtractor(),
+            featurePrintGenerator: ImageFeaturePrintGenerator()
         )
 
         let isRelevant = await validator.validateImage(

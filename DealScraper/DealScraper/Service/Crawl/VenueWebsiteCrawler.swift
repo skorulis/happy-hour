@@ -132,7 +132,8 @@ final class VenueWebsiteCrawler {
                     sourceURL: loadedPage.normalizedURL,
                     type: .image,
                     imageDimensions: validation.dimensions,
-                    textPieces: .textLines(validation.lines.map(\.text))
+                    textPieces: .textLines(validation.lines.map(\.text)),
+                    imageFeaturePrint: validation.featurePrint
                 )
             }
             

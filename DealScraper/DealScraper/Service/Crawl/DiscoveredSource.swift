@@ -8,18 +8,21 @@ nonisolated struct DiscoveredSource: Equatable, Sendable {
     let type: DealSourceType
     let imageDimensions: CGSize?
     let textPieces: DealSourceTextPieces?
+    let imageFeaturePrint: Data?
 
     init(
         url: URL,
         sourceURL: URL,
         type: DealSourceType,
         imageDimensions: CGSize? = nil,
-        textPieces: DealSourceTextPieces? = nil
+        textPieces: DealSourceTextPieces? = nil,
+        imageFeaturePrint: Data? = nil
     ) {
         self.url = url
         self.sourceURL = sourceURL
         self.type = type
         self.imageDimensions = imageDimensions
         self.textPieces = textPieces
+        self.imageFeaturePrint = imageFeaturePrint
     }
 }

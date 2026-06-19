@@ -42,6 +42,7 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
     @MainActor
     private func registerServices(container: Container<TargetResolver>) {
         container.register(DealImageExtractor.self) { _ in DealImageExtractor() }
+        container.register(ImageFeaturePrintGenerator.self) { _ in ImageFeaturePrintGenerator() }
         container.register(DealTextFilter.self) { _ in DealTextFilter() }
         container.register(DealAdvancedTextFilter.self) { _ in DealAdvancedTextFilter() }
         container.register(OpenAIClient.self) { _ in OpenAIClient() }
@@ -104,7 +105,8 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
         container.register(CrawlImageValidator.self) { resolver in
             CrawlImageValidator(
                 fetcher: resolver.crawlImageFetcher(),
-                imageExtractor: resolver.dealImageExtractor()
+                imageExtractor: resolver.dealImageExtractor(),
+                featurePrintGenerator: resolver.imageFeaturePrintGenerator()
             )
         }
 

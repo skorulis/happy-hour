@@ -2,6 +2,7 @@
 
 import CoreGraphics
 import Foundation
+import ImageIO
 import Testing
 @testable import DealScraper
 
@@ -13,6 +14,7 @@ struct ImageDeduperTests {
         url: String,
         lines: [String],
         dimensions: CGSize? = nil,
+        featurePrint: Data? = nil,
         sourcePageURL: String = "https://pub.example.com/specials"
     ) -> (URL, DiscoveredSource) {
         let imageURL = URL(string: url)!
@@ -22,7 +24,8 @@ struct ImageDeduperTests {
             sourceURL: pageURL,
             type: .image,
             imageDimensions: dimensions,
-            textPieces: .textLines(lines)
+            textPieces: .textLines(lines),
+            imageFeaturePrint: featurePrint
         )
         return (imageURL, source)
     }
@@ -218,4 +221,110 @@ struct ImageDeduperTests {
         #expect(result[large.0] != nil)
         #expect(result[small.0] == nil)
     }
+
+    @Test func dedupesViaFeaturePrintWhenOCRTextDiffers() async throws {
+        let generator = ImageFeaturePrintGenerator()
+        let fixtureURL = try fixtureImageURL(named: "goat_deals")
+        let featurePrint = try await generator.featurePrintData(for: fixtureURL)
+
+        let fullLines = [
+            "HAPPY HOUR",
+            "MON - FRI 4PM - 6PM",
+            "$5 SCHOONERS",
+            "$8 WINES",
+            "$10 COCKTAILS",
+            "TUESDAY TACOS",
+            "WEDNESDAY WINGS",
+            "THURSDAY STEAK",
+            "FRIDAY FISH",
+            "SATURDAY PIZZA",
+        ]
+        let partialLines = ["HAPPY HOUR", "MON - FRI 4PM - 6PM"]
+
+        let small = imageSource(
+            url: "https://pub.example.com/small.png",
+            lines: partialLines,
+            dimensions: CGSize(width: 600, height: 800),
+            featurePrint: featurePrint
+        )
+        let large = imageSource(
+            url: "https://pub.example.com/large.png",
+            lines: fullLines,
+            dimensions: CGSize(width: 1200, height: 1600),
+            featurePrint: featurePrint
+        )
+
+        let result = dedupe([small, large])
+
+        #expect(result.count == 1)
+        #expect(result[large.0] != nil)
+        #expect(result[small.0] == nil)
+    }
+
+    @Test func keepsVisuallyDifferentImagesWithSimilarHeaders() async throws {
+        let generator = ImageFeaturePrintGenerator()
+        let fixtureURL = try fixtureImageURL(named: "goat_deals")
+        let otherURL = try makeSolidColorImage(width: 600, height: 800)
+        let firstPrint = try await generator.featurePrintData(for: fixtureURL)
+        let secondPrint = try await generator.featurePrintData(for: otherURL)
+
+        let sharedHeader = ["HAPPY HOUR", "MON - FRI 4PM - 6PM", "$5 SCHOONERS"]
+        let first = imageSource(
+            url: "https://pub.example.com/a.png",
+            lines: sharedHeader + ["$8 WINES", "$10 COCKTAILS"],
+            featurePrint: firstPrint
+        )
+        let second = imageSource(
+            url: "https://pub.example.com/b.png",
+            lines: sharedHeader + ["COMPLETELY DIFFERENT MENU", "OTHER SPECIALS HERE"],
+            featurePrint: secondPrint
+        )
+
+        let result = dedupe([first, second])
+
+        #expect(result.count == 2)
+    }
+
+    private func fixtureImageURL(named name: String) throws -> URL {
+        let bundle = Bundle(for: BundleToken.self)
+        let extensions = ["jpeg", "jpg", "png"]
+        for ext in extensions {
+            if let url = bundle.url(forResource: name, withExtension: ext) {
+                return url
+            }
+        }
+        throw NSError(domain: "ImageDeduperTests", code: 1)
+    }
+
+    private func makeSolidColorImage(width: Int, height: Int) throws -> URL {
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        let context = CGContext(
+            data: nil,
+            width: width,
+            height: height,
+            bitsPerComponent: 8,
+            bytesPerRow: 0,
+            space: colorSpace,
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        )!
+        context.setFillColor(red: 0.2, green: 0.4, blue: 0.9, alpha: 1)
+        context.fill(CGRect(x: 0, y: 0, width: width, height: height))
+        guard let image = context.makeImage() else {
+            throw ImageFeaturePrintGenerator.Error.invalidImage
+        }
+
+        let destinationURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+            .appendingPathExtension("png")
+        let mutableData = CFDataCreateMutable(nil, 0)!
+        guard let destination = CGImageDestinationCreateWithData(mutableData, "public.png" as CFString, 1, nil) else {
+            throw ImageFeaturePrintGenerator.Error.invalidImage
+        }
+        CGImageDestinationAddImage(destination, image, nil)
+        CGImageDestinationFinalize(destination)
+        try (mutableData as Data).write(to: destinationURL)
+        return destinationURL
+    }
 }
+
+private final class BundleToken {}

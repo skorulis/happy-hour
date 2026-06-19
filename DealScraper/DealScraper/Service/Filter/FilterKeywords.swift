@@ -18,7 +18,9 @@ nonisolated enum FilterKeywords {
         "food",
         "happyhour",
         "eat-drink",
-        "weekly"
+        "weekly",
+        "weekends",
+        "weekdays"
     ]
     
     static let excludedKeywords = [

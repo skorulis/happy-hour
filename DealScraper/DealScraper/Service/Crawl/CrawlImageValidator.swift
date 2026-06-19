@@ -11,10 +11,16 @@ final class CrawlImageValidator {
 
     private let fetcher: CrawlImageFetcher
     private let imageExtractor: DealImageExtractor
+    private let featurePrintGenerator: ImageFeaturePrintGenerator
 
-    init(fetcher: CrawlImageFetcher, imageExtractor: DealImageExtractor) {
+    init(
+        fetcher: CrawlImageFetcher,
+        imageExtractor: DealImageExtractor,
+        featurePrintGenerator: ImageFeaturePrintGenerator
+    ) {
         self.fetcher = fetcher
         self.imageExtractor = imageExtractor
+        self.featurePrintGenerator = featurePrintGenerator
     }
 
     func validateImage(url: URL, hash: String) async -> ImageValidationResult? {
@@ -41,11 +47,14 @@ final class CrawlImageValidator {
         guard DealTextFilter().isValidDeal(combinedText) else {
             return nil
         }
-        
+
+        let featurePrint = try? await featurePrintGenerator.featurePrintData(for: localURL)
+
         return .init(
             url: url,
             lines: lines,
-            dimensions: dimensions
+            dimensions: dimensions,
+            featurePrint: featurePrint
         )
     }
 
@@ -87,4 +96,5 @@ struct ImageValidationResult {
     let url: URL
     let lines: [ExtractedTextLine]
     let dimensions: CGSize
+    let featurePrint: Data?
 }
