@@ -20,7 +20,34 @@ nonisolated enum FilterKeywords {
         "eat-drink",
         "weekly",
         "weekends",
-        "weekdays"
+        "weekdays",
+        "2-4-1"
+    ]
+    
+    static let productKeywords: [String] = [
+        "wine",
+        "beer",
+        "jugs",
+        "pints",
+        "cocktails",
+        "spritz",
+        "martini",
+        "drinks",
+        
+        // Food
+        "steak",
+        "pizza",
+        "chicken",
+        "schnitzel",
+        "burger",
+        "roast",
+        "meat tray",
+        "curry"
+        
+        // Events
+        "brunch",
+        "lunch",
+        "dinner",
     ]
     
     static let excludedKeywords = [

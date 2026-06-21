@@ -9,21 +9,21 @@ struct DealTextFilterTests {
     private let filter = DealTextFilter()
 
     @Test func acceptsTextWithDays() {
-        #expect(filter.isValidDeal("EVERY TUES"))
+        #expect(filter.isValidDeal("EVERY TUES SPECIALS"))
         #expect(filter.isValidDeal("CHEESEBURGER TUESDAYS"))
         #expect(filter.isValidDeal("Happy Hour every Friday"))
-        #expect(filter.isValidDeal("TUES - THURS 4PM - 6PM / FRI 3PM - 5PM"))
+        #expect(filter.isValidDeal("HAPPY HOUR TUES - THURS 4PM - 6PM / FRI 3PM - 5PM"))
     }
 
     @Test func acceptsTextWithTimes() {
-        #expect(filter.isValidDeal("4PM - 6PM"))
-        #expect(filter.isValidDeal("FROM 11:30 TILL SOLD OUT."))
+        #expect(filter.isValidDeal("PIZZA 4PM - 6PM"))
+        #expect(filter.isValidDeal("SUNDAY ROAST FROM 11:30 TILL SOLD OUT."))
     }
 
     @Test func acceptsDealHeadlines() {
-        #expect(filter.isValidDeal("HAPPY HOUR"))
-        #expect(filter.isValidDeal("Weekly Specials"))
-        #expect(filter.isValidDeal("Drink Promotions"))
+        #expect(filter.isValidDeal("HAPPY HOUR 4-7PM"))
+        #expect(filter.isValidDeal("Weekend Brunch Specials"))
+        #expect(filter.isValidDeal("Tuesday Drink Promotions"))
     }
 
     @Test func rejectsNonDealText() {

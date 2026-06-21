@@ -4,13 +4,6 @@ import Foundation
 
 struct DealTextFilter {
 
-    private static let headlinePatterns = [
-        #"\bhappy hour\b"#,
-        #"\bspecials\b"#,
-        #"\bpromotions?\b"#,
-        #"\bdeals?\b"#,
-    ]
-
     func isValidDeal(_ text: String) -> Bool {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return false }
@@ -22,17 +15,29 @@ struct DealTextFilter {
         if Self.containsDate(in: trimmed) {
             return false
         }
+        
+        let hasDay = DealDay.isMentioned(in: trimmed)
+        let hasTime = Self.hasDealTime(in: trimmed)
 
-        if DealDay.isMentioned(in: trimmed) {
-            return true
+        if !hasDay && !hasTime {
+            return false
         }
 
-        if Self.hasDealTime(in: trimmed) {
-            return true
-        }
-
-        return Self.containsHeadlineKeyword(in: trimmed)
+        return Self.containsHeadlineKeyword(in: trimmed) || Self.containsPrice(in: trimmed)
     }
+
+    static func containsPrice(in text: String) -> Bool {
+        let range = NSRange(text.startIndex..., in: text)
+        return pricePatterns.contains { pattern in
+            guard let regex = try? NSRegularExpression(pattern: pattern) else { return false }
+            return regex.firstMatch(in: text, range: range) != nil
+        }
+    }
+
+    private static let pricePatterns = [
+        #"(?i)\$\s*\d+(?:\.\d{2})?"#,
+        #"(?i)\bhalf[\s-]?price\b"#,
+    ]
 
     static func containsDate(in text: String) -> Bool {
         let range = NSRange(text.startIndex..., in: text)
@@ -58,13 +63,9 @@ struct DealTextFilter {
     }
 
     private static func containsHeadlineKeyword(in text: String) -> Bool {
-        let range = NSRange(text.startIndex..., in: text)
-        return headlinePatterns.contains { pattern in
-            guard let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) else {
-                return false
-            }
-            return regex.firstMatch(in: text, range: range) != nil
-        }
+        let lowercased = text.lowercased()
+        return FilterKeywords.dealKeywords.contains { lowercased.contains($0) } ||
+            FilterKeywords.productKeywords.contains { lowercased.contains($0) }
     }
 
     private static func hasDealTime(in text: String) -> Bool {
