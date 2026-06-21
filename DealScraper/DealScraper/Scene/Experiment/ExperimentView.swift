@@ -62,7 +62,9 @@ struct ExperimentView: View {
             LoadingView(text: message)
         
         case .loaded:
-            EmptyView()
+            if let validation = viewModel.crawlDealValidation {
+                crawlDealValidationBanner(validation)
+            }
 
         case let .failed(message):
             Label(message, systemImage: "exclamationmark.triangle.fill")
@@ -371,6 +373,17 @@ struct ExperimentView: View {
                     .fill(Color(nsColor: .controlBackgroundColor))
             }
         }
+    }
+
+    private func crawlDealValidationBanner(_ validation: ExperimentViewModel.CrawlDealValidation) -> some View {
+        Label(validation.message, systemImage: validation.isAccepted ? "checkmark.circle.fill" : "xmark.circle.fill")
+            .foregroundStyle(validation.isAccepted ? .green : .red)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(12)
+            .background {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill((validation.isAccepted ? Color.green : Color.red).opacity(0.1))
+            }
     }
 
     private var isLoading: Bool {

@@ -23,8 +23,14 @@ final class ExperimentViewModel {
         case failed(message: String)
     }
 
+    struct CrawlDealValidation: Equatable {
+        let isAccepted: Bool
+        let message: String
+    }
+
     var urlString = "https://www.thestrawbs.com.au/"
     private(set) var state: State = .idle
+    private(set) var crawlDealValidation: CrawlDealValidation?
     private(set) var validatedImages: [ImageValidationResult]?
     private(set) var isProcessingImages = false
 
@@ -89,6 +95,7 @@ final class ExperimentViewModel {
     }
 
     private func performLoad(url: URL) async {
+        crawlDealValidation = nil
         validatedImages = nil
         isProcessingImages = false
 
@@ -108,6 +115,7 @@ final class ExperimentViewModel {
     private func loadWebpage(url: URL) async {
         do {
             let page = try await webPageLoader.load(url: url)
+            crawlDealValidation = validateWebpageForCrawl(page)
             state = .loaded(.page(page))
         } catch {
             state = .failed(message: error.localizedDescription)
@@ -119,6 +127,7 @@ final class ExperimentViewModel {
             let hash = URLNormalizer.hash(url)
             let localURL = try await imageFetcher.localFileURL(for: url, hash: hash)
             let lines = try await imageExtractor.extractTexts(from: localURL)
+            crawlDealValidation = await validateImageForCrawl(url: url)
             state = .loaded(.image(url: url, lines: lines))
         } catch {
             state = .failed(message: error.localizedDescription)
@@ -133,10 +142,53 @@ final class ExperimentViewModel {
                 state = .failed(message: "No deal-related text could be extracted from the PDF.")
                 return
             }
+            crawlDealValidation = validatePDFForCrawl(url: url)
             state = .loaded(.pdf(url: url, extraction: extraction))
         } catch {
             state = .failed(message: error.localizedDescription)
         }
+    }
+
+    private func validateWebpageForCrawl(_ page: LoadedPage) -> CrawlDealValidation {
+        let count = page.dealContentBlocks.count
+        if count > 0 {
+            let blockLabel = count == 1 ? "block" : "blocks"
+            return CrawlDealValidation(
+                isAccepted: true,
+                message: "Accepted by crawler — \(count) deal content \(blockLabel) found on this page."
+            )
+        }
+        return CrawlDealValidation(
+            isAccepted: false,
+            message: "Rejected by crawler — no content blocks passed the deal text filter."
+        )
+    }
+
+    private func validateImageForCrawl(url: URL) async -> CrawlDealValidation {
+        if await crawlImageValidator.validateImage(url: url) != nil {
+            return CrawlDealValidation(
+                isAccepted: true,
+                message: "Accepted by crawler — image meets size requirements and contains valid deal text."
+            )
+        }
+        return CrawlDealValidation(
+            isAccepted: false,
+            message: "Rejected by crawler — image is too small, has no deal text, or matches an excluded URL pattern."
+        )
+    }
+
+    private func validatePDFForCrawl(url: URL) -> CrawlDealValidation {
+        let currentYear = Calendar.current.component(.year, from: Date())
+        if let year = PDFVersionFilter.year(from: url), year < currentYear {
+            return CrawlDealValidation(
+                isAccepted: false,
+                message: "Rejected by crawler — PDF appears to be from \(year) and outdated menus are skipped."
+            )
+        }
+        return CrawlDealValidation(
+            isAccepted: true,
+            message: "Accepted by crawler — PDF contains deal-related text."
+        )
     }
 
     private func performImageProcessing(urls: [URL]) async {
