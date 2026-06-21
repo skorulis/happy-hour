@@ -8,7 +8,8 @@ struct ExperimentView: View {
 
     @State var viewModel: ExperimentViewModel
     @State private var linkDisplayMode: LinkDisplayMode = .filtered
-    @State private var pdfTextDisplayMode: PDFTextDisplayMode = .filtered
+    @State private var pdfMarkdownDisplayMode: PDFMarkdownDisplayMode = .filtered
+    @State private var isPDFMarkdownExpanded = false
     @State private var isMarkdownExpanded = false
 
     private let pageLinkFilter = PageLinkFilter()
@@ -18,7 +19,7 @@ struct ExperimentView: View {
         case all
     }
 
-    private enum PDFTextDisplayMode: String, CaseIterable {
+    private enum PDFMarkdownDisplayMode: String, CaseIterable {
         case filtered
         case full
     }
@@ -86,7 +87,7 @@ struct ExperimentView: View {
             case let .image(url, lines):
                 imageOCRSection(url: url, lines: lines)
             case let .pdf(url, extraction):
-                pdfTextSection(url: url, extraction: extraction)
+                pdfMarkdownSection(url: url, extraction: extraction)
             }
         }
     }
@@ -190,13 +191,34 @@ struct ExperimentView: View {
         }
     }
 
-    private func pdfTextSection(url: URL, extraction: PDFTextExtractionResult) -> some View {
-        let text = pdfTextDisplayMode == .filtered ? extraction.filteredText : extraction.fullText
+    private func pdfMarkdownSection(url: URL, extraction: PDFTextExtractionResult) -> some View {
+        let markdown = pdfMarkdownDisplayMode == .filtered
+            ? extraction.filteredMarkdown
+            : extraction.fullMarkdown
 
-        return detailSection(title: "PDF Text") {
-            Picker("PDF text", selection: $pdfTextDisplayMode) {
-                Text("Filtered").tag(PDFTextDisplayMode.filtered)
-                Text("Full").tag(PDFTextDisplayMode.full)
+        return VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Button {
+                    isPDFMarkdownExpanded.toggle()
+                } label: {
+                    HStack {
+                        Text("PDF Markdown")
+                            .font(.headline)
+                        Image(systemName: isPDFMarkdownExpanded ? "chevron.down" : "chevron.right")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .buttonStyle(.plain)
+
+                Spacer()
+
+                printMarkdownButton(markdown)
+                copyMarkdownButton(markdown)
+            }
+
+            Picker("PDF markdown", selection: $pdfMarkdownDisplayMode) {
+                Text("Filtered").tag(PDFMarkdownDisplayMode.filtered)
+                Text("Full").tag(PDFMarkdownDisplayMode.full)
             }
             .pickerStyle(.segmented)
             .labelsHidden()
@@ -204,16 +226,24 @@ struct ExperimentView: View {
             Link(url.absoluteString, destination: url)
                 .font(.subheadline)
 
-            ScrollView {
-                Text(text)
-                    .font(.system(.body, design: .monospaced))
-                    .textSelection(.enabled)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+            if isPDFMarkdownExpanded {
+                ScrollView {
+                    Text(markdown)
+                        .font(.system(.body, design: .monospaced))
+                        .textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .frame(maxHeight: 400)
             }
-            .frame(maxHeight: 400)
+        }
+        .padding(16)
+        .background {
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color(nsColor: .controlBackgroundColor))
         }
         .onChange(of: url) {
-            pdfTextDisplayMode = .filtered
+            pdfMarkdownDisplayMode = .filtered
+            isPDFMarkdownExpanded = false
         }
     }
 

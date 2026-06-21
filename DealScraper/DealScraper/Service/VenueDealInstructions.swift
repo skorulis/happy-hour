@@ -72,19 +72,7 @@ nonisolated enum VenueDealInstructions {
     }
 
     nonisolated static func dealExtraction(for material: VenueDealSourceMaterial) -> String {
-        if material.type == .pdf {
-            return """
-            \(introduction)
-
-            \(verbatimRule)
-
-            \(pdfSourceContext)
-
-            \(fieldRules)
-            """
-        }
-
-        if material.markdown != nil {
+        if material.type == .pdf || material.markdown != nil {
             return """
             \(introduction)
 
@@ -108,11 +96,8 @@ nonisolated enum VenueDealInstructions {
         if material.type == .image {
             typeLabel = "image"
             extractionTask = imageExtractionTask
-        } else if material.type == .pdf {
-            typeLabel = "PDF text"
-            extractionTask = pdfExtractionTask
-        } else if material.markdown != nil {
-            typeLabel = "webpage markdown"
+        } else if material.type == .pdf || material.markdown != nil {
+            typeLabel = material.type == .pdf ? "PDF markdown" : "webpage markdown"
             extractionTask = markdownExtractionTask
         } else {
             typeLabel = "webpage link"

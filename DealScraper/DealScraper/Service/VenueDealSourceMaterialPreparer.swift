@@ -153,7 +153,7 @@ final class VenueDealSourceMaterialPreparer {
             sourceURL: sourceURL ?? url,
             type: .pdf,
             pngData: nil,
-            markdown: extraction.filteredText
+            markdown: extraction.filteredMarkdown
         )
     }
 
