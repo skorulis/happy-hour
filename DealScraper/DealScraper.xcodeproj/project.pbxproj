@@ -14,6 +14,7 @@
 		FA312B5C2FDF957B00D1DD06 /* ASKCoordinator in Frameworks */ = {isa = PBXBuildFile; productRef = FA312B5B2FDF957B00D1DD06 /* ASKCoordinator */; };
 		FA312C102FE1000100D1DD06 /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = FA312C0F2FE1000100D1DD06 /* SwiftSoup */; };
 		FA41E1202FE3E95C008046F5 /* Demark in Frameworks */ = {isa = PBXBuildFile; productRef = FA41E11F2FE3E95C008046F5 /* Demark */; };
+		FA41E2202FE60B9E008046F5 /* Markdown in Frameworks */ = {isa = PBXBuildFile; productRef = FA41E21F2FE60B9E008046F5 /* Markdown */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -52,6 +53,7 @@
 				FA312B5C2FDF957B00D1DD06 /* ASKCoordinator in Frameworks */,
 				FA312A4F2FDF76DF00D1DD06 /* ASKCore in Frameworks */,
 				FA312A412FDF74A200D1DD06 /* Knit in Frameworks */,
+				FA41E2202FE60B9E008046F5 /* Markdown in Frameworks */,
 				FA41E1202FE3E95C008046F5 /* Demark in Frameworks */,
 				FA312A432FDF74A200D1DD06 /* KnitMacros in Frameworks */,
 				FA312A992FDF81B800D1DD06 /* GRDB in Frameworks */,
@@ -115,6 +117,7 @@
 				FA312B5B2FDF957B00D1DD06 /* ASKCoordinator */,
 				FA312C0F2FE1000100D1DD06 /* SwiftSoup */,
 				FA41E11F2FE3E95C008046F5 /* Demark */,
+				FA41E21F2FE60B9E008046F5 /* Markdown */,
 			);
 			productName = DealScraper;
 			productReference = FA57DC002FDE31B40040032F /* DealScraper.app */;
@@ -178,6 +181,7 @@
 				FA312B5A2FDF957B00D1DD06 /* XCRemoteSwiftPackageReference "ASKCoordinator" */,
 				FA312C0E2FE1000100D1DD06 /* XCRemoteSwiftPackageReference "SwiftSoup" */,
 				FA41E11E2FE3E95C008046F5 /* XCRemoteSwiftPackageReference "Demark" */,
+				FA41E21E2FE60B9E008046F5 /* XCRemoteSwiftPackageReference "swift-markdown" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = FA57DC012FDE31B40040032F /* Products */;
@@ -543,6 +547,14 @@
 				minimumVersion = 1.1.0;
 			};
 		};
+		FA41E21E2FE60B9E008046F5 /* XCRemoteSwiftPackageReference "swift-markdown" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/swiftlang/swift-markdown";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.8.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -585,6 +597,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = FA41E11E2FE3E95C008046F5 /* XCRemoteSwiftPackageReference "Demark" */;
 			productName = Demark;
+		};
+		FA41E21F2FE60B9E008046F5 /* Markdown */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FA41E21E2FE60B9E008046F5 /* XCRemoteSwiftPackageReference "swift-markdown" */;
+			productName = Markdown;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

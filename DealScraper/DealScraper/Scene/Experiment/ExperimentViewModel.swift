@@ -1,8 +1,10 @@
 //Created by Alex Skorulis on 15/6/2026.
 
+import AppKit
 import Foundation
 import Knit
 import KnitMacros
+import Markdown
 
 @MainActor
 @Observable
@@ -141,5 +143,15 @@ final class ExperimentViewModel {
         isProcessingImages = true
         validatedImages = await crawlImageValidator.validateImages(urls: urls)
         isProcessingImages = false
+    }
+    
+    func copyMarkdownToClipboard(_ markdown: String) {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(markdown, forType: .string)
+    }
+
+    func printMarkdownDocument(_ markdown: String) {
+        let document = Document(parsing: markdown)
+        print(document.debugDescription())
     }
 }

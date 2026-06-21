@@ -1,6 +1,6 @@
 //Created by Alex Skorulis on 15/6/2026.
 
-import AppKit
+
 import Knit
 import SwiftUI
 
@@ -59,12 +59,8 @@ struct ExperimentView: View {
                 .foregroundStyle(.secondary)
 
         case let .loading(message):
-            HStack(spacing: 8) {
-                ProgressView()
-                    .controlSize(.small)
-                Text(message)
-            }
-
+            LoadingView(text: message)
+        
         case .loaded:
             EmptyView()
 
@@ -110,13 +106,8 @@ struct ExperimentView: View {
 
                 Spacer()
 
-                Button {
-                    copyMarkdownToClipboard(markdown)
-                } label: {
-                    Image(systemName: "doc.on.doc")
-                }
-                .buttonStyle(.plain)
-                .help("Copy markdown to clipboard")
+                printMarkdownButton(markdown)
+                copyMarkdownButton(markdown)
             }
 
             if isMarkdownExpanded {
@@ -138,10 +129,25 @@ struct ExperimentView: View {
             isMarkdownExpanded = false
         }
     }
-
-    private func copyMarkdownToClipboard(_ markdown: String) {
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(markdown, forType: .string)
+    
+    private func copyMarkdownButton(_ markdown: String) -> some View {
+        Button {
+            viewModel.copyMarkdownToClipboard(markdown)
+        } label: {
+            Image(systemName: "doc.on.doc")
+        }
+        .buttonStyle(.plain)
+        .help("Copy markdown to clipboard")
+    }
+    
+    private func printMarkdownButton(_ markdown: String) -> some View {
+        Button {
+            viewModel.printMarkdownDocument(markdown)
+        } label: {
+            Image(systemName: "terminal")
+        }
+        .buttonStyle(.plain)
+        .help("Parse markdown and print Document tree to terminal")
     }
 
     private func imageOCRSection(url: URL, lines: [ExtractedTextLine]) -> some View {
@@ -265,11 +271,7 @@ struct ExperimentView: View {
             .disabled(viewModel.isProcessingImages || imageCount == 0)
 
             if viewModel.isProcessingImages {
-                HStack(spacing: 8) {
-                    ProgressView()
-                        .controlSize(.small)
-                    Text("Processing images…")
-                }
+                LoadingView(text: "Processing images…")
             }
 
             if let validatedImages = viewModel.validatedImages {
