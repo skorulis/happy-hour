@@ -29,25 +29,36 @@ nonisolated enum FilterKeywords {
         "beer",
         "jugs",
         "pints",
+        "marg",
         "cocktails",
         "spritz",
         "martini",
         "drinks",
+        "rose",
         
         // Food
-        "steak",
-        "pizza",
-        "chicken",
-        "schnitzel",
         "burger",
+        "chicken",
+        "curry",
+        "meal",
+        "pasta",
+        "pizza",
         "roast",
-        "meat tray",
-        "curry"
+        "salad",
+        "sandwich",
+        "schnitzel",
+        "steak",
+        "wings",
         
         // Events
         "brunch",
         "lunch",
         "dinner",
+        "trivia",
+        "bottomless",
+        
+        // Other
+        "meat tray",
     ]
     
     static let excludedKeywords = [
