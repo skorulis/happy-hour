@@ -49,6 +49,12 @@ final class VenueRepository {
         }
     }
 
+    func find(id: Int64) throws -> Venue? {
+        try store.dbQueue.read { db in
+            try Venue.fetchOne(db, key: id)
+        }
+    }
+
     func updateLastCrawlDate(venueId: Int64, date: Date) throws {
         try store.dbQueue.write { db in
             try db.execute(

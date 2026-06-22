@@ -54,11 +54,15 @@ final class VenueDealExtractionService {
 
         let materials = try await materialPreparer.prepare(sources: sources, progress: progress)
 
+        try Task.checkCancellation()
+
         let result = try await extractPayload(
             materials: materials,
             venueName: venue.name,
             progress: progress
         )
+
+        try Task.checkCancellation()
 
         let mapped = VenueDealPersistenceMapper.map(sourced: result.extractions, venueId: venueId)
         let deals = mapped // DealCondenser().condense(mapped)

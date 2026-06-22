@@ -32,10 +32,8 @@ final class VenueDetailsViewModel {
     private(set) var venueLinks: VenueLinks?
     private(set) var dealSources: [DealSource] = []
     private(set) var deals: [DealWithSchedules] = []
-    private(set) var crawlState: ProgressState<VenueCrawlResults> = .idle
     private(set) var deleteSourcesState: DeleteSourcesState = .idle
     private(set) var deleteDealsState: DeleteDealsState = .idle
-    private(set) var extractionState: ExtractionState = .idle
 
     var openRouterModel: String = LLMModelStore.defaultOpenRouterModel {
         didSet { llmModelStore.openRouterModel = openRouterModel }
@@ -45,8 +43,7 @@ final class VenueDetailsViewModel {
     private let dealSourceRepository: DealSourceRepository
     private let dealRepository: DealRepository
     private let venueLinksRepository: VenueLinksRepository
-    private let venueWebsiteCrawler: VenueWebsiteCrawler
-    private let venueDealExtractionService: VenueDealExtractionService
+    private let jobQueue: JobQueue
     private let llmModelStore: LLMModelStore
 
     @Resolvable<Resolver>
@@ -56,8 +53,7 @@ final class VenueDetailsViewModel {
         dealSourceRepository: DealSourceRepository,
         dealRepository: DealRepository,
         venueLinksRepository: VenueLinksRepository,
-        venueWebsiteCrawler: VenueWebsiteCrawler,
-        venueDealExtractionService: VenueDealExtractionService,
+        jobQueue: JobQueue,
         llmModelStore: LLMModelStore
     ) {
         self.googleMapId = googleMapId
@@ -65,11 +61,27 @@ final class VenueDetailsViewModel {
         self.dealSourceRepository = dealSourceRepository
         self.dealRepository = dealRepository
         self.venueLinksRepository = venueLinksRepository
-        self.venueWebsiteCrawler = venueWebsiteCrawler
-        self.venueDealExtractionService = venueDealExtractionService
+        self.jobQueue = jobQueue
         self.llmModelStore = llmModelStore
         openRouterModel = llmModelStore.openRouterModel
         load()
+    }
+
+    var crawlState: ProgressState<VenueCrawlResults> {
+        guard let venueId = venue?.id else { return .idle }
+        guard let job = jobQueue.latestJob(venueId: venueId, type: .crawlWebsite) else { return .idle }
+        return mapCrawlState(job.status)
+    }
+
+    var extractionState: ExtractionState {
+        guard let venueId = venue?.id else { return .idle }
+        guard let job = jobQueue.latestJob(venueId: venueId, type: .extractDeals) else { return .idle }
+        return mapExtractionState(job.status)
+    }
+
+    var venueJobs: [JobItem] {
+        guard let venueId = venue?.id else { return [] }
+        return jobQueue.jobs(for: venueId)
     }
 
     var canCrawl: Bool {
@@ -81,13 +93,13 @@ final class VenueDetailsViewModel {
     }
 
     var isCrawling: Bool {
-        if case .inProgress = crawlState { return true }
-        return false
+        guard let venueId = venue?.id else { return false }
+        return jobQueue.isJobActive(venueId: venueId, type: .crawlWebsite)
     }
 
     var isExtracting: Bool {
-        if case .extracting = extractionState { return true }
-        return false
+        guard let venueId = venue?.id else { return false }
+        return jobQueue.isJobActive(venueId: venueId, type: .extractDeals)
     }
 
     var approvedSourceCount: Int {
@@ -103,10 +115,10 @@ final class VenueDetailsViewModel {
     }
 
     func crawlWebsite() {
-        guard let venue, canCrawl else { return }
+        guard let venueId = venue?.id, canCrawl else { return }
 
-        Task {
-            await performCrawl(venue: venue)
+        jobQueue.enqueue(venueId: venueId, type: .crawlWebsite) { [weak self] in
+            self?.load()
         }
     }
 
@@ -116,7 +128,7 @@ final class VenueDetailsViewModel {
         do {
             let deleted = try dealSourceRepository.deleteAll(venueId: venueId)
             deleteSourcesState = .completed(deleted: deleted)
-            crawlState = .idle
+            jobQueue.clearCompleted(for: venueId, type: .crawlWebsite)
             load()
         } catch {
             deleteSourcesState = .failed(message: error.localizedDescription)
@@ -124,10 +136,10 @@ final class VenueDetailsViewModel {
     }
 
     func extractDeals() {
-        guard let venue, canExtractDeals else { return }
+        guard let venueId = venue?.id, canExtractDeals else { return }
 
-        Task {
-            await performExtraction(venue: venue)
+        jobQueue.enqueue(venueId: venueId, type: .extractDeals) { [weak self] in
+            self?.load()
         }
     }
 
@@ -137,7 +149,7 @@ final class VenueDetailsViewModel {
         do {
             let deleted = try dealRepository.deleteAll(venueId: venueId)
             deleteDealsState = .completed(deleted: deleted)
-            extractionState = .idle
+            jobQueue.clearCompleted(for: venueId, type: .extractDeals)
             load()
         } catch {
             deleteDealsState = .failed(message: error.localizedDescription)
@@ -183,49 +195,37 @@ final class VenueDetailsViewModel {
         }
     }
 
-    private func performCrawl(venue: Venue) async {
-        crawlState = .inProgress(progress: "Starting crawl…")
-        deleteSourcesState = .idle
-
-        do {
-            let crawlProgress = ProgressMonitor { newValue in
-                self.crawlState = newValue
-            }
-            
-            let results = try await venueWebsiteCrawler.crawl(venue: venue, progress: crawlProgress)
-
-            load()
-            crawlState = .completed(results)
-        } catch {
-            crawlState = .failed(message: error.localizedDescription)
-        }
-    }
-    
-    private func updateState(_ state: ExtractionState) {
-        Task { @MainActor in
-            self.extractionState = state
+    private func mapCrawlState(_ status: JobStatus) -> ProgressState<VenueCrawlResults> {
+        switch status {
+        case .pending:
+            return .inProgress(progress: "Queued…")
+        case let .running(progress):
+            return .inProgress(progress: progress)
+        case let .completed(.crawl(results)):
+            return .completed(results)
+        case let .failed(message):
+            return .failed(message: message)
+        case .cancelled:
+            return .idle
+        case .completed:
+            return .idle
         }
     }
 
-    private func performExtraction(venue: Venue) async {
-        updateState(.extracting(progress: "Preparing sources…"))
-
-        do {
-            let extractionProgress = ProgressMonitor<VenueDealExtractionResults> { newValue in
-                if case let .inProgress(progress) = newValue {
-                    self.extractionState = .extracting(progress: progress)
-                }
-            }
-
-            let results = try await venueDealExtractionService.extractDeals(
-                for: venue,
-                progress: extractionProgress
-            )
-
-            load()
-            updateState(.completed(results))
-        } catch {
-            updateState(.failed(message: error.localizedDescription))
+    private func mapExtractionState(_ status: JobStatus) -> ExtractionState {
+        switch status {
+        case .pending:
+            return .extracting(progress: "Queued…")
+        case let .running(progress):
+            return .extracting(progress: progress)
+        case let .completed(.extract(results)):
+            return .completed(results)
+        case let .failed(message):
+            return .failed(message: message)
+        case .cancelled:
+            return .idle
+        case .completed:
+            return .idle
         }
     }
 

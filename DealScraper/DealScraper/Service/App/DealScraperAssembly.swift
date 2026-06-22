@@ -39,6 +39,7 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
             VenueDetailsViewModel.make(resolver: resolver, googleMapId: googleID)
         }
         container.register(ApprovalViewModel.self) { ApprovalViewModel.make(resolver: $0) }
+        container.register(JobQueueViewModel.self) { JobQueueViewModel.make(resolver: $0) }
     }
     
     @MainActor
@@ -118,6 +119,9 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
         container.register(ImageDeduper.self) { _ in ImageDeduper() }
 
         container.register(VenueWebsiteCrawler.self) { VenueWebsiteCrawler.make(resolver: $0) }
+
+        container.register(JobQueue.self) { JobQueue.make(resolver: $0) }
+            .inObjectScope(.container)
     }
     
     @MainActor

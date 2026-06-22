@@ -38,6 +38,10 @@ final class OpenRouterVenueDealExtractor: VenueDealExtractor, @unchecked Sendabl
         let total = materials.count
 
         for (offset, material) in materials.enumerated() {
+            if Task.isCancelled {
+                break
+            }
+
             let index = offset + 1
             await progress("Analyzing source \(index) of \(total)")
 

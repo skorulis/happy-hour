@@ -93,6 +93,8 @@ final class VenueWebsiteCrawler {
         var pdfSourceURLs: [URL: URL] = [:]
         
         while !queue.isEmpty, visited.count < Self.maxPages {
+            try Task.checkCancellation()
+
             let pageURL = queue.removeFirst()
             let visitKey = URLNormalizer.hash(pageURL)
             print("CRAWL: Visiting \(pageURL)")

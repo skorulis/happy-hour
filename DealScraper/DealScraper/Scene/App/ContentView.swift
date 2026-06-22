@@ -11,6 +11,7 @@ struct ContentView: View {
         case imageImport
         case experiment
         case venues
+        case jobs
         case approval
         case settings
     }
@@ -38,6 +39,12 @@ struct ContentView: View {
                     Label("Venues", systemImage: "mappin.and.ellipse")
                 }
                 .tag(Tab.venues)
+
+            JobQueueView(viewModel: resolver!.jobQueueViewModel())
+                .tabItem {
+                    Label("Jobs", systemImage: "list.bullet.rectangle")
+                }
+                .tag(Tab.jobs)
 
             ApprovalView(viewModel: resolver!.approvalViewModel()) {
                 selectedTab = .experiment
