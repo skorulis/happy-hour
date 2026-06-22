@@ -16,17 +16,43 @@ struct JobQueueView: View {
                     description: Text("Queued crawl and extraction jobs will appear here.")
                 )
             } else {
-                List(viewModel.jobs) { job in
-                    JobRow(
-                        job: job,
-                        venueName: viewModel.venueName(for: job.venueId),
-                        canCancel: viewModel.canCancel(job),
-                        onCancel: { viewModel.cancel(job: job) }
-                    )
+                List {
+                    if !currentJobs.isEmpty {
+                        Section("Current") {
+                            ForEach(currentJobs) { job in
+                                jobRow(for: job)
+                            }
+                        }
+                    }
+
+                    if !completedJobs.isEmpty {
+                        Section("Completed") {
+                            ForEach(completedJobs) { job in
+                                jobRow(for: job)
+                            }
+                        }
+                    }
                 }
             }
         }
         .navigationTitle("Jobs")
+    }
+
+    private var currentJobs: [JobItem] {
+        viewModel.jobs.filter(\.status.isActive)
+    }
+
+    private var completedJobs: [JobItem] {
+        viewModel.jobs.filter { !$0.status.isActive }
+    }
+
+    private func jobRow(for job: JobItem) -> some View {
+        JobRow(
+            job: job,
+            venueName: viewModel.venueName(for: job.venueId),
+            canCancel: viewModel.canCancel(job),
+            onCancel: { viewModel.cancel(job: job) }
+        )
     }
 }
 

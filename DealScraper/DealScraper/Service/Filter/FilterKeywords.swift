@@ -63,6 +63,7 @@ nonisolated enum FilterKeywords {
     
     static let excludedKeywords = [
         "functions",
+        "events package",
         "covid",
         "tonight",
         "mothers day",

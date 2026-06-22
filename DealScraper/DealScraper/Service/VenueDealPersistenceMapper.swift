@@ -53,6 +53,9 @@ enum VenueDealPersistenceMapper {
         )
 
         let schedules = schedules(for: legacyDeal)
+        guard !schedules.isEmpty else {
+            return nil
+        }
         return DealWithSchedules(deal: deal, schedules: schedules)
     }
 
