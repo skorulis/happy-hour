@@ -8,6 +8,7 @@ struct VenueImportView: View {
 
     @Environment(\.resolver) private var resolver
     @State var viewModel: VenueImportViewModel
+    @State private var showGoogleImport = false
 
     var body: some View {
         NavigationSplitView {
@@ -19,17 +20,18 @@ struct VenueImportView: View {
         .onAppear {
             viewModel.loadSavedVenues()
         }
-        .onChange(of: viewModel.searchMode) {
-            viewModel.reset()
+        .sheet(isPresented: $showGoogleImport, onDismiss: {
+            viewModel.loadSavedVenues()
+        }) {
+            GoogleImportView(viewModel: resolver!.googleImportViewModel())
         }
     }
 
     private var sidebar: some View {
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: 16) {
-                searchControls
-                searchButton
-                statusContent
+                findVenuesButton
+                loadErrorContent
             }
             .padding(16)
 
@@ -81,37 +83,10 @@ struct VenueImportView: View {
         }
     }
 
-    private var searchControls: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Picker("Search", selection: $viewModel.searchMode) {
-                ForEach(VenueSearchMode.allCases, id: \.self) { mode in
-                    Text(mode.rawValue).tag(mode)
-                }
-            }
-            .pickerStyle(.segmented)
-
-            switch viewModel.searchMode {
-            case .text:
-                TextField("Search query", text: $viewModel.textQuery)
-                    .textFieldStyle(.roundedBorder)
-                TextField("Region code (optional)", text: $viewModel.regionCode)
-                    .textFieldStyle(.roundedBorder)
-            case .nearby:
-                TextField("Latitude", text: $viewModel.latitude)
-                    .textFieldStyle(.roundedBorder)
-                TextField("Longitude", text: $viewModel.longitude)
-                    .textFieldStyle(.roundedBorder)
-                TextField("Radius (meters)", text: $viewModel.radiusMeters)
-                    .textFieldStyle(.roundedBorder)
-            }
+    private var findVenuesButton: some View {
+        Button("Find Venues") {
+            showGoogleImport = true
         }
-    }
-
-    private var searchButton: some View {
-        Button("Search and Save") {
-            viewModel.search()
-        }
-        .disabled(viewModel.state == .searching)
     }
 
     private var venueCountLabel: String {
@@ -120,26 +95,8 @@ struct VenueImportView: View {
     }
 
     @ViewBuilder
-    private var statusContent: some View {
-        switch viewModel.state {
-        case .idle:
-            EmptyView()
-
-        case .searching:
-            HStack(spacing: 12) {
-                ProgressView()
-                Text("Searching Google Places…")
-                    .foregroundStyle(.secondary)
-            }
-
-        case let .completed(importedCount):
-            Label(
-                "Saved \(importedCount) venue\(importedCount == 1 ? "" : "s")",
-                systemImage: "checkmark.circle.fill"
-            )
-            .foregroundStyle(.green)
-
-        case let .failed(message):
+    private var loadErrorContent: some View {
+        if case let .failed(message) = viewModel.state {
             Label(message, systemImage: "exclamationmark.triangle.fill")
                 .foregroundStyle(.red)
         }

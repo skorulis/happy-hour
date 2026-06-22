@@ -81,4 +81,23 @@ struct VenueRepositoryTests {
         #expect(found.lastCrawlDate == nil)
         #expect(found.json.contains("Harbour Pub"))
     }
+
+    @Test func upsertPlacesReturnsNewCount() throws {
+        let repository = VenueRepository(store: SQLStore.inMemory())
+
+        let place = GooglePlace(
+            id: "places/ChIJFromAPI",
+            displayName: .init(text: "Harbour Pub", languageCode: "en"),
+            location: .init(latitude: -33.8600, longitude: 151.2100),
+            formattedAddress: "1 Circular Quay, Sydney",
+            websiteUri: "https://harbourpub.example.com",
+            types: ["bar"]
+        )
+
+        let firstNewCount = try repository.upsert(places: [place])
+        #expect(firstNewCount == 1)
+
+        let secondNewCount = try repository.upsert(places: [place])
+        #expect(secondNewCount == 0)
+    }
 }

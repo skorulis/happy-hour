@@ -11,7 +11,8 @@ final class VenueRepository {
         self.store = store
     }
 
-    func upsert(_ venue: Venue) throws {
+    @discardableResult
+    func upsert(_ venue: Venue) throws -> Bool {
         try store.dbQueue.write { db in
             if let existingID = try Venue
                 .filter(Column("google_map_id") == venue.googleMapId)
@@ -21,18 +22,25 @@ final class VenueRepository {
                 var updated = venue
                 updated.id = existingID
                 try updated.update(db)
+                return false
             } else {
                 var newVenue = venue
                 newVenue.id = nil
                 try newVenue.insert(db)
+                return true
             }
         }
     }
 
-    func upsert(places: [GooglePlace]) throws {
+    @discardableResult
+    func upsert(places: [GooglePlace]) throws -> Int {
+        var newCount = 0
         for place in places {
-            try upsert(try Venue(from: place))
+            if try upsert(try Venue(from: place)) {
+                newCount += 1
+            }
         }
+        return newCount
     }
 
     func all() throws -> [Venue] {
