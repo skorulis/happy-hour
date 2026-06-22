@@ -12,11 +12,11 @@ nonisolated enum DealStatus: String, Codable, Sendable {
 nonisolated struct Deal: Codable, Sendable {
     var id: Int64?
     let venueId: Int64
-    let title: String?
+    var title: String?
     let imageURL: String?
     let sourceURL: String?
-    let details: String?
-    let conditions: String?
+    var details: String?
+    var conditions: String?
     var status: DealStatus
 
     enum CodingKeys: String, CodingKey {

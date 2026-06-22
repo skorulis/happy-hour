@@ -9,6 +9,11 @@ import PDFKit
 @Observable
 final class ApprovalViewModel {
 
+    enum Mode: String, CaseIterable {
+        case sources = "Sources"
+        case deals = "Deals"
+    }
+
     enum PreviewState: Equatable {
         case idle
         case loading
@@ -35,11 +40,19 @@ final class ApprovalViewModel {
         }
     }
 
+    var mode: Mode = .sources
+
+    var editTitle = ""
+    var editDetails = ""
+    var editConditions = ""
+
     private(set) var pendingSources: [DealSource] = []
+    private(set) var pendingDeals: [DealWithSchedules] = []
     private(set) var venueNames: [Int64: String] = [:]
     private(set) var previewState: PreviewState = .idle
 
     private let dealSourceRepository: DealSourceRepository
+    private let dealRepository: DealRepository
     private let venueRepository: VenueRepository
     private let pdfFetcher: CrawlPDFFetcher
     private let experimentViewModel: ExperimentViewModel
@@ -49,11 +62,13 @@ final class ApprovalViewModel {
     @Resolvable<Resolver>
     init(
         dealSourceRepository: DealSourceRepository,
+        dealRepository: DealRepository,
         venueRepository: VenueRepository,
         pdfFetcher: CrawlPDFFetcher,
         experimentViewModel: ExperimentViewModel
     ) {
         self.dealSourceRepository = dealSourceRepository
+        self.dealRepository = dealRepository
         self.venueRepository = venueRepository
         self.pdfFetcher = pdfFetcher
         self.experimentViewModel = experimentViewModel
@@ -63,8 +78,26 @@ final class ApprovalViewModel {
         pendingSources.first
     }
 
+    var currentDeal: DealWithSchedules? {
+        pendingDeals.first
+    }
+
+    var hasPendingItems: Bool {
+        switch mode {
+        case .sources:
+            return currentSource != nil
+        case .deals:
+            return currentDeal != nil
+        }
+    }
+
     var remainingCount: Int {
-        pendingSources.count
+        switch mode {
+        case .sources:
+            return pendingSources.count
+        case .deals:
+            return pendingDeals.count
+        }
     }
 
     var currentSourceURL: String? {
@@ -88,18 +121,28 @@ final class ApprovalViewModel {
 
         do {
             pendingSources = try dealSourceRepository.findNew()
+            pendingDeals = try dealRepository.findNew()
             venueNames = Dictionary(
                 uniqueKeysWithValues: try venueRepository.all().compactMap { venue in
                     guard let id = venue.id else { return nil }
                     return (id, venue.name)
                 }
             )
-            loadPreview()
+            reloadForCurrentMode()
+            syncDealEditFields()
         } catch {
             pendingSources = []
+            pendingDeals = []
             venueNames = [:]
+            editTitle = ""
+            editDetails = ""
+            editConditions = ""
             previewState = .failed(error.localizedDescription)
         }
+    }
+
+    func onModeChanged() {
+        reloadForCurrentMode()
     }
 
     func decide(status: DealStatus) {
@@ -112,6 +155,47 @@ final class ApprovalViewModel {
         } catch {
             previewState = .failed(error.localizedDescription)
         }
+    }
+
+    func decideDeal(status: DealStatus) {
+        guard let item = currentDeal, let id = item.deal.id else { return }
+
+        do {
+            switch status {
+            case .approved:
+                try dealRepository.update(
+                    id: id,
+                    title: editTitle.isEmpty ? nil : editTitle,
+                    details: editDetails.isEmpty ? nil : editDetails,
+                    conditions: editConditions.isEmpty ? nil : editConditions,
+                    status: status
+                )
+            case .new, .rejected:
+                try dealRepository.updateStatus(id: id, status: status)
+            }
+            pendingDeals.removeFirst()
+            syncDealEditFields()
+        } catch {
+            previewState = .failed(error.localizedDescription)
+        }
+    }
+
+    private func reloadForCurrentMode() {
+        previewTask?.cancel()
+
+        switch mode {
+        case .sources:
+            loadPreview()
+        case .deals:
+            previewState = .idle
+            syncDealEditFields()
+        }
+    }
+
+    private func syncDealEditFields() {
+        editTitle = currentDeal?.deal.title ?? ""
+        editDetails = currentDeal?.deal.details ?? ""
+        editConditions = currentDeal?.deal.conditions ?? ""
     }
 
     private func loadPreview() {

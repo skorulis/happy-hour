@@ -11,6 +11,25 @@ final class DealRepository {
         self.store = store
     }
 
+    func findNew() throws -> [DealWithSchedules] {
+        try store.dbQueue.read { db in
+            let deals = try Deal
+                .filter(Column("status") == DealStatus.new.rawValue)
+                .order(Column("id").asc)
+                .fetchAll(db)
+
+            return try deals.map { deal in
+                guard let dealId = deal.id else {
+                    throw DealRepositoryError.missingDealID
+                }
+                let schedules = try DealSchedule
+                    .filter(Column("deal_id") == dealId)
+                    .fetchAll(db)
+                return DealWithSchedules(deal: deal, schedules: schedules)
+            }
+        }
+    }
+
     func find(venueId: Int64) throws -> [DealWithSchedules] {
         try store.dbQueue.read { db in
             let deals = try Deal
@@ -87,6 +106,23 @@ final class DealRepository {
     func updateStatus(id: Int64, status: DealStatus) throws {
         try store.dbQueue.write { db in
             guard var deal = try Deal.fetchOne(db, key: id) else { return }
+            deal.status = status
+            try deal.update(db)
+        }
+    }
+
+    func update(
+        id: Int64,
+        title: String?,
+        details: String?,
+        conditions: String?,
+        status: DealStatus
+    ) throws {
+        try store.dbQueue.write { db in
+            guard var deal = try Deal.fetchOne(db, key: id) else { return }
+            deal.title = title
+            deal.details = details
+            deal.conditions = conditions
             deal.status = status
             try deal.update(db)
         }
