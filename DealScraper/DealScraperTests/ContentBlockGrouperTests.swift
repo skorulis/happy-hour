@@ -152,6 +152,43 @@ struct ContentBlockGrouperTests {
         #expect(happyHour?.text.contains("MON to FRI") == true)
     }
 
+    @Test func elementorPageUsesContentRootNotNestedArticles() throws {
+        let html = """
+        <html>
+        <body>
+          <header><nav><a href="/">HOME</a></nav></header>
+          <div id="content" class="site-content">
+            <div data-elementor-type="single" class="elementor elementor-location-single">
+              <p>Nestled above Sydney's famous Paddy's Markets.</p>
+              <h4>HAPPY HOUR</h4>
+              <h2>4PM TO 6PM EVERYDAY</h2>
+              <h2>$6 SELECTED TAP BEER, HOUSE WINE &amp; SPIRITS</h2>
+              <h1>WHAT'S ON</h1>
+              <article class="elementor-post elementor-grid-item">
+                <h3><a href="/whatson/stella-special/">STELLA SPECIAL</a></h3>
+                <p>Indulge in a delightful treat at our pub with our</p>
+              </article>
+            </div>
+          </div>
+          <footer><p>Contact us</p></footer>
+        </body>
+        </html>
+        """
+
+        let pageURL = URL(string: "https://www.marketcitytavernsydney.com.au/")!
+        let blocks = try grouper.group(html: html, pageURL: pageURL)
+        let titles = blocks.compactMap(\.title)
+        let allText = blocks.map { "\($0.title ?? "") \($0.text)" }.joined(separator: " ")
+
+        #expect(titles.contains("HAPPY HOUR"))
+        #expect(titles.contains("4PM TO 6PM EVERYDAY"))
+        #expect(allText.contains("$6 SELECTED TAP BEER"))
+        #expect(allText.contains("Paddy's Markets"))
+        #expect(titles.contains("STELLA SPECIAL"))
+        #expect(!allText.contains("HOME"))
+        #expect(!allText.contains("Contact us"))
+    }
+
     @Test func thestrawbsFixture() throws {
         let html = """
         <html>

@@ -29,6 +29,11 @@ struct ContentBlockGrouper {
         "[role=main]",
         "#PAGES_CONTAINER",
         "#SITE_PAGES",
+        "#content",
+        ".site-content",
+        "[data-elementor-type=single]",
+        ".entry-content",
+        "article:not(.elementor-post)",
         "article",
         "body",
     ]
