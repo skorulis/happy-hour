@@ -19,7 +19,10 @@ nonisolated enum DealMapper {
         let details = deal.details
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
-        guard !title.isEmpty || !details.isEmpty else { return nil }
+        let conditions = deal.conditions
+            .map { normalizeCondition($0) }
+            .filter { !$0.isEmpty }
+        guard !title.isEmpty || !details.isEmpty || !conditions.isEmpty else { return nil }
 
         let days = deal.days.flatMap { DealDay.parseAll(in: $0) }
         let times = parseTimes(deal.times)
@@ -27,9 +30,18 @@ nonisolated enum DealMapper {
         return LegacyDeal(
             title: title,
             details: details,
+            conditions: conditions,
             days: days,
             times: times
         )
+    }
+
+    private static func normalizeCondition(_ string: String) -> String {
+        var trimmed = string.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.hasPrefix("*") {
+            trimmed = String(trimmed.dropFirst()).trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        return trimmed
     }
 
     private static func parseTimes(_ strings: [String]) -> [DealHours] {
@@ -75,6 +87,7 @@ nonisolated enum DealMapper {
         return LegacyDeal(
             title: deal.title,
             details: deal.details,
+            conditions: deal.conditions,
             days: deal.days,
             times: resolvedTimes
         )
@@ -106,6 +119,7 @@ nonisolated enum DealMapper {
                 merged[index] = LegacyDeal(
                     title: existing.title.isEmpty ? deal.title : existing.title,
                     details: Array(Set(existing.details + deal.details)),
+                    conditions: Array(Set(existing.conditions + deal.conditions)),
                     days: Array(Set(existing.days + deal.days)),
                     times: mergedTimes(existing.times, deal.times)
                 )

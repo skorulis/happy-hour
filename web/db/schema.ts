@@ -1,0 +1,116 @@
+import { relations, sql } from "drizzle-orm";
+import {
+  doublePrecision,
+  index,
+  integer,
+  jsonb,
+  pgTable,
+  serial,
+  text,
+  timestamp,
+} from "drizzle-orm/pg-core";
+
+export const venue = pgTable(
+  "venue",
+  {
+    id: serial("id").primaryKey(),
+    googleMapId: text("google_map_id").notNull().unique(),
+    name: text("name").notNull(),
+    lat: doublePrecision("lat").notNull(),
+    lng: doublePrecision("lng").notNull(),
+    websiteUri: text("website_uri"),
+    lastCrawlDate: timestamp("last_crawl_date", { withTimezone: true }),
+    json: jsonb("json").notNull(),
+    syncedAt: timestamp("synced_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index("venue_name_idx").on(table.name)],
+);
+
+export const venueLinks = pgTable("venue_links", {
+  venueId: integer("venue_id")
+    .primaryKey()
+    .references(() => venue.id, { onDelete: "cascade" }),
+  whatsOn: text("whats_on"),
+  instagram: text("instagram"),
+  facebook: text("facebook"),
+});
+
+export const deal = pgTable(
+  "deal",
+  {
+    id: serial("id").primaryKey(),
+    venueId: integer("venue_id")
+      .notNull()
+      .references(() => venue.id, { onDelete: "cascade" }),
+    title: text("title"),
+    imageUrl: text("image_url"),
+    sourceUrl: text("source_url"),
+    details: text("details"),
+    conditions: text("conditions"),
+    syncedAt: timestamp("synced_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index("deal_venue_id_idx").on(table.venueId)],
+);
+
+export const dealSchedule = pgTable(
+  "deal_schedule",
+  {
+    id: serial("id").primaryKey(),
+    dealId: integer("deal_id")
+      .notNull()
+      .references(() => deal.id, { onDelete: "cascade" }),
+    dayOfWeek: integer("day_of_week").notNull(),
+    startMinute: integer("start_minute").notNull(),
+    endMinute: integer("end_minute").notNull(),
+  },
+  (table) => [
+    index("deal_schedule_day_time_idx").on(
+      table.dayOfWeek,
+      table.startMinute,
+      table.endMinute,
+    ),
+    index("deal_schedule_deal_id_idx").on(table.dealId),
+  ],
+);
+
+export const venueRelations = relations(venue, ({ one, many }) => ({
+  links: one(venueLinks, {
+    fields: [venue.id],
+    references: [venueLinks.venueId],
+  }),
+  deals: many(deal),
+}));
+
+export const venueLinksRelations = relations(venueLinks, ({ one }) => ({
+  venue: one(venue, {
+    fields: [venueLinks.venueId],
+    references: [venue.id],
+  }),
+}));
+
+export const dealRelations = relations(deal, ({ one, many }) => ({
+  venue: one(venue, {
+    fields: [deal.venueId],
+    references: [venue.id],
+  }),
+  schedules: many(dealSchedule),
+}));
+
+export const dealScheduleRelations = relations(dealSchedule, ({ one }) => ({
+  deal: one(deal, {
+    fields: [dealSchedule.dealId],
+    references: [deal.id],
+  }),
+}));
+
+export type Venue = typeof venue.$inferSelect;
+export type VenueLinks = typeof venueLinks.$inferSelect;
+export type Deal = typeof deal.$inferSelect;
+export type DealSchedule = typeof dealSchedule.$inferSelect;
+
+/** Full-text search vector for deals (used in raw SQL queries). */
+export const dealSearchVector = sql`to_tsvector('english', coalesce(${deal.title}, '') || ' ' || coalesce(${deal.details}, '') || ' ' || coalesce(${deal.conditions}, ''))`;

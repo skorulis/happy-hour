@@ -128,7 +128,7 @@ struct VenueDealPersistenceMapperTests {
         #expect(result.deal.venueId == 42)
         #expect(result.deal.title == "$22 STEAK NIGHT")
         #expect(result.deal.details == "Raise\nthe\nSteaks")
-        #expect(result.deal.conditions == "*only available with bar service in our public bar, beer garden and nude")
+        #expect(result.deal.conditions == "only available with bar service in our public bar, beer garden and nude")
 
         #expect(result.schedules.count == 1)
         let schedule = try #require(result.schedules.first)

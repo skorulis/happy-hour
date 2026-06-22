@@ -38,8 +38,8 @@ enum VenueDealPersistenceMapper {
         let sourceURL = material.sourceURL.absoluteString
 
         let details = joinedNonEmpty(rawDeal.details)
-        let conditions = joinedNonEmpty(rawDeal.conditions)
-        let title = rawDeal.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        let conditions = joinedNonEmpty(legacyDeal.conditions)
+        let title = legacyDeal.title
 
         guard !title.isEmpty || details != nil || conditions != nil else { return nil }
 

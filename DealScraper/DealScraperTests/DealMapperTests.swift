@@ -102,6 +102,21 @@ struct DealMapperTests {
         #expect(deal.times == [.from(18 * 60 + 30)])
     }
 
+    @Test func stripsLeadingAsteriskFromConditions() throws {
+        let raw = DealExtractionPayload.RawDeal(
+            title: "STEAK NIGHT",
+            details: ["$22 STEAK"],
+            conditions: ["*only available with bar service"],
+            days: ["TUESDAY"],
+            times: ["all day"]
+        )
+
+        let deals = DealMapper.map([raw])
+        let deal = try #require(deals.first)
+
+        #expect(deal.conditions == ["only available with bar service"])
+    }
+
     @Test func filtersEmptyRawDeals() {
         let raw = DealExtractionPayload.RawDeal(
             title: "   ",

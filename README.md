@@ -62,6 +62,8 @@ cd web
 docker compose up -d
 ```
 
+Postgres listens on **port 5433** locally (not 5432) to avoid conflicting with other Docker Postgres instances. Ensure `DATABASE_URL` in `.env.local` uses `localhost:5433`.
+
 2. Copy environment config and set your SQLite path:
 
 ```bash

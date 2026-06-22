@@ -6,6 +6,8 @@ nonisolated struct LegacyDeal {
     let title: String
     
     let details: [String]
+
+    let conditions: [String]
     
     /// The days this deal applies to
     let days: [DealDay]

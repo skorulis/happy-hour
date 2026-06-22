@@ -151,7 +151,7 @@ struct DealCondenserTests {
         let steakNight = try #require(result.first { $0.deal.title == "$22 STEAK NIGHT" })
         #expect(steakNight.deal.details == "Raise\nthe\nSteaks")
         #expect(steakNight.deal.conditions?.contains("Conditions Apply") == true)
-        #expect(steakNight.deal.conditions?.contains("*only available with bar service in our public bar, beer garden and nude") == true)
+        #expect(steakNight.deal.conditions?.contains("only available with bar service in our public bar, beer garden and nude") == true)
         #expect(steakNight.deal.imageURL == "https://example.com/steak-nights.jpg")
         #expect(steakNight.schedules.count == 1)
         #expect(steakNight.schedules[0].dayOfWeek == 2)
