@@ -17,7 +17,17 @@ final class VenueImportViewModel {
     private(set) var savedVenues: [Venue] = []
     private(set) var sourceCountsByVenueId: [Int64: Int] = [:]
     private(set) var dealCountsByVenueId: [Int64: Int] = [:]
+    var searchText = ""
     var selectedGoogleMapId: String?
+
+    var filteredVenues: [Venue] {
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else { return savedVenues }
+        return savedVenues.filter { venue in
+            venue.name.localizedCaseInsensitiveContains(query)
+                || venue.json.localizedCaseInsensitiveContains(query)
+        }
+    }
 
     private let venueRepository: VenueRepository
     private let dealSourceRepository: DealSourceRepository

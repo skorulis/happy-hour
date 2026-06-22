@@ -37,6 +37,8 @@ struct VenueImportView: View {
 
             Divider()
 
+            searchField
+
             Text(venueCountLabel)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
@@ -50,9 +52,16 @@ struct VenueImportView: View {
                     description: Text("Search Google Places to add venues.")
                 )
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if viewModel.filteredVenues.isEmpty {
+                ContentUnavailableView(
+                    "No Matching Venues",
+                    systemImage: "magnifyingglass",
+                    description: Text("Try a different name or address.")
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 List(selection: $viewModel.selectedGoogleMapId) {
-                    ForEach(viewModel.savedVenues, id: \.googleMapId) { venue in
+                    ForEach(viewModel.filteredVenues, id: \.googleMapId) { venue in
                         VenueRow(
                             venue: venue,
                             sourceCount: viewModel.sourceCount(for: venue),
@@ -89,9 +98,21 @@ struct VenueImportView: View {
         }
     }
 
+    private var searchField: some View {
+        TextField("Filter venues", text: $viewModel.searchText)
+            .textFieldStyle(.roundedBorder)
+            .padding(.horizontal, 16)
+            .padding(.top, 8)
+    }
+
     private var venueCountLabel: String {
-        let count = viewModel.savedVenues.count
-        return "\(count) venue\(count == 1 ? "" : "s")"
+        let total = viewModel.savedVenues.count
+        let filtered = viewModel.filteredVenues.count
+        let isFiltering = !viewModel.searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        if isFiltering {
+            return "\(filtered) of \(total) venue\(total == 1 ? "" : "s")"
+        }
+        return "\(total) venue\(total == 1 ? "" : "s")"
     }
 
     @ViewBuilder
