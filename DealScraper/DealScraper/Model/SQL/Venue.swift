@@ -5,6 +5,7 @@ import Foundation
 
 nonisolated struct Venue: Codable, Sendable {
     var id: Int64?
+    var suburbId: Int64?
     let googleMapId: String
     let name: String
     let lat: Double
@@ -15,6 +16,7 @@ nonisolated struct Venue: Codable, Sendable {
 
     enum CodingKeys: String, CodingKey {
         case id
+        case suburbId = "suburb_id"
         case googleMapId = "google_map_id"
         case name
         case lat
@@ -26,6 +28,7 @@ nonisolated struct Venue: Codable, Sendable {
 
     init(
         id: Int64? = nil,
+        suburbId: Int64? = nil,
         googleMapId: String,
         name: String,
         lat: Double,
@@ -35,6 +38,7 @@ nonisolated struct Venue: Codable, Sendable {
         json: String
     ) {
         self.id = id
+        self.suburbId = suburbId
         self.googleMapId = googleMapId
         self.name = name
         self.lat = lat

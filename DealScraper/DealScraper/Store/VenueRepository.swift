@@ -14,19 +14,20 @@ final class VenueRepository {
     @discardableResult
     func upsert(_ venue: Venue) throws -> Bool {
         try store.dbQueue.write { db in
+            var mutableVenue = venue
+            try Self.linkSuburb(for: &mutableVenue, in: db)
+
             if let existingID = try Venue
-                .filter(Column("google_map_id") == venue.googleMapId)
+                .filter(Column("google_map_id") == mutableVenue.googleMapId)
                 .fetchOne(db)?
                 .id
             {
-                var updated = venue
-                updated.id = existingID
-                try updated.update(db)
+                mutableVenue.id = existingID
+                try mutableVenue.update(db)
                 return false
             } else {
-                var newVenue = venue
-                newVenue.id = nil
-                try newVenue.insert(db)
+                mutableVenue.id = nil
+                try mutableVenue.insert(db)
                 return true
             }
         }
@@ -70,5 +71,21 @@ final class VenueRepository {
                 arguments: [date, venueId]
             )
         }
+    }
+
+    private static func linkSuburb(for venue: inout Venue, in db: Database) throws {
+        guard let jsonData = venue.json.data(using: .utf8),
+              let place = try? JSONDecoder().decode(GooglePlace.self, from: jsonData),
+              let address = place.formattedAddress,
+              let extracted = SuburbExtractor.extract(from: address)
+        else {
+            return
+        }
+
+        venue.suburbId = try SuburbRepository.upsert(
+            name: extracted.name,
+            postcode: extracted.postcode,
+            in: db
+        )
     }
 }

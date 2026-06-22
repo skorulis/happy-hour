@@ -122,5 +122,19 @@ final class SQLMigrations {
                 t.add(column: "status", .text).notNull().defaults(to: DealStatus.new.rawValue)
             }
         }
+
+        migrator.registerMigration("v12_create_suburb") { db in
+            try db.create(table: "suburb") { t in
+                t.autoIncrementedPrimaryKey("id")
+                t.column("name", .text).notNull()
+                t.column("postcode", .text)
+                t.uniqueKey(["name", "postcode"])
+            }
+
+            try db.alter(table: "venue") { t in
+                t.add(column: "suburb_id", .integer)
+                    .references("suburb", onDelete: .setNull)
+            }
+        }
     }
 }

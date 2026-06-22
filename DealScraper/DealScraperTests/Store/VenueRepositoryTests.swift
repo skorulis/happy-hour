@@ -59,7 +59,8 @@ struct VenueRepositoryTests {
     }
 
     @Test func upsertPlacesMapsGooglePlaceToVenue() throws {
-        let repository = VenueRepository(store: SQLStore.inMemory())
+        let store = SQLStore.inMemory()
+        let repository = VenueRepository(store: store)
 
         let place = GooglePlace(
             id: "places/ChIJFromAPI",
@@ -80,6 +81,12 @@ struct VenueRepositoryTests {
         #expect(found.websiteUri == "https://harbourpub.example.com")
         #expect(found.lastCrawlDate == nil)
         #expect(found.json.contains("Harbour Pub"))
+
+        let suburb = try #require(try SuburbRepository(store: store).find(
+            name: "Sydney",
+            postcode: nil
+        ))
+        #expect(found.suburbId == suburb.id)
     }
 
     @Test func upsertPlacesReturnsNewCount() throws {

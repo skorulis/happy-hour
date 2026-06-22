@@ -7,8 +7,15 @@ import path from "node:path";
 import postgres from "postgres";
 import * as schema from "../db/schema";
 
+type SqliteSuburb = {
+  id: number;
+  name: string;
+  postcode: string | null;
+};
+
 type SqliteVenue = {
   id: number;
+  suburb_id: number | null;
   google_map_id: string;
   name: string;
   lat: number;
@@ -116,11 +123,46 @@ async function main() {
   let venuesSynced = 0;
   let dealsInserted = 0;
 
+  async function upsertSuburb(
+    tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+    suburbRow: SqliteSuburb,
+  ): Promise<number> {
+    const [upsertedSuburb] = await tx
+      .insert(schema.suburb)
+      .values({
+        name: suburbRow.name,
+        postcode: suburbRow.postcode,
+      })
+      .onConflictDoUpdate({
+        target: [schema.suburb.name, schema.suburb.postcode],
+        set: {
+          name: suburbRow.name,
+          postcode: suburbRow.postcode,
+        },
+      })
+      .returning({ id: schema.suburb.id });
+
+    return upsertedSuburb.id;
+  }
+
   for (const venueRow of venueRows) {
     await db.transaction(async (tx) => {
+      let suburbId: number | null = null;
+
+      if (venueRow.suburb_id != null) {
+        const suburbRow = sqlite
+          .prepare("SELECT * FROM suburb WHERE id = ?")
+          .get(venueRow.suburb_id) as SqliteSuburb | undefined;
+
+        if (suburbRow) {
+          suburbId = await upsertSuburb(tx, suburbRow);
+        }
+      }
+
       const [upsertedVenue] = await tx
         .insert(schema.venue)
         .values({
+          suburbId,
           googleMapId: venueRow.google_map_id,
           name: venueRow.name,
           lat: venueRow.lat,
@@ -133,6 +175,7 @@ async function main() {
         .onConflictDoUpdate({
           target: schema.venue.googleMapId,
           set: {
+            suburbId,
             name: venueRow.name,
             lat: venueRow.lat,
             lng: venueRow.lng,

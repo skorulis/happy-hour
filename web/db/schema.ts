@@ -8,12 +8,28 @@ import {
   serial,
   text,
   timestamp,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
+
+export const suburb = pgTable(
+  "suburb",
+  {
+    id: serial("id").primaryKey(),
+    name: text("name").notNull(),
+    postcode: text("postcode"),
+  },
+  (table) => [
+    uniqueIndex("suburb_name_postcode_idx").on(table.name, table.postcode),
+  ],
+);
 
 export const venue = pgTable(
   "venue",
   {
     id: serial("id").primaryKey(),
+    suburbId: integer("suburb_id").references(() => suburb.id, {
+      onDelete: "set null",
+    }),
     googleMapId: text("google_map_id").notNull().unique(),
     name: text("name").notNull(),
     lat: doublePrecision("lat").notNull(),
@@ -78,11 +94,19 @@ export const dealSchedule = pgTable(
 );
 
 export const venueRelations = relations(venue, ({ one, many }) => ({
+  suburb: one(suburb, {
+    fields: [venue.suburbId],
+    references: [suburb.id],
+  }),
   links: one(venueLinks, {
     fields: [venue.id],
     references: [venueLinks.venueId],
   }),
   deals: many(deal),
+}));
+
+export const suburbRelations = relations(suburb, ({ many }) => ({
+  venues: many(venue),
 }));
 
 export const venueLinksRelations = relations(venueLinks, ({ one }) => ({
@@ -107,6 +131,7 @@ export const dealScheduleRelations = relations(dealSchedule, ({ one }) => ({
   }),
 }));
 
+export type Suburb = typeof suburb.$inferSelect;
 export type Venue = typeof venue.$inferSelect;
 export type VenueLinks = typeof venueLinks.$inferSelect;
 export type Deal = typeof deal.$inferSelect;
