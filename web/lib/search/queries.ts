@@ -13,7 +13,13 @@ import {
   currentCalendarWeekday,
   currentMinuteOfDay,
 } from "@/lib/search/schedule";
-import { deal, dealSchedule, venue, venueLinks } from "@/db/schema";
+import { deal, dealSchedule, suburb, venue, venueLinks } from "@/db/schema";
+
+export type SuburbSearchResult = {
+  id: number;
+  name: string;
+  postcode: string | null;
+};
 
 export type VenueSearchResult = {
   id: number;
@@ -73,6 +79,10 @@ function activeNowScheduleFilter(now = new Date()): SQL {
 }
 
 function dayScheduleFilter(day: number): SQL {
+  return daysScheduleFilter([day]);
+}
+
+function daysScheduleFilter(days: number[]): SQL {
   return exists(
     db
       .select({ one: sql`1` })
@@ -80,7 +90,32 @@ function dayScheduleFilter(day: number): SQL {
       .where(
         and(
           eq(dealSchedule.dealId, deal.id),
-          eq(dealSchedule.dayOfWeek, day),
+          inArray(dealSchedule.dayOfWeek, days),
+        ),
+      ),
+  );
+}
+
+function timeRangeScheduleFilter(
+  days: number[] | undefined,
+  startMinute: number,
+  endMinute: number,
+): SQL {
+  const dayFilter =
+    days && days.length > 0
+      ? inArray(dealSchedule.dayOfWeek, days)
+      : undefined;
+
+  return exists(
+    db
+      .select({ one: sql`1` })
+      .from(dealSchedule)
+      .where(
+        and(
+          eq(dealSchedule.dealId, deal.id),
+          dayFilter,
+          sql`${dealSchedule.startMinute} < ${endMinute}`,
+          sql`${dealSchedule.endMinute} > ${startMinute}`,
         ),
       ),
   );
@@ -91,6 +126,41 @@ function textSearchFilter(query: string): SQL {
 }
 
 const dealSearchVector = sql`to_tsvector('english', coalesce(${deal.title}, '') || ' ' || coalesce(${deal.details}, '') || ' ' || coalesce(${deal.conditions}, ''))`;
+
+export async function searchSuburbs(
+  query: string,
+  limit = 20,
+): Promise<SuburbSearchResult[]> {
+  const trimmed = query.trim();
+
+  if (!trimmed) {
+    return db
+      .select({
+        id: suburb.id,
+        name: suburb.name,
+        postcode: suburb.postcode,
+      })
+      .from(suburb)
+      .orderBy(suburb.name)
+      .limit(limit);
+  }
+
+  return db
+    .select({
+      id: suburb.id,
+      name: suburb.name,
+      postcode: suburb.postcode,
+    })
+    .from(suburb)
+    .where(
+      or(
+        ilike(suburb.name, `%${trimmed}%`),
+        ilike(suburb.postcode, `%${trimmed}%`),
+      ),
+    )
+    .orderBy(suburb.name)
+    .limit(limit);
+}
 
 export async function searchVenues(
   query: string,
@@ -134,6 +204,10 @@ export async function searchVenues(
 export async function searchDeals(options: {
   venueId?: number;
   day?: number;
+  days?: number[];
+  suburbId?: number;
+  startMinute?: number;
+  endMinute?: number;
   query?: string;
   activeNow?: boolean;
   limit?: number;
@@ -144,8 +218,51 @@ export async function searchDeals(options: {
     filters.push(eq(deal.venueId, options.venueId));
   }
 
-  if (options.day !== undefined) {
-    filters.push(dayScheduleFilter(options.day));
+  if (options.suburbId !== undefined) {
+    filters.push(eq(venue.suburbId, options.suburbId));
+  }
+
+  if (options.days !== undefined && options.days.length > 0) {
+    if (
+      options.startMinute !== undefined &&
+      options.endMinute !== undefined
+    ) {
+      filters.push(
+        timeRangeScheduleFilter(
+          options.days,
+          options.startMinute,
+          options.endMinute,
+        ),
+      );
+    } else {
+      filters.push(daysScheduleFilter(options.days));
+    }
+  } else if (options.day !== undefined) {
+    if (
+      options.startMinute !== undefined &&
+      options.endMinute !== undefined
+    ) {
+      filters.push(
+        timeRangeScheduleFilter(
+          [options.day],
+          options.startMinute,
+          options.endMinute,
+        ),
+      );
+    } else {
+      filters.push(dayScheduleFilter(options.day));
+    }
+  } else if (
+    options.startMinute !== undefined &&
+    options.endMinute !== undefined
+  ) {
+    filters.push(
+      timeRangeScheduleFilter(
+        undefined,
+        options.startMinute,
+        options.endMinute,
+      ),
+    );
   }
 
   if (options.activeNow) {
