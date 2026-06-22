@@ -9,11 +9,15 @@ enum MainPath: CoordinatorPath {
     
     case venueImport
     case settings
+    case venueDetails(String)
+    case jobQueue
     
     var id: String {
         switch self {
         case .venueImport: "venueImport"
         case .settings: "settings"
+        case .venueDetails(let id): "venue-details-\(id)"
+        case .jobQueue: "job-queue"
         }
     }
 }
@@ -30,6 +34,10 @@ struct MainPathRenderer: CoordinatorPathRenderer {
             VenueImportView(viewModel: resolver.venueImportViewModel())
         case .settings:
             SettingsView(viewModel: resolver.settingsViewModel())
+        case let .venueDetails(id):
+            VenueDetailsView(viewModel: resolver.venueDetailsViewModel(googleID: id))
+        case .jobQueue:
+            JobQueueView(viewModel: coordinator.apply(resolver.jobQueueViewModel()))
         }
     }
 }

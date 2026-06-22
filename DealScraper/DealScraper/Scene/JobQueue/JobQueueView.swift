@@ -1,13 +1,22 @@
 //Created by Alex Skorulis on 22/6/2026.
 
+import ASKCoordinator
+import ASKCore
 import Knit
 import SwiftUI
 
 struct JobQueueView: View {
 
+    @Environment(\.resolver) private var resolver
     @State var viewModel: JobQueueViewModel
 
     var body: some View {
+        jobList
+            .navigationTitle("Jobs")
+    }
+
+    @ViewBuilder
+    private var jobList: some View {
         Group {
             if viewModel.jobs.isEmpty {
                 ContentUnavailableView(
@@ -35,7 +44,6 @@ struct JobQueueView: View {
                 }
             }
         }
-        .navigationTitle("Jobs")
     }
 
     private var currentJobs: [JobItem] {
@@ -46,13 +54,22 @@ struct JobQueueView: View {
         viewModel.jobs.filter { !$0.status.isActive }
     }
 
+    @ViewBuilder
     private func jobRow(for job: JobItem) -> some View {
-        JobRow(
+        let row = JobRow(
             job: job,
             venueName: viewModel.venueName(for: job.venueId),
             canCancel: viewModel.canCancel(job),
             onCancel: { viewModel.cancel(job: job) }
         )
+
+        if let googleMapId = viewModel.googleMapId(for: job.venueId) {
+            Button(action: {
+                viewModel.coordinator?.push(MainPath.venueDetails(googleMapId))
+            }, label: { row })
+        } else {
+            row
+        }
     }
 }
 

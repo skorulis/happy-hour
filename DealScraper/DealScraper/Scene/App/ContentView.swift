@@ -40,7 +40,8 @@ struct ContentView: View {
                 }
                 .tag(Tab.venues)
 
-            JobQueueView(viewModel: resolver!.jobQueueViewModel())
+            CoordinatorView(coordinator: .init(root: MainPath.jobQueue))
+                .withRenderers(resolver: resolver!)
                 .tabItem {
                     Label("Jobs", systemImage: "list.bullet.rectangle")
                 }

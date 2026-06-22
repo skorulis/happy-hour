@@ -1,16 +1,19 @@
 //Created by Alex Skorulis on 22/6/2026.
 
+import ASKCoordinator
 import Foundation
 import Knit
 import KnitMacros
 
 @MainActor
 @Observable
-final class JobQueueViewModel {
-
+final class JobQueueViewModel: CoordinatorViewModel {
+    weak var coordinator: ASKCoordinator.Coordinator?
+    
     private let jobQueue: JobQueue
     private let venueRepository: VenueRepository
     private var venueNames: [Int64: String] = [:]
+    private var venueGoogleMapIds: [Int64: String] = [:]
 
     var jobs: [JobItem] {
         jobQueue.jobs.sorted { lhs, rhs in
@@ -36,10 +39,27 @@ final class JobQueueViewModel {
             return cached
         }
         if let venue = try? venueRepository.find(id: venueId) {
-            venueNames[venueId] = venue.name
+            cacheVenue(venue)
             return venue.name
         }
         return "Venue #\(venueId)"
+    }
+
+    func googleMapId(for venueId: Int64) -> String? {
+        if let cached = venueGoogleMapIds[venueId] {
+            return cached
+        }
+        if let venue = try? venueRepository.find(id: venueId) {
+            cacheVenue(venue)
+            return venue.googleMapId
+        }
+        return nil
+    }
+
+    private func cacheVenue(_ venue: Venue) {
+        guard let venueId = venue.id else { return }
+        venueNames[venueId] = venue.name
+        venueGoogleMapIds[venueId] = venue.googleMapId
     }
 
     func canCancel(_ job: JobItem) -> Bool {

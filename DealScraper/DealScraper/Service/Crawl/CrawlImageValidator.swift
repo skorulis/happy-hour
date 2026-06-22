@@ -70,6 +70,9 @@ final class CrawlImageValidator {
     }
 
     private static func shouldIgnore(url: URL) -> Bool {
+        if url.host() == nil {
+            return true
+        }
         let absoluteString = url.absoluteString.lowercased()
         return FilterKeywords.excludedKeywords.contains { absoluteString.contains($0) }
     }
