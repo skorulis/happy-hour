@@ -4,29 +4,23 @@ import Foundation
 import PDFKit
 
 struct PDFTextExtractionResult: Equatable, Sendable {
-    let fullMarkdown: String
-    let filteredMarkdown: String
-
-    var fullText: String { plainText(from: fullMarkdown) }
-    var filteredText: String { plainText(from: filteredMarkdown) }
-
-    private func plainText(from markdown: String) -> String {
-        markdown
-            .replacingOccurrences(of: #"^#{1,6}\s+"#, with: "", options: .regularExpression)
-            .replacingOccurrences(of: #"^[-*]\s+"#, with: "", options: .regularExpression)
-            .replacingOccurrences(of: "\n---\n", with: "\n")
-    }
+    let fullText: String
+    let filteredText: String
 }
 
 struct PDFTextExtractor {
 
+    /// Set to `true` to use layout-aware PDF markdown generation instead of plain `page.string` extraction.
+    static let usesMarkdownParsing = false
+
     private let markdownGenerator = PDFMarkdownGenerator()
-    private static let pageSeparator = "\n\n---\n\n"
 
     func extractText(from localURL: URL) -> PDFTextExtractionResult? {
         guard let document = PDFDocument(url: localURL) else {
             return nil
         }
+
+        let pageSeparator = Self.usesMarkdownParsing ? "\n\n---\n\n" : "\n"
 
         var allParts: [String] = []
         var filteredParts: [String] = []
@@ -35,27 +29,34 @@ struct PDFTextExtractor {
                 continue
             }
 
-            let pageMarkdown = markdownGenerator.markdown(from: page)
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !pageMarkdown.isEmpty else {
+            let pageText = pageContent(from: page)
+            guard !pageText.isEmpty else {
                 continue
             }
 
-            let keywordText = page.string ?? pageMarkdown
-            allParts.append(pageMarkdown)
+            let keywordText = page.string ?? pageText
+            allParts.append(pageText)
             if FilterKeywords.containsDealKeyword(keywordText) {
-                filteredParts.append(pageMarkdown)
+                filteredParts.append(pageText)
             }
         }
 
-        let filteredMarkdown = filteredParts.joined(separator: Self.pageSeparator)
-        guard !filteredMarkdown.isEmpty else {
+        let filteredText = filteredParts.joined(separator: pageSeparator)
+        guard !filteredText.isEmpty else {
             return nil
         }
 
         return PDFTextExtractionResult(
-            fullMarkdown: allParts.joined(separator: Self.pageSeparator),
-            filteredMarkdown: filteredMarkdown
+            fullText: allParts.joined(separator: pageSeparator),
+            filteredText: filteredText
         )
+    }
+
+    private func pageContent(from page: PDFPage) -> String {
+        if Self.usesMarkdownParsing {
+            return markdownGenerator.markdown(from: page)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        return page.string?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
     }
 }

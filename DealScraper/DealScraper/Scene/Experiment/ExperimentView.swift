@@ -193,8 +193,8 @@ struct ExperimentView: View {
 
     private func pdfMarkdownSection(url: URL, extraction: PDFTextExtractionResult) -> some View {
         let markdown = pdfMarkdownDisplayMode == .filtered
-            ? extraction.filteredMarkdown
-            : extraction.fullMarkdown
+            ? extraction.filteredText
+            : extraction.fullText
 
         return VStack(alignment: .leading, spacing: 12) {
             HStack {

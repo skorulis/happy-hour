@@ -28,15 +28,15 @@ struct VenueDealInstructionsTests {
         #expect(preamble.contains(VenueDealInstructions.webpageExtractionTask))
     }
 
-    @Test func usesMarkdownContextWhenMaterialIsPDF() {
-        let material = VenueDealSourceMaterial.fixture(type: .pdf, markdown: "## Happy Hour\n\nMonday happy hour 4pm to 6pm")
+    @Test func usesPDFContextWhenMaterialIsPDF() {
+        let material = VenueDealSourceMaterial.fixture(type: .pdf, markdown: "Happy Hour\n\nMonday happy hour 4pm to 6pm")
 
         let instructions = VenueDealInstructions.dealExtraction(for: material)
-        #expect(instructions.contains(VenueDealInstructions.markdownSourceContext))
-        #expect(!instructions.contains(VenueDealInstructions.pdfSourceContext))
+        #expect(instructions.contains(VenueDealInstructions.pdfSourceContext))
+        #expect(!instructions.contains(VenueDealInstructions.markdownSourceContext))
 
         let preamble = VenueDealInstructions.promptPreamble(venueName: "Test Pub", material: material)
-        #expect(preamble.contains("PDF markdown"))
-        #expect(preamble.contains(VenueDealInstructions.markdownExtractionTask))
+        #expect(preamble.contains("PDF text"))
+        #expect(preamble.contains(VenueDealInstructions.pdfExtractionTask))
     }
 }

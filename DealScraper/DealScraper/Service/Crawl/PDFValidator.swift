@@ -30,7 +30,7 @@ final class PDFValidator {
             return nil
         }
 
-        return PDFValidationResult(url: url, text: extraction.filteredMarkdown)
+        return PDFValidationResult(url: url, text: extraction.filteredText)
     }
 
     func validatePDFs(urls: [URL]) async -> [PDFValidationResult] {
