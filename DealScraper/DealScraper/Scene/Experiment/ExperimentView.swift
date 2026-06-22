@@ -8,6 +8,7 @@ struct ExperimentView: View {
 
     @State var viewModel: ExperimentViewModel
     @State private var linkDisplayMode: LinkDisplayMode = .filtered
+    @State private var contentBlockDisplayMode: ContentBlockDisplayMode = .deal
     @State private var pdfMarkdownDisplayMode: PDFMarkdownDisplayMode = .filtered
     @State private var isPDFMarkdownExpanded = false
     @State private var isMarkdownExpanded = false
@@ -16,6 +17,11 @@ struct ExperimentView: View {
 
     private enum LinkDisplayMode: String, CaseIterable {
         case filtered
+        case all
+    }
+
+    private enum ContentBlockDisplayMode: String, CaseIterable {
+        case deal
         case all
     }
 
@@ -83,7 +89,7 @@ struct ExperimentView: View {
                 }
                 linksSection(page.links)
                 imagesSection(page)
-                dealContentBlocksSection(page.dealContentBlocks)
+                contentBlocksSection(page)
             case let .image(url, lines):
                 imageOCRSection(url: url, lines: lines)
             case let .pdf(url, extraction):
@@ -353,10 +359,21 @@ struct ExperimentView: View {
         .help("Open image in browser")
     }
 
-    private func dealContentBlocksSection(_ blocks: [ContentBlock]) -> some View {
-        detailSection(title: "Deal Content Blocks (\(blocks.count))") {
+    private func contentBlocksSection(_ page: LoadedPage) -> some View {
+        let blocks = contentBlocksForDisplay(page)
+
+        return detailSection(title: "Content Blocks (\(blocks.count))") {
+            Picker("Content blocks", selection: $contentBlockDisplayMode) {
+                Text("Deal").tag(ContentBlockDisplayMode.deal)
+                Text("All").tag(ContentBlockDisplayMode.all)
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+
             if blocks.isEmpty {
-                Text("No deal content blocks found.")
+                Text(contentBlockDisplayMode == .deal
+                    ? "No deal content blocks found."
+                    : "No content blocks found.")
                     .foregroundStyle(.secondary)
             } else {
                 ForEach(Array(blocks.enumerated()), id: \.offset) { index, block in
@@ -385,6 +402,18 @@ struct ExperimentView: View {
                     }
                 }
             }
+        }
+        .onChange(of: page.url) {
+            contentBlockDisplayMode = .deal
+        }
+    }
+
+    private func contentBlocksForDisplay(_ page: LoadedPage) -> [ContentBlock] {
+        switch contentBlockDisplayMode {
+        case .deal:
+            return page.dealContentBlocks
+        case .all:
+            return page.contentBlocks
         }
     }
 
