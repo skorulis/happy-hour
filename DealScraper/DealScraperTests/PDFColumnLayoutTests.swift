@@ -30,4 +30,18 @@ struct PDFColumnLayoutTests {
         #expect(layout.index(for: runs[0]) == 0)
         #expect(layout.index(for: runs[1]) == 1)
     }
+
+    @Test func rightAlignedLeftColumnPricesStayInLeftColumn() {
+        let runs = [
+            PDFTextRun(text: "FIZZ", bounds: CGRect(x: 24, y: 520, width: 30, height: 12), fontSize: 12, isBold: false, isItalic: false),
+            PDFTextRun(text: "10 / 45", bounds: CGRect(x: 213, y: 508, width: 24, height: 12), fontSize: 12, isBold: false, isItalic: false),
+            PDFTextRun(text: "MEMBERS' HAPPY HOUR", bounds: CGRect(x: 289, y: 518, width: 86, height: 12), fontSize: 12, isBold: false, isItalic: false),
+        ]
+
+        let layout = PDFColumnLayout.detect(from: runs, pageWidth: 421)
+
+        #expect(layout.index(for: runs[0]) == 0)
+        #expect(layout.index(for: runs[1]) == 0)
+        #expect(layout.index(for: runs[2]) == 1)
+    }
 }

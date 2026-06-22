@@ -35,6 +35,7 @@ struct PDFLayoutExtractor {
 
     private let lineYTolerance: CGFloat = 4
     private let runGapThreshold: CGFloat = 2
+    private let lineColumnGapThreshold: CGFloat = 40
 
     func lines(from page: PDFPage) -> [PDFTextLine] {
         guard let attributedString = page.attributedString, attributedString.length > 0 else {
@@ -117,6 +118,7 @@ struct PDFLayoutExtractor {
             if let y = currentY, abs(centerY - y) <= lineYTolerance {
                 if let lastRun = currentRuns.last,
                    shouldSplitLine(between: lastRun, and: run)
+                   || shouldSplitLineHorizontally(between: lastRun, and: run)
                 {
                     groupedLines.append(PDFTextLine(runs: sortRunsLeftToRight(currentRuns)))
                     currentRuns = [run]
@@ -167,6 +169,11 @@ struct PDFLayoutExtractor {
         let smaller = min(lhs.fontSize, rhs.fontSize)
         guard smaller > 0 else { return false }
         return larger / smaller >= 1.25
+    }
+
+    private func shouldSplitLineHorizontally(between lhs: PDFTextRun, and rhs: PDFTextRun) -> Bool {
+        let gap = rhs.bounds.minX - lhs.bounds.maxX
+        return gap > lineColumnGapThreshold
     }
 
     private func splitIntoLineParts(_ text: String) -> [String] {
