@@ -66,10 +66,28 @@ struct DealRow: View {
                     .foregroundStyle(.secondary)
             }
 
-            if let sourceURL = item.deal.sourceURL, let url = URL(string: sourceURL) {
-                Link("Source", destination: url)
-                    .font(.caption)
+            sourceLinks
+        }
+    }
+
+    @ViewBuilder
+    private var sourceLinks: some View {
+        let hasPageSource = item.deal.sourceURL.flatMap { URL(string: $0) } != nil
+        let hasImageSource = item.deal.imageURL.flatMap { !$0.isEmpty ? URL(string: $0) : nil } != nil
+
+        if hasPageSource || hasImageSource {
+            HStack(spacing: 16) {
+                if let sourceURL = item.deal.sourceURL, let url = URL(string: sourceURL) {
+                    Link("Page source", destination: url)
+                }
+
+                if let imageURLString = item.deal.imageURL,
+                   !imageURLString.isEmpty,
+                   let url = URL(string: imageURLString) {
+                    Link("Image source", destination: url)
+                }
             }
+            .font(.caption)
         }
     }
     
