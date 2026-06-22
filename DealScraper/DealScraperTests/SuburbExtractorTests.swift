@@ -26,6 +26,12 @@ struct SuburbExtractorTests {
         #expect(result?.postcode == "2010")
     }
 
+    @Test func extractsSuburbFromStandaloneAddressWithAustraliaSuffix() {
+        let result = SuburbExtractor.extract(from: "Glebe NSW 2037, Australia")
+        #expect(result?.name == "Glebe")
+        #expect(result?.postcode == "2037")
+    }
+
     @Test func returnsNilForEmptyAddress() {
         #expect(SuburbExtractor.extract(from: "") == nil)
         #expect(SuburbExtractor.extract(from: "   ") == nil)
