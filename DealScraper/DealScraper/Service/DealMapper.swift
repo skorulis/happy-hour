@@ -23,6 +23,7 @@ nonisolated enum DealMapper {
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
         (title, details) = withLeadingPriceInTitle(title: title, details: details)
+        title = titleCased(title)
         let conditions = deal.conditions
             .map { normalizeCondition($0) }
             .filter { !$0.isEmpty }
@@ -107,6 +108,11 @@ nonisolated enum DealMapper {
             result.append(line)
         }
         return result
+    }
+
+    private static func titleCased(_ title: String) -> String {
+        guard !title.isEmpty, !isPriceLine(title) else { return title }
+        return title.capitalized
     }
 
     private static func normalizeLine(_ line: String) -> String {

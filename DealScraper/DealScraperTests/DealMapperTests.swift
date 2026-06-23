@@ -18,7 +18,7 @@ struct DealMapperTests {
 
         #expect(deals.count == 1)
         let deal = try #require(deals.first)
-        #expect(deal.title == "CHEESEBURGER TUESDAYS")
+        #expect(deal.title == "Cheeseburger Tuesdays")
         #expect(deal.details.count == 1)
         #expect(deal.days == [.tuesday])
         #expect(deal.times == [.allDay])
@@ -166,7 +166,7 @@ struct DealMapperTests {
 
         let deal = try #require(DealMapper.map([raw]).first)
 
-        #expect(deal.title == "HAPPY HOUR")
+        #expect(deal.title == "Happy Hour")
         #expect(deal.details == ["$8 WINES"])
     }
 
@@ -220,7 +220,7 @@ struct DealMapperTests {
 
         let deal = try #require(DealMapper.map([raw]).first)
 
-        #expect(deal.title == "STEAK NIGHT $22")
+        #expect(deal.title == "Steak Night $22")
         #expect(deal.details == ["Premium cut with sides"])
     }
 
@@ -248,7 +248,7 @@ struct DealMapperTests {
 
         let deal = try #require(DealMapper.map([raw]).first)
 
-        #expect(deal.title == "HAPPY HOUR")
+        #expect(deal.title == "Happy Hour")
         #expect(deal.details == ["$8 SCHOONERS"])
     }
 
@@ -262,7 +262,7 @@ struct DealMapperTests {
 
         let deal = try #require(DealMapper.map([raw]).first)
 
-        #expect(deal.title == "$22 STEAK NIGHT")
+        #expect(deal.title == "$22 Steak Night")
         #expect(deal.details == ["Raise the Steaks"])
     }
 }
