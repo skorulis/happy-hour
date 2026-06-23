@@ -42,6 +42,8 @@ export type DealSearchResult = {
     lat: number;
     lng: number;
     websiteUri: string | null;
+    heroImage: string | null;
+    formattedAddress: string | null;
   };
   schedules: Array<{
     dayOfWeek: number;
@@ -49,6 +51,15 @@ export type DealSearchResult = {
     endMinute: number;
   }>;
 };
+
+function parseVenueFormattedAddress(json: unknown): string | null {
+  if (!json || typeof json !== "object") {
+    return null;
+  }
+
+  const address = (json as { formattedAddress?: unknown }).formattedAddress;
+  return typeof address === "string" && address.trim() ? address.trim() : null;
+}
 
 export type VenueDetailResult = VenueSearchResult & {
   links: {
@@ -320,6 +331,8 @@ export async function searchDeals(options: {
       venueLat: venue.lat,
       venueLng: venue.lng,
       venueWebsiteUri: venue.websiteUri,
+      venueHeroImage: venue.heroImage,
+      venueJson: venue.json,
     })
     .from(deal)
     .innerJoin(venue, eq(deal.venueId, venue.id))
@@ -366,6 +379,8 @@ export async function searchDeals(options: {
       lat: row.venueLat,
       lng: row.venueLng,
       websiteUri: row.venueWebsiteUri,
+      heroImage: row.venueHeroImage,
+      formattedAddress: parseVenueFormattedAddress(row.venueJson),
     },
     schedules: schedulesByDeal.get(row.dealId) ?? [],
   }));

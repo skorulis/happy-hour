@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { DealCard } from "@/components/DealCard";
+import { groupDealsByVenue, VenueSearchCard } from "@/components/VenueSearchCard";
 import { SearchBar, type SearchFilters } from "@/components/search/SearchBar";
 import type { TimeRange } from "@/components/search/DayPicker";
 import type { DealSearchResult } from "@/lib/search/queries";
@@ -97,6 +97,8 @@ export function SearchPage() {
     }));
   }
 
+  const venueGroups = groupDealsByVenue(deals);
+
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-10">
       <header className="space-y-2">
@@ -121,7 +123,9 @@ export function SearchPage() {
             Results
           </h2>
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            {loadingDeals ? "Loading..." : `${deals.length} deals`}
+            {loadingDeals
+              ? "Loading..."
+              : `${venueGroups.length} venues · ${deals.length} deals`}
           </p>
         </div>
 
@@ -138,8 +142,8 @@ export function SearchPage() {
           </p>
         ) : (
           <div className="grid gap-4">
-            {deals.map((deal) => (
-              <DealCard key={deal.id} deal={deal} />
+            {venueGroups.map((group) => (
+              <VenueSearchCard key={group.venue.id} group={group} />
             ))}
           </div>
         )}

@@ -95,12 +95,117 @@ export function formatMinute(minute: number): string {
   return `${hours12}:${minutes.toString().padStart(2, "0")}${suffix}`;
 }
 
+type ScheduleSlice = {
+  dayOfWeek: number;
+  startMinute: number;
+  endMinute: number;
+};
+
+function weekdaySort(a: number, b: number): number {
+  return (
+    WEEKDAY_UI_ORDER.indexOf(a as (typeof WEEKDAY_UI_ORDER)[number]) -
+    WEEKDAY_UI_ORDER.indexOf(b as (typeof WEEKDAY_UI_ORDER)[number])
+  );
+}
+
+function areConsecutiveWeekdays(first: number, second: number): boolean {
+  const firstIndex = WEEKDAY_UI_ORDER.indexOf(
+    first as (typeof WEEKDAY_UI_ORDER)[number],
+  );
+  const secondIndex = WEEKDAY_UI_ORDER.indexOf(
+    second as (typeof WEEKDAY_UI_ORDER)[number],
+  );
+  return firstIndex >= 0 && secondIndex === firstIndex + 1;
+}
+
+function formatDayRange(start: number, end: number): string {
+  if (start === end) {
+    return DAY_ABBREVIATIONS[start] ?? `Day ${start}`;
+  }
+  const startLabel = DAY_ABBREVIATIONS[start] ?? `Day ${start}`;
+  const endLabel = DAY_ABBREVIATIONS[end] ?? `Day ${end}`;
+  return `${startLabel}-${endLabel}`;
+}
+
+function compressDayRanges(days: number[]): string[] {
+  const sorted = [...days].sort(weekdaySort);
+  if (sorted.length === 0) {
+    return [];
+  }
+
+  const ranges: string[] = [];
+  let rangeStart = sorted[0];
+  let rangeEnd = sorted[0];
+
+  for (const day of sorted.slice(1)) {
+    if (areConsecutiveWeekdays(rangeEnd, day)) {
+      rangeEnd = day;
+    } else {
+      ranges.push(formatDayRange(rangeStart, rangeEnd));
+      rangeStart = day;
+      rangeEnd = day;
+    }
+  }
+
+  ranges.push(formatDayRange(rangeStart, rangeEnd));
+  return ranges;
+}
+
+export function formatDealDayBadge(schedules: ScheduleSlice[]): string {
+  if (schedules.length === 0) {
+    return "—";
+  }
+
+  const days = [...new Set(schedules.map((schedule) => schedule.dayOfWeek))];
+  if (days.length === ALL_WEEKDAYS.length) {
+    return "7 Days";
+  }
+
+  return compressDayRanges(days).join(", ");
+}
+
+function formatCompactMinute(minute: number, includeMeridiem: boolean): string {
+  const hours24 = Math.floor(minute / 60);
+  const minutes = minute % 60;
+  const suffix = hours24 >= 12 ? "pm" : "am";
+  const hours12 = hours24 % 12 || 12;
+  const time =
+    minutes === 0
+      ? `${hours12}`
+      : `${hours12}:${minutes.toString().padStart(2, "0")}`;
+
+  return includeMeridiem ? `${time}${suffix}` : time;
+}
+
+export function formatCompactTimeRange(startMinute: number, endMinute: number): string {
+  const startPeriod = startMinute >= 720 ? "pm" : "am";
+  const endPeriod = endMinute >= 720 ? "pm" : "am";
+  const start = formatCompactMinute(startMinute, startPeriod !== endPeriod);
+  const end = formatCompactMinute(endMinute, true);
+  return `${start}-${end}`;
+}
+
+export function formatDealTimeBadge(schedules: ScheduleSlice[]): string {
+  if (schedules.length === 0) {
+    return "—";
+  }
+
+  const timeRanges = new Set(
+    schedules.map(
+      (schedule) => `${schedule.startMinute}-${schedule.endMinute}`,
+    ),
+  );
+
+  if (timeRanges.size === 1) {
+    const schedule = schedules[0];
+    return formatCompactTimeRange(schedule.startMinute, schedule.endMinute);
+  }
+
+  return "Various";
+}
+
 export function formatScheduleSummary(
-  schedules: Array<{
-    dayOfWeek: number;
-    startMinute: number;
-    endMinute: number;
-  }>,
+  schedules: ScheduleSlice[],
 ): string {
   if (schedules.length === 0) {
     return "Schedule not listed";
