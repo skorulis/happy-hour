@@ -41,6 +41,9 @@ nonisolated enum DealMapper {
         if trimmed.hasPrefix("*") {
             trimmed = String(trimmed.dropFirst()).trimmingCharacters(in: .whitespacesAndNewlines)
         }
+        if trimmed.hasPrefix("\\*") {
+            trimmed = String(trimmed.dropFirst().dropFirst()).trimmingCharacters(in: .whitespacesAndNewlines)
+        }
         return trimmed
     }
 

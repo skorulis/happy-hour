@@ -61,7 +61,7 @@ struct DealRow: View {
             }
 
             if !item.schedules.isEmpty {
-                Text(formattedSchedules)
+                Text(item.formattedScheduleSummary)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -119,38 +119,6 @@ struct DealRow: View {
             .buttonStyle(.plain)
             .help("Open image in browser")
         }
-    }
-
-    private var formattedSchedules: String {
-        item.schedules.map { schedule in
-            let day = dayName(for: schedule.dayOfWeek)
-            let start = formattedMinute(schedule.startMinute)
-            let end = formattedMinute(schedule.endMinute)
-            if schedule.startMinute == 0, schedule.endMinute == 1_440 {
-                return day
-            }
-            return "\(day) \(start)–\(end)"
-        }
-        .joined(separator: ", ")
-    }
-
-    private func dayName(for weekday: Int) -> String {
-        switch weekday {
-        case 1: return "Sun"
-        case 2: return "Mon"
-        case 3: return "Tue"
-        case 4: return "Wed"
-        case 5: return "Thu"
-        case 6: return "Fri"
-        case 7: return "Sat"
-        default: return "Day \(weekday)"
-        }
-    }
-
-    private func formattedMinute(_ minute: Int) -> String {
-        let hours = minute / 60
-        let minutes = minute % 60
-        return String(format: "%d:%02d", hours, minutes)
     }
 
     private func statusButton(

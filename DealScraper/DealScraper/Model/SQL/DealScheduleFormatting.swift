@@ -1,0 +1,110 @@
+//Created by Alex Skorulis on 23/6/2026.
+
+import Foundation
+
+enum DealScheduleFormatting {
+    /// Mon → Sun display order (calendar weekday values 2–7, 1).
+    private static let weekdayDisplayOrder = [2, 3, 4, 5, 6, 7, 1]
+
+    static func formattedSummary(_ schedules: [DealSchedule]) -> String {
+        guard !schedules.isEmpty else { return "" }
+
+        var groups: [TimeRangeKey: Set<Int>] = [:]
+        for schedule in schedules {
+            let key = TimeRangeKey(start: schedule.startMinute, end: schedule.endMinute)
+            groups[key, default: []].insert(schedule.dayOfWeek)
+        }
+
+        return groups
+            .sorted { lhs, rhs in
+                let lhsFirstDay = weekdayDisplayOrder.firstIndex(of: lhs.value.min(by: weekdaySort)!) ?? 0
+                let rhsFirstDay = weekdayDisplayOrder.firstIndex(of: rhs.value.min(by: weekdaySort)!) ?? 0
+                if lhsFirstDay != rhsFirstDay { return lhsFirstDay < rhsFirstDay }
+                if lhs.key.start != rhs.key.start { return lhs.key.start < rhs.key.start }
+                return lhs.key.end < rhs.key.end
+            }
+            .map { key, days in
+                formatGroup(days: Array(days), start: key.start, end: key.end)
+            }
+            .joined(separator: ", ")
+    }
+
+    private struct TimeRangeKey: Hashable {
+        let start: Int
+        let end: Int
+    }
+
+    private static func formatGroup(days: [Int], start: Int, end: Int) -> String {
+        let dayPart = formatDayRanges(days)
+        if start == 0, end == 1_440 {
+            return dayPart
+        }
+        return "\(dayPart) \(formattedMinute(start))–\(formattedMinute(end))"
+    }
+
+    private static func formatDayRanges(_ days: [Int]) -> String {
+        let sorted = days.sorted(by: weekdaySort)
+        var ranges: [String] = []
+        var rangeStart = sorted[0]
+        var rangeEnd = sorted[0]
+
+        for day in sorted.dropFirst() {
+            if areConsecutive(rangeEnd, day) {
+                rangeEnd = day
+            } else {
+                ranges.append(formatDayRange(from: rangeStart, to: rangeEnd))
+                rangeStart = day
+                rangeEnd = day
+            }
+        }
+        ranges.append(formatDayRange(from: rangeStart, to: rangeEnd))
+        return ranges.joined(separator: ", ")
+    }
+
+    private static func areConsecutive(_ first: Int, _ second: Int) -> Bool {
+        guard let firstIndex = weekdayDisplayOrder.firstIndex(of: first),
+              let secondIndex = weekdayDisplayOrder.firstIndex(of: second)
+        else {
+            return false
+        }
+        return secondIndex == firstIndex + 1
+    }
+
+    private static func weekdaySort(_ lhs: Int, _ rhs: Int) -> Bool {
+        let lhsIndex = weekdayDisplayOrder.firstIndex(of: lhs) ?? Int.max
+        let rhsIndex = weekdayDisplayOrder.firstIndex(of: rhs) ?? Int.max
+        return lhsIndex < rhsIndex
+    }
+
+    private static func formatDayRange(from start: Int, to end: Int) -> String {
+        if start == end {
+            return dayName(for: start)
+        }
+        return "\(dayName(for: start))-\(dayName(for: end))"
+    }
+
+    private static func dayName(for weekday: Int) -> String {
+        switch weekday {
+        case 1: return "Sun"
+        case 2: return "Mon"
+        case 3: return "Tue"
+        case 4: return "Wed"
+        case 5: return "Thu"
+        case 6: return "Fri"
+        case 7: return "Sat"
+        default: return "Day \(weekday)"
+        }
+    }
+
+    private static func formattedMinute(_ minute: Int) -> String {
+        let hours = minute / 60
+        let minutes = minute % 60
+        return String(format: "%d:%02d", hours, minutes)
+    }
+}
+
+extension DealWithSchedules {
+    var formattedScheduleSummary: String {
+        DealScheduleFormatting.formattedSummary(schedules)
+    }
+}
