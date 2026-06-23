@@ -62,14 +62,7 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
             )
         }
 
-        container.register(VenueDealSourceMaterialPreparer.self) { resolver in
-            VenueDealSourceMaterialPreparer(
-                imageFetcher: resolver.crawlImageFetcher(),
-                webPageLoader: resolver.webPageLoader(),
-                pdfFetcher: resolver.crawlPDFFetcher(),
-                pdfTextExtractor: resolver.pdfTextExtractor()
-            )
-        }
+        container.register(VenueDealSourceMaterialPreparer.self) { VenueDealSourceMaterialPreparer.make(resolver: $0) }
 
         container.register(VenueDealExtractionService.self) { VenueDealExtractionService.make(resolver: $0) }
         
@@ -97,13 +90,7 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
             CrawlImageFetcher(cache: resolver.crawlImageCache())
         }
 
-        container.register(CrawlImageValidator.self) { resolver in
-            CrawlImageValidator(
-                fetcher: resolver.crawlImageFetcher(),
-                imageExtractor: resolver.dealImageExtractor(),
-                featurePrintGenerator: resolver.imageFeaturePrintGenerator()
-            )
-        }
+        container.register(CrawlImageValidator.self) { CrawlImageValidator.make(resolver: $0) }
 
         container.register(CrawlPDFCache.self) { _ in CrawlPDFCache() }
             .inObjectScope(.container)
@@ -117,6 +104,16 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
         container.register(PDFValidator.self) { PDFValidator.make(resolver: $0) }
 
         container.register(ImageDeduper.self) { _ in ImageDeduper() }
+
+        container.register(ImageClassifier.self) { _ in ImageClassifier() }
+
+        container.register(VenueHeroImageSelector.self) { resolver in
+            VenueHeroImageSelector(
+                fetcher: resolver.crawlImageFetcher(),
+                imageExtractor: resolver.dealImageExtractor(),
+                classifier: resolver.imageClassifier()
+            )
+        }
 
         container.register(VenueWebsiteCrawler.self) { VenueWebsiteCrawler.make(resolver: $0) }
 

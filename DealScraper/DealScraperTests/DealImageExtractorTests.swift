@@ -97,6 +97,13 @@ struct DealImageExtractorTests {
         #expect(!DealImageExtractor.isEstablishmentDateLine("1862"))
     }
 
+    @Test func dealPosterFixturesHaveHighTextCoverage() async throws {
+        let imageURL = try getURL(name: "goat_deals")
+        let coverage = try await DealImageExtractor().textCoverageRatio(from: imageURL)
+
+        #expect(coverage > 0)
+    }
+
     private func hasLine(_ expected: String, in lines: [ExtractedTextLine]) -> Bool {
         line(expected, in: lines) != nil
     }

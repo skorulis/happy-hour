@@ -150,4 +150,23 @@ struct VenueRepositoryTests {
         #expect(found.name == "New Name")
         #expect(found.status == .broken)
     }
+
+    @Test func updateHeroImagePersistsURL() throws {
+        let repository = VenueRepository(store: SQLStore.inMemory())
+
+        try repository.upsert(Venue(
+            googleMapId: "places/ChIJTest123",
+            name: "The Royal Pub",
+            lat: -33.8688,
+            lng: 151.2093,
+            json: "{}"
+        ))
+
+        let venueId = try #require(try repository.find(googleMapId: "places/ChIJTest123")?.id)
+        let heroURL = "https://example.com/hero.jpg"
+        try repository.updateHeroImage(venueId: venueId, url: heroURL)
+
+        let found = try #require(try repository.find(id: venueId))
+        #expect(found.heroImage == heroURL)
+    }
 }

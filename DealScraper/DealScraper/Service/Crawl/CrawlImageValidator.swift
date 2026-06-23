@@ -1,5 +1,7 @@
 //Created by Alex Skorulis on 15/6/2026.
 
+import Knit
+import KnitMacros
 import CoreGraphics
 import Foundation
 import ImageIO
@@ -13,6 +15,7 @@ final class CrawlImageValidator {
     private let imageExtractor: DealImageExtractor
     private let featurePrintGenerator: ImageFeaturePrintGenerator
 
+    @Resolvable<Resolver>
     init(
         fetcher: CrawlImageFetcher,
         imageExtractor: DealImageExtractor,

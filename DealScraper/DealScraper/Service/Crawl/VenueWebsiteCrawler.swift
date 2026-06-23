@@ -37,6 +37,7 @@ final class VenueWebsiteCrawler {
     private let pdfValidator: PDFValidator
     private let imageDeduper: ImageDeduper
     private let dealAdvancedTextFilter: DealAdvancedTextFilter
+    private let heroImageSelector: VenueHeroImageSelector
     private let dealSourceRepository: DealSourceRepository
     private let venueRepository: VenueRepository
     private let venueLinksRepository: VenueLinksRepository
@@ -51,6 +52,7 @@ final class VenueWebsiteCrawler {
         pdfValidator: PDFValidator,
         imageDeduper: ImageDeduper,
         dealAdvancedTextFilter: DealAdvancedTextFilter,
+        heroImageSelector: VenueHeroImageSelector,
         dealSourceRepository: DealSourceRepository,
         venueRepository: VenueRepository,
         venueLinksRepository: VenueLinksRepository
@@ -63,6 +65,7 @@ final class VenueWebsiteCrawler {
         self.pdfValidator = pdfValidator
         self.imageDeduper = imageDeduper
         self.dealAdvancedTextFilter = dealAdvancedTextFilter
+        self.heroImageSelector = heroImageSelector
         self.dealSourceRepository = dealSourceRepository
         self.venueRepository = venueRepository
         self.venueLinksRepository = venueLinksRepository
@@ -202,6 +205,16 @@ final class VenueWebsiteCrawler {
                     instagram: discoveredLinks.instagram?.absoluteString,
                     facebook: discoveredLinks.facebook?.absoluteString
                 )
+
+                if venue.heroImage?.isEmpty != false {
+                    await progress("Selecting hero image…")
+                    if let heroURL = await heroImageSelector.selectHeroImage(from: loadedPage.imageURLs) {
+                        try venueRepository.updateHeroImage(
+                            venueId: venueId,
+                            url: heroURL.absoluteString
+                        )
+                    }
+                }
             }
         }
         

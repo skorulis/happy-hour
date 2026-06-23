@@ -28,11 +28,47 @@ nonisolated struct DealImageExtractor {
         }.value
     }
 
+    nonisolated func textCoverageRatio(from url: URL) async throws -> CGFloat {
+        guard let cgImage = Self.loadCGImage(from: url) else {
+            throw Error.invalidImage
+        }
+        return try await textCoverageRatio(from: cgImage)
+    }
+
+    nonisolated func textCoverageRatio(from cgImage: CGImage) async throws -> CGFloat {
+        try await Task.detached {
+            try Self.computeTextCoverageRatio(on: cgImage)
+        }.value
+    }
+
     private nonisolated static func loadCGImage(from url: URL) -> CGImage? {
         guard let source = CGImageSourceCreateWithURL(url as CFURL, nil) else {
             return nil
         }
         return CGImageSourceCreateImageAtIndex(source, 0, nil)
+    }
+
+    private nonisolated static func computeTextCoverageRatio(on cgImage: CGImage) throws -> CGFloat {
+        let request = VNRecognizeTextRequest()
+        request.recognitionLevel = .accurate
+        request.usesLanguageCorrection = true
+        request.recognitionLanguages = ["en-AU", "en-US"]
+
+        let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+        do {
+            try handler.perform([request])
+        } catch {
+            throw Error.recognitionFailed
+        }
+
+        guard let observations = request.results else {
+            return 0
+        }
+
+        return observations.reduce(0) { partialResult, observation in
+            let box = observation.boundingBox
+            return partialResult + box.width * box.height
+        }
     }
 
     private nonisolated static func performRecognition(on cgImage: CGImage) throws -> [ExtractedTextLine] {

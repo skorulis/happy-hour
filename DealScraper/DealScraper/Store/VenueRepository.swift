@@ -91,6 +91,15 @@ final class VenueRepository {
         }
     }
 
+    func updateHeroImage(venueId: Int64, url: String?) throws {
+        try store.dbQueue.write { db in
+            try db.execute(
+                sql: "UPDATE venue SET hero_image = ? WHERE id = ?",
+                arguments: [url, venueId]
+            )
+        }
+    }
+
     private static func linkSuburb(for venue: inout Venue, in db: Database) throws {
         guard let jsonData = venue.json.data(using: .utf8),
               let place = try? JSONDecoder().decode(GooglePlace.self, from: jsonData),

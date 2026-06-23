@@ -1,5 +1,7 @@
 //Created by Alex Skorulis on 17/6/2026.
 
+import Knit
+import KnitMacros
 import Foundation
 import UniformTypeIdentifiers
 
@@ -33,6 +35,7 @@ final class VenueDealSourceMaterialPreparer {
     private let pdfFetcher: CrawlPDFFetcher
     private let pdfTextExtractor: PDFTextExtractor
 
+    @Resolvable<Resolver>
     init(
         imageFetcher: CrawlImageFetcher,
         webPageLoader: WebPageLoader,
