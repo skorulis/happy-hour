@@ -247,9 +247,9 @@ final class VenueDetailsViewModel {
         return String(format: "%.6f, %.6f", venue.lat, venue.lng)
     }
 
-    var lastCrawlDescription: String? {
-        guard let venue, let lastCrawlDate = venue.lastCrawlDate else { return nil }
-        return lastCrawlDate.formatted(date: .abbreviated, time: .shortened)
+    var lastCrawlDescription: String {
+        guard let lastCrawl = venue?.lastCrawlDate else { return "Never" }
+        return lastCrawl.formatted(date: .abbreviated, time: .shortened)
     }
 
     var mapsURL: URL? {

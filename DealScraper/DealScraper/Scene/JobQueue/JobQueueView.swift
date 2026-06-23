@@ -11,8 +11,34 @@ struct JobQueueView: View {
     @State var viewModel: JobQueueViewModel
 
     var body: some View {
-        jobList
-            .navigationTitle("Jobs")
+        VStack(spacing: 0) {
+            actionBar
+            jobList
+        }
+        .navigationTitle("Jobs")
+    }
+
+    private var actionBar: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Button("Crawl Next") {
+                    viewModel.crawlNext()
+                }
+
+                Button("Extract Next") {
+                    viewModel.extractNext()
+                }
+            }
+
+            if let message = viewModel.actionMessage {
+                Text(message)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.bar)
     }
 
     @ViewBuilder

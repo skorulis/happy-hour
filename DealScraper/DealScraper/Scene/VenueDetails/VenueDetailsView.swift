@@ -132,6 +132,8 @@ struct VenueDetailsView: View {
     @ViewBuilder
     private var actionsSection: some View {
         detailSection(title: "Actions") {
+            LabeledContent("Last Crawl", value: viewModel.lastCrawlDescription)
+
             HStack {
                 Button("Crawl Website") {
                     viewModel.crawlWebsite()
@@ -190,9 +192,6 @@ struct VenueDetailsView: View {
                 LabeledContent("Types", value: viewModel.types.joined(separator: ", "))
             }
 
-            if let lastCrawlDescription = viewModel.lastCrawlDescription {
-                LabeledContent("Last Crawled", value: lastCrawlDescription)
-            }
         }
     }
 
