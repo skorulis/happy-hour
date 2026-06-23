@@ -37,6 +37,9 @@ struct PageLinkFilter {
     }
 
     func shouldInclude(_ link: ContentBlockLink) -> Bool {
+        if Self.isYearSpecificEventsLink(link.url) {
+            return false
+        }
         let context = linkContext(link)
         if FilterKeywords.containsExcludedKeyword(context) {
             return false
@@ -72,5 +75,22 @@ struct PageLinkFilter {
     private func linkContext(_ link: ContentBlockLink) -> String {
         let text = link.text ?? ""
         return "\(text) \(link.url.path) \(link.url.absoluteString)"
+    }
+
+    private static func isYearSpecificEventsLink(_ url: URL) -> Bool {
+        let components = url.path.split(separator: "/").map { String($0).lowercased() }
+        for (index, component) in components.enumerated() {
+            guard component == "events" || component == "event" else { continue }
+            guard index + 1 < components.count else { continue }
+            let yearComponent = components[index + 1]
+            guard yearComponent.count == 4,
+                  yearComponent.hasPrefix("20"),
+                  Int(yearComponent) != nil
+            else {
+                continue
+            }
+            return true
+        }
+        return false
     }
 }

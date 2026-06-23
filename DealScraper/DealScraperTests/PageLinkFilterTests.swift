@@ -59,6 +59,23 @@ struct PageLinkFilterTests {
         #expect(result.crawlURLs.count == 0)
     }
 
+    @Test func excludesYearSpecificEventsLink() {
+        let result = filter.filter(links: [
+            link(text: "Events", url: "https://pub.example.com/events/2026"),
+        ])
+
+        #expect(result.crawlURLs.isEmpty)
+    }
+
+    @Test func includesGeneralEventsLink() {
+        let result = filter.filter(links: [
+            link(text: "Events", url: "https://pub.example.com/events"),
+        ])
+
+        #expect(result.crawlURLs.count == 1)
+        #expect(result.crawlURLs[0].path == "/events")
+    }
+
     @Test func excludesNonMatchingLink() {
         let result = filter.filter(links: [
             link(text: "About Us", url: "https://pub.example.com/about"),
