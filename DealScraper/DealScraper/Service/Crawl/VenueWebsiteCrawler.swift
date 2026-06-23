@@ -132,9 +132,12 @@ final class VenueWebsiteCrawler {
             }
             
             imagesAnalyzed += loadedPage.imageURLs.count
-            await progress("Checking \(loadedPage.imageURLs.count) images")
+            
             let validations = await imageValidator.validateImages(urls: loadedPage.imageURLs)
+            var index = 0
             for validation in validations {
+                index += 1
+                await progress("Checking image \(index) of \(loadedPage.imageURLs.count)")
                 discoveredByURL[validation.url] = DiscoveredSource(
                     url: validation.url,
                     sourceURL: loadedPage.normalizedURL,

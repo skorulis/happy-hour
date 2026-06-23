@@ -88,6 +88,32 @@ struct DealMapperTests {
         #expect(deals.first?.days.contains(.thursday) == true)
     }
 
+    @Test func parsesTillTimeAsUntilEndOfRange() throws {
+        let raw = DealExtractionPayload.RawDeal(
+            title: "LATE NIGHT SPECIAL",
+            details: ["$5 BEERS"],
+            days: ["FRIDAY"],
+            times: ["till 10pm"]
+        )
+
+        let deal = try #require(DealMapper.map([raw]).first)
+
+        #expect(deal.times == [.between(0, 22 * 60)])
+    }
+
+    @Test func parsesFromTillTimeRange() throws {
+        let raw = DealExtractionPayload.RawDeal(
+            title: "HAPPY HOUR",
+            details: ["$8 WINES"],
+            days: ["FRIDAY"],
+            times: ["from 4pm till 10pm"]
+        )
+
+        let deal = try #require(DealMapper.map([raw]).first)
+
+        #expect(deal.times == [.between(16 * 60, 22 * 60)])
+    }
+
     @Test func parsesDotSeparatedTimeFromRawDeal() throws {
         let raw = DealExtractionPayload.RawDeal(
             title: "HAPPY HOUR",

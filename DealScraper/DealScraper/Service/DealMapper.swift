@@ -140,7 +140,9 @@ nonisolated enum DealMapper {
 
         var times: [DealHours] = []
         for string in trimmed {
-            if let time = DealHours.parse(string) {
+            if let time = parseTillOrUntilTime(in: string) {
+                times.append(time)
+            } else if let time = DealHours.parse(string) {
                 times.append(time)
             } else {
                 times.append(contentsOf: timesInText(string))
@@ -178,6 +180,9 @@ nonisolated enum DealMapper {
     }
 
     private static func timesInText(_ text: String) -> [DealHours] {
+        if let time = parseTillOrUntilTime(in: text) {
+            return [time]
+        }
         if let time = DealHours.parse(text) {
             return [time]
         }
@@ -192,6 +197,31 @@ nonisolated enum DealMapper {
             guard let matchRange = Range(match.range(at: 1), in: text) else { return nil }
             return DealHours.parse(String(text[matchRange]))
         }
+    }
+
+    private static func parseTillOrUntilTime(in text: String) -> DealHours? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+
+        let fromTillPattern = #"(?i)from\s+(\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?)\s+(?:till|until)\s+(\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?)"#
+        if let regex = try? NSRegularExpression(pattern: fromTillPattern),
+           let match = regex.firstMatch(in: trimmed, range: NSRange(trimmed.startIndex..., in: trimmed)),
+           let startRange = Range(match.range(at: 1), in: trimmed),
+           let endRange = Range(match.range(at: 2), in: trimmed),
+           let start = DealHours.toMinutes(string: String(trimmed[startRange])),
+           let end = DealHours.toMinutes(string: String(trimmed[endRange])) {
+            return .between(start, end)
+        }
+
+        let tillOnlyPattern = #"(?i)(?:till|until)\s+(\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?)"#
+        if let regex = try? NSRegularExpression(pattern: tillOnlyPattern),
+           let match = regex.firstMatch(in: trimmed, range: NSRange(trimmed.startIndex..., in: trimmed)),
+           let endRange = Range(match.range(at: 1), in: trimmed),
+           let end = DealHours.toMinutes(string: String(trimmed[endRange])) {
+            return .between(0, end)
+        }
+
+        return nil
     }
 
     private static func merge(_ deals: [LegacyDeal]) -> [LegacyDeal] {
