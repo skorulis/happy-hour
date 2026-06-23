@@ -148,5 +148,11 @@ final class SQLMigrations {
                 t.add(column: "last_extraction_date", .datetime)
             }
         }
+
+        migrator.registerMigration("v15_venue_status") { db in
+            try db.alter(table: "venue") { t in
+                t.add(column: "status", .text).notNull().defaults(to: VenueStatus.normal.rawValue)
+            }
+        }
     }
 }

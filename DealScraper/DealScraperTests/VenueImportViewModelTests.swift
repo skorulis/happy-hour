@@ -119,4 +119,40 @@ struct VenueImportViewModelTests {
         viewModel.venueFilter = .ready
         #expect(viewModel.filteredVenues.map(\.name) == ["Ready Pub"])
     }
+
+    @Test func venueFilterExcludesBrokenFromOtherFilters() throws {
+        let store = SQLStore.inMemory()
+        let venueRepository = VenueRepository(store: store)
+        let dealSourceRepository = DealSourceRepository(store: store)
+        let dealRepository = DealRepository(store: store)
+
+        try venueRepository.upsert(Venue(
+            googleMapId: "places/normal",
+            name: "Normal Pub",
+            lat: 0,
+            lng: 0,
+            json: "{}"
+        ))
+        try venueRepository.upsert(Venue(
+            googleMapId: "places/broken",
+            name: "Broken Pub",
+            lat: 0,
+            lng: 0,
+            status: .broken,
+            json: "{}"
+        ))
+
+        let viewModel = VenueImportViewModel(
+            venueRepository: venueRepository,
+            dealSourceRepository: dealSourceRepository,
+            dealRepository: dealRepository
+        )
+        viewModel.loadSavedVenues()
+
+        viewModel.venueFilter = .all
+        #expect(viewModel.filteredVenues.map(\.name) == ["Normal Pub"])
+
+        viewModel.venueFilter = .broken
+        #expect(viewModel.filteredVenues.map(\.name) == ["Broken Pub"])
+    }
 }

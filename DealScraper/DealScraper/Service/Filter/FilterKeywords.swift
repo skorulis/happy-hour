@@ -57,6 +57,7 @@ nonisolated enum FilterKeywords {
         "brunch",
         "lunch",
         "dinner",
+        "night",
         "trivia",
         "bottomless",
         
@@ -65,6 +66,7 @@ nonisolated enum FilterKeywords {
         "meat tray",
         "2-4-1",
         "2 for 1",
+        "jazz",
     ]
     
     static let excludedKeywords = [
@@ -90,6 +92,13 @@ nonisolated enum FilterKeywords {
         "grandfinal",
         "melbournecup",
         "xmas",
+        "goodfriday",
+        "tournament",
+        "harrypotter",
+        "easter",
+        "mardigras",
+        "seinfeld",
+        "simpsons",
     ]
     
     static func containsDealKeyword(_ text: String) -> Bool {

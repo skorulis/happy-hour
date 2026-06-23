@@ -187,6 +187,15 @@ struct VenueDetailsView: View {
 
     private func metadataSection(_ venue: Venue) -> some View {
         detailSection(title: "Details") {
+            Picker("Status", selection: Binding(
+                get: { viewModel.venue?.status ?? .normal },
+                set: { viewModel.setVenueStatus($0) }
+            )) {
+                Text("Normal").tag(VenueStatus.normal)
+                Text("Broken").tag(VenueStatus.broken)
+            }
+            .pickerStyle(.segmented)
+
             LabeledContent("Google Place ID", value: venue.googleMapId)
 
             if !viewModel.types.isEmpty {

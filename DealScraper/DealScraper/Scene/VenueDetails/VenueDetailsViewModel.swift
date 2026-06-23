@@ -182,6 +182,17 @@ final class VenueDetailsViewModel {
         }
     }
 
+    func setVenueStatus(_ status: VenueStatus) {
+        guard let venueId = venue?.id else { return }
+
+        do {
+            try venueRepository.updateStatus(venueId: venueId, status: status)
+            venue?.status = status
+        } catch {
+            // Keep the current UI state if persistence fails.
+        }
+    }
+
     private func load() {
         venue = try? venueRepository.find(googleMapId: googleMapId)
         if let venueId = venue?.id {

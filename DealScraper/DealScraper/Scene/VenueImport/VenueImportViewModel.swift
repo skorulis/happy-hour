@@ -26,6 +26,7 @@ final class VenueImportViewModel {
         case crawl
         case extraction
         case ready
+        case broken
 
         var label: String {
             switch self {
@@ -37,6 +38,8 @@ final class VenueImportViewModel {
                 return "Extraction"
             case .ready:
                 return "Ready"
+            case .broken:
+                return "Broken"
             }
         }
     }
@@ -46,13 +49,15 @@ final class VenueImportViewModel {
 
         switch venueFilter {
         case .all:
-            break
+            venues = venues.filter { $0.status != .broken }
         case .crawl:
-            venues = venues.filter { sourceCount(for: $0) == 0 }
+            venues = venues.filter { $0.status != .broken && sourceCount(for: $0) == 0 }
         case .extraction:
-            venues = venues.filter { dealCount(for: $0) == 0 }
+            venues = venues.filter { $0.status != .broken && dealCount(for: $0) == 0 }
         case .ready:
-            venues = venues.filter { dealCount(for: $0) > 0 }
+            venues = venues.filter { $0.status != .broken && dealCount(for: $0) > 0 }
+        case .broken:
+            venues = venues.filter { $0.status == .broken }
         }
 
         let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)

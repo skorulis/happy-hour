@@ -107,4 +107,47 @@ struct VenueRepositoryTests {
         let secondNewCount = try repository.upsert(places: [place])
         #expect(secondNewCount == 0)
     }
+
+    @Test func updateStatusPersistsVenueStatus() throws {
+        let repository = VenueRepository(store: SQLStore.inMemory())
+
+        try repository.upsert(Venue(
+            googleMapId: "places/ChIJTest123",
+            name: "The Royal Pub",
+            lat: -33.8688,
+            lng: 151.2093,
+            json: "{}"
+        ))
+
+        let venueId = try #require(try repository.find(googleMapId: "places/ChIJTest123")?.id)
+        try repository.updateStatus(venueId: venueId, status: .broken)
+
+        let found = try #require(try repository.find(id: venueId))
+        #expect(found.status == .broken)
+    }
+
+    @Test func upsertPreservesExistingStatus() throws {
+        let repository = VenueRepository(store: SQLStore.inMemory())
+
+        try repository.upsert(Venue(
+            googleMapId: "places/ChIJTest123",
+            name: "The Royal Pub",
+            lat: -33.8688,
+            lng: 151.2093,
+            status: .broken,
+            json: #"{"name":"Old Name"}"#
+        ))
+
+        try repository.upsert(Venue(
+            googleMapId: "places/ChIJTest123",
+            name: "New Name",
+            lat: -33.8700,
+            lng: 151.2100,
+            json: #"{"name":"New Name"}"#
+        ))
+
+        let found = try #require(try repository.find(googleMapId: "places/ChIJTest123"))
+        #expect(found.name == "New Name")
+        #expect(found.status == .broken)
+    }
 }

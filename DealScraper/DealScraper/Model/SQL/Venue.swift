@@ -3,6 +3,11 @@
 import Foundation
 @preconcurrency import GRDB
 
+nonisolated enum VenueStatus: String, Codable, Sendable {
+    case normal
+    case broken
+}
+
 nonisolated struct Venue: Codable, Sendable {
     var id: Int64?
     var suburbId: Int64?
@@ -13,6 +18,7 @@ nonisolated struct Venue: Codable, Sendable {
     let websiteUri: String?
     let lastCrawlDate: Date?
     let lastExtractionDate: Date?
+    var status: VenueStatus
     let json: String
 
     enum CodingKeys: String, CodingKey {
@@ -25,6 +31,7 @@ nonisolated struct Venue: Codable, Sendable {
         case websiteUri = "website_uri"
         case lastCrawlDate = "last_crawl_date"
         case lastExtractionDate = "last_extraction_date"
+        case status
         case json
     }
 
@@ -38,6 +45,7 @@ nonisolated struct Venue: Codable, Sendable {
         websiteUri: String? = nil,
         lastCrawlDate: Date? = nil,
         lastExtractionDate: Date? = nil,
+        status: VenueStatus = .normal,
         json: String
     ) {
         self.id = id
@@ -49,6 +57,7 @@ nonisolated struct Venue: Codable, Sendable {
         self.websiteUri = websiteUri
         self.lastCrawlDate = lastCrawlDate
         self.lastExtractionDate = lastExtractionDate
+        self.status = status
         self.json = json
     }
 

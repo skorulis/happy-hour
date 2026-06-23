@@ -130,6 +130,7 @@ final class JobQueueViewModel: CoordinatorViewModel {
             .sorted { ($0.id ?? .max) < ($1.id ?? .max) }
             .first { venue in
                 guard let venueId = venue.id,
+                      venue.status != .broken,
                       venue.websiteUri != nil
                 else { return false }
 
@@ -149,6 +150,7 @@ final class JobQueueViewModel: CoordinatorViewModel {
             .sorted { ($0.id ?? .max) < ($1.id ?? .max) }
             .first { venue in
                 guard let venueId = venue.id else { return false }
+                guard venue.status != .broken else { return false }
                 guard (dealCounts[venueId] ?? 0) == 0 else { return false }
                 guard !jobQueue.isJobActive(venueId: venueId, type: .extractDeals) else { return false }
 

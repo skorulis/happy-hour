@@ -17,12 +17,12 @@ final class VenueRepository {
             var mutableVenue = venue
             try Self.linkSuburb(for: &mutableVenue, in: db)
 
-            if let existingID = try Venue
+            if let existing = try Venue
                 .filter(Column("google_map_id") == mutableVenue.googleMapId)
-                .fetchOne(db)?
-                .id
+                .fetchOne(db)
             {
-                mutableVenue.id = existingID
+                mutableVenue.id = existing.id
+                mutableVenue.status = existing.status
                 try mutableVenue.update(db)
                 return false
             } else {
@@ -78,6 +78,15 @@ final class VenueRepository {
             try db.execute(
                 sql: "UPDATE venue SET last_extraction_date = ? WHERE id = ?",
                 arguments: [date, venueId]
+            )
+        }
+    }
+
+    func updateStatus(venueId: Int64, status: VenueStatus) throws {
+        try store.dbQueue.write { db in
+            try db.execute(
+                sql: "UPDATE venue SET status = ? WHERE id = ?",
+                arguments: [status.rawValue, venueId]
             )
         }
     }
