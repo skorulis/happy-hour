@@ -75,6 +75,7 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
             VenueDealExtractionService(
                 dealSourceRepository: resolver.dealSourceRepository(),
                 dealRepository: resolver.dealRepository(),
+                venueRepository: resolver.venueRepository(),
                 materialPreparer: resolver.venueDealSourceMaterialPreparer(),
                 extractor: resolver.openRouterVenueDealExtractor()
             )

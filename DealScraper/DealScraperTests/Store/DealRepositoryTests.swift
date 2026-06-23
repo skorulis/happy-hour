@@ -112,9 +112,14 @@ struct DealRepositoryTests {
             ]
         )
 
+        try venueRepository.updateLastExtractionDate(venueId: venueId, date: .now)
+
         let deleted = try dealRepository.deleteAll(venueId: venueId)
         #expect(deleted == 1)
         #expect(try dealRepository.find(venueId: venueId).isEmpty)
+
+        let venue = try #require(try venueRepository.find(id: venueId))
+        #expect(venue.lastExtractionDate == nil)
     }
 
     @Test func findNewReturnsOnlyNewDealsAcrossVenues() throws {

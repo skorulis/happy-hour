@@ -39,6 +39,7 @@ nonisolated enum FilterKeywords {
         "burger",
         "chicken",
         "curry",
+        "gyros",
         "meal",
         "pasta",
         "pizza",
@@ -47,6 +48,7 @@ nonisolated enum FilterKeywords {
         "salad",
         "sandwich",
         "schnitzel",
+        "schnitty",
         "sirloin",
         "steak",
         "wings",
@@ -59,6 +61,7 @@ nonisolated enum FilterKeywords {
         "bottomless",
         
         // Other
+        "pool",
         "meat tray",
         "2-4-1",
         "2 for 1",

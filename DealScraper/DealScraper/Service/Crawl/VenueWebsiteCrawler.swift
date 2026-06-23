@@ -153,7 +153,7 @@ final class VenueWebsiteCrawler {
             
             discoveredImages.formUnion(loadedPage.imageURLs)
             
-            let imagesToCheck = discoveredImages.filter { visited.contains(URLNormalizer.hash($0)) }
+            let imagesToCheck = discoveredImages.filter { !visited.contains(URLNormalizer.hash($0)) }
             await progress("Checking \(imagesToCheck) images")
             visited.formUnion(imagesToCheck.map { URLNormalizer.hash($0)})
             

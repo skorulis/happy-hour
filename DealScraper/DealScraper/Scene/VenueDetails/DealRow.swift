@@ -77,10 +77,10 @@ struct DealRow: View {
                 Link("Page source", destination: url)
             }
 
-            if let imageURLString = item.deal.imageURL,
-               !imageURLString.isEmpty,
-               let url = URL(string: imageURLString) {
-                Link("Image source", destination: url)
+            if let creativeURLString = item.deal.creativeURL,
+               !creativeURLString.isEmpty,
+               let url = URL(string: creativeURLString) {
+                Link(creativeSourceLinkLabel(for: url), destination: url)
             }
         }
         .font(.caption)
@@ -88,36 +88,65 @@ struct DealRow: View {
     
     @ViewBuilder
     private var maybeImage: some View {
-        if let imageURLString = item.deal.imageURL,
-           !imageURLString.isEmpty,
-           let imageURL = URL(string: imageURLString) {
-            Link(destination: imageURL) {
-                AsyncImage(url: imageURL) { phase in
-                    switch phase {
-                    case .empty:
-                        RoundedRectangle(cornerRadius: 6)
-                            .fill(Color.secondary.opacity(0.15))
-                            .overlay { ProgressView() }
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                    case .failure:
-                        RoundedRectangle(cornerRadius: 6)
-                            .fill(Color.secondary.opacity(0.15))
-                            .overlay {
-                                Image(systemName: "photo")
-                                    .foregroundStyle(.secondary)
-                            }
-                    @unknown default:
-                        EmptyView()
+        if let creativeURLString = item.deal.creativeURL,
+           !creativeURLString.isEmpty,
+           let creativeURL = URL(string: creativeURLString) {
+            switch PageLinkFilter.sourceType(for: creativeURL) {
+            case .image:
+                Link(destination: creativeURL) {
+                    AsyncImage(url: creativeURL) { phase in
+                        switch phase {
+                        case .empty:
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(Color.secondary.opacity(0.15))
+                                .overlay { ProgressView() }
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                        case .failure:
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(Color.secondary.opacity(0.15))
+                                .overlay {
+                                    Image(systemName: "photo")
+                                        .foregroundStyle(.secondary)
+                                }
+                        @unknown default:
+                            EmptyView()
+                        }
                     }
+                    .frame(maxWidth: 200, maxHeight: 120)
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
                 }
-                .frame(maxWidth: 200, maxHeight: 120)
-                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .buttonStyle(.plain)
+                .help("Open image in browser")
+            case .pdf:
+                Link(destination: creativeURL) {
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color.secondary.opacity(0.15))
+                        .frame(width: 80, height: 120)
+                        .overlay {
+                            Image(systemName: "doc.fill")
+                                .font(.title)
+                                .foregroundStyle(.secondary)
+                        }
+                }
+                .buttonStyle(.plain)
+                .help("Open PDF in browser")
+            case .webpage:
+                EmptyView()
             }
-            .buttonStyle(.plain)
-            .help("Open image in browser")
+        }
+    }
+
+    private func creativeSourceLinkLabel(for url: URL) -> String {
+        switch PageLinkFilter.sourceType(for: url) {
+        case .pdf:
+            return "PDF source"
+        case .image:
+            return "Image source"
+        case .webpage:
+            return "Creative source"
         }
     }
 

@@ -252,6 +252,11 @@ final class VenueDetailsViewModel {
         return lastCrawl.formatted(date: .abbreviated, time: .shortened)
     }
 
+    var lastExtractionDescription: String {
+        guard let lastExtraction = venue?.lastExtractionDate else { return "Never" }
+        return lastExtraction.formatted(date: .abbreviated, time: .shortened)
+    }
+
     var mapsURL: URL? {
         guard let venue else { return nil }
         return URL(string: "https://www.google.com/maps/search/?api=1&query=\(venue.lat),\(venue.lng)&query_place_id=\(venue.googleMapId)")

@@ -34,7 +34,7 @@ struct VenueDealPersistenceMapperTests {
         #expect(mapped[0].deal.title == "Happy Hour")
         #expect(mapped[0].deal.details == "$8 wines")
         #expect(mapped[0].deal.conditions == "Dine-in only")
-        #expect(mapped[0].deal.imageURL == "https://example.com/poster.jpg")
+        #expect(mapped[0].deal.creativeURL == "https://example.com/poster.jpg")
         #expect(mapped[0].deal.sourceURL == "https://example.com/specials")
         #expect(!mapped[0].schedules.isEmpty)
         #expect(mapped[0].schedules.contains { $0.dayOfWeek == 6 })
@@ -106,10 +106,37 @@ struct VenueDealPersistenceMapperTests {
         )
 
         #expect(mapped.count == 2)
-        #expect(mapped.contains { $0.deal.title == "Deal A" && $0.deal.imageURL == "https://example.com/poster-a.jpg" })
-        #expect(mapped.contains { $0.deal.title == "Deal B" && $0.deal.imageURL == "https://example.com/poster-b.jpg" })
+        #expect(mapped.contains { $0.deal.title == "Deal A" && $0.deal.creativeURL == "https://example.com/poster-a.jpg" })
+        #expect(mapped.contains { $0.deal.title == "Deal B" && $0.deal.creativeURL == "https://example.com/poster-b.jpg" })
         #expect(mapped.contains { $0.deal.title == "Deal A" && $0.deal.sourceURL == "https://example.com/specials-a" })
         #expect(mapped.contains { $0.deal.title == "Deal B" && $0.deal.sourceURL == "https://example.com/specials-b" })
+    }
+
+    @Test func mapsPDFCreativeURL() {
+        let material = VenueDealSourceMaterial.fixture(
+            dealSourceId: 10,
+            url: URL(string: "https://example.com/menu.pdf")!,
+            sourceURL: URL(string: "https://example.com/specials")!,
+            type: .pdf,
+            markdown: "Happy Hour"
+        )
+        let payload = DealExtractionPayload(deals: [
+            DealExtractionPayload.RawDeal(
+                title: "Happy Hour",
+                details: ["$8 wines"],
+                days: ["Friday"],
+                times: ["4PM - 6PM"]
+            ),
+        ])
+
+        let mapped = VenueDealPersistenceMapper.map(
+            payload: payload,
+            venueId: 1,
+            material: material
+        )
+
+        #expect(mapped.count == 1)
+        #expect(mapped[0].deal.creativeURL == "https://example.com/menu.pdf")
     }
 
     @Test func mapsGlebeSteakNightFixture() throws {

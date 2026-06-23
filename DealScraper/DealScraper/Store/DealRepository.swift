@@ -69,6 +69,10 @@ final class DealRepository {
             try Deal
                 .filter(Column("venue_id") == venueId)
                 .deleteAll(db)
+            try db.execute(
+                sql: "UPDATE venue SET last_extraction_date = NULL WHERE id = ?",
+                arguments: [venueId]
+            )
             return count
         }
     }

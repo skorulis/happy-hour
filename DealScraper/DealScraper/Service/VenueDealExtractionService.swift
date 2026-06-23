@@ -24,17 +24,20 @@ final class VenueDealExtractionService {
 
     private let dealSourceRepository: DealSourceRepository
     private let dealRepository: DealRepository
+    private let venueRepository: VenueRepository
     private let materialPreparer: VenueDealSourceMaterialPreparer
     private let extractor: OpenRouterVenueDealExtractor
 
     init(
         dealSourceRepository: DealSourceRepository,
         dealRepository: DealRepository,
+        venueRepository: VenueRepository,
         materialPreparer: VenueDealSourceMaterialPreparer,
         extractor: OpenRouterVenueDealExtractor
     ) {
         self.dealSourceRepository = dealSourceRepository
         self.dealRepository = dealRepository
+        self.venueRepository = venueRepository
         self.materialPreparer = materialPreparer
         self.extractor = extractor
     }
@@ -67,6 +70,7 @@ final class VenueDealExtractionService {
         let mapped = VenueDealPersistenceMapper.map(sourced: result.extractions, venueId: venueId)
         let deals = mapped // DealCondenser().condense(mapped)
         let savedCount = try dealRepository.replaceAll(venueId: venueId, deals: deals)
+        try venueRepository.updateLastExtractionDate(venueId: venueId, date: .now)
 
         let results = VenueDealExtractionResults(
             dealsFoundBeforeCondensing: mapped.count,

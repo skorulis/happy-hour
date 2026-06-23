@@ -34,7 +34,12 @@ enum VenueDealPersistenceMapper {
     ) -> DealWithSchedules? {
         guard let legacyDeal = DealMapper.map(rawDeal) else { return nil }
 
-        let imageURL = material.type == .image ? material.url.absoluteString : nil
+        let creativeURL: String? = switch material.type {
+        case .image, .pdf:
+            material.url.absoluteString
+        case .webpage:
+            nil
+        }
         let sourceURL = material.sourceURL.absoluteString
 
         let details = joinedNonEmpty(rawDeal.details)
@@ -46,7 +51,7 @@ enum VenueDealPersistenceMapper {
         let deal = Deal(
             venueId: venueId,
             title: title.isEmpty ? nil : title,
-            imageURL: imageURL,
+            creativeURL: creativeURL,
             sourceURL: sourceURL,
             details: details,
             conditions: conditions

@@ -73,6 +73,15 @@ final class VenueRepository {
         }
     }
 
+    func updateLastExtractionDate(venueId: Int64, date: Date) throws {
+        try store.dbQueue.write { db in
+            try db.execute(
+                sql: "UPDATE venue SET last_extraction_date = ? WHERE id = ?",
+                arguments: [date, venueId]
+            )
+        }
+    }
+
     private static func linkSuburb(for venue: inout Venue, in db: Database) throws {
         guard let jsonData = venue.json.data(using: .utf8),
               let place = try? JSONDecoder().decode(GooglePlace.self, from: jsonData),

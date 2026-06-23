@@ -58,14 +58,14 @@ struct DealCondenser: Sendable {
         let title = preferredTitle(lhsDeal.title, rhsDeal.title)
         let details = mergedLines(lhsDeal.details, rhsDeal.details)
         let conditions = mergedLines(lhsDeal.conditions, rhsDeal.conditions)
-        let imageURL = lhsDeal.imageURL ?? rhsDeal.imageURL
+        let creativeURL = lhsDeal.creativeURL ?? rhsDeal.creativeURL
         let sourceURL = preferredSourceURL(lhsDeal, rhsDeal)
 
         let deal = Deal(
             id: lhsDeal.id,
             venueId: lhsDeal.venueId,
             title: title,
-            imageURL: imageURL,
+            creativeURL: creativeURL,
             sourceURL: sourceURL,
             details: details,
             conditions: conditions,
@@ -287,10 +287,10 @@ struct DealCondenser: Sendable {
     }
 
     private func preferredSourceURL(_ lhs: Deal, _ rhs: Deal) -> String? {
-        if lhs.imageURL == nil, rhs.imageURL != nil {
+        if lhs.creativeURL == nil, rhs.creativeURL != nil {
             return lhs.sourceURL ?? rhs.sourceURL
         }
-        if rhs.imageURL == nil, lhs.imageURL != nil {
+        if rhs.creativeURL == nil, lhs.creativeURL != nil {
             return rhs.sourceURL ?? lhs.sourceURL
         }
         return lhs.sourceURL ?? rhs.sourceURL

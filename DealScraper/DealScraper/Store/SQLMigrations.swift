@@ -136,5 +136,17 @@ final class SQLMigrations {
                     .references("suburb", onDelete: .setNull)
             }
         }
+
+        migrator.registerMigration("v13_deal_creative_url") { db in
+            try db.alter(table: "deal") { t in
+                t.rename(column: "image_url", to: "creative_url")
+            }
+        }
+
+        migrator.registerMigration("v14_venue_last_extraction_date") { db in
+            try db.alter(table: "venue") { t in
+                t.add(column: "last_extraction_date", .datetime)
+            }
+        }
     }
 }

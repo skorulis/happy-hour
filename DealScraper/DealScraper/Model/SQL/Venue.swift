@@ -12,6 +12,7 @@ nonisolated struct Venue: Codable, Sendable {
     let lng: Double
     let websiteUri: String?
     let lastCrawlDate: Date?
+    let lastExtractionDate: Date?
     let json: String
 
     enum CodingKeys: String, CodingKey {
@@ -23,6 +24,7 @@ nonisolated struct Venue: Codable, Sendable {
         case lng
         case websiteUri = "website_uri"
         case lastCrawlDate = "last_crawl_date"
+        case lastExtractionDate = "last_extraction_date"
         case json
     }
 
@@ -35,6 +37,7 @@ nonisolated struct Venue: Codable, Sendable {
         lng: Double,
         websiteUri: String? = nil,
         lastCrawlDate: Date? = nil,
+        lastExtractionDate: Date? = nil,
         json: String
     ) {
         self.id = id
@@ -45,6 +48,7 @@ nonisolated struct Venue: Codable, Sendable {
         self.lng = lng
         self.websiteUri = websiteUri
         self.lastCrawlDate = lastCrawlDate
+        self.lastExtractionDate = lastExtractionDate
         self.json = json
     }
 

@@ -13,7 +13,7 @@ nonisolated struct Deal: Codable, Sendable {
     var id: Int64?
     let venueId: Int64
     var title: String?
-    let imageURL: String?
+    let creativeURL: String?
     let sourceURL: String?
     var details: String?
     var conditions: String?
@@ -23,7 +23,7 @@ nonisolated struct Deal: Codable, Sendable {
         case id
         case venueId = "venue_id"
         case title
-        case imageURL = "image_url"
+        case creativeURL = "creative_url"
         case sourceURL = "source_url"
         case details
         case conditions
@@ -34,7 +34,7 @@ nonisolated struct Deal: Codable, Sendable {
         id: Int64? = nil,
         venueId: Int64,
         title: String? = nil,
-        imageURL: String? = nil,
+        creativeURL: String? = nil,
         sourceURL: String? = nil,
         details: String? = nil,
         conditions: String? = nil,
@@ -43,7 +43,7 @@ nonisolated struct Deal: Codable, Sendable {
         self.id = id
         self.venueId = venueId
         self.title = title
-        self.imageURL = imageURL
+        self.creativeURL = creativeURL
         self.sourceURL = sourceURL
         self.details = details
         self.conditions = conditions

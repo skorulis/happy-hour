@@ -133,6 +133,7 @@ struct VenueDetailsView: View {
     private var actionsSection: some View {
         detailSection(title: "Actions") {
             LabeledContent("Last Crawl", value: viewModel.lastCrawlDescription)
+            LabeledContent("Last Extraction", value: viewModel.lastExtractionDescription)
 
             HStack {
                 Button("Crawl Website") {

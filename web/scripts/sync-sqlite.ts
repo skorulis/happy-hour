@@ -36,7 +36,7 @@ type SqliteDeal = {
   id: number;
   venue_id: number;
   title: string | null;
-  image_url: string | null;
+  creative_url: string | null;
   source_url: string | null;
   details: string | null;
   conditions: string | null;
@@ -226,7 +226,7 @@ async function main() {
           .values({
             venueId,
             title: dealRow.title,
-            imageUrl: dealRow.image_url,
+            imageUrl: dealRow.creative_url,
             sourceUrl: dealRow.source_url,
             details: dealRow.details,
             conditions: dealRow.conditions,

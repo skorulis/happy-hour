@@ -13,7 +13,7 @@ struct DealCondenserTests {
         let imageDeal = makeDeal(
             title: nil,
             details: "$8 wines",
-            imageURL: "https://example.com/poster.jpg",
+            creativeURL: "https://example.com/poster.jpg",
             sourceURL: "https://example.com/specials",
             schedules: [schedule(day: 3, start: 0, end: 1_440)]
         )
@@ -29,7 +29,7 @@ struct DealCondenserTests {
         #expect(result.count == 1)
         let merged = result[0]
         #expect(merged.deal.title == "Happy Hour")
-        #expect(merged.deal.imageURL == "https://example.com/poster.jpg")
+        #expect(merged.deal.creativeURL == "https://example.com/poster.jpg")
         #expect(merged.deal.sourceURL == "https://example.com/menu")
         #expect(merged.deal.details?.contains("$8 wines") == true)
         #expect(merged.deal.details?.contains("$8 schooners") == true)
@@ -152,7 +152,7 @@ struct DealCondenserTests {
         #expect(steakNight.deal.details == "Raise\nthe\nSteaks")
         #expect(steakNight.deal.conditions?.contains("Conditions Apply") == true)
         #expect(steakNight.deal.conditions?.contains("only available with bar service in our public bar, beer garden and nude") == true)
-        #expect(steakNight.deal.imageURL == "https://example.com/steak-nights.jpg")
+        #expect(steakNight.deal.creativeURL == "https://example.com/steak-nights.jpg")
         #expect(steakNight.schedules.count == 1)
         #expect(steakNight.schedules[0].dayOfWeek == 2)
         #expect(steakNight.schedules[0].startMinute == 0)
@@ -191,14 +191,14 @@ struct DealCondenserTests {
         title: String? = nil,
         details: String? = nil,
         conditions: String? = nil,
-        imageURL: String? = nil,
+        creativeURL: String? = nil,
         sourceURL: String? = nil,
         schedules: [DealSchedule] = []
     ) -> DealWithSchedules {
         let deal = Deal(
             venueId: 1,
             title: title,
-            imageURL: imageURL,
+            creativeURL: creativeURL,
             sourceURL: sourceURL,
             details: details,
             conditions: conditions

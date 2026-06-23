@@ -68,7 +68,7 @@ struct DealScheduleFormattingTests {
                 id: 1,
                 venueId: 1,
                 title: "Happy hour",
-                imageURL: nil,
+                creativeURL: nil,
                 sourceURL: nil,
                 details: nil,
                 conditions: nil,
