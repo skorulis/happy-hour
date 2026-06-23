@@ -31,6 +31,7 @@ final class VenueWebsiteCrawler {
     
     private let pageLoader: WebPageLoader
     private let pageLinkFilter: PageLinkFilter
+    private let siteMapExtractor: SiteMapExtractor
     private let venueLinkExtractor: VenueLinkExtractor
     private let imageValidator: CrawlImageValidator
     private let pdfValidator: PDFValidator
@@ -44,6 +45,7 @@ final class VenueWebsiteCrawler {
     init(
         pageLoader: WebPageLoader,
         pageLinkFilter: PageLinkFilter,
+        siteMapExtractor: SiteMapExtractor,
         venueLinkExtractor: VenueLinkExtractor,
         imageValidator: CrawlImageValidator,
         pdfValidator: PDFValidator,
@@ -55,6 +57,7 @@ final class VenueWebsiteCrawler {
     ) {
         self.pageLoader = pageLoader
         self.pageLinkFilter = pageLinkFilter
+        self.siteMapExtractor = siteMapExtractor
         self.venueLinkExtractor = venueLinkExtractor
         self.imageValidator = imageValidator
         self.pdfValidator = pdfValidator
@@ -91,7 +94,24 @@ final class VenueWebsiteCrawler {
         var discoveredByURL: [URL: DiscoveredSource] = [:]
         var pdfURLs: Set<URL> = []
         var pdfSourceURLs: [URL: URL] = [:]
-        
+
+        if CrawlPolicy.shouldUseSitemap(for: baseURL) {
+            await progress("Loading sitemap…")
+            let sitemap = await siteMapExtractor.extract(baseURL: baseURL)
+
+            for url in sitemap.webpageURLs {
+                guard let normalized = URLNormalizer.normalize(url) else { continue }
+                queue.append(normalized)
+            }
+
+            discoveredImages.formUnion(sitemap.imageURLs)
+
+            for pdfURL in sitemap.pdfURLs {
+                pdfURLs.insert(pdfURL)
+                pdfSourceURLs[pdfURL] = baseURL
+            }
+        }
+
         while !queue.isEmpty, visited.count < maxPages {
             try Task.checkCancellation()
 

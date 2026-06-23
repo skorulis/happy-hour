@@ -91,6 +91,8 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
 
         container.register(PageLinkFilter.self) { _ in PageLinkFilter() }
 
+        container.register(SiteMapExtractor.self) { _ in SiteMapExtractor() }
+
         container.register(VenueLinkExtractor.self) { _ in VenueLinkExtractor() }
 
         container.register(CrawlImageCache.self) { _ in CrawlImageCache() }

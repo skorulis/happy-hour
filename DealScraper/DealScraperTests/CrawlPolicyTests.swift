@@ -20,4 +20,19 @@ struct CrawlPolicyTests {
         let venueURL = try #require(URLNormalizer.normalize(URL(string: "https://pub.example.com/specials")!))
         #expect(CrawlPolicy.maxPages(for: venueURL) == 15)
     }
+
+    @Test func merivaleVenuesSkipSitemap() throws {
+        let venueURL = try #require(URLNormalizer.normalize(URL(string: "https://merivale.com/venues/coogee-pavilion")!))
+        #expect(CrawlPolicy.shouldUseSitemap(for: venueURL) == false)
+    }
+
+    @Test func merivaleWWWVenuesSkipSitemap() throws {
+        let venueURL = try #require(URLNormalizer.normalize(URL(string: "https://www.merivale.com/venues/coogee-pavilion")!))
+        #expect(CrawlPolicy.shouldUseSitemap(for: venueURL) == false)
+    }
+
+    @Test func otherVenuesUseSitemap() throws {
+        let venueURL = try #require(URLNormalizer.normalize(URL(string: "https://pub.example.com/specials")!))
+        #expect(CrawlPolicy.shouldUseSitemap(for: venueURL) == true)
+    }
 }

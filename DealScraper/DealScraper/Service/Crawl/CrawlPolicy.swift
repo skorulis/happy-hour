@@ -13,4 +13,8 @@ enum CrawlPolicy {
         }
         return defaultMaxPages
     }
+
+    static func shouldUseSitemap(for baseURL: URL) -> Bool {
+        !URLNormalizer.isSameOrigin(baseURL, as: merivaleBaseURL)
+    }
 }
