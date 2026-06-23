@@ -17,7 +17,7 @@ nonisolated enum FilterKeywords {
         "drinks",
         "food",
         "happyhour",
-        "eat-drink",
+        "eatdrink",
         "weekly",
         "weekends",
         "weekdays",
@@ -79,12 +79,17 @@ nonisolated enum FilterKeywords {
         "this-week",
         "state of origin",
         "state-of-origin",
-        "new years eve",
+        "new years",
         "new years",
         "new-years",
         "christmas in july",
         "christmas",
-        "parties"
+        "parties",
+        "superbowl",
+        "theashes",
+        "grandfinal",
+        "melbournecup",
+        "xmas",
     ]
     
     static func containsDealKeyword(_ text: String) -> Bool {
@@ -93,7 +98,7 @@ nonisolated enum FilterKeywords {
     }
     
     static func containsExcludedKeyword(_ text: String) -> Bool {
-        let lowercased = text.lowercased()
+        let lowercased = text.lowercased().replacingOccurrences(of: "-", with: "")
         return excludedKeywords.contains { lowercased.contains($0) }
     }
 }

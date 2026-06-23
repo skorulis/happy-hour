@@ -18,12 +18,46 @@ final class VenueImportViewModel {
     private(set) var sourceCountsByVenueId: [Int64: Int] = [:]
     private(set) var dealCountsByVenueId: [Int64: Int] = [:]
     var searchText = ""
+    var venueFilter: VenueFilter = .all
     var selectedGoogleMapId: String?
 
+    enum VenueFilter: String, CaseIterable, Equatable {
+        case all
+        case crawl
+        case extraction
+        case ready
+
+        var label: String {
+            switch self {
+            case .all:
+                return "All"
+            case .crawl:
+                return "Crawl"
+            case .extraction:
+                return "Extraction"
+            case .ready:
+                return "Ready"
+            }
+        }
+    }
+
     var filteredVenues: [Venue] {
+        var venues = savedVenues
+
+        switch venueFilter {
+        case .all:
+            break
+        case .crawl:
+            venues = venues.filter { sourceCount(for: $0) == 0 }
+        case .extraction:
+            venues = venues.filter { dealCount(for: $0) == 0 }
+        case .ready:
+            venues = venues.filter { dealCount(for: $0) > 0 }
+        }
+
         let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !query.isEmpty else { return savedVenues }
-        return savedVenues.filter { venue in
+        guard !query.isEmpty else { return venues }
+        return venues.filter { venue in
             venue.name.localizedCaseInsensitiveContains(query)
                 || venue.json.localizedCaseInsensitiveContains(query)
         }

@@ -4,7 +4,7 @@ import Foundation
 
 enum CrawlPolicy {
 
-    private static let defaultMaxPages = 15
+    private static let defaultMaxPages = 20
     private static let merivaleBaseURL = URL(string: "https://merivale.com/")!
 
     static func maxPages(for baseURL: URL) -> Int {

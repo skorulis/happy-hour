@@ -50,6 +50,14 @@ struct PageLinkFilterTests {
         #expect(result.pdfURLs.isEmpty)
         #expect(result.crawlURLs.count == 1)
     }
+    
+    @Test func excludesLinksWithInvalidWords() {
+        let result = filter.filter(links: [
+            link(text: "Grand Final", url: "https://royalalberthotel.com.au/whatson/nrl-grand-final"),
+        ])
+
+        #expect(result.crawlURLs.count == 0)
+    }
 
     @Test func excludesNonMatchingLink() {
         let result = filter.filter(links: [

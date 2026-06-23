@@ -99,16 +99,27 @@ struct VenueImportView: View {
     }
 
     private var searchField: some View {
-        TextField("Filter venues", text: $viewModel.searchText)
-            .textFieldStyle(.roundedBorder)
-            .padding(.horizontal, 16)
-            .padding(.top, 8)
+        HStack(spacing: 8) {
+            TextField("Filter venues", text: $viewModel.searchText)
+                .textFieldStyle(.roundedBorder)
+
+            Picker("Filter", selection: $viewModel.venueFilter) {
+                ForEach(VenueImportViewModel.VenueFilter.allCases, id: \.self) { filter in
+                    Text(filter.label).tag(filter)
+                }
+            }
+            .pickerStyle(.menu)
+            .fixedSize()
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 8)
     }
 
     private var venueCountLabel: String {
         let total = viewModel.savedVenues.count
         let filtered = viewModel.filteredVenues.count
-        let isFiltering = !viewModel.searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let isFiltering = viewModel.venueFilter != .all
+            || !viewModel.searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         if isFiltering {
             return "\(filtered) of \(total) venue\(total == 1 ? "" : "s")"
         }
