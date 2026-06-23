@@ -26,7 +26,7 @@ enum VenueDealSourceMaterialPreparerError: LocalizedError, Equatable {
 @MainActor
 final class VenueDealSourceMaterialPreparer {
 
-    static let maxSources = 10
+    static let maxSources = 30
 
     private let imageFetcher: CrawlImageFetcher
     private let webPageLoader: WebPageLoader

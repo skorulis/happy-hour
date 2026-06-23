@@ -30,6 +30,8 @@ export async function GET(request: Request) {
   const dayParam = searchParams.get("day");
   const daysParam = searchParams.get("days");
   const suburbIdParam = searchParams.get("suburbId");
+  const latParam = searchParams.get("lat");
+  const lngParam = searchParams.get("lng");
   const startMinuteParam = searchParams.get("startMinute");
   const endMinuteParam = searchParams.get("endMinute");
   const query = searchParams.get("q") ?? undefined;
@@ -47,6 +49,10 @@ export async function GET(request: Request) {
     suburbIdParam !== null && suburbIdParam !== ""
       ? Number(suburbIdParam)
       : undefined;
+  const lat =
+    latParam !== null && latParam !== "" ? Number(latParam) : undefined;
+  const lng =
+    lngParam !== null && lngParam !== "" ? Number(lngParam) : undefined;
   const startMinute =
     startMinuteParam !== null && startMinuteParam !== ""
       ? Number(startMinuteParam)
@@ -72,6 +78,29 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Invalid suburbId" }, { status: 400 });
   }
 
+  if (lat !== undefined && !Number.isFinite(lat)) {
+    return NextResponse.json({ error: "Invalid lat" }, { status: 400 });
+  }
+
+  if (lng !== undefined && !Number.isFinite(lng)) {
+    return NextResponse.json({ error: "Invalid lng" }, { status: 400 });
+  }
+
+  if ((lat !== undefined) !== (lng !== undefined)) {
+    return NextResponse.json(
+      { error: "lat and lng must be provided together" },
+      { status: 400 },
+    );
+  }
+
+  if (lat !== undefined && (lat < -90 || lat > 90)) {
+    return NextResponse.json({ error: "Invalid lat" }, { status: 400 });
+  }
+
+  if (lng !== undefined && (lng < -180 || lng > 180)) {
+    return NextResponse.json({ error: "Invalid lng" }, { status: 400 });
+  }
+
   if (
     startMinute !== undefined &&
     (!Number.isFinite(startMinute) || startMinute < 0 || startMinute > 1439)
@@ -92,6 +121,8 @@ export async function GET(request: Request) {
       day,
       days,
       suburbId,
+      lat,
+      lng,
       startMinute,
       endMinute,
       query,

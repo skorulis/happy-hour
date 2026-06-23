@@ -5,6 +5,7 @@ import Testing
 @testable import DealScraper
 
 @MainActor
+@Suite(.serialized)
 struct JobQueueTests {
 
     private func makeVenue(id: Int64 = 1) -> Venue {
@@ -26,18 +27,15 @@ struct JobQueueTests {
         return repository
     }
 
-    @Test func enqueueRunsJobsSequentially() async {
+    @Test func enqueueCompletesAllJobsForSameVenue() async {
         let venue = makeVenue()
         let repository = makeRepository(with: venue)
-        let executionOrder = ExecutionOrderTracker()
 
         let crawler = FakeVenueWebsiteCrawler { venue, progress in
-            await executionOrder.record("crawl-\(venue.id ?? 0)")
             await progress("Crawling…")
             return VenueCrawlResults(dealsFound: 1, visitedPages: [], imagesAnalyzed: 0, duration: 0.1)
         }
         let extractor = FakeVenueDealExtractor { venue, progress in
-            await executionOrder.record("extract-\(venue.id ?? 0)")
             await progress("Extracting…")
             return VenueDealExtractionResults(
                 dealsFoundBeforeCondensing: 1,
@@ -58,12 +56,49 @@ struct JobQueueTests {
 
         await waitForJobs(toFinish: 2, in: jobQueue)
 
-        #expect(await executionOrder.values == ["crawl-1", "extract-1"])
         #expect(jobQueue.jobs.count == 2)
         #expect(jobQueue.jobs.allSatisfy { job in
             if case .completed = job.status { return true }
             return false
         })
+    }
+
+    @Test func enqueueRunsUpToMaxConcurrentJobs() async {
+        let repository = makeRepository(with: makeVenue())
+        for id in 2...3 {
+            try! repository.upsert(makeVenue(id: Int64(id)))
+        }
+
+        let crawler = FakeVenueWebsiteCrawler { _, _ in
+            try await Task.sleep(for: .milliseconds(100))
+            return VenueCrawlResults(dealsFound: 0, visitedPages: [], imagesAnalyzed: 0, duration: 0)
+        }
+
+        let jobQueue = JobQueue(
+            venueRepository: repository,
+            venueWebsiteCrawler: crawler,
+            venueDealExtractionService: FakeVenueDealExtractor { _, _ in
+                VenueDealExtractionResults(dealsFoundBeforeCondensing: 0, dealsFound: 0, duration: 0, errorCount: 0)
+            }
+        )
+
+        _ = jobQueue.enqueue(venueId: 1, type: .crawlWebsite)
+        _ = jobQueue.enqueue(venueId: 2, type: .crawlWebsite)
+        _ = jobQueue.enqueue(venueId: 3, type: .crawlWebsite)
+
+        let runningCount = jobQueue.jobs.filter { job in
+            if case .running = job.status { return true }
+            return false
+        }.count
+        let pendingCount = jobQueue.jobs.filter { job in
+            if case .pending = job.status { return true }
+            return false
+        }.count
+
+        #expect(runningCount == 2)
+        #expect(pendingCount == 1)
+
+        await waitForJobs(toFinish: 3, in: jobQueue)
     }
 
     @Test func duplicateEnqueueIsRejected() async {
@@ -88,11 +123,16 @@ struct JobQueueTests {
         #expect(first != nil)
         #expect(second == nil)
         #expect(jobQueue.jobs.count == 1)
+
+        await waitForJobs(toFinish: 1, in: jobQueue)
     }
 
     @Test func cancelPendingJobMarksCancelled() async {
-        let venue = makeVenue()
-        let repository = makeRepository(with: venue)
+        let repository = makeRepository(with: makeVenue())
+        for id in 2...3 {
+            try! repository.upsert(makeVenue(id: Int64(id)))
+        }
+
         let crawler = FakeVenueWebsiteCrawler { _, _ in
             try await Task.sleep(for: .milliseconds(200))
             return VenueCrawlResults(dealsFound: 0, visitedPages: [], imagesAnalyzed: 0, duration: 0)
@@ -107,10 +147,8 @@ struct JobQueueTests {
         )
 
         _ = jobQueue.enqueue(venueId: 1, type: .crawlWebsite)
-
-        let venueTwo = makeVenue(id: 2)
-        try! repository.upsert(venueTwo)
-        let pendingJobID = jobQueue.enqueue(venueId: 2, type: .crawlWebsite)
+        _ = jobQueue.enqueue(venueId: 2, type: .crawlWebsite)
+        let pendingJobID = jobQueue.enqueue(venueId: 3, type: .crawlWebsite)
         #expect(pendingJobID != nil)
 
         if let pendingJobID {
@@ -119,13 +157,31 @@ struct JobQueueTests {
             #expect(pendingJob?.status == .cancelled)
         }
 
-        if let runningJob = jobQueue.jobs.first(where: { $0.venueId == 1 }) {
-            await waitUntilRunning(jobId: runningJob.id, in: jobQueue)
-            jobQueue.cancel(jobId: runningJob.id)
-            await waitForJob(toFinish: runningJob.id, in: jobQueue)
-            let cancelledJob = jobQueue.jobs.first { $0.id == runningJob.id }
-            #expect(cancelledJob?.status == .cancelled)
+        await waitForJobs(toFinish: 3, in: jobQueue)
+    }
+
+    @Test func cancelRunningJobMarksCancelled() async {
+        let repository = makeRepository(with: makeVenue())
+        let crawler = FakeVenueWebsiteCrawler { _, _ in
+            try await Task.sleep(for: .milliseconds(200))
+            return VenueCrawlResults(dealsFound: 0, visitedPages: [], imagesAnalyzed: 0, duration: 0)
         }
+
+        let jobQueue = JobQueue(
+            venueRepository: repository,
+            venueWebsiteCrawler: crawler,
+            venueDealExtractionService: FakeVenueDealExtractor { _, _ in
+                VenueDealExtractionResults(dealsFoundBeforeCondensing: 0, dealsFound: 0, duration: 0, errorCount: 0)
+            }
+        )
+
+        let jobID = jobQueue.enqueue(venueId: 1, type: .crawlWebsite)
+        await waitUntilRunning(jobId: jobID!, in: jobQueue)
+        jobQueue.cancel(jobId: jobID!)
+        await waitForJob(toFinish: jobID!, in: jobQueue)
+
+        let job = jobQueue.jobs.first { $0.id == jobID }
+        #expect(job?.status == .cancelled)
     }
 
     @Test func progressUpdatesPropagate() async {
@@ -217,14 +273,6 @@ struct JobQueueTests {
             if case .running = job.status { return }
             try? await Task.sleep(for: .milliseconds(10))
         }
-    }
-}
-
-private actor ExecutionOrderTracker {
-    private(set) var values: [String] = []
-
-    func record(_ value: String) {
-        values.append(value)
     }
 }
 

@@ -14,7 +14,8 @@ final class JobQueue {
     private let venueWebsiteCrawler: any VenueWebsiteCrawling
     private let venueDealExtractionService: any VenueDealExtracting
 
-    private var workerTask: Task<Void, Never>?
+    private let maxConcurrentJobs = 2
+
     private var runningTasks: [UUID: Task<Void, Never>] = [:]
     private var completionHandlers: [UUID: @MainActor () -> Void] = [:]
 
@@ -52,7 +53,7 @@ final class JobQueue {
         if let onComplete {
             completionHandlers[job.id] = onComplete
         }
-        startWorkerIfNeeded()
+        pumpQueue()
         return job.id
     }
 
@@ -92,36 +93,27 @@ final class JobQueue {
         }
     }
 
-    private func startWorkerIfNeeded() {
-        guard workerTask == nil else { return }
-        workerTask = Task {
-            await runWorker()
-        }
-    }
-
-    private func runWorker() async {
-        while let nextIndex = jobs.firstIndex(where: { job in
-            if case .pending = job.status { return true }
-            return false
-        }) {
+    private func pumpQueue() {
+        while runningTasks.count < maxConcurrentJobs,
+              let nextIndex = jobs.firstIndex(where: { job in
+                  if case .pending = job.status { return true }
+                  return false
+              })
+        {
             let jobId = jobs[nextIndex].id
             updateJobStatus(jobId: jobId, status: .running(progress: "Starting…"))
 
             let executionTask = Task {
                 await executeJob(jobId: jobId)
+                jobDidFinish(jobId: jobId)
             }
             runningTasks[jobId] = executionTask
-            await executionTask.value
-            runningTasks.removeValue(forKey: jobId)
         }
-        workerTask = nil
+    }
 
-        if jobs.contains(where: { job in
-            if case .pending = job.status { return true }
-            return false
-        }) {
-            startWorkerIfNeeded()
-        }
+    private func jobDidFinish(jobId: UUID) {
+        runningTasks.removeValue(forKey: jobId)
+        pumpQueue()
     }
 
     private func executeJob(jobId: UUID) async {

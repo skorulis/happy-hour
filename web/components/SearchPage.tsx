@@ -4,18 +4,16 @@ import { useEffect, useState } from "react";
 import { DealCard } from "@/components/DealCard";
 import { SearchBar, type SearchFilters } from "@/components/search/SearchBar";
 import type { TimeRange } from "@/components/search/DayPicker";
-import type { DealSearchResult, SuburbSearchResult } from "@/lib/search/queries";
+import type { DealSearchResult } from "@/lib/search/queries";
 
 export function SearchPage() {
   const [filters, setFilters] = useState<SearchFilters>({
     days: [],
     timeRange: null,
-    suburbId: "",
+    where: { kind: "anywhere" },
     query: "",
   });
   const [debouncedQuery, setDebouncedQuery] = useState("");
-  const [selectedSuburb, setSelectedSuburb] =
-    useState<SuburbSearchResult | null>(null);
   const [deals, setDeals] = useState<DealSearchResult[]>([]);
   const [loadingDeals, setLoadingDeals] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,8 +39,11 @@ export function SearchPage() {
         if (filters.days.length > 0) {
           params.set("days", filters.days.join(","));
         }
-        if (filters.suburbId !== "") {
-          params.set("suburbId", String(filters.suburbId));
+        if (filters.where.kind === "suburb") {
+          params.set("suburbId", String(filters.where.id));
+        } else if (filters.where.kind === "nearMe") {
+          params.set("lat", String(filters.where.lat));
+          params.set("lng", String(filters.where.lng));
         }
         if (filters.timeRange) {
           params.set("startMinute", String(filters.timeRange.startMinute));
@@ -72,7 +73,7 @@ export function SearchPage() {
     void loadDeals();
 
     return () => controller.abort();
-  }, [filters.days, filters.suburbId, filters.timeRange, debouncedQuery]);
+  }, [filters.days, filters.where, filters.timeRange, debouncedQuery]);
 
   function handleDaysApply(days: number[], timeRange: TimeRange) {
     setFilters((current) => ({
@@ -82,14 +83,10 @@ export function SearchPage() {
     }));
   }
 
-  function handleSuburbChange(
-    suburbId: number | "",
-    suburb: SuburbSearchResult | null,
-  ) {
-    setSelectedSuburb(suburb);
+  function handleWhereChange(where: SearchFilters["where"]) {
     setFilters((current) => ({
       ...current,
-      suburbId,
+      where,
     }));
   }
 
@@ -113,9 +110,8 @@ export function SearchPage() {
 
       <SearchBar
         filters={filters}
-        selectedSuburb={selectedSuburb}
         onDaysApply={handleDaysApply}
-        onSuburbChange={handleSuburbChange}
+        onWhereChange={handleWhereChange}
         onQueryChange={handleQueryChange}
       />
 

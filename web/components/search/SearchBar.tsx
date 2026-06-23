@@ -1,29 +1,26 @@
 "use client";
 
 import { DayPicker, type TimeRange } from "@/components/search/DayPicker";
-import { SuburbSelect } from "@/components/search/SuburbSelect";
-import type { SuburbSearchResult } from "@/lib/search/queries";
+import { SuburbSelect, type WhereFilter } from "@/components/search/SuburbSelect";
 
 export type SearchFilters = {
   days: number[];
   timeRange: TimeRange;
-  suburbId: number | "";
+  where: WhereFilter;
   query: string;
 };
 
 type SearchBarProps = {
   filters: SearchFilters;
-  selectedSuburb: SuburbSearchResult | null;
   onDaysApply: (days: number[], timeRange: TimeRange) => void;
-  onSuburbChange: (suburbId: number | "", suburb: SuburbSearchResult | null) => void;
+  onWhereChange: (where: WhereFilter) => void;
   onQueryChange: (query: string) => void;
 };
 
 export function SearchBar({
   filters,
-  selectedSuburb,
   onDaysApply,
-  onSuburbChange,
+  onWhereChange,
   onQueryChange,
 }: SearchBarProps) {
   return (
@@ -45,9 +42,8 @@ export function SearchBar({
             Where
           </span>
           <SuburbSelect
-            suburbId={filters.suburbId}
-            selectedSuburb={selectedSuburb}
-            onChange={onSuburbChange}
+            where={filters.where}
+            onChange={onWhereChange}
           />
         </div>
 

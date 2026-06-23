@@ -127,6 +127,24 @@ function textSearchFilter(query: string): SQL {
 
 const dealSearchVector = sql`to_tsvector('english', coalesce(${deal.title}, '') || ' ' || coalesce(${deal.details}, '') || ' ' || coalesce(${deal.conditions}, ''))`;
 
+const DEFAULT_NEAR_ME_RADIUS_KM = 30;
+
+function distanceKmExpression(lat: number, lng: number): SQL {
+  return sql`(
+    6371 * acos(
+      least(1.0, greatest(-1.0,
+        cos(radians(${lat})) * cos(radians(${venue.lat})) *
+        cos(radians(${venue.lng}) - radians(${lng})) +
+        sin(radians(${lat})) * sin(radians(${venue.lat}))
+      ))
+    )
+  )`;
+}
+
+function nearLocationFilter(lat: number, lng: number, radiusKm: number): SQL {
+  return sql`${distanceKmExpression(lat, lng)} <= ${radiusKm}`;
+}
+
 export async function searchSuburbs(
   query: string,
   limit = 20,
@@ -206,6 +224,9 @@ export async function searchDeals(options: {
   day?: number;
   days?: number[];
   suburbId?: number;
+  lat?: number;
+  lng?: number;
+  radiusKm?: number;
   startMinute?: number;
   endMinute?: number;
   query?: string;
@@ -213,6 +234,8 @@ export async function searchDeals(options: {
   limit?: number;
 }): Promise<DealSearchResult[]> {
   const filters: SQL[] = [];
+  const hasNearLocation =
+    options.lat !== undefined && options.lng !== undefined;
 
   if (options.venueId !== undefined) {
     filters.push(eq(deal.venueId, options.venueId));
@@ -220,6 +243,16 @@ export async function searchDeals(options: {
 
   if (options.suburbId !== undefined) {
     filters.push(eq(venue.suburbId, options.suburbId));
+  }
+
+  if (hasNearLocation) {
+    filters.push(
+      nearLocationFilter(
+        options.lat!,
+        options.lng!,
+        options.radiusKm ?? DEFAULT_NEAR_ME_RADIUS_KM,
+      ),
+    );
   }
 
   if (options.days !== undefined && options.days.length > 0) {
@@ -291,7 +324,11 @@ export async function searchDeals(options: {
     .from(deal)
     .innerJoin(venue, eq(deal.venueId, venue.id))
     .where(filters.length > 0 ? and(...filters) : undefined)
-    .orderBy(venue.name, deal.title)
+    .orderBy(
+      ...(hasNearLocation
+        ? [distanceKmExpression(options.lat!, options.lng!), venue.name, deal.title]
+        : [venue.name, deal.title]),
+    )
     .limit(options.limit ?? 100);
 
   if (rows.length === 0) {
