@@ -1,6 +1,8 @@
 //Created by Alex Skorulis on 17/6/2026.
 
 import Foundation
+import Knit
+import KnitMacros
 
 enum VenueDealExtractionServiceError: LocalizedError, Equatable {
     case missingVenueID
@@ -27,19 +29,23 @@ final class VenueDealExtractionService {
     private let venueRepository: VenueRepository
     private let materialPreparer: VenueDealSourceMaterialPreparer
     private let extractor: OpenRouterVenueDealExtractor
-
+    private let dealCondenser: DealCondenser
+    
+    @Resolvable<Resolver>
     init(
         dealSourceRepository: DealSourceRepository,
         dealRepository: DealRepository,
         venueRepository: VenueRepository,
         materialPreparer: VenueDealSourceMaterialPreparer,
-        extractor: OpenRouterVenueDealExtractor
+        extractor: OpenRouterVenueDealExtractor,
+        dealCondenser: DealCondenser
     ) {
         self.dealSourceRepository = dealSourceRepository
         self.dealRepository = dealRepository
         self.venueRepository = venueRepository
         self.materialPreparer = materialPreparer
         self.extractor = extractor
+        self.dealCondenser = dealCondenser
     }
 
     func extractDeals(
@@ -68,7 +74,7 @@ final class VenueDealExtractionService {
         try Task.checkCancellation()
 
         let mapped = VenueDealPersistenceMapper.map(sourced: result.extractions, venueId: venueId)
-        let deals = mapped // DealCondenser().condense(mapped)
+        let deals = mapped // TextMatchDealCondenser().condense(mapped)
         let savedCount = try dealRepository.replaceAll(venueId: venueId, deals: deals)
         try venueRepository.updateLastExtractionDate(venueId: venueId, date: .now)
 
@@ -98,7 +104,7 @@ final class VenueDealExtractionService {
         )
 
         let mapped = VenueDealPersistenceMapper.map(sourced: result.extractions, venueId: 0)
-        let deals = DealCondenser().condense(mapped)
+        let deals = TextMatchDealCondenser().condense(mapped)
         await progress.completed(results: deals)
         return deals
     }
@@ -129,7 +135,7 @@ final class VenueDealExtractionService {
         )
 
         let mapped = VenueDealPersistenceMapper.map(sourced: result.extractions, venueId: 0)
-        let deals = DealCondenser().condense(mapped)
+        let deals = TextMatchDealCondenser().condense(mapped)
         await progress.completed(results: deals)
         return deals
     }

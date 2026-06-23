@@ -7,7 +7,7 @@ import Testing
 @Suite(.serialized)
 struct DealCondenserTests {
 
-    private let condenser = DealCondenser()
+    private let condenser = TextMatchDealCondenser()
 
     @Test func mergesPartialImageDealWithFullWebpageDeal() {
         let imageDeal = makeDeal(
@@ -214,7 +214,7 @@ struct DealCondenserTests {
 @Suite(.serialized)
 struct DealCondenserShouldMergeTests {
 
-    private let condenser = DealCondenser()
+    private let condenser = TextMatchDealCondenser()
 
     @Test func mergesWhenTitlesMatchExactly() {
         let webpage = makeDeal(
@@ -366,7 +366,7 @@ struct DealCondenserShouldMergeTests {
     }
 
     @Test func doesNotMergeWhenTextSimilarityIsBelowThreshold() {
-        let strict = DealCondenser(matchThreshold: 0.95)
+        let strict = TextMatchDealCondenser(matchThreshold: 0.95)
         let first = makeDeal(
             title: "Trivia Night",
             details: "$20 schnitzel",

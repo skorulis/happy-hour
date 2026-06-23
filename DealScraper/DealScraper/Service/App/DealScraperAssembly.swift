@@ -71,15 +71,9 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
             )
         }
 
-        container.register(VenueDealExtractionService.self) { resolver in
-            VenueDealExtractionService(
-                dealSourceRepository: resolver.dealSourceRepository(),
-                dealRepository: resolver.dealRepository(),
-                venueRepository: resolver.venueRepository(),
-                materialPreparer: resolver.venueDealSourceMaterialPreparer(),
-                extractor: resolver.openRouterVenueDealExtractor()
-            )
-        }
+        container.register(VenueDealExtractionService.self) { VenueDealExtractionService.make(resolver: $0) }
+        
+        container.register(DealCondenser.self) { _ in TextMatchDealCondenser() }
 
         container.register(WebPageLoader.self) { WebPageLoader.make(resolver: $0) }
             .inObjectScope(.container)

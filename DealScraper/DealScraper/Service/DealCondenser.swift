@@ -2,7 +2,11 @@
 
 import Foundation
 
-struct DealCondenser: Sendable {
+protocol DealCondenser: Sendable {
+    func condense(_ deals: [DealWithSchedules]) -> [DealWithSchedules]
+}
+
+struct TextMatchDealCondenser: DealCondenser {
 
     let matchThreshold: Double
 
