@@ -154,5 +154,11 @@ final class SQLMigrations {
                 t.add(column: "status", .text).notNull().defaults(to: VenueStatus.normal.rawValue)
             }
         }
+
+        migrator.registerMigration("v16_venue_hero_image") { db in
+            try db.alter(table: "venue") { t in
+                t.add(column: "hero_image", .text)
+            }
+        }
     }
 }

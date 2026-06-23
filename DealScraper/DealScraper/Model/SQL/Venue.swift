@@ -16,6 +16,7 @@ nonisolated struct Venue: Codable, Sendable {
     let lat: Double
     let lng: Double
     let websiteUri: String?
+    let heroImage: String?
     let lastCrawlDate: Date?
     let lastExtractionDate: Date?
     var status: VenueStatus
@@ -29,6 +30,7 @@ nonisolated struct Venue: Codable, Sendable {
         case lat
         case lng
         case websiteUri = "website_uri"
+        case heroImage = "hero_image"
         case lastCrawlDate = "last_crawl_date"
         case lastExtractionDate = "last_extraction_date"
         case status
@@ -43,6 +45,7 @@ nonisolated struct Venue: Codable, Sendable {
         lat: Double,
         lng: Double,
         websiteUri: String? = nil,
+        heroImage: String? = nil,
         lastCrawlDate: Date? = nil,
         lastExtractionDate: Date? = nil,
         status: VenueStatus = .normal,
@@ -55,6 +58,7 @@ nonisolated struct Venue: Codable, Sendable {
         self.lat = lat
         self.lng = lng
         self.websiteUri = websiteUri
+        self.heroImage = heroImage
         self.lastCrawlDate = lastCrawlDate
         self.lastExtractionDate = lastExtractionDate
         self.status = status

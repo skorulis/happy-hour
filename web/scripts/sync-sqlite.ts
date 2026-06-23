@@ -21,6 +21,7 @@ type SqliteVenue = {
   lat: number;
   lng: number;
   website_uri: string | null;
+  hero_image: string | null;
   last_crawl_date: string | null;
   json: string;
 };
@@ -168,6 +169,7 @@ async function main() {
           lat: venueRow.lat,
           lng: venueRow.lng,
           websiteUri: venueRow.website_uri,
+          heroImage: venueRow.hero_image,
           lastCrawlDate: parseTimestamp(venueRow.last_crawl_date),
           json: parseJsonColumn(venueRow.json),
           syncedAt: new Date(),
@@ -180,6 +182,7 @@ async function main() {
             lat: venueRow.lat,
             lng: venueRow.lng,
             websiteUri: venueRow.website_uri,
+            heroImage: venueRow.hero_image,
             lastCrawlDate: parseTimestamp(venueRow.last_crawl_date),
             json: parseJsonColumn(venueRow.json),
             syncedAt: new Date(),
