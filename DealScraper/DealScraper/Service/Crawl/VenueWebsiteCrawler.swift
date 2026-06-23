@@ -90,6 +90,7 @@ final class VenueWebsiteCrawler {
         var visited = Set<String>()
         var visitedIdentities = Set<String>()
         var visitedPages: [URL] = []
+        var checkedImages: Set<String> = []
         var discoveredImages = Set<URL>()
         var discoveredByURL: [URL: DiscoveredSource] = [:]
         var pdfURLs: Set<URL> = []
@@ -153,9 +154,9 @@ final class VenueWebsiteCrawler {
             
             discoveredImages.formUnion(loadedPage.imageURLs)
             
-            let imagesToCheck = discoveredImages.filter { !visited.contains(URLNormalizer.hash($0)) }
-            await progress("Checking \(imagesToCheck) images")
-            visited.formUnion(imagesToCheck.map { URLNormalizer.hash($0)})
+            let imagesToCheck = discoveredImages.filter { !checkedImages.contains(URLNormalizer.hash($0)) }
+            await progress("Checking \(imagesToCheck.count) images")
+            checkedImages.formUnion(imagesToCheck.map { URLNormalizer.hash($0)})
             
             let validations = await imageValidator.validateImages(urls: Array(imagesToCheck))
             var index = 0
