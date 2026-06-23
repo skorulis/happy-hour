@@ -87,7 +87,7 @@ final class VenueWebsiteCrawler {
         var visited = Set<String>()
         var visitedIdentities = Set<String>()
         var visitedPages: [URL] = []
-        var imagesAnalyzed = 0
+        var discoveredImages = Set<URL>()
         var discoveredByURL: [URL: DiscoveredSource] = [:]
         var pdfURLs: Set<URL> = []
         var pdfSourceURLs: [URL: URL] = [:]
@@ -131,13 +131,17 @@ final class VenueWebsiteCrawler {
                 discoveredByURL[loadedPage.normalizedURL] = source
             }
             
-            imagesAnalyzed += loadedPage.imageURLs.count
+            discoveredImages.formUnion(loadedPage.imageURLs)
             
-            let validations = await imageValidator.validateImages(urls: loadedPage.imageURLs)
+            let imagesToCheck = discoveredImages.filter { visited.contains(URLNormalizer.hash($0)) }
+            await progress("Checking \(imagesToCheck) images")
+            visited.formUnion(imagesToCheck.map { URLNormalizer.hash($0)})
+            
+            let validations = await imageValidator.validateImages(urls: Array(imagesToCheck))
             var index = 0
             for validation in validations {
                 index += 1
-                await progress("Checking image \(index) of \(loadedPage.imageURLs.count)")
+                await progress("Processing image \(index) of \(imagesToCheck.count)")
                 discoveredByURL[validation.url] = DiscoveredSource(
                     url: validation.url,
                     sourceURL: loadedPage.normalizedURL,
@@ -221,7 +225,7 @@ final class VenueWebsiteCrawler {
         let results = VenueCrawlResults(
             dealsFound: newCount,
             visitedPages: visitedPages,
-            imagesAnalyzed: imagesAnalyzed,
+            imagesAnalyzed: discoveredImages.count,
             duration: Date().timeIntervalSince(startTime)
         )
         await progress.completed(results: results)
