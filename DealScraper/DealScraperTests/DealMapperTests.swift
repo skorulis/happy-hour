@@ -129,4 +129,58 @@ struct DealMapperTests {
 
         #expect(deals.isEmpty)
     }
+
+    @Test func removesTitleRepeatedInDetails() throws {
+        let raw = DealExtractionPayload.RawDeal(
+            title: "HAPPY HOUR",
+            details: ["HAPPY HOUR", "$8 WINES"],
+            days: ["FRIDAY"],
+            times: ["4PM - 6PM"]
+        )
+
+        let deal = try #require(DealMapper.map([raw]).first)
+
+        #expect(deal.title == "HAPPY HOUR")
+        #expect(deal.details == ["$8 WINES"])
+    }
+
+    @Test func removesDuplicateDetailLines() throws {
+        let raw = DealExtractionPayload.RawDeal(
+            title: "TACO TUESDAY",
+            details: ["$2 TACOS", "$2 TACOS", "$3 BEERS"],
+            days: ["TUESDAY"],
+            times: ["all day"]
+        )
+
+        let deal = try #require(DealMapper.map([raw]).first)
+
+        #expect(deal.details == ["$2 TACOS", "$3 BEERS"])
+    }
+
+    @Test func deduplicatesDetailsCaseInsensitively() throws {
+        let raw = DealExtractionPayload.RawDeal(
+            title: "WING WEDNESDAY",
+            details: ["$1 WINGS", "$1 wings"],
+            days: ["WEDNESDAY"],
+            times: ["all day"]
+        )
+
+        let deal = try #require(DealMapper.map([raw]).first)
+
+        #expect(deal.details == ["$1 WINGS"])
+    }
+
+    @Test func removesConditionsDuplicatingTitleOrDetails() throws {
+        let raw = DealExtractionPayload.RawDeal(
+            title: "STEAK NIGHT",
+            details: ["$22 STEAK"],
+            conditions: ["STEAK NIGHT", "$22 STEAK", "dine-in only"],
+            days: ["TUESDAY"],
+            times: ["all day"]
+        )
+
+        let deal = try #require(DealMapper.map([raw]).first)
+
+        #expect(deal.conditions == ["dine-in only"])
+    }
 }

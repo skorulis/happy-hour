@@ -27,13 +27,56 @@ nonisolated enum DealMapper {
         let days = deal.days.flatMap { DealDay.parseAll(in: $0) }
         let times = parseTimes(deal.times)
 
+        return deduplicated(
+            LegacyDeal(
+                title: title,
+                details: details,
+                conditions: conditions,
+                days: days,
+                times: times
+            )
+        )
+    }
+
+    private static func deduplicated(_ deal: LegacyDeal) -> LegacyDeal {
+        let titleKey = normalizeLine(deal.title)
+        var excludeForDetails = Set<String>()
+        if !titleKey.isEmpty {
+            excludeForDetails.insert(titleKey)
+        }
+
+        let details = deduplicatedLines(deal.details, excluding: excludeForDetails)
+        let detailKeys = Set(details.map(normalizeLine).filter { !$0.isEmpty })
+        let excludeForConditions = excludeForDetails.union(detailKeys)
+        let conditions = deduplicatedLines(deal.conditions, excluding: excludeForConditions)
+
         return LegacyDeal(
-            title: title,
+            title: deal.title,
             details: details,
             conditions: conditions,
-            days: days,
-            times: times
+            days: deal.days,
+            times: deal.times
         )
+    }
+
+    private static func deduplicatedLines(_ lines: [String], excluding excluded: Set<String>) -> [String] {
+        var seen: Set<String> = []
+        var result: [String] = []
+        for line in lines {
+            let key = normalizeLine(line)
+            guard !key.isEmpty, !excluded.contains(key), !seen.contains(key) else { continue }
+            seen.insert(key)
+            result.append(line)
+        }
+        return result
+    }
+
+    private static func normalizeLine(_ line: String) -> String {
+        line
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+            .split(whereSeparator: \.isWhitespace)
+            .joined(separator: " ")
     }
 
     private static func normalizeCondition(_ string: String) -> String {
@@ -119,12 +162,14 @@ nonisolated enum DealMapper {
         for deal in deals {
             if let index = merged.firstIndex(where: { shouldMerge($0, deal) }) {
                 let existing = merged[index]
-                merged[index] = LegacyDeal(
-                    title: existing.title.isEmpty ? deal.title : existing.title,
-                    details: Array(Set(existing.details + deal.details)),
-                    conditions: Array(Set(existing.conditions + deal.conditions)),
-                    days: Array(Set(existing.days + deal.days)),
-                    times: mergedTimes(existing.times, deal.times)
+                merged[index] = deduplicated(
+                    LegacyDeal(
+                        title: existing.title.isEmpty ? deal.title : existing.title,
+                        details: existing.details + deal.details,
+                        conditions: existing.conditions + deal.conditions,
+                        days: Array(Set(existing.days + deal.days)),
+                        times: mergedTimes(existing.times, deal.times)
+                    )
                 )
             } else {
                 merged.append(deal)
