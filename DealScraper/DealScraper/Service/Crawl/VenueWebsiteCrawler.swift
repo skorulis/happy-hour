@@ -86,6 +86,7 @@ final class VenueWebsiteCrawler {
         
         var queue: [URL] = [baseURL]
         var visited = Set<String>()
+        var visitedIdentities = Set<String>()
         var visitedPages: [URL] = []
         var imagesAnalyzed = 0
         var discoveredByURL: [URL: DiscoveredSource] = [:]
@@ -114,7 +115,13 @@ final class VenueWebsiteCrawler {
             }
             
             print("CRAWL: Loaded. Blocks: \(loadedPage.contentBlocks.count). Images: \(loadedPage.imageURLs.count)")
-            
+
+            let identityKey = URLNormalizer.hash(loadedPage.normalizedURL)
+            guard visitedIdentities.insert(identityKey).inserted else {
+                print("CRAWL: Skipping duplicate canonical page \(pageURL) -> \(loadedPage.normalizedURL)")
+                continue
+            }
+
             if !loadedPage.dealContentBlocks.isEmpty {
                 let source = DiscoveredSource(
                     url: loadedPage.normalizedURL,

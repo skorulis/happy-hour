@@ -127,6 +127,7 @@ final class WebPageLoader: NSObject {
 
     private let contentBlockGrouper: ContentBlockGrouper
     private let pageLinkExtractor: PageLinkExtractor
+    private let canonicalURLExtractor: CanonicalURLExtractor
     private let webMarkdownGenerator: WebMarkdownGenerator
     private let webView: WKWebView
     private var loadContinuation: CheckedContinuation<Void, Error>?
@@ -135,10 +136,12 @@ final class WebPageLoader: NSObject {
     init(
         contentBlockGrouper: ContentBlockGrouper,
         pageLinkExtractor: PageLinkExtractor,
+        canonicalURLExtractor: CanonicalURLExtractor,
         webMarkdownGenerator: WebMarkdownGenerator
     ) {
         self.contentBlockGrouper = contentBlockGrouper
         self.pageLinkExtractor = pageLinkExtractor
+        self.canonicalURLExtractor = canonicalURLExtractor
         self.webMarkdownGenerator = webMarkdownGenerator
         let configuration = WKWebViewConfiguration()
         configuration.defaultWebpagePreferences.allowsContentJavaScript = true
@@ -183,16 +186,18 @@ final class WebPageLoader: NSObject {
             throw WebPageLoaderError.emptyContent
         }
         
-        print("LOADER: Final URL: \(finalURL)")
+        let effectiveURL = (try? canonicalURLExtractor.extract(html: resolvedHTML, pageURL: finalURL))
+            ?? URLNormalizer.normalize(finalURL)
+            ?? finalURL
+        print("LOADER: Final URL: \(finalURL), effective URL: \(effectiveURL)")
 
         let imageURLs = harvestImageURLs(html: resolvedHTML, liveDOMURLs: await harvestLiveImageURLStrings())
-        let contentBlocks = (try? contentBlockGrouper.group(html: resolvedHTML, pageURL: finalURL)) ?? []
-        let links = (try? pageLinkExtractor.extract(html: resolvedHTML, pageURL: finalURL)) ?? []
-        let normalizedURL = URLNormalizer.normalize(finalURL) ?? finalURL
+        let contentBlocks = (try? contentBlockGrouper.group(html: resolvedHTML, pageURL: effectiveURL)) ?? []
+        let links = (try? pageLinkExtractor.extract(html: resolvedHTML, pageURL: effectiveURL)) ?? []
         let markdown = try? await webMarkdownGenerator.markdown(from: resolvedHTML)
 
         return LoadedPage(
-            url: normalizedURL,
+            url: effectiveURL,
             html: resolvedHTML,
             markdown: markdown,
             imageURLs: imageURLs,

@@ -53,6 +53,7 @@ struct VenueDealSourceMaterialPreparerTests {
             webPageLoader: WebPageLoader(
                 contentBlockGrouper: ContentBlockGrouper(),
                 pageLinkExtractor: PageLinkExtractor(),
+                canonicalURLExtractor: CanonicalURLExtractor(),
                 webMarkdownGenerator: WebMarkdownGenerator()
             ),
             pdfFetcher: CrawlPDFFetcher(
