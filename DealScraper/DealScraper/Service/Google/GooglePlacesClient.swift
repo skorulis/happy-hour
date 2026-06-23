@@ -25,6 +25,9 @@ final class GooglePlacesClient: HTTPService {
         super.init(baseURL: nil, logger: nil)
     }
 
+    private static let maxTextSearchPages = 3
+    private static let pageTokenDelay: Duration = .seconds(2)
+
     func searchText(
         apiKey: String,
         textQuery: String,
@@ -41,6 +44,83 @@ final class GooglePlacesClient: HTTPService {
                 pageToken: pageToken
             )
         )
+    }
+
+    func searchTextAllPages(
+        apiKey: String,
+        textQuery: String,
+        includedType: String? = nil,
+        regionCode: String? = nil
+    ) async throws -> GooglePlacesSearchResponse {
+        var allPlaces: [GooglePlace] = []
+        var seenIDs = Set<String>()
+        var pageToken: String?
+        var pageCount = 0
+
+        while pageCount < Self.maxTextSearchPages {
+            if pageCount > 0 {
+                try await Task.sleep(for: Self.pageTokenDelay)
+            }
+
+            let response = try await searchTextPage(
+                apiKey: apiKey,
+                textQuery: textQuery,
+                includedType: includedType,
+                regionCode: regionCode,
+                pageToken: pageToken
+            )
+
+            for place in response.places where seenIDs.insert(place.id).inserted {
+                allPlaces.append(place)
+            }
+
+            pageCount += 1
+
+            guard let nextToken = response.nextPageToken,
+                  !nextToken.isEmpty,
+                  pageCount < Self.maxTextSearchPages
+            else {
+                break
+            }
+
+            pageToken = nextToken
+        }
+
+        return GooglePlacesSearchResponse(places: allPlaces, nextPageToken: nil)
+    }
+
+    private func searchTextPage(
+        apiKey: String,
+        textQuery: String,
+        includedType: String?,
+        regionCode: String?,
+        pageToken: String?
+    ) async throws -> GooglePlacesSearchResponse {
+        do {
+            return try await searchText(
+                apiKey: apiKey,
+                textQuery: textQuery,
+                includedType: includedType,
+                regionCode: regionCode,
+                pageToken: pageToken
+            )
+        } catch let error as GooglePlacesAPI.Error {
+            guard pageToken != nil,
+                  case let .apiError(_, message) = error,
+                  message.contains("INVALID_ARGUMENT")
+            else {
+                throw error
+            }
+
+            try await Task.sleep(for: Self.pageTokenDelay)
+            return try await searchText(
+                apiKey: apiKey,
+                textQuery: textQuery,
+                includedType: includedType,
+                regionCode: regionCode,
+                pageToken: pageToken
+            )
+        }
     }
 
     func searchNearby(

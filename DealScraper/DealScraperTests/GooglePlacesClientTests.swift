@@ -67,6 +67,69 @@ struct GooglePlacesClientTests {
         #expect(response.nextPageToken == "next-page-token")
     }
 
+    @Test func searchTextAllPagesFetchesSubsequentPages() async throws {
+        var capturedRequests: [any HTTPRequest] = []
+
+        let client = GooglePlacesClient { request in
+            capturedRequests.append(request)
+            let httpRequest = try #require(request as? HTTPJSONRequest<GooglePlacesSearchResponse>)
+            let body = try #require(httpRequest.body)
+            let json = try #require(JSONSerialization.jsonObject(with: body) as? [String: Any])
+            let pageToken = json["pageToken"] as? String
+
+            switch pageToken {
+            case nil:
+                return GooglePlacesSearchResponse(
+                    places: [Self.samplePlace(id: "places/page-1")],
+                    nextPageToken: "token-2"
+                )
+            case "token-2":
+                return GooglePlacesSearchResponse(
+                    places: [Self.samplePlace(id: "places/page-2")],
+                    nextPageToken: "token-3"
+                )
+            case "token-3":
+                return GooglePlacesSearchResponse(
+                    places: [Self.samplePlace(id: "places/page-3")],
+                    nextPageToken: nil
+                )
+            default:
+                Issue.record("Unexpected page token: \(pageToken ?? "nil")")
+                return GooglePlacesSearchResponse(places: [], nextPageToken: nil)
+            }
+        }
+
+        let response = try await client.searchTextAllPages(
+            apiKey: "google-test-key",
+            textQuery: "pubs in Sydney",
+            includedType: "bar",
+            regionCode: "AU"
+        )
+
+        #expect(capturedRequests.count == 3)
+        #expect(response.places.count == 3)
+        #expect(response.places.map(\.id) == ["places/page-1", "places/page-2", "places/page-3"])
+        #expect(response.nextPageToken == nil)
+
+        let firstBody = try #require(
+            (capturedRequests[0] as? HTTPJSONRequest<GooglePlacesSearchResponse>)?.body
+        )
+        let firstJSON = try #require(JSONSerialization.jsonObject(with: firstBody) as? [String: Any])
+        #expect(firstJSON["pageToken"] == nil || firstJSON["pageToken"] is NSNull)
+
+        let secondBody = try #require(
+            (capturedRequests[1] as? HTTPJSONRequest<GooglePlacesSearchResponse>)?.body
+        )
+        let secondJSON = try #require(JSONSerialization.jsonObject(with: secondBody) as? [String: Any])
+        #expect(secondJSON["pageToken"] as? String == "token-2")
+
+        let thirdBody = try #require(
+            (capturedRequests[2] as? HTTPJSONRequest<GooglePlacesSearchResponse>)?.body
+        )
+        let thirdJSON = try #require(JSONSerialization.jsonObject(with: thirdBody) as? [String: Any])
+        #expect(thirdJSON["pageToken"] as? String == "token-3")
+    }
+
     @Test func searchNearbySendsCircleRestriction() async throws {
         let captured = RequestCapture()
 
@@ -118,6 +181,19 @@ struct GooglePlacesClientTests {
             #expect(statusCode == 403)
             #expect(message == "API key not valid")
         }
+    }
+}
+
+private extension GooglePlacesClientTests {
+    static func samplePlace(id: String) -> GooglePlace {
+        GooglePlace(
+            id: id,
+            displayName: .init(text: "The Royal Pub", languageCode: "en"),
+            location: .init(latitude: -33.8688, longitude: 151.2093),
+            formattedAddress: "123 George St, Sydney NSW 2000",
+            websiteUri: "https://theroyalpub.example.com",
+            types: ["bar", "point_of_interest"]
+        )
     }
 }
 

@@ -1,5 +1,6 @@
 //Created by Alex Skorulis on 22/6/2026.
 
+import ASKCore
 import Foundation
 import Knit
 import Testing
@@ -26,7 +27,7 @@ struct GoogleImportViewModelTests {
           "types": ["bar", "point_of_interest"]
         }
       ],
-      "nextPageToken": "next-page-token"
+      "nextPageToken": null
     }
     """
 
@@ -114,8 +115,61 @@ struct GoogleImportViewModelTests {
         #expect(viewModel.state == GoogleImportViewModel.State.failed(message: "Configure a Google Places API key in Settings."))
     }
 
+    @Test func searchTextPaginatesAndImportsAllPages() async {
+        let store = SQLStore.inMemory()
+        let repository = VenueRepository(store: store)
+        let assembler = DealScraperAssembly.testing()
+        let apiKeyStore = assembler.resolver.apiKeyStore()
+        apiKeyStore.googlePlacesAPIKey = "google-test-key"
+
+        let client = GooglePlacesClient { request in
+            let httpRequest = try #require(request as? HTTPJSONRequest<GooglePlacesSearchResponse>)
+            let body = try #require(httpRequest.body)
+            let json = try #require(JSONSerialization.jsonObject(with: body) as? [String: Any])
+            let pageToken = json["pageToken"] as? String
+
+            switch pageToken {
+            case nil:
+                return GooglePlacesSearchResponse(
+                    places: [Self.samplePlace(id: "places/page-1", name: "Pub One")],
+                    nextPageToken: "token-2"
+                )
+            case "token-2":
+                return GooglePlacesSearchResponse(
+                    places: [Self.samplePlace(id: "places/page-2", name: "Pub Two")],
+                    nextPageToken: nil
+                )
+            default:
+                Issue.record("Unexpected page token: \(pageToken ?? "nil")")
+                return GooglePlacesSearchResponse(places: [], nextPageToken: nil)
+            }
+        }
+
+        let viewModel = GoogleImportViewModel(
+            googlePlacesClient: client,
+            venueRepository: repository,
+            apiKeyStore: apiKeyStore
+        )
+
+        viewModel.search()
+        await waitForSearchCompletion(viewModel)
+
+        #expect(viewModel.state == GoogleImportViewModel.State.completed(totalCount: 2, newCount: 2))
+    }
+
+    private static func samplePlace(id: String, name: String) -> GooglePlace {
+        GooglePlace(
+            id: id,
+            displayName: .init(text: name, languageCode: "en"),
+            location: .init(latitude: -33.8688, longitude: 151.2093),
+            formattedAddress: "123 George St, Sydney NSW 2000",
+            websiteUri: "https://example.com",
+            types: ["bar"]
+        )
+    }
+
     private func waitForSearchCompletion(_ viewModel: GoogleImportViewModel) async {
-        for _ in 0..<50 {
+        for _ in 0..<500 {
             switch viewModel.state {
             case .searching, .idle:
                 try? await Task.sleep(for: .milliseconds(20))

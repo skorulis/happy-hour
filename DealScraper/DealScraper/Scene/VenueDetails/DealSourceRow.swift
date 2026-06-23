@@ -61,8 +61,13 @@ struct DealSourceRow: View {
         if let url = URL(string: source.sourceURL) {
             HStack {
                 Text("Source: ")
-                Link(url.lastPathComponent, destination: url)
-                    .lineLimit(2)
+                if url.lastPathComponent.count <= 2 {
+                    Link(url.absoluteString, destination: url)
+                        .lineLimit(2)
+                } else {
+                    Link(url.lastPathComponent, destination: url)
+                        .lineLimit(2)
+                }
             }
             
         } else {

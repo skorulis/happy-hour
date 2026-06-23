@@ -29,8 +29,6 @@ enum VenueWebsiteCrawlerError: LocalizedError {
 @MainActor
 final class VenueWebsiteCrawler {
     
-    private static let maxPages = 15
-    
     private let pageLoader: WebPageLoader
     private let pageLinkFilter: PageLinkFilter
     private let venueLinkExtractor: VenueLinkExtractor
@@ -83,6 +81,7 @@ final class VenueWebsiteCrawler {
         }
         
         let startTime = Date()
+        let maxPages = CrawlPolicy.maxPages(for: baseURL)
         
         var queue: [URL] = [baseURL]
         var visited = Set<String>()
@@ -93,7 +92,7 @@ final class VenueWebsiteCrawler {
         var pdfURLs: Set<URL> = []
         var pdfSourceURLs: [URL: URL] = [:]
         
-        while !queue.isEmpty, visited.count < Self.maxPages {
+        while !queue.isEmpty, visited.count < maxPages {
             try Task.checkCancellation()
 
             let pageURL = queue.removeFirst()

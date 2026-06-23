@@ -82,7 +82,7 @@ final class GoogleImportViewModel {
             case .text:
                 let query = textQuery.trimmingCharacters(in: .whitespacesAndNewlines)
                 let region = regionCode.trimmingCharacters(in: .whitespacesAndNewlines)
-                response = try await googlePlacesClient.searchText(
+                response = try await googlePlacesClient.searchTextAllPages(
                     apiKey: apiKey,
                     textQuery: query,
                     includedType: "bar",

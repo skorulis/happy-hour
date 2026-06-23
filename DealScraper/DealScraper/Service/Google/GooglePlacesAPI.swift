@@ -11,7 +11,7 @@ enum GooglePlacesAPI {
         case decodingFailure
     }
 
-    nonisolated static let defaultFieldMask = "places.id,places.displayName,places.location,places.formattedAddress,places.websiteUri,places.types"
+    nonisolated static let defaultFieldMask = "places.id,places.displayName,places.location,places.formattedAddress,places.websiteUri,places.types,nextPageToken"
 
     nonisolated static func searchTextRequest(
         apiKey: String,
