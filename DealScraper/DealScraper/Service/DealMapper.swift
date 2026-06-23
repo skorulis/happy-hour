@@ -15,7 +15,10 @@ nonisolated enum DealMapper {
     }
 
     nonisolated static func map(_ deal: DealExtractionPayload.RawDeal) -> LegacyDeal? {
-        let title = deal.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        let title = deal.title
+            .components(separatedBy: .newlines)
+            .joined(separator: " ")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
         let details = deal.details
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
