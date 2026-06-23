@@ -42,7 +42,7 @@ enum VenueDealPersistenceMapper {
         }
         let sourceURL = material.sourceURL.absoluteString
 
-        let details = joinedNonEmpty(rawDeal.details)
+        let details = joinedNonEmpty(legacyDeal.details)
         let conditions = joinedNonEmpty(legacyDeal.conditions)
         let title = legacyDeal.title
 

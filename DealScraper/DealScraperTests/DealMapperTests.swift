@@ -19,7 +19,7 @@ struct DealMapperTests {
         #expect(deals.count == 1)
         let deal = try #require(deals.first)
         #expect(deal.title == "Cheeseburger Tuesdays")
-        #expect(deal.details.count == 1)
+        #expect(deal.details == ["Ten dollar beef or vegan cheeseburgers with chips"])
         #expect(deal.days == [.tuesday])
         #expect(deal.times == [.allDay])
     }
@@ -167,7 +167,7 @@ struct DealMapperTests {
         let deal = try #require(DealMapper.map([raw]).first)
 
         #expect(deal.title == "Happy Hour")
-        #expect(deal.details == ["$8 WINES"])
+        #expect(deal.details == ["$8 Wines"])
     }
 
     @Test func removesDuplicateDetailLines() throws {
@@ -180,7 +180,7 @@ struct DealMapperTests {
 
         let deal = try #require(DealMapper.map([raw]).first)
 
-        #expect(deal.details == ["$2 TACOS", "$3 BEERS"])
+        #expect(deal.details == ["$2 Tacos", "$3 Beers"])
     }
 
     @Test func deduplicatesDetailsCaseInsensitively() throws {
@@ -193,7 +193,7 @@ struct DealMapperTests {
 
         let deal = try #require(DealMapper.map([raw]).first)
 
-        #expect(deal.details == ["$1 WINGS"])
+        #expect(deal.details == ["$1 Wings"])
     }
 
     @Test func removesConditionsDuplicatingTitleOrDetails() throws {
@@ -249,7 +249,7 @@ struct DealMapperTests {
         let deal = try #require(DealMapper.map([raw]).first)
 
         #expect(deal.title == "Happy Hour")
-        #expect(deal.details == ["$8 SCHOONERS"])
+        #expect(deal.details == ["$8 Schooners"])
     }
 
     @Test func doesNotDuplicateLeadingPriceAlreadyInTitle() throws {
@@ -263,6 +263,19 @@ struct DealMapperTests {
         let deal = try #require(DealMapper.map([raw]).first)
 
         #expect(deal.title == "$22 Steak Night")
-        #expect(deal.details == ["Raise the Steaks"])
+        #expect(deal.details == ["Raise the steaks"])
+    }
+
+    @Test func sentenceCasesMultilineDetails() throws {
+        let raw = DealExtractionPayload.RawDeal(
+            title: "STEAK NIGHT",
+            details: ["RAISE THE STEAKS\nWITH ALL THE TRIMMINGS\n$22 EACH"],
+            days: ["MONDAY"],
+            times: ["all day"]
+        )
+
+        let deal = try #require(DealMapper.map([raw]).first)
+
+        #expect(deal.details == ["Raise the steaks\nWith all the trimmings\n$22 Each"])
     }
 }

@@ -32,7 +32,7 @@ struct VenueDealPersistenceMapperTests {
 
         #expect(mapped.count == 1)
         #expect(mapped[0].deal.title == "Happy Hour")
-        #expect(mapped[0].deal.details == "$8 wines")
+        #expect(mapped[0].deal.details == "$8 Wines")
         #expect(mapped[0].deal.conditions == "Dine-in only")
         #expect(mapped[0].deal.creativeURL == "https://example.com/poster.jpg")
         #expect(mapped[0].deal.sourceURL == "https://example.com/specials")
@@ -84,7 +84,7 @@ struct VenueDealPersistenceMapperTests {
                     deals: [
                         DealExtractionPayload.RawDeal(
                             title: "Deal A",
-                            details: ["$5"],
+                            details: ["$5 beers"],
                             days: ["Monday"],
                             times: ["all day"]
                         ),
@@ -95,7 +95,7 @@ struct VenueDealPersistenceMapperTests {
                     deals: [
                         DealExtractionPayload.RawDeal(
                             title: "Deal B",
-                            details: ["$6"],
+                            details: ["$6 wines"],
                             days: ["Tuesday"],
                             times: ["all day"]
                         ),
@@ -153,8 +153,8 @@ struct VenueDealPersistenceMapperTests {
 
         let result = try #require(mapped.first)
         #expect(result.deal.venueId == 42)
-        #expect(result.deal.title == "$22 STEAK NIGHT")
-        #expect(result.deal.details == "Raise\nthe\nSteaks")
+        #expect(result.deal.title == "$22 Steak Night")
+        #expect(result.deal.details == "Raise\nThe\nSteaks")
         #expect(result.deal.conditions == "only available with bar service in our public bar, beer garden and nude")
 
         #expect(result.schedules.count == 1)
