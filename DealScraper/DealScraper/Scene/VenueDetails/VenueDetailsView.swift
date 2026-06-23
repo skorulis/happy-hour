@@ -52,32 +52,82 @@ struct VenueDetailsView: View {
     }
 
     private func header(_ venue: Venue) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(venue.name)
-                    .font(.largeTitle.weight(.semibold))
+        HStack(alignment: .top, spacing: 24) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text(venue.name)
+                        .font(.largeTitle.weight(.semibold))
 
-                if let id = venue.id {
-                    Text("#\(id)")
-                        .font(.title3.monospacedDigit())
+                    if let id = venue.id {
+                        Text("#\(id)")
+                            .font(.title3.monospacedDigit())
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                if let address = viewModel.formattedAddress {
+                    Text(address)
+                        .font(.title3)
                         .foregroundStyle(.secondary)
                 }
-            }
 
-            if let address = viewModel.formattedAddress {
-                Text(address)
-                    .font(.title3)
-                    .foregroundStyle(.secondary)
-            }
-
-            Picker("Section", selection: $selectedTab) {
-                ForEach(VenueDetailsTab.allCases, id: \.self) { tab in
-                    Text(tab.rawValue).tag(tab)
+                Picker("Section", selection: $selectedTab) {
+                    ForEach(VenueDetailsTab.allCases, id: \.self) { tab in
+                        Text(tab.rawValue).tag(tab)
+                    }
                 }
+                .pickerStyle(.segmented)
+                .padding(.top, 8)
             }
-            .pickerStyle(.segmented)
-            .padding(.top, 8)
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            heroImageView(venue)
         }
+    }
+
+    @ViewBuilder
+    private func heroImageView(_ venue: Venue) -> some View {
+        let shape = RoundedRectangle(cornerRadius: 8, style: .continuous)
+
+        if let heroImageURL = venue.heroImage.flatMap({ URL(string: $0) }) {
+            Color.clear
+                .aspectRatio(3 / 2, contentMode: .fill)
+                .frame(maxWidth: 200)
+                .overlay {
+                    AsyncImage(url: heroImageURL) { phase in
+                        switch phase {
+                        case .empty:
+                            heroImagePlaceholder
+                                .overlay { ProgressView() }
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                        case .failure:
+                            heroImagePlaceholder
+                                .overlay {
+                                    Image(systemName: "photo")
+                                        .foregroundStyle(.secondary)
+                                }
+                        @unknown default:
+                            EmptyView()
+                        }
+                    }
+                }
+                .clipShape(shape)
+        } else {
+            heroImagePlaceholder
+                .aspectRatio(3 / 2, contentMode: .fit)
+                .frame(maxWidth: 200)
+        }
+    }
+
+    private var heroImagePlaceholder: some View {
+        RoundedRectangle(cornerRadius: 8, style: .continuous)
+            .strokeBorder(
+                Color.secondary.opacity(0.4),
+                style: StrokeStyle(lineWidth: 1, dash: [6, 4])
+            )
     }
 
     @ViewBuilder
