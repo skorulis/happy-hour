@@ -183,4 +183,60 @@ struct DealMapperTests {
 
         #expect(deal.conditions == ["dine-in only"])
     }
+
+    @Test func appendsLeadingPriceDetailToTitle() throws {
+        let raw = DealExtractionPayload.RawDeal(
+            title: "STEAK NIGHT",
+            details: ["$22", "Premium cut with sides"],
+            days: ["MONDAY"],
+            times: ["all day"]
+        )
+
+        let deal = try #require(DealMapper.map([raw]).first)
+
+        #expect(deal.title == "STEAK NIGHT $22")
+        #expect(deal.details == ["Premium cut with sides"])
+    }
+
+    @Test func usesLeadingPriceAsTitleWhenTitleIsEmpty() throws {
+        let raw = DealExtractionPayload.RawDeal(
+            title: "",
+            details: ["$39PP", "Sunday roast with all the trimmings"],
+            days: ["SUNDAY"],
+            times: ["all day"]
+        )
+
+        let deal = try #require(DealMapper.map([raw]).first)
+
+        #expect(deal.title == "$39PP")
+        #expect(deal.details == ["Sunday roast with all the trimmings"])
+    }
+
+    @Test func doesNotAppendPricePlusDescriptionDetailToTitle() throws {
+        let raw = DealExtractionPayload.RawDeal(
+            title: "HAPPY HOUR",
+            details: ["$8 SCHOONERS"],
+            days: ["FRIDAY"],
+            times: ["4PM - 6PM"]
+        )
+
+        let deal = try #require(DealMapper.map([raw]).first)
+
+        #expect(deal.title == "HAPPY HOUR")
+        #expect(deal.details == ["$8 SCHOONERS"])
+    }
+
+    @Test func doesNotDuplicateLeadingPriceAlreadyInTitle() throws {
+        let raw = DealExtractionPayload.RawDeal(
+            title: "$22 STEAK NIGHT",
+            details: ["$22", "Raise the Steaks"],
+            days: ["MONDAY"],
+            times: ["all day"]
+        )
+
+        let deal = try #require(DealMapper.map([raw]).first)
+
+        #expect(deal.title == "$22 STEAK NIGHT")
+        #expect(deal.details == ["Raise the Steaks"])
+    }
 }

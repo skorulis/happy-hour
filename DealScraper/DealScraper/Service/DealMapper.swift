@@ -15,13 +15,14 @@ nonisolated enum DealMapper {
     }
 
     nonisolated static func map(_ deal: DealExtractionPayload.RawDeal) -> LegacyDeal? {
-        let title = deal.title
+        var title = deal.title
             .components(separatedBy: .newlines)
             .joined(separator: " ")
             .trimmingCharacters(in: .whitespacesAndNewlines)
-        let details = deal.details
+        var details = deal.details
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
+        (title, details) = withLeadingPriceInTitle(title: title, details: details)
         let conditions = deal.conditions
             .map { normalizeCondition($0) }
             .filter { !$0.isEmpty }
@@ -40,6 +41,40 @@ nonisolated enum DealMapper {
             )
         )
     }
+
+    private static func withLeadingPriceInTitle(title: String, details: [String]) -> (title: String, details: [String]) {
+        guard let firstDetail = details.first, isPriceLine(firstDetail) else {
+            return (title, details)
+        }
+
+        let resolvedTitle: String
+        if title.isEmpty {
+            resolvedTitle = firstDetail
+        } else if normalizeLine(title).contains(normalizeLine(firstDetail)) {
+            resolvedTitle = title
+        } else {
+            resolvedTitle = "\(title) \(firstDetail)"
+        }
+
+        return (resolvedTitle, Array(details.dropFirst()))
+    }
+
+    private static func isPriceLine(_ line: String) -> Bool {
+        let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return false }
+
+        let range = NSRange(trimmed.startIndex..., in: trimmed)
+        return priceLinePatterns.contains { pattern in
+            guard let regex = try? NSRegularExpression(pattern: pattern) else { return false }
+            guard let match = regex.firstMatch(in: trimmed, range: range) else { return false }
+            return match.range.location == 0 && match.range.length == trimmed.utf16.count
+        }
+    }
+
+    private static let priceLinePatterns = [
+        #"(?i)^\$\s*\d+(?:\.\d{2})?[a-z]*$"#,
+        #"(?i)^half[\s-]?price$"#,
+    ]
 
     private static func deduplicated(_ deal: LegacyDeal) -> LegacyDeal {
         let titleKey = normalizeLine(deal.title)
