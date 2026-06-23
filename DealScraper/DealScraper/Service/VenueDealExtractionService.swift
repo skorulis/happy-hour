@@ -74,7 +74,7 @@ final class VenueDealExtractionService {
         try Task.checkCancellation()
 
         let mapped = VenueDealPersistenceMapper.map(sourced: result.extractions, venueId: venueId)
-        let deals = mapped // TextMatchDealCondenser().condense(mapped)
+        let deals = dealCondenser.condense(mapped)
         let savedCount = try dealRepository.replaceAll(venueId: venueId, deals: deals)
         try venueRepository.updateLastExtractionDate(venueId: venueId, date: .now)
 

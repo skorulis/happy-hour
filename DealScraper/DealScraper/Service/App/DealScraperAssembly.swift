@@ -73,7 +73,7 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
 
         container.register(VenueDealExtractionService.self) { VenueDealExtractionService.make(resolver: $0) }
         
-        container.register(DealCondenser.self) { _ in TextMatchDealCondenser() }
+        container.register(DealCondenser.self) { _ in KeywordDealCondenser() }
 
         container.register(WebPageLoader.self) { WebPageLoader.make(resolver: $0) }
             .inObjectScope(.container)
