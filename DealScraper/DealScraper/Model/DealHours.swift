@@ -27,7 +27,7 @@ nonisolated enum DealHours: Equatable, Hashable {
               let hour = Int(normalized[hourRange]),
               hour >= 1, hour <= 12
         else {
-            return nil
+            return parseCompactMinutes(normalized)
         }
 
         let minute: Int
@@ -61,6 +61,27 @@ nonisolated enum DealHours: Equatable, Hashable {
         default:
             return nil
         }
+    }
+
+    /// Parses compact times like `630pm` (6:30 PM) where minutes omit the separator.
+    private static func parseCompactMinutes(_ normalized: String) -> Int? {
+        let pattern = #"^(\d{3,4})\s*(am|pm)$"#
+        guard let regex = try? NSRegularExpression(pattern: pattern),
+              let match = regex.firstMatch(
+                  in: normalized,
+                  range: NSRange(normalized.startIndex..., in: normalized)
+              ),
+              let digitsRange = Range(match.range(at: 1), in: normalized),
+              let periodRange = Range(match.range(at: 2), in: normalized),
+              let minute = Int(normalized[digitsRange].suffix(2)),
+              let hour = Int(normalized[digitsRange].dropLast(2)),
+              hour >= 1, hour <= 12,
+              minute >= 0, minute < 60
+        else {
+            return nil
+        }
+
+        return minutesFrom(hour: hour, minute: minute, isPM: normalized[periodRange] == "pm")
     }
 
     private static func minutesFrom(hour: Int, minute: Int, isPM: Bool) -> Int {

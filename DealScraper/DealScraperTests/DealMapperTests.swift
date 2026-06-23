@@ -114,6 +114,20 @@ struct DealMapperTests {
         #expect(deal.times == [.between(16 * 60, 22 * 60)])
     }
 
+    @Test func parsesCompactTimeRangeFromRawDeal() throws {
+        let raw = DealExtractionPayload.RawDeal(
+            title: "HAPPY HOUR",
+            details: ["$8 SCHOONERS"],
+            days: ["FRIDAY"],
+            times: ["5pm-630pm"]
+        )
+
+        let deals = DealMapper.map([raw])
+        let deal = try #require(deals.first)
+
+        #expect(deal.times == [.between(17 * 60, 18 * 60 + 30)])
+    }
+
     @Test func parsesDotSeparatedTimeFromRawDeal() throws {
         let raw = DealExtractionPayload.RawDeal(
             title: "HAPPY HOUR",

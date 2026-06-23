@@ -53,7 +53,7 @@ final class VenueImportViewModel {
         case .crawl:
             venues = venues.filter { $0.status != .broken && sourceCount(for: $0) == 0 }
         case .extraction:
-            venues = venues.filter { $0.status != .broken && dealCount(for: $0) == 0 }
+            venues = venues.filter { $0.status != .broken && dealCount(for: $0) == 0 && sourceCount(for: $0) > 0 }
         case .ready:
             venues = venues.filter { $0.status != .broken && dealCount(for: $0) > 0 }
         case .broken:

@@ -22,6 +22,7 @@ struct DealHoursTests {
         #expect(DealHours.toMinutes(string: "7:15am") == 435)
         #expect(DealHours.toMinutes(string: "6.30pm") == 1110)
         #expect(DealHours.toMinutes(string: "4.30 PM") == 990)
+        #expect(DealHours.toMinutes(string: "630pm") == 18 * 60 + 30)
     }
 
     @Test func guessesAMWhenOnlyAMFitsInRange() {
@@ -65,6 +66,7 @@ struct DealHoursTests {
         #expect(DealHours.parse("4 PM - 6 PM") == .between(960, 1080))
         #expect(DealHours.parse("4 PM-6 PM") == .between(960, 1080))
         #expect(DealHours.parse("4 PM to 6 PM") == .between(960, 1080))
+        #expect(DealHours.parse("5pm-630pm") == .between(17 * 60, 18 * 60 + 30))
     }
 
     @Test func parseAllDay() {
