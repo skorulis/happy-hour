@@ -77,7 +77,9 @@ struct JobQueueView: View {
     }
 
     private var completedJobs: [JobItem] {
-        viewModel.jobs.filter { !$0.status.isActive }
+        viewModel.jobs
+            .filter { !$0.status.isActive }
+            .sorted { ($0.startDate ?? .distantPast) > ($1.startDate ?? .distantPast) }
     }
 
     @ViewBuilder

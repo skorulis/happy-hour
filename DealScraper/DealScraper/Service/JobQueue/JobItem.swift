@@ -29,16 +29,19 @@ struct JobItem: Identifiable, Equatable, Sendable {
     let venueId: Int64
     let type: JobType
     var status: JobStatus
+    var startDate: Date?
 
     init(
         id: UUID = UUID(),
         venueId: Int64,
         type: JobType,
-        status: JobStatus = .pending
+        status: JobStatus = .pending,
+        startDate: Date? = nil
     ) {
         self.id = id
         self.venueId = venueId
         self.type = type
         self.status = status
+        self.startDate = startDate
     }
 }

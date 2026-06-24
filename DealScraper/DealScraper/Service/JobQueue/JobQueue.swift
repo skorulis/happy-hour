@@ -173,6 +173,9 @@ final class JobQueue {
 
     private func updateJobStatus(jobId: UUID, status: JobStatus) {
         guard let index = jobs.firstIndex(where: { $0.id == jobId }) else { return }
+        if case .running = status, jobs[index].startDate == nil {
+            jobs[index].startDate = Date()
+        }
         jobs[index].status = status
     }
 
