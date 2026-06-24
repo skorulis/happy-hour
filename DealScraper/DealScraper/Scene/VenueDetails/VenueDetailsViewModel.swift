@@ -114,6 +114,22 @@ final class VenueDetailsViewModel {
         venue?.id != nil && !isExtracting && !isCrawling
     }
 
+    var canClearHeroImage: Bool {
+        guard let venue, venue.id != nil else { return false }
+        return venue.heroImage?.isEmpty == false
+    }
+
+    func clearHeroImage() {
+        guard let venueId = venue?.id, canClearHeroImage else { return }
+
+        do {
+            try venueRepository.updateHeroImage(venueId: venueId, url: nil)
+            load()
+        } catch {
+            // Keep the current UI state if persistence fails.
+        }
+    }
+
     func crawlWebsite() {
         guard let venueId = venue?.id, canCrawl else { return }
 

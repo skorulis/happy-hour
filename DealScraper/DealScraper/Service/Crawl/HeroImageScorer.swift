@@ -3,21 +3,35 @@
 import CoreGraphics
 import Foundation
 
+nonisolated struct HeroImageScore: Equatable {
+    let dimensions: CGSize?
+    let aspectScore: CGFloat
+    let textCoverageRatio: CGFloat
+    let textScore: CGFloat
+    let buildingScore: CGFloat
+    let totalScore: CGFloat
+    let isViable: Bool
+    let skipReason: String?
+}
+
 nonisolated enum HeroImageScorer {
     static let idealAspectRatio: CGFloat = 1.5
     static let minimumTotalScore: CGFloat = 0.3
 
     static func aspectScore(width: CGFloat, height: CGFloat) -> CGFloat {
-        guard width > 0, height > 0 else { return 0 }
-        let ratio = width / height
-        return max(0, 1 - abs(ratio - idealAspectRatio) / idealAspectRatio)
+        return min(width / height, 1.5)
     }
 
     static func textScore(coverageRatio: CGFloat) -> CGFloat {
-        1 - min(1, coverageRatio)
+        let score = 1 - min(1, coverageRatio)
+        return score * score
     }
 
-    static func totalScore(aspect: CGFloat, text: CGFloat, building: CGFloat) -> CGFloat {
+    static func totalScore(
+        aspect: CGFloat,
+        text: CGFloat,
+        building: CGFloat
+    ) -> CGFloat {
         (aspect + text + building) / 3
     }
 

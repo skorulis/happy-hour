@@ -101,6 +101,10 @@ export type ScheduleSlice = {
   endMinute: number;
 };
 
+export function isAllDaySchedule(startMinute: number, endMinute: number): boolean {
+  return startMinute === 0 && endMinute === 1440;
+}
+
 export function schedulesForDay(
   schedules: ScheduleSlice[],
   dayOfWeek: number,
@@ -228,6 +232,9 @@ export function formatDealTimeBadge(schedules: ScheduleSlice[]): string {
 
   if (timeRanges.size === 1) {
     const schedule = schedules[0];
+    if (isAllDaySchedule(schedule.startMinute, schedule.endMinute)) {
+      return "";
+    }
     return formatCompactTimeRange(schedule.startMinute, schedule.endMinute);
   }
 
@@ -244,7 +251,9 @@ export function formatScheduleSummary(
   const grouped = new Map<string, number[]>();
 
   for (const schedule of schedules) {
-    const timeRange = `${formatMinute(schedule.startMinute)}–${formatMinute(schedule.endMinute)}`;
+    const timeRange = isAllDaySchedule(schedule.startMinute, schedule.endMinute)
+      ? ""
+      : `${formatMinute(schedule.startMinute)}–${formatMinute(schedule.endMinute)}`;
     const days = grouped.get(timeRange) ?? [];
     days.push(schedule.dayOfWeek);
     grouped.set(timeRange, days);
@@ -256,7 +265,7 @@ export function formatScheduleSummary(
         .sort((a, b) => a - b)
         .map((day) => DAY_LABELS[day] ?? `Day ${day}`)
         .join(", ");
-      return `${dayNames}: ${timeRange}`;
+      return timeRange ? `${dayNames}: ${timeRange}` : dayNames;
     })
     .join(" · ");
 }

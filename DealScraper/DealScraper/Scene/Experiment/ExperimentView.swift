@@ -91,7 +91,7 @@ struct ExperimentView: View {
                 imagesSection(page)
                 contentBlocksSection(page)
             case let .image(url, lines):
-                imageOCRSection(url: url, lines: lines)
+                imageOCRSection(url: url, lines: lines, heroScore: viewModel.heroImageScore)
             case let .pdf(url, extraction):
                 pdfMarkdownSection(url: url, extraction: extraction)
             }
@@ -159,40 +159,106 @@ struct ExperimentView: View {
         .help("Parse markdown and print Document tree to terminal")
     }
 
-    private func imageOCRSection(url: URL, lines: [ExtractedTextLine]) -> some View {
-        detailSection(title: "OCR (\(lines.count) line\(lines.count == 1 ? "" : "s"))") {
-            AsyncImage(url: url) { phase in
-                switch phase {
-                case .empty:
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.secondary.opacity(0.15))
-                        .frame(maxHeight: 240)
-                        .overlay { ProgressView() }
-                case .success(let image):
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(maxHeight: 240)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                case .failure:
-                    Link(url.absoluteString, destination: url)
-                        .font(.subheadline)
-                @unknown default:
-                    EmptyView()
-                }
+    private func imageOCRSection(url: URL, lines: [ExtractedTextLine], heroScore: HeroImageScore?) -> some View {
+        VStack(alignment: .leading, spacing: 24) {
+            if let heroScore {
+                heroImageScoreSection(heroScore)
             }
 
-            if lines.isEmpty {
-                Text("No text was recognized in this image.")
-                    .foregroundStyle(.secondary)
-            } else {
-                ScrollView {
-                    Text(lines.map(\.text).joined(separator: "\n"))
-                        .font(.system(.body, design: .monospaced))
-                        .textSelection(.enabled)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+            detailSection(title: "OCR (\(lines.count) line\(lines.count == 1 ? "" : "s"))") {
+                imagePreview(url: url)
+
+                if lines.isEmpty {
+                    Text("No text was recognized in this image.")
+                        .foregroundStyle(.secondary)
+                } else {
+                    ScrollView {
+                        Text(lines.map(\.text).joined(separator: "\n"))
+                            .font(.system(.body, design: .monospaced))
+                            .textSelection(.enabled)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .frame(maxHeight: 400)
                 }
-                .frame(maxHeight: 400)
+            }
+        }
+    }
+
+    private func heroImageScoreSection(_ score: HeroImageScore) -> some View {
+        detailSection(title: "Hero Image Score") {
+            if let skipReason = score.skipReason {
+                Label(skipReason, systemImage: "xmark.circle.fill")
+                    .foregroundStyle(.red)
+            }
+
+            if let dimensions = score.dimensions {
+                Text("Dimensions: \(Int(dimensions.width)) × \(Int(dimensions.height))")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+
+            if score.skipReason == nil || score.skipReason == "Below viability threshold" {
+                scoreRow(label: "Aspect", value: score.aspectScore)
+                scoreRow(
+                    label: "Text",
+                    value: score.textScore,
+                    detail: "coverage \(percentString(score.textCoverageRatio))"
+                )
+                scoreRow(label: "Building", value: score.buildingScore)
+                Divider()
+                scoreRow(label: "Total", value: score.totalScore, emphasized: true)
+
+                Label(
+                    score.isViable ? "Viable candidate" : "Not viable",
+                    systemImage: score.isViable ? "checkmark.circle.fill" : "xmark.circle.fill"
+                )
+                .foregroundStyle(score.isViable ? .green : .red)
+            }
+        }
+    }
+
+    private func scoreRow(label: String, value: CGFloat, detail: String? = nil, emphasized: Bool = false) -> some View {
+        HStack {
+            Text(label)
+                .font(emphasized ? .subheadline.weight(.semibold) : .subheadline)
+            Spacer()
+            if let detail {
+                Text(detail)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Text(scoreString(value))
+                .font(emphasized ? .subheadline.weight(.semibold).monospacedDigit() : .subheadline.monospacedDigit())
+        }
+    }
+
+    private func scoreString(_ value: CGFloat) -> String {
+        String(format: "%.3f", value)
+    }
+
+    private func percentString(_ value: CGFloat) -> String {
+        String(format: "%.1f%%", value * 100)
+    }
+
+    private func imagePreview(url: URL) -> some View {
+        AsyncImage(url: url) { phase in
+            switch phase {
+            case .empty:
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color.secondary.opacity(0.15))
+                    .frame(maxHeight: 240)
+                    .overlay { ProgressView() }
+            case .success(let image):
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(maxHeight: 240)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+            case .failure:
+                Link(url.absoluteString, destination: url)
+                    .font(.subheadline)
+            @unknown default:
+                EmptyView()
             }
         }
     }

@@ -4,6 +4,7 @@ import {
   formatDealTimeBadge,
 } from "@/lib/search/schedule";
 import type { DealSearchResult } from "@/lib/search/queries";
+import { venuePath } from "@/lib/search/slugs";
 
 export type VenueGroupedDeals = {
   venue: DealSearchResult["venue"];
@@ -43,27 +44,33 @@ export function VenueSearchCard({ group }: VenueSearchCardProps) {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1 space-y-4">
           <ul className="space-y-2">
-            {group.deals.map((deal) => (
-              <li
-                key={deal.id}
-                className="flex flex-wrap items-center gap-2 text-sm"
-              >
-                <span className="font-semibold text-zinc-900 dark:text-zinc-50">
-                  {deal.title || "Untitled deal"}
-                </span>
-                <span className="inline-flex items-center rounded-md bg-zinc-900 px-2 py-0.5 text-xs font-medium text-white dark:bg-zinc-100 dark:text-zinc-900">
-                  {formatDealDayBadge(deal.schedules)}
-                </span>
-                <span className="inline-flex items-center rounded-md border border-zinc-300 px-2 py-0.5 text-xs font-medium text-zinc-500 dark:border-zinc-600 dark:text-zinc-400">
-                  {formatDealTimeBadge(deal.schedules)}
-                </span>
-              </li>
-            ))}
+            {group.deals.map((deal) => {
+              const timeBadge = formatDealTimeBadge(deal.schedules);
+
+              return (
+                <li
+                  key={deal.id}
+                  className="flex flex-wrap items-center gap-2 text-sm"
+                >
+                  <span className="font-semibold text-zinc-900 dark:text-zinc-50">
+                    {deal.title || "Untitled deal"}
+                  </span>
+                  <span className="inline-flex items-center rounded-md bg-zinc-900 px-2 py-0.5 text-xs font-medium text-white dark:bg-zinc-100 dark:text-zinc-900">
+                    {formatDealDayBadge(deal.schedules)}
+                  </span>
+                  {timeBadge && timeBadge !== "—" ? (
+                    <span className="inline-flex items-center rounded-md border border-zinc-300 px-2 py-0.5 text-xs font-medium text-zinc-500 dark:border-zinc-600 dark:text-zinc-400">
+                      {timeBadge}
+                    </span>
+                  ) : null}
+                </li>
+              );
+            })}
           </ul>
 
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
             <Link
-              href={`/venues/${group.venue.id}`}
+              href={venuePath(group.venue.suburbName, group.venue.name)}
               className="hover:text-amber-700 hover:underline dark:hover:text-amber-400"
             >
               {group.venue.name}

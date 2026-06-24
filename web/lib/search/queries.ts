@@ -4,6 +4,7 @@ import {
   exists,
   ilike,
   inArray,
+  isNull,
   or,
   sql,
   type SQL,
@@ -13,6 +14,7 @@ import {
   currentCalendarWeekday,
   currentMinuteOfDay,
 } from "@/lib/search/schedule";
+import { slugify, UNKNOWN_SUBURB_SLUG } from "@/lib/search/slugs";
 import { deal, dealSchedule, suburb, venue, venueLinks } from "@/db/schema";
 
 export type SuburbSearchResult = {
@@ -39,6 +41,7 @@ export type DealSearchResult = {
   venue: {
     id: number;
     name: string;
+    suburbName: string | null;
     lat: number;
     lng: number;
     websiteUri: string | null;
@@ -62,6 +65,7 @@ function parseVenueFormattedAddress(json: unknown): string | null {
 }
 
 export type VenueDetailResult = VenueSearchResult & {
+  suburbName: string | null;
   links: {
     whatsOn: string | null;
     instagram: string | null;
@@ -328,6 +332,7 @@ export async function searchDeals(options: {
       sourceUrl: deal.sourceUrl,
       venueId: venue.id,
       venueName: venue.name,
+      venueSuburbName: suburb.name,
       venueLat: venue.lat,
       venueLng: venue.lng,
       venueWebsiteUri: venue.websiteUri,
@@ -336,6 +341,7 @@ export async function searchDeals(options: {
     })
     .from(deal)
     .innerJoin(venue, eq(deal.venueId, venue.id))
+    .leftJoin(suburb, eq(venue.suburbId, suburb.id))
     .where(filters.length > 0 ? and(...filters) : undefined)
     .orderBy(
       ...(hasNearLocation
@@ -376,6 +382,7 @@ export async function searchDeals(options: {
     venue: {
       id: row.venueId,
       name: row.venueName,
+      suburbName: row.venueSuburbName,
       lat: row.venueLat,
       lng: row.venueLng,
       websiteUri: row.venueWebsiteUri,
@@ -386,30 +393,22 @@ export async function searchDeals(options: {
   }));
 }
 
-export async function getVenueDetail(
-  venueId: number,
-): Promise<VenueDetailResult | null> {
-  const [venueRow] = await db
-    .select()
-    .from(venue)
-    .where(eq(venue.id, venueId))
-    .limit(1);
-
-  if (!venueRow) {
-    return null;
-  }
-
+async function buildVenueDetail(
+  venueRow: typeof venue.$inferSelect,
+  suburbName: string | null,
+): Promise<VenueDetailResult> {
   const [linksRow] = await db
     .select()
     .from(venueLinks)
-    .where(eq(venueLinks.venueId, venueId))
+    .where(eq(venueLinks.venueId, venueRow.id))
     .limit(1);
 
-  const deals = await searchDeals({ venueId, limit: 500 });
+  const deals = await searchDeals({ venueId: venueRow.id, limit: 500 });
 
   return {
     id: venueRow.id,
     name: venueRow.name,
+    suburbName,
     lat: venueRow.lat,
     lng: venueRow.lng,
     websiteUri: venueRow.websiteUri,
@@ -422,4 +421,75 @@ export async function getVenueDetail(
       : null,
     deals,
   };
+}
+
+export async function getVenueDetail(
+  venueId: number,
+): Promise<VenueDetailResult | null> {
+  const [row] = await db
+    .select({
+      venue: venue,
+      suburbName: suburb.name,
+    })
+    .from(venue)
+    .leftJoin(suburb, eq(venue.suburbId, suburb.id))
+    .where(eq(venue.id, venueId))
+    .limit(1);
+
+  if (!row) {
+    return null;
+  }
+
+  return buildVenueDetail(row.venue, row.suburbName);
+}
+
+export async function getVenueDetailBySlug(
+  suburbSlug: string,
+  venueSlug: string,
+): Promise<VenueDetailResult | null> {
+  let venueRows: Array<typeof venue.$inferSelect>;
+
+  if (suburbSlug === UNKNOWN_SUBURB_SLUG) {
+    venueRows = await db.select().from(venue).where(isNull(venue.suburbId));
+  } else {
+    const suburbs = await db.select().from(suburb);
+    const matchingSuburbIds = suburbs
+      .filter((row) => slugify(row.name) === suburbSlug)
+      .map((row) => row.id);
+
+    if (matchingSuburbIds.length === 0) {
+      return null;
+    }
+
+    venueRows = await db
+      .select()
+      .from(venue)
+      .where(inArray(venue.suburbId, matchingSuburbIds));
+  }
+
+  const matchingVenues = venueRows.filter(
+    (row) => slugify(row.name) === venueSlug,
+  );
+
+  if (matchingVenues.length === 0) {
+    return null;
+  }
+
+  if (matchingVenues.length > 1) {
+    return null;
+  }
+
+  const venueRow = matchingVenues[0];
+  const suburbName =
+    venueRow.suburbId === null
+      ? null
+      : (
+          await db
+            .select({ name: suburb.name })
+            .from(suburb)
+            .where(eq(suburb.id, venueRow.suburbId))
+            .limit(1)
+        )[0]?.name ?? null;
+
+  return buildVenueDetail(venueRow, suburbName);
 }

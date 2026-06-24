@@ -115,6 +115,20 @@ struct VenueDetailsView: View {
                     }
                 }
                 .clipShape(shape)
+                .overlay(alignment: .topTrailing) {
+                    if viewModel.canClearHeroImage {
+                        Button {
+                            viewModel.clearHeroImage()
+                        } label: {
+                            Image(systemName: "minus.circle.fill")
+                                .font(.title2)
+                                .symbolRenderingMode(.palette)
+                                .foregroundStyle(.white, .red)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(6)
+                    }
+                }
         } else {
             heroImagePlaceholder
                 .aspectRatio(3 / 2, contentMode: .fit)

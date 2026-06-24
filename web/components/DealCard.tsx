@@ -5,6 +5,7 @@ import {
   schedulesForDay,
 } from "@/lib/search/schedule";
 import type { DealSearchResult } from "@/lib/search/queries";
+import { venuePath } from "@/lib/search/slugs";
 
 type DealCardProps = {
   deal: DealSearchResult;
@@ -37,7 +38,7 @@ export function DealCard({ deal, showVenue = true, dayOfWeek }: DealCardProps) {
           {showVenue ? (
             <p className="text-sm text-zinc-600 dark:text-zinc-400">
               <Link
-                href={`/venues/${deal.venue.id}`}
+                href={venuePath(deal.venue.suburbName, deal.venue.name)}
                 className="font-medium text-amber-700 hover:underline dark:text-amber-400"
               >
                 {deal.venue.name}

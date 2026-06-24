@@ -33,9 +33,11 @@ final class ExperimentViewModel {
     private(set) var crawlDealValidation: CrawlDealValidation?
     private(set) var validatedImages: [ImageValidationResult]?
     private(set) var isProcessingImages = false
+    private(set) var heroImageScore: HeroImageScore?
 
     private let webPageLoader: WebPageLoader
     private let crawlImageValidator: CrawlImageValidator
+    private let heroImageSelector: VenueHeroImageSelector
     private let imageFetcher: CrawlImageFetcher
     private let imageExtractor: DealImageExtractor
     private let pdfFetcher: CrawlPDFFetcher
@@ -45,6 +47,7 @@ final class ExperimentViewModel {
     init(
         webPageLoader: WebPageLoader,
         crawlImageValidator: CrawlImageValidator,
+        heroImageSelector: VenueHeroImageSelector,
         imageFetcher: CrawlImageFetcher,
         imageExtractor: DealImageExtractor,
         pdfFetcher: CrawlPDFFetcher,
@@ -52,6 +55,7 @@ final class ExperimentViewModel {
     ) {
         self.webPageLoader = webPageLoader
         self.crawlImageValidator = crawlImageValidator
+        self.heroImageSelector = heroImageSelector
         self.imageFetcher = imageFetcher
         self.imageExtractor = imageExtractor
         self.pdfFetcher = pdfFetcher
@@ -97,6 +101,7 @@ final class ExperimentViewModel {
     private func performLoad(url: URL) async {
         crawlDealValidation = nil
         validatedImages = nil
+        heroImageScore = nil
         isProcessingImages = false
 
         switch PageLinkFilter.sourceType(for: url) {
@@ -126,7 +131,10 @@ final class ExperimentViewModel {
         do {
             let hash = URLNormalizer.hash(url)
             let localURL = try await imageFetcher.localFileURL(for: url, hash: hash)
-            let lines = try await imageExtractor.extractTexts(from: localURL)
+            async let linesTask = imageExtractor.extractTexts(from: localURL)
+            async let scoreTask = heroImageSelector.scoreHeroImage(url: url)
+            let lines = try await linesTask
+            heroImageScore = await scoreTask
             crawlDealValidation = await validateImageForCrawl(url: url)
             state = .loaded(.image(url: url, lines: lines))
         } catch {
