@@ -5,32 +5,6 @@ import Knit
 import KnitMacros
 import PDFKit
 
-struct EditableDealSchedule: Identifiable, Sendable {
-    let id: Int64
-    let dealId: Int64
-    var dayOfWeek: Int
-    var startMinute: Int
-    var endMinute: Int
-
-    init(schedule: DealSchedule, fallbackID: Int64) {
-        id = schedule.id ?? fallbackID
-        dealId = schedule.dealId
-        dayOfWeek = schedule.dayOfWeek
-        startMinute = schedule.startMinute
-        endMinute = schedule.endMinute
-    }
-
-    func toDealSchedule() -> DealSchedule {
-        DealSchedule(
-            id: id,
-            dealId: dealId,
-            dayOfWeek: dayOfWeek,
-            startMinute: startMinute,
-            endMinute: endMinute
-        )
-    }
-}
-
 @MainActor
 @Observable
 final class ApprovalViewModel {
@@ -67,11 +41,6 @@ final class ApprovalViewModel {
     }
 
     var mode: Mode = .sources
-
-    var editTitle = ""
-    var editDetails = ""
-    var editConditions = ""
-    var editSchedules: [EditableDealSchedule] = []
 
     private(set) var pendingSources: [DealSource] = []
     private(set) var pendingDeals: [DealWithSchedules] = []
@@ -156,15 +125,10 @@ final class ApprovalViewModel {
                 }
             )
             reloadForCurrentMode()
-            syncDealEditFields()
         } catch {
             pendingSources = []
             pendingDeals = []
             venueNames = [:]
-            editTitle = ""
-            editDetails = ""
-            editConditions = ""
-            editSchedules = []
             previewState = .failed(error.localizedDescription)
         }
     }
@@ -185,7 +149,7 @@ final class ApprovalViewModel {
         }
     }
 
-    func decideDeal(status: DealStatus) {
+    func decideDeal(status: DealStatus, draft: EditDealDraft) {
         guard let item = currentDeal, let id = item.deal.id else { return }
 
         do {
@@ -193,17 +157,16 @@ final class ApprovalViewModel {
             case .approved:
                 try dealRepository.update(
                     id: id,
-                    title: editTitle.isEmpty ? nil : editTitle,
-                    details: editDetails.isEmpty ? nil : editDetails,
-                    conditions: editConditions.isEmpty ? nil : editConditions,
-                    schedules: editSchedules.map { $0.toDealSchedule() },
+                    title: draft.title.isEmpty ? nil : draft.title,
+                    details: draft.details.isEmpty ? nil : draft.details,
+                    conditions: draft.conditions.isEmpty ? nil : draft.conditions,
+                    schedules: draft.schedules.map { $0.toDealSchedule() },
                     status: status
                 )
             case .new, .rejected:
                 try dealRepository.updateStatus(id: id, status: status)
             }
             pendingDeals.removeFirst()
-            syncDealEditFields()
         } catch {
             previewState = .failed(error.localizedDescription)
         }
@@ -217,28 +180,7 @@ final class ApprovalViewModel {
             loadPreview()
         case .deals:
             previewState = .idle
-            syncDealEditFields()
         }
-    }
-
-    private func syncDealEditFields() {
-        editTitle = currentDeal?.deal.title ?? ""
-        editDetails = currentDeal?.deal.details ?? ""
-        editConditions = currentDeal?.deal.conditions ?? ""
-        editSchedules = DealScheduleFormatting
-            .sortedSchedules(currentDeal?.schedules ?? [])
-            .enumerated()
-            .map { index, schedule in
-                EditableDealSchedule(schedule: schedule, fallbackID: Int64(-index - 1))
-            }
-    }
-
-    var formattedEditScheduleSummary: String {
-        DealScheduleFormatting.formattedSummary(editSchedules.map { $0.toDealSchedule() })
-    }
-
-    func removeEditSchedule(id: Int64) {
-        editSchedules.removeAll { $0.id == id }
     }
 
     private func loadPreview() {
