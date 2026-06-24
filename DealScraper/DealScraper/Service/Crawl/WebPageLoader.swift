@@ -312,12 +312,20 @@ final class WebPageLoader: NSObject {
 
     private func cancelPendingLoad() {
         print("LOADER: Cancelling pending load")
+        guard let continuation = loadContinuation else {
+            webView.stopLoading()
+            return
+        }
         loadContinuation = nil
         webView.stopLoading()
+        continuation.resume(throwing: WebPageLoaderError.timeout)
     }
 
     private func finishLoad(with result: Result<Void, Error>) {
-        guard let continuation = loadContinuation else { return }
+        guard let continuation = loadContinuation else {
+            print("LOADER: Finished without continuation")
+            return
+        }
         loadContinuation = nil
         continuation.resume(with: result)
     }

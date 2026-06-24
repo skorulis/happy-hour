@@ -15,6 +15,8 @@ nonisolated enum DealDay: String, CaseIterable {
         "thur": .thursday,
         "thurs": .thursday,
         "fri": .friday,
+        "friyay": .friday,
+        "friyays": .friday,
         "sat": .saturday,
         "sun": .sunday,
         "every Day": .everyDay,

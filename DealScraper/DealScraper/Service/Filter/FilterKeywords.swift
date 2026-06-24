@@ -99,6 +99,8 @@ nonisolated enum FilterKeywords {
         "mardigras",
         "seinfeld",
         "simpsons",
+        "fifa",
+        "footy"
     ]
     
     static func containsDealKeyword(_ text: String) -> Bool {
