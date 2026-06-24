@@ -369,13 +369,28 @@ struct ExperimentView: View {
             Text("\(imageCount) image\(imageCount == 1 ? "" : "s") on page.")
                 .foregroundStyle(.secondary)
 
-            Button("Process images") {
-                viewModel.processImages()
+            HStack(spacing: 12) {
+                Button("Process images") {
+                    viewModel.processImages()
+                }
+                .disabled(viewModel.isProcessingImages || viewModel.isFindingHero || imageCount == 0)
+
+                Button("Find hero") {
+                    viewModel.findHero()
+                }
+                .disabled(viewModel.isFindingHero || viewModel.isProcessingImages || imageCount == 0)
             }
-            .disabled(viewModel.isProcessingImages || imageCount == 0)
 
             if viewModel.isProcessingImages {
                 LoadingView(text: "Processing images…")
+            }
+
+            if viewModel.isFindingHero {
+                LoadingView(text: "Ranking images for hero…")
+            }
+
+            if let rankedHeroImages = viewModel.rankedHeroImages {
+                rankedHeroImagesSection(rankedHeroImages)
             }
 
             if let validatedImages = viewModel.validatedImages {
@@ -393,6 +408,91 @@ struct ExperimentView: View {
                 }
             }
         }
+    }
+
+    private func rankedHeroImagesSection(_ rankedImages: [RankedHeroImage]) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            if let best = rankedImages.first(where: { $0.score.isViable }) ?? rankedImages.first {
+                Label(
+                    best.score.isViable ? "Best hero candidate" : "Top ranked image",
+                    systemImage: best.score.isViable ? "star.fill" : "photo"
+                )
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(best.score.isViable ? .yellow : .secondary)
+            }
+
+            ForEach(rankedImages) { ranked in
+                rankedHeroImageRow(ranked)
+            }
+        }
+    }
+
+    private func rankedHeroImageRow(_ ranked: RankedHeroImage) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Text("#\(ranked.rank)")
+                .font(.subheadline.weight(.semibold).monospacedDigit())
+                .foregroundStyle(ranked.rank == 1 ? .primary : .secondary)
+                .frame(width: 28, alignment: .trailing)
+
+            rankedHeroImageThumbnail(ranked)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Link(ranked.url.absoluteString, destination: ranked.url)
+                    .font(.caption)
+                    .lineLimit(2)
+
+                if let skipReason = ranked.score.skipReason {
+                    Text(skipReason)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                } else {
+                    Text("Total: \(scoreString(ranked.score.totalScore))")
+                        .font(.caption.monospacedDigit())
+                }
+
+                if ranked.score.isViable {
+                    Label("Viable", systemImage: "checkmark.circle.fill")
+                        .font(.caption)
+                        .foregroundStyle(.green)
+                }
+            }
+        }
+    }
+
+    private func rankedHeroImageThumbnail(_ ranked: RankedHeroImage) -> some View {
+        Link(destination: ranked.url) {
+            AsyncImage(url: ranked.url) { phase in
+                switch phase {
+                case .empty:
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color.secondary.opacity(0.15))
+                        .overlay { ProgressView() }
+                case .success(let image):
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                case .failure:
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color.secondary.opacity(0.15))
+                        .overlay {
+                            Image(systemName: "photo")
+                                .foregroundStyle(.secondary)
+                        }
+                @unknown default:
+                    EmptyView()
+                }
+            }
+            .frame(width: 120, height: 80)
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .overlay {
+                if ranked.rank == 1 {
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(Color.yellow, lineWidth: 2)
+                }
+            }
+        }
+        .buttonStyle(.plain)
+        .help("Open image in browser")
     }
 
     private func validatedImageThumbnail(_ result: ImageValidationResult) -> some View {

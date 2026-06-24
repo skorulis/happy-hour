@@ -33,6 +33,8 @@ final class ExperimentViewModel {
     private(set) var crawlDealValidation: CrawlDealValidation?
     private(set) var validatedImages: [ImageValidationResult]?
     private(set) var isProcessingImages = false
+    private(set) var rankedHeroImages: [RankedHeroImage]?
+    private(set) var isFindingHero = false
     private(set) var heroImageScore: HeroImageScore?
 
     private let webPageLoaderFactory: WebPageLoaderFactory
@@ -83,6 +85,14 @@ final class ExperimentViewModel {
         }
     }
 
+    func findHero() {
+        guard case let .loaded(.page(page)) = state else { return }
+
+        Task {
+            await performHeroRanking(urls: page.imageURLs)
+        }
+    }
+
     private func validatedURL() -> URL? {
         let trimmed = urlString.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
@@ -101,8 +111,10 @@ final class ExperimentViewModel {
     private func performLoad(url: URL) async {
         crawlDealValidation = nil
         validatedImages = nil
+        rankedHeroImages = nil
         heroImageScore = nil
         isProcessingImages = false
+        isFindingHero = false
 
         switch PageLinkFilter.sourceType(for: url) {
         case .webpage:
@@ -204,6 +216,12 @@ final class ExperimentViewModel {
         isProcessingImages = true
         validatedImages = await crawlImageValidator.validateImages(urls: urls)
         isProcessingImages = false
+    }
+
+    private func performHeroRanking(urls: [URL]) async {
+        isFindingHero = true
+        rankedHeroImages = await heroImageSelector.rankHeroImages(from: urls)
+        isFindingHero = false
     }
     
     func copyMarkdownToClipboard(_ markdown: String) {

@@ -14,6 +14,14 @@ nonisolated struct HeroImageScore: Equatable {
     let skipReason: String?
 }
 
+nonisolated struct RankedHeroImage: Equatable, Identifiable {
+    let url: URL
+    let score: HeroImageScore
+    let rank: Int
+
+    var id: String { "\(rank)-\(url.absoluteString)" }
+}
+
 nonisolated enum HeroImageScorer {
     static let idealAspectRatio: CGFloat = 1.5
     static let minimumTotalScore: CGFloat = 0.3

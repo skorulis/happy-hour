@@ -52,6 +52,7 @@ nonisolated enum FilterKeywords {
         "rump",
         "parma",
         "parmi",
+        "parmy",
         "salad",
         "sandwich",
         "schnitzel",
@@ -70,10 +71,12 @@ nonisolated enum FilterKeywords {
         "bottomless",
         
         // Other
+        "bingo",
         "pool",
         "meat tray",
         "2-4-1",
         "2 for 1",
+        "karaoke",
         "jazz",
     ]
     

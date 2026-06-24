@@ -99,6 +99,25 @@ final class VenueHeroImageSelector {
         )
     }
 
+    func rankHeroImages(from urls: [URL]) async -> [RankedHeroImage] {
+        var scored: [(url: URL, score: HeroImageScore)] = []
+        for url in urls {
+            let score = await scoreHeroImage(url: url)
+            scored.append((url, score))
+        }
+
+        scored.sort { lhs, rhs in
+            if lhs.score.isViable != rhs.score.isViable {
+                return lhs.score.isViable && !rhs.score.isViable
+            }
+            return lhs.score.totalScore > rhs.score.totalScore
+        }
+
+        return scored.enumerated().map { index, item in
+            RankedHeroImage(url: item.url, score: item.score, rank: index + 1)
+        }
+    }
+
     func selectHeroImage(from urls: [URL]) async -> URL? {
         var best: (url: URL, score: CGFloat)?
 
