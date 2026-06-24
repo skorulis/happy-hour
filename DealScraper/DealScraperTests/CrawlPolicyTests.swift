@@ -18,7 +18,7 @@ struct CrawlPolicyTests {
 
     @Test func otherVenuesUseDefaultPageLimit() throws {
         let venueURL = try #require(URLNormalizer.normalize(URL(string: "https://pub.example.com/specials")!))
-        #expect(CrawlPolicy.maxPages(for: venueURL) == 15)
+        #expect(CrawlPolicy.maxPages(for: venueURL) == 20)
     }
 
     @Test func merivaleVenuesSkipSitemap() throws {

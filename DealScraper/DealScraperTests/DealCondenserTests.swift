@@ -146,10 +146,10 @@ struct DealCondenserTests {
         let result = condenser.condense(mapped)
 
         #expect(result.count == 10)
-        #expect(result.filter { $0.deal.title == "$22 STEAK NIGHT" }.count == 1)
+        #expect(result.filter { $0.deal.title == "$22 Steak Night" }.count == 1)
 
-        let steakNight = try #require(result.first { $0.deal.title == "$22 STEAK NIGHT" })
-        #expect(steakNight.deal.details == "Raise\nthe\nSteaks")
+        let steakNight = try #require(result.first { $0.deal.title == "$22 Steak Night" })
+        #expect(steakNight.deal.details == "Raise\nThe\nSteaks")
         #expect(steakNight.deal.conditions?.contains("Conditions Apply") == true)
         #expect(steakNight.deal.conditions?.contains("only available with bar service in our public bar, beer garden and nude") == true)
         #expect(steakNight.deal.creativeURL == "https://example.com/steak-nights.jpg")
@@ -159,16 +159,16 @@ struct DealCondenserTests {
         #expect(steakNight.schedules[0].endMinute == 1_440)
 
         let expectedTitles: Set<String> = [
-            "$15 LUNCH SPECIALS",
-            "$22 STEAK NIGHT",
-            "2-4-1 MEAL DEAL",
-            "TRIVIA NIGHT",
-            "PICK THE JOKER",
-            "$18 BURGERS",
-            "$13 APEROL SPRITZ & $15 ESPRESSO MARTINIS",
-            "SUNDAY ROAST $35",
-            "PETS WELCOME",
-            "MEMBERS HAPPY HOUR",
+            "$15 Lunch Specials",
+            "$22 Steak Night",
+            "2-4-1 Meal Deal",
+            "Trivia Night",
+            "Pick The Joker",
+            "$18 Burgers",
+            "$13 Aperol Spritz & $15 Espresso Martinis",
+            "Sunday Roast $35",
+            "Pets Welcome",
+            "Members Happy Hour",
         ]
         let resultTitles = Set(result.compactMap(\.deal.title))
         #expect(resultTitles == expectedTitles)
@@ -402,8 +402,8 @@ struct DealCondenserShouldMergeTests {
             type: .webpage
         )
         let mapped = try mappedDeals(fixture: "glebe-whats-on", material: material)
-        let burgers = try #require(mapped.first { $0.deal.title == "$18 BURGERS" })
-        let members = try #require(mapped.first { $0.deal.title == "MEMBERS HAPPY HOUR" })
+        let burgers = try #require(mapped.first { $0.deal.title == "$18 Burgers" })
+        let members = try #require(mapped.first { $0.deal.title == "Members Happy Hour" })
 
         #expect(!condenser.shouldMerge(burgers, members))
     }

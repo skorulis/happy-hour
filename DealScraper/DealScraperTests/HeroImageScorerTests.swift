@@ -7,17 +7,21 @@ import Testing
 struct HeroImageScorerTests {
 
     @Test func aspectScorePrefersThreeToTwoRatio() {
-        #expect(abs(HeroImageScorer.aspectScore(width: 1500, height: 1000) - 1) < 0.001)
-        #expect(HeroImageScorer.aspectScore(width: 1000, height: 1000) < 1)
-        #expect(HeroImageScorer.aspectScore(width: 1600, height: 900) < 1)
         #expect(
-            abs(HeroImageScorer.aspectScore(width: 1000, height: 1000) - 2.0 / 3.0) < 0.001
+            abs(HeroImageScorer.aspectScore(width: 1500, height: 1000) - HeroImageScorer.idealAspectRatio)
+                < 0.001
         )
+        #expect(HeroImageScorer.aspectScore(width: 1000, height: 1000) < HeroImageScorer.idealAspectRatio)
+        #expect(
+            abs(HeroImageScorer.aspectScore(width: 1600, height: 900) - HeroImageScorer.idealAspectRatio)
+                < 0.001
+        )
+        #expect(abs(HeroImageScorer.aspectScore(width: 1000, height: 1000) - 1) < 0.001)
     }
 
-    @Test func textScoreInvertsCoverage() {
+    @Test func textScorePenalizesCoverageQuadratically() {
         #expect(HeroImageScorer.textScore(coverageRatio: 0) == 1)
-        #expect(HeroImageScorer.textScore(coverageRatio: 0.5) == 0.5)
+        #expect(HeroImageScorer.textScore(coverageRatio: 0.5) == 0.25)
         #expect(HeroImageScorer.textScore(coverageRatio: 1) == 0)
         #expect(HeroImageScorer.textScore(coverageRatio: 2) == 0)
     }
@@ -36,6 +40,9 @@ struct HeroImageScorerTests {
         #expect(ImageClassifier.isBuildingRelatedIdentifier("building"))
         #expect(ImageClassifier.isBuildingRelatedIdentifier("skyscraper"))
         #expect(ImageClassifier.isBuildingRelatedIdentifier("house_exterior"))
+        #expect(ImageClassifier.isBuildingRelatedIdentifier("structure"))
+        #expect(ImageClassifier.isBuildingRelatedIdentifier("facade"))
+        #expect(ImageClassifier.isBuildingRelatedIdentifier("architecture"))
         #expect(!ImageClassifier.isBuildingRelatedIdentifier("food"))
         #expect(!ImageClassifier.isBuildingRelatedIdentifier("text"))
     }

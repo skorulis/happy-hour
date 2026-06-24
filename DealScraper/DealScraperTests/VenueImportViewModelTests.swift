@@ -11,7 +11,6 @@ struct VenueImportViewModelTests {
     @Test func loadSavedVenuesReadsDatabase() throws {
         let store = SQLStore.inMemory()
         let repository = VenueRepository(store: store)
-        let assembler = DealScraperAssembly.testing()
 
         let place = GooglePlace(
             id: "places/ChIJFromAPI",
@@ -114,7 +113,7 @@ struct VenueImportViewModelTests {
         #expect(viewModel.filteredVenues.map(\.name) == ["Needs Crawl"])
 
         viewModel.venueFilter = .extraction
-        #expect(viewModel.filteredVenues.map(\.name) == ["Needs Crawl", "Needs Extraction"])
+        #expect(viewModel.filteredVenues.map(\.name) == ["Needs Extraction"])
 
         viewModel.venueFilter = .ready
         #expect(viewModel.filteredVenues.map(\.name) == ["Ready Pub"])

@@ -4,11 +4,14 @@ import AppKit
 import ASKCore
 import CoreText
 import Foundation
+import Knit
 import Testing
 @testable import DealScraper
 
 @MainActor
 struct VenueDealSourceMaterialPreparerTests {
+    
+    private let assembler = DealScraperAssembly.testing()
 
     @Test func preparePDFExtractsTextIntoMaterial() async throws {
         let directory = FileManager.default.temporaryDirectory
@@ -45,17 +48,12 @@ struct VenueDealSourceMaterialPreparerTests {
     }
 
     private func makePreparer(cache: CrawlPDFCache) -> VenueDealSourceMaterialPreparer {
-        VenueDealSourceMaterialPreparer(
+        return VenueDealSourceMaterialPreparer(
             imageFetcher: CrawlImageFetcher(
                 cache: CrawlImageCache(directory: FileManager.default.temporaryDirectory
                     .appendingPathComponent(UUID().uuidString, isDirectory: true))
             ),
-            webPageLoader: WebPageLoader(
-                contentBlockGrouper: ContentBlockGrouper(),
-                pageLinkExtractor: PageLinkExtractor(),
-                canonicalURLExtractor: CanonicalURLExtractor(),
-                webMarkdownGenerator: WebMarkdownGenerator()
-            ),
+            webPageLoaderFactory: assembler.resolver.webPageLoaderFactory(),
             pdfFetcher: CrawlPDFFetcher(
                 cache: cache,
                 urlSession: FakeURLSession { _ in

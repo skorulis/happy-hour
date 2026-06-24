@@ -92,6 +92,7 @@ nonisolated enum FilterKeywords {
         "harrypotter",
         "mardigras",
         "melbournecup",
+        "mothersday",
         "mothers day",
         "mothers-day",
         "mother's day",

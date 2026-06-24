@@ -84,6 +84,15 @@ struct PageLinkFilterTests {
         #expect(result.pdfURLs.isEmpty)
         #expect(result.crawlURLs.isEmpty)
     }
+    
+    @Test func excludesMothersDay() {
+        let result = filter.filter(links: [
+            link(text: "Something", url: "https://darlingglebe.com.au/whats-on/mothers-day-2026"),
+        ])
+        
+        #expect(result.pdfURLs.isEmpty)
+        #expect(result.crawlURLs.isEmpty)
+    }
 
     @Test func excludesImageLinkWithKeywordFromCrawlURLs() {
         let result = filter.filter(links: [
