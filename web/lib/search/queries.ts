@@ -65,6 +65,7 @@ function parseVenueFormattedAddress(json: unknown): string | null {
 }
 
 export type VenueDetailResult = VenueSearchResult & {
+  heroImage: string | null;
   suburbName: string | null;
   links: {
     whatsOn: string | null;
@@ -412,6 +413,7 @@ async function buildVenueDetail(
     lat: venueRow.lat,
     lng: venueRow.lng,
     websiteUri: venueRow.websiteUri,
+    heroImage: venueRow.heroImage,
     links: linksRow
       ? {
           whatsOn: linksRow.whatsOn,

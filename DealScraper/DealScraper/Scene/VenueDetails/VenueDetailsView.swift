@@ -105,45 +105,49 @@ struct VenueDetailsView: View {
         let shape = RoundedRectangle(cornerRadius: 8, style: .continuous)
 
         if let heroImageURL = venue.heroImage.flatMap({ URL(string: $0) }) {
-            Color.clear
-                .aspectRatio(3 / 2, contentMode: .fill)
-                .frame(maxWidth: 200)
-                .overlay {
-                    AsyncImage(url: heroImageURL) { phase in
-                        switch phase {
-                        case .empty:
-                            heroImagePlaceholder
-                                .overlay { ProgressView() }
-                        case .success(let image):
-                            image
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                        case .failure:
-                            heroImagePlaceholder
-                                .overlay {
-                                    Image(systemName: "photo")
-                                        .foregroundStyle(.secondary)
-                                }
-                        @unknown default:
-                            EmptyView()
+            Link(destination: heroImageURL) {
+                Color.clear
+                    .aspectRatio(3 / 2, contentMode: .fill)
+                    .frame(maxWidth: 200)
+                    .overlay {
+                        AsyncImage(url: heroImageURL) { phase in
+                            switch phase {
+                            case .empty:
+                                heroImagePlaceholder
+                                    .overlay { ProgressView() }
+                            case .success(let image):
+                                image
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                            case .failure:
+                                heroImagePlaceholder
+                                    .overlay {
+                                        Image(systemName: "photo")
+                                            .foregroundStyle(.secondary)
+                                    }
+                            @unknown default:
+                                EmptyView()
+                            }
                         }
                     }
-                }
-                .clipShape(shape)
-                .overlay(alignment: .topTrailing) {
-                    if viewModel.canClearHeroImage {
-                        Button {
-                            viewModel.clearHeroImage()
-                        } label: {
-                            Image(systemName: "minus.circle.fill")
-                                .font(.title2)
-                                .symbolRenderingMode(.palette)
-                                .foregroundStyle(.white, .red)
-                        }
-                        .buttonStyle(.plain)
-                        .padding(6)
+                    .clipShape(shape)
+            }
+            .buttonStyle(.plain)
+            .help("Open image in browser")
+            .overlay(alignment: .topTrailing) {
+                if viewModel.canClearHeroImage {
+                    Button {
+                        viewModel.clearHeroImage()
+                    } label: {
+                        Image(systemName: "minus.circle.fill")
+                            .font(.title2)
+                            .symbolRenderingMode(.palette)
+                            .foregroundStyle(.white, .red)
                     }
+                    .buttonStyle(.plain)
+                    .padding(6)
                 }
+            }
         } else {
             heroImagePlaceholder
                 .aspectRatio(3 / 2, contentMode: .fit)

@@ -24,7 +24,34 @@ export function VenuePageContent({ venue }: VenuePageContentProps) {
         </Link>
       </div>
 
-      <header className="space-y-3">
+      <header className="space-y-4">
+        {venue.heroImage ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={venue.heroImage}
+            alt={venue.name}
+            className="aspect-[21/9] w-full rounded-xl object-cover"
+          />
+        ) : (
+          <div
+            aria-hidden
+            className="flex aspect-[21/9] w-full items-center justify-center rounded-xl border border-dashed border-zinc-300 bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              className="h-14 w-14 text-zinc-400 dark:text-zinc-600"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M2.25 21h19.5M3.75 21V9.75m16.5 11.25V9.75M4.5 9.75 12 3.75l7.5 6M9 21v-4.5h6V21"
+              />
+            </svg>
+          </div>
+        )}
         <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">
           {venue.name}
         </h1>
