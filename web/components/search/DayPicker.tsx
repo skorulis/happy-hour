@@ -49,7 +49,11 @@ function Checkbox({
   badge?: string;
 }) {
   return (
-    <label className="flex cursor-pointer items-center gap-2 py-1.5 text-sm text-zinc-800 dark:text-zinc-200">
+    <label
+      className={`flex cursor-pointer gap-2 py-1.5 text-sm text-zinc-800 dark:text-zinc-200 ${
+        badge ? "items-start" : "items-center"
+      }`}
+    >
       <span
         className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
           checked
@@ -69,10 +73,10 @@ function Checkbox({
         onChange={onChange}
         className="sr-only"
       />
-      <span className="flex items-center gap-2">
-        {label}
+      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <span>{label}</span>
         {badge ? (
-          <span className="rounded bg-amber-600 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+          <span className="self-start rounded bg-amber-600 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
             {badge}
           </span>
         ) : null}
@@ -180,7 +184,7 @@ export function DayPicker({ days, timeRange, onApply }: DayPickerProps) {
       {open ? (
         <div className="absolute left-0 z-20 mt-2 w-72 rounded-xl border border-zinc-200 bg-white p-4 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
           <div className="grid grid-cols-2 gap-x-4">
-            <div>
+            <div className="min-w-0">
               {leftColumn.map((day) => (
                 <Checkbox
                   key={day}
@@ -191,7 +195,7 @@ export function DayPicker({ days, timeRange, onApply }: DayPickerProps) {
                 />
               ))}
             </div>
-            <div>
+            <div className="min-w-0">
               {rightColumn.map((day) => (
                 <Checkbox
                   key={day}
