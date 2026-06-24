@@ -67,6 +67,14 @@ struct PageLinkFilterTests {
         #expect(result.crawlURLs.isEmpty)
     }
 
+    @Test func excludesMonthSpecificLink() {
+        let result = filter.filter(links: [
+            link(text: "October Specials", url: "https://pub.example.com/whats-on/october-specials"),
+        ])
+
+        #expect(result.crawlURLs.isEmpty)
+    }
+
     @Test func includesGeneralEventsLink() {
         let result = filter.filter(links: [
             link(text: "Events", url: "https://pub.example.com/events"),

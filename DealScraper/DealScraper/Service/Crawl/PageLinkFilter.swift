@@ -40,6 +40,9 @@ struct PageLinkFilter {
         if Self.isYearSpecificEventsLink(link.url) {
             return false
         }
+        if Self.isMonthSpecificLink(link.url) {
+            return false
+        }
         let context = linkContext(link)
         if FilterKeywords.containsExcludedKeyword(context) {
             return false
@@ -75,6 +78,35 @@ struct PageLinkFilter {
     private func linkContext(_ link: ContentBlockLink) -> String {
         let text = link.text ?? ""
         return "\(text) \(link.url.path) \(link.url.absoluteString)"
+    }
+
+    private static let monthComponents: Set<String> = [
+        "january", "jan",
+        "february", "feb",
+        "march", "mar",
+        "april", "apr",
+        "may",
+        "june", "jun",
+        "july", "jul",
+        "august", "aug",
+        "september", "sep", "sept",
+        "october", "oct",
+        "november", "nov",
+        "december", "dec",
+    ]
+
+    private static func isMonthSpecificLink(_ url: URL) -> Bool {
+        let components = url.path.split(separator: "/").map { String($0).lowercased() }
+        for component in components {
+            if monthComponents.contains(component) {
+                return true
+            }
+            let segments = component.split(separator: "-").map(String.init)
+            if segments.contains(where: { monthComponents.contains($0) }) {
+                return true
+            }
+        }
+        return false
     }
 
     private static func isYearSpecificEventsLink(_ url: URL) -> Bool {
