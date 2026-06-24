@@ -10,6 +10,10 @@ struct DealTimeParserTests {
         #expect(DealTimeParser.parse(["FROM 4-6PM"]) == [.between(16 * 60, 18 * 60)])
     }
 
+    @Test func parsesCompactTimeRangeWithTrailingPunctuation() {
+        #expect(DealTimeParser.parse(["2-4pm!"]) == [.between(14 * 60, 16 * 60)])
+    }
+
     @Test func parsesTimeRangeFromRawDealTimes() throws {
         let raw = DealExtractionPayload.RawDeal(
             title: "HAPPY HOUR",

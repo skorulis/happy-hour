@@ -280,6 +280,61 @@ struct DealMapperTests {
         #expect(deal.details == ["Raise the steaks"])
     }
 
+    @Test func replacesDayOnlyTitleWithFirstDetailLine() throws {
+        let raw = DealExtractionPayload.RawDeal(
+            title: "Monday",
+            details: ["$5 BEERS", "Selected tap beers only"],
+            days: ["MONDAY"],
+            times: ["4PM - 6PM"]
+        )
+
+        let deal = try #require(DealMapper.map([raw]).first)
+
+        #expect(deal.title == "$5 Beers")
+        #expect(deal.details == ["Selected tap beers only"])
+    }
+
+    @Test func replacesDayOnlyTitleWithFirstLineOfMultilineDetail() throws {
+        let raw = DealExtractionPayload.RawDeal(
+            title: "TUESDAY",
+            details: ["STEAK NIGHT\n$22 PREMIUM CUT"],
+            days: ["TUESDAY"],
+            times: ["all day"]
+        )
+
+        let deal = try #require(DealMapper.map([raw]).first)
+
+        #expect(deal.title == "Steak Night")
+        #expect(deal.details == ["$22 Premium cut"])
+    }
+
+    @Test func rejectsDayOnlyTitleWhenDetailsAreEmpty() {
+        let raw = DealExtractionPayload.RawDeal(
+            title: "Wednesday",
+            details: [],
+            conditions: ["Bar service only"],
+            days: ["WEDNESDAY"],
+            times: ["all day"]
+        )
+
+        let deals = DealMapper.map([raw])
+
+        #expect(deals.isEmpty)
+    }
+
+    @Test func keepsNonDayOnlyTitlesUnchanged() throws {
+        let raw = DealExtractionPayload.RawDeal(
+            title: "CHEESEBURGER TUESDAYS",
+            details: ["TEN DOLLAR BEEF OR VEGAN CHEESEBURGERS WITH CHIPS"],
+            days: ["TUESDAY"],
+            times: ["all day"]
+        )
+
+        let deal = try #require(DealMapper.map([raw]).first)
+
+        #expect(deal.title == "Cheeseburger Tuesdays")
+    }
+
     @Test func sentenceCasesMultilineDetails() throws {
         let raw = DealExtractionPayload.RawDeal(
             title: "STEAK NIGHT",

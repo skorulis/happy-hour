@@ -12,9 +12,7 @@ nonisolated enum DealHours: Equatable, Hashable {
     private static let maxMinutes = 1260 // 9 PM
 
     static func toMinutes(string: String) -> Int? {
-        let normalized = string
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .lowercased()
+        let normalized = normalizeTimeComponent(string)
         guard !normalized.isEmpty else { return nil }
 
         let pattern = #"^(\d{1,2})(?:[:.](\d{2}))?\s*(am|pm)?$"#
@@ -97,9 +95,11 @@ nonisolated enum DealHours: Equatable, Hashable {
     }
 
     static func parse(_ string: String) -> DealHours? {
-        var normalized = string
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .replacingOccurrences(of: "–", with: "-")
+        var normalized = normalizeTimeComponent(
+            string
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .replacingOccurrences(of: "–", with: "-")
+        )
         guard !normalized.isEmpty else { return nil }
 
         let lowercased = normalized.lowercased()
@@ -111,8 +111,6 @@ nonisolated enum DealHours: Equatable, Hashable {
                 .trimmingCharacters(in: .whitespacesAndNewlines)
         }
         guard !normalized.isEmpty else { return nil }
-
-        normalized = normalized.lowercased()
 
         if normalized == "all day" || normalized == "all-day" || normalized == "allday" {
             return .allDay
@@ -132,5 +130,15 @@ nonisolated enum DealHours: Equatable, Hashable {
 
         guard let minutes = toMinutes(string: normalized) else { return nil }
         return .from(minutes)
+    }
+
+    private static func normalizeTimeComponent(_ string: String) -> String {
+        var normalized = string
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+        while let last = normalized.last, last.isPunctuation || last.isSymbol {
+            normalized.removeLast()
+        }
+        return normalized
     }
 }

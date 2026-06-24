@@ -22,6 +22,8 @@ nonisolated enum DealMapper {
         var details = deal.details
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
+        guard let dayOnlyResolved = withDayOnlyTitle(title: title, details: details) else { return nil }
+        (title, details) = dayOnlyResolved
         (title, details) = withLeadingPriceInTitle(title: title, details: details)
         title = titleCased(title)
         details = details.map(sentenceCased)
@@ -42,6 +44,39 @@ nonisolated enum DealMapper {
                 times: times
             )
         )
+    }
+
+    private static func withDayOnlyTitle(title: String, details: [String]) -> (title: String, details: [String])? {
+        guard DealDay.parse(title) != nil else {
+            return (title, details)
+        }
+        guard let (firstLine, remainingDetails) = popFirstDetailLine(from: details) else {
+            return nil
+        }
+        return (firstLine, remainingDetails)
+    }
+
+    private static func popFirstDetailLine(from details: [String]) -> (line: String, remaining: [String])? {
+        for (index, detail) in details.enumerated() {
+            let lines = detail.components(separatedBy: .newlines)
+            for (lineIndex, line) in lines.enumerated() {
+                let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !trimmed.isEmpty else { continue }
+
+                var remaining = details
+                remaining.remove(at: index)
+
+                let trailingLines = lines[(lineIndex + 1)...]
+                    .joined(separator: "\n")
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                if !trailingLines.isEmpty {
+                    remaining.insert(trailingLines, at: index)
+                }
+
+                return (trimmed, remaining)
+            }
+        }
+        return nil
     }
 
     private static func withLeadingPriceInTitle(title: String, details: [String]) -> (title: String, details: [String]) {
