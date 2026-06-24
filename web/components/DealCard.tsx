@@ -11,9 +11,15 @@ type DealCardProps = {
   deal: DealSearchResult;
   showVenue?: boolean;
   dayOfWeek?: number;
+  id?: string;
 };
 
-export function DealCard({ deal, showVenue = true, dayOfWeek }: DealCardProps) {
+export function DealCard({
+  deal,
+  showVenue = true,
+  dayOfWeek,
+  id,
+}: DealCardProps) {
   const daySchedules =
     dayOfWeek !== undefined
       ? schedulesForDay(deal.schedules, dayOfWeek)
@@ -22,7 +28,10 @@ export function DealCard({ deal, showVenue = true, dayOfWeek }: DealCardProps) {
     dayOfWeek !== undefined ? formatDealTimeBadge(daySchedules) : null;
 
   return (
-    <article className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+    <article
+      id={id}
+      className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-950"
+    >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">

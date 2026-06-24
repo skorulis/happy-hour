@@ -7,6 +7,8 @@ struct VenueDetailsView: View {
 
     @State var viewModel: VenueDetailsViewModel
     @State private var selectedTab: VenueDetailsTab = .details
+    @State private var showHeroImageURLPrompt = false
+    @State private var heroImageURLString = ""
 
     var body: some View {
         Group {
@@ -22,6 +24,19 @@ struct VenueDetailsView: View {
         }
         .frame(minWidth: 360, minHeight: 400)
         .navigationTitle(viewModel.venue.map(venueTitle) ?? "Venue")
+        .alert("Hero Image URL", isPresented: $showHeroImageURLPrompt) {
+            TextField("URL", text: $heroImageURLString)
+            Button("Cancel", role: .cancel) {
+                heroImageURLString = ""
+            }
+            Button("Save") {
+                viewModel.setHeroImage(urlString: heroImageURLString)
+                heroImageURLString = ""
+            }
+            .disabled(!isValidHeroImageURL(heroImageURLString))
+        } message: {
+            Text("Enter the URL for the hero image.")
+        }
     }
 
     private func venueContent(_ venue: Venue) -> some View {
@@ -133,7 +148,26 @@ struct VenueDetailsView: View {
             heroImagePlaceholder
                 .aspectRatio(3 / 2, contentMode: .fit)
                 .frame(maxWidth: 200)
+                .overlay {
+                    Button {
+                        heroImageURLString = ""
+                        showHeroImageURLPrompt = true
+                    } label: {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.title)
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                }
         }
+    }
+
+    private func isValidHeroImageURL(_ string: String) -> Bool {
+        let trimmed = string.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, let url = URL(string: trimmed), url.scheme != nil else {
+            return false
+        }
+        return true
     }
 
     private var heroImagePlaceholder: some View {

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { DealCard } from "@/components/DealCard";
 import type { VenueDetailResult } from "@/lib/search/queries";
 import { groupDealsByDay } from "@/lib/search/schedule";
+import { dealAnchorId } from "@/lib/search/slugs";
 
 type VenuePageContentProps = {
   venue: VenueDetailResult;
@@ -10,6 +11,7 @@ type VenuePageContentProps = {
 export function VenuePageContent({ venue }: VenuePageContentProps) {
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${venue.lat},${venue.lng}`;
   const dealsByDay = groupDealsByDay(venue.deals);
+  const anchoredDealIds = new Set<number>();
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-10">
@@ -94,14 +96,24 @@ export function VenuePageContent({ venue }: VenuePageContentProps) {
                   {dayLabel}
                 </h3>
                 <div className="grid gap-4">
-                  {deals.map((deal) => (
-                    <DealCard
-                      key={`${dayOfWeek}-${deal.id}`}
-                      deal={deal}
-                      showVenue={false}
-                      dayOfWeek={dayOfWeek}
-                    />
-                  ))}
+                  {deals.map((deal) => {
+                    const anchorId = anchoredDealIds.has(deal.id)
+                      ? undefined
+                      : dealAnchorId(deal.id);
+                    if (anchorId) {
+                      anchoredDealIds.add(deal.id);
+                    }
+
+                    return (
+                      <DealCard
+                        key={`${dayOfWeek}-${deal.id}`}
+                        id={anchorId}
+                        deal={deal}
+                        showVenue={false}
+                        dayOfWeek={dayOfWeek}
+                      />
+                    );
+                  })}
                 </div>
               </div>
             ))}

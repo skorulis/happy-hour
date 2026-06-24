@@ -130,6 +130,25 @@ final class VenueDetailsViewModel {
         }
     }
 
+    func setHeroImage(urlString: String) {
+        guard let venueId = venue?.id else { return }
+
+        let trimmed = urlString.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty,
+              let url = URL(string: trimmed),
+              url.scheme != nil
+        else {
+            return
+        }
+
+        do {
+            try venueRepository.updateHeroImage(venueId: venueId, url: trimmed)
+            load()
+        } catch {
+            // Keep the current UI state if persistence fails.
+        }
+    }
+
     func crawlWebsite() {
         guard let venueId = venue?.id, canCrawl else { return }
 
