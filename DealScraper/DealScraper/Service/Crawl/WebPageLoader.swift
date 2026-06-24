@@ -42,6 +42,14 @@ enum WebPageLoaderError: LocalizedError {
     }
 }
 
+struct WebPageLoaderFactory {
+    let resolver: Resolver
+    
+    func make() -> WebPageLoader {
+        WebPageLoader.make(resolver: resolver)
+    }
+}
+
 @MainActor
 final class WebPageLoader: NSObject {
 

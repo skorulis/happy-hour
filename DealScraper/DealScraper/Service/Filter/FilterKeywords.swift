@@ -109,8 +109,11 @@ nonisolated enum FilterKeywords {
         "theashes",
         "tonight",
         "tournament",
+        "ufc",
         "valentines",
         "xmas",
+        "/post",
+        "/blog",
     ]
     
     static func containsDealKeyword(_ text: String) -> Bool {

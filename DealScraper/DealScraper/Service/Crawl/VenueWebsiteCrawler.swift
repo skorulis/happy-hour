@@ -29,7 +29,7 @@ enum VenueWebsiteCrawlerError: LocalizedError {
 @MainActor
 final class VenueWebsiteCrawler {
     
-    private let pageLoader: WebPageLoader
+    private let pageLoaderFactory: WebPageLoaderFactory
     private let pageLinkFilter: PageLinkFilter
     private let siteMapExtractor: SiteMapExtractor
     private let venueLinkExtractor: VenueLinkExtractor
@@ -44,7 +44,7 @@ final class VenueWebsiteCrawler {
     
     @Resolvable<Resolver>
     init(
-        pageLoader: WebPageLoader,
+        pageLoaderFactory: WebPageLoaderFactory,
         pageLinkFilter: PageLinkFilter,
         siteMapExtractor: SiteMapExtractor,
         venueLinkExtractor: VenueLinkExtractor,
@@ -57,7 +57,7 @@ final class VenueWebsiteCrawler {
         venueRepository: VenueRepository,
         venueLinksRepository: VenueLinksRepository
     ) {
-        self.pageLoader = pageLoader
+        self.pageLoaderFactory = pageLoaderFactory
         self.pageLinkFilter = pageLinkFilter
         self.siteMapExtractor = siteMapExtractor
         self.venueLinkExtractor = venueLinkExtractor
@@ -115,6 +115,7 @@ final class VenueWebsiteCrawler {
                 pdfSourceURLs[pdfURL] = baseURL
             }
         }
+        let pageLoader = pageLoaderFactory.make()
 
         while !queue.isEmpty, visited.count < maxPages {
             try Task.checkCancellation()

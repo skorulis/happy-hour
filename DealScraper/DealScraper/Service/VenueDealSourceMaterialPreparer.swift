@@ -31,19 +31,19 @@ final class VenueDealSourceMaterialPreparer {
     static let maxSources = 30
 
     private let imageFetcher: CrawlImageFetcher
-    private let webPageLoader: WebPageLoader
+    private let webPageLoaderFactory: WebPageLoaderFactory
     private let pdfFetcher: CrawlPDFFetcher
     private let pdfTextExtractor: PDFTextExtractor
 
     @Resolvable<Resolver>
     init(
         imageFetcher: CrawlImageFetcher,
-        webPageLoader: WebPageLoader,
+        webPageLoaderFactory: WebPageLoaderFactory,
         pdfFetcher: CrawlPDFFetcher,
         pdfTextExtractor: PDFTextExtractor
     ) {
         self.imageFetcher = imageFetcher
-        self.webPageLoader = webPageLoader
+        self.webPageLoaderFactory = webPageLoaderFactory
         self.pdfFetcher = pdfFetcher
         self.pdfTextExtractor = pdfTextExtractor
     }
@@ -166,6 +166,7 @@ final class VenueDealSourceMaterialPreparer {
         dealSourceId: Int64 = 0,
         index: Int = 1
     ) async throws -> VenueDealSourceMaterial {
+        let webPageLoader = webPageLoaderFactory.make()
         let page = try await webPageLoader.load(url: url)
         guard let markdown = page.markdown,
               !markdown.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty

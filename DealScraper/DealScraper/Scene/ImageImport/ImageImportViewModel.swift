@@ -28,17 +28,17 @@ final class ImageImportViewModel {
     }
 
     private let venueDealExtractionService: VenueDealExtractionService
-    private let webPageLoader: WebPageLoader
+    private let webPageLoaderFactory: WebPageLoaderFactory
     private let llmModelStore: LLMModelStore
 
     @Resolvable<Resolver>
     init(
         venueDealExtractionService: VenueDealExtractionService,
-        webPageLoader: WebPageLoader,
+        webPageLoaderFactory: WebPageLoaderFactory,
         llmModelStore: LLMModelStore
     ) {
         self.venueDealExtractionService = venueDealExtractionService
-        self.webPageLoader = webPageLoader
+        self.webPageLoaderFactory = webPageLoaderFactory
         self.llmModelStore = llmModelStore
         openRouterModel = llmModelStore.openRouterModel
     }

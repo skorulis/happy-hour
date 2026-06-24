@@ -35,7 +35,7 @@ final class ExperimentViewModel {
     private(set) var isProcessingImages = false
     private(set) var heroImageScore: HeroImageScore?
 
-    private let webPageLoader: WebPageLoader
+    private let webPageLoaderFactory: WebPageLoaderFactory
     private let crawlImageValidator: CrawlImageValidator
     private let heroImageSelector: VenueHeroImageSelector
     private let imageFetcher: CrawlImageFetcher
@@ -45,7 +45,7 @@ final class ExperimentViewModel {
 
     @Resolvable<Resolver>
     init(
-        webPageLoader: WebPageLoader,
+        webPageLoaderFactory: WebPageLoaderFactory,
         crawlImageValidator: CrawlImageValidator,
         heroImageSelector: VenueHeroImageSelector,
         imageFetcher: CrawlImageFetcher,
@@ -53,7 +53,7 @@ final class ExperimentViewModel {
         pdfFetcher: CrawlPDFFetcher,
         pdfTextExtractor: PDFTextExtractor
     ) {
-        self.webPageLoader = webPageLoader
+        self.webPageLoaderFactory = webPageLoaderFactory
         self.crawlImageValidator = crawlImageValidator
         self.heroImageSelector = heroImageSelector
         self.imageFetcher = imageFetcher
@@ -119,6 +119,7 @@ final class ExperimentViewModel {
 
     private func loadWebpage(url: URL) async {
         do {
+            let webPageLoader = webPageLoaderFactory.make()
             let page = try await webPageLoader.load(url: url)
             crawlDealValidation = validateWebpageForCrawl(page)
             state = .loaded(.page(page))
