@@ -24,16 +24,20 @@ nonisolated enum FilterKeywords {
     ]
     
     static let productKeywords: [String] = [
-        "wine",
+        // drinks
         "beer",
-        "jug",
-        "pints",
-        "marg",
         "cocktails",
-        "spritz",
-        "martini",
         "drinks",
+        "guinness",
+        "jug",
+        "marg",
+        "martini",
+        "negroni",
+        "pints",
+        "porter",
         "rose",
+        "spritz",
+        "wine",
         
         // Food
         "burger",
@@ -43,14 +47,18 @@ nonisolated enum FilterKeywords {
         "meal",
         "pasta",
         "pizza",
+        "porterhouse",
         "roast",
         "rump",
+        "parma",
+        "parmi",
         "salad",
         "sandwich",
         "schnitzel",
         "schnitty",
         "sirloin",
         "steak",
+        "taco",
         "wings",
         
         // Events
@@ -100,7 +108,8 @@ nonisolated enum FilterKeywords {
         "seinfeld",
         "simpsons",
         "fifa",
-        "footy"
+        "footy",
+        "stpatricks"
     ]
     
     static func containsDealKeyword(_ text: String) -> Bool {

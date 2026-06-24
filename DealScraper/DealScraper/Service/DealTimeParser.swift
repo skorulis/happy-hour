@@ -60,7 +60,10 @@ nonisolated enum DealTimeParser {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
 
-        let fromTillPattern = #"(?i)from\s+(\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?)\s+(?:till|until)\s+(\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?)"#
+        let time = #"\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?"#
+        let till = #"(?:'?(?:till|til)|until)"#
+
+        let fromTillPattern = #"(?i)from\s+(\#(time))\s+\#(till)\s+(\#(time))"#
         if let regex = try? NSRegularExpression(pattern: fromTillPattern),
            let match = regex.firstMatch(in: trimmed, range: NSRange(trimmed.startIndex..., in: trimmed)),
            let startRange = Range(match.range(at: 1), in: trimmed),
@@ -70,7 +73,17 @@ nonisolated enum DealTimeParser {
             return .between(start, end)
         }
 
-        let tillOnlyPattern = #"(?i)(?:till|until)\s+(\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?)"#
+        let tillRangePattern = #"(?i)(\#(time))\s+\#(till)\s+(\#(time))"#
+        if let regex = try? NSRegularExpression(pattern: tillRangePattern),
+           let match = regex.firstMatch(in: trimmed, range: NSRange(trimmed.startIndex..., in: trimmed)),
+           let startRange = Range(match.range(at: 1), in: trimmed),
+           let endRange = Range(match.range(at: 2), in: trimmed),
+           let start = DealHours.toMinutes(string: String(trimmed[startRange])),
+           let end = DealHours.toMinutes(string: String(trimmed[endRange])) {
+            return .between(start, end)
+        }
+
+        let tillOnlyPattern = #"(?i)\#(till)\s+(\#(time))"#
         if let regex = try? NSRegularExpression(pattern: tillOnlyPattern),
            let match = regex.firstMatch(in: trimmed, range: NSRange(trimmed.startIndex..., in: trimmed)),
            let endRange = Range(match.range(at: 1), in: trimmed),
