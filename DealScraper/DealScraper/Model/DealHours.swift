@@ -102,7 +102,11 @@ nonisolated enum DealHours: Equatable, Hashable {
             .replacingOccurrences(of: "–", with: "-")
         guard !normalized.isEmpty else { return nil }
 
-        if normalized.lowercased().hasPrefix("from ") {
+        let lowercased = normalized.lowercased()
+        if lowercased.hasPrefix("available from ") {
+            normalized = String(normalized.dropFirst("available from ".count))
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+        } else if lowercased.hasPrefix("from ") {
             normalized = String(normalized.dropFirst(5))
                 .trimmingCharacters(in: .whitespacesAndNewlines)
         }
