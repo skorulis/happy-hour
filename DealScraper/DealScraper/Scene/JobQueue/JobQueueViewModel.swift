@@ -110,6 +110,20 @@ final class JobQueueViewModel: CoordinatorViewModel {
         }
     }
 
+    private static func crawlPrioritySort(_ lhs: Venue, _ rhs: Venue) -> Bool {
+        switch (lhs.lastCrawlDate, rhs.lastCrawlDate) {
+        case (nil, nil):
+            return (lhs.id ?? .max) < (rhs.id ?? .max)
+        case (nil, .some):
+            return true
+        case (.some, nil):
+            return false
+        case let (.some(lhsDate), .some(rhsDate)):
+            if lhsDate != rhsDate { return lhsDate < rhsDate }
+            return (lhs.id ?? .max) < (rhs.id ?? .max)
+        }
+    }
+
     private static func sortOrder(for status: JobStatus) -> Int {
         switch status {
         case .running:
@@ -127,7 +141,7 @@ final class JobQueueViewModel: CoordinatorViewModel {
         else { return nil }
 
         return venues
-            .sorted { ($0.id ?? .max) < ($1.id ?? .max) }
+            .sorted(by: Self.crawlPrioritySort)
             .first { venue in
                 guard let venueId = venue.id,
                       venue.status != .broken,

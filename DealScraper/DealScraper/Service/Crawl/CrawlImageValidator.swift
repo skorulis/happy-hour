@@ -9,7 +9,8 @@ import ImageIO
 @MainActor
 final class CrawlImageValidator {
 
-    private static let minimumPixelDimension: CGFloat = 500
+    private static let minimumPixelWidth: CGFloat = 470
+    private static let minimumPixelHeight: CGFloat = 500
 
     private let fetcher: CrawlImageFetcher
     private let imageExtractor: DealImageExtractor
@@ -81,8 +82,8 @@ final class CrawlImageValidator {
     }
 
     private static func meetsMinimumDimensions(dimensions: CGSize) -> Bool {
-        return dimensions.width >= minimumPixelDimension
-            && dimensions.height >= minimumPixelDimension
+        return dimensions.width >= minimumPixelWidth
+            && dimensions.height >= minimumPixelHeight
     }
 
     private static func imagePixelDimensions(at url: URL) -> CGSize? {
