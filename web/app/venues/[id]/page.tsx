@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DealCard } from "@/components/DealCard";
 import { getVenueDetail } from "@/lib/search/queries";
+import { groupDealsByDay } from "@/lib/search/schedule";
 
 type VenuePageProps = {
   params: Promise<{ id: string }>;
@@ -22,6 +23,7 @@ export default async function VenuePage({ params }: VenuePageProps) {
   }
 
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${venue.lat},${venue.lng}`;
+  const dealsByDay = groupDealsByDay(venue.deals);
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-10">
@@ -94,14 +96,28 @@ export default async function VenuePage({ params }: VenuePageProps) {
         <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
           Deals ({venue.deals.length})
         </h2>
-        {venue.deals.length === 0 ? (
+        {dealsByDay.length === 0 ? (
           <p className="rounded-xl border border-dashed border-zinc-300 px-4 py-8 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
             No approved deals have been synced for this venue yet.
           </p>
         ) : (
-          <div className="grid gap-4">
-            {venue.deals.map((deal) => (
-              <DealCard key={deal.id} deal={deal} showVenue={false} />
+          <div className="space-y-8">
+            {dealsByDay.map(({ dayOfWeek, dayLabel, deals }) => (
+              <div key={dayOfWeek} className="space-y-4">
+                <h3 className="text-2xl font-bold text-zinc-700 dark:text-zinc-300">
+                  {dayLabel}
+                </h3>
+                <div className="grid gap-4">
+                  {deals.map((deal) => (
+                    <DealCard
+                      key={`${dayOfWeek}-${deal.id}`}
+                      deal={deal}
+                      showVenue={false}
+                      dayOfWeek={dayOfWeek}
+                    />
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         )}

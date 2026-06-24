@@ -95,11 +95,41 @@ export function formatMinute(minute: number): string {
   return `${hours12}:${minutes.toString().padStart(2, "0")}${suffix}`;
 }
 
-type ScheduleSlice = {
+export type ScheduleSlice = {
   dayOfWeek: number;
   startMinute: number;
   endMinute: number;
 };
+
+export function schedulesForDay(
+  schedules: ScheduleSlice[],
+  dayOfWeek: number,
+): ScheduleSlice[] {
+  return schedules.filter((schedule) => schedule.dayOfWeek === dayOfWeek);
+}
+
+export function groupDealsByDay<T extends { id: number; schedules: ScheduleSlice[] }>(
+  deals: T[],
+): Array<{ dayOfWeek: number; dayLabel: string; deals: T[] }> {
+  const dealsByDay = new Map<number, T[]>();
+
+  for (const deal of deals) {
+    const days = [...new Set(deal.schedules.map((schedule) => schedule.dayOfWeek))];
+    for (const day of days) {
+      const existing = dealsByDay.get(day) ?? [];
+      if (!existing.some((item) => item.id === deal.id)) {
+        existing.push(deal);
+        dealsByDay.set(day, existing);
+      }
+    }
+  }
+
+  return WEEKDAY_UI_ORDER.filter((day) => dealsByDay.has(day)).map((day) => ({
+    dayOfWeek: day,
+    dayLabel: DAY_LABELS[day] ?? `Day ${day}`,
+    deals: dealsByDay.get(day) ?? [],
+  }));
+}
 
 function weekdaySort(a: number, b: number): number {
   return (
