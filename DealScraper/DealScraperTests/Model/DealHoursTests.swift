@@ -88,6 +88,12 @@ struct DealHoursTests {
     @Test func fromStringParsesTimeRange() {
         #expect(DealHours.fromString("4PM - 6PM") == .between(960, 1080))
         #expect(DealHours.fromString("4 PM - 6 PM") == .between(960, 1080))
+        #expect(DealHours.fromString("FROM 4-6PM") == .between(960, 1080))
+    }
+
+    @Test func parseFromPrefixedCompactTimeRange() {
+        #expect(DealHours.parse("FROM 4-6PM") == .between(960, 1080))
+        #expect(DealHours.parse("from 4-6pm") == .between(960, 1080))
     }
 
     @Test func fromStringReturnsNilForUnparseableInput() {

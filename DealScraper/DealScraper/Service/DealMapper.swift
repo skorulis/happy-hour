@@ -31,7 +31,7 @@ nonisolated enum DealMapper {
         guard !title.isEmpty || !details.isEmpty || !conditions.isEmpty else { return nil }
 
         let days = deal.days.flatMap { DealDay.parseAll(in: $0) }
-        let times = parseTimes(deal.times)
+        let times = DealTimeParser.parse(deal.times)
 
         return deduplicated(
             LegacyDeal(
@@ -158,44 +158,12 @@ nonisolated enum DealMapper {
         return trimmed
     }
 
-    private static func parseTimes(_ strings: [String]) -> [DealHours] {
-        let trimmed = strings
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
-        guard !trimmed.isEmpty else { return [] }
-
-        if trimmed.allSatisfy({ isAllDayToken($0) }) {
-            return [.allDay]
-        }
-
-        var times: [DealHours] = []
-        for string in trimmed {
-            if let time = parseTillOrUntilTime(in: string) {
-                times.append(time)
-            } else if let time = DealHours.parse(string) {
-                times.append(time)
-            } else {
-                times.append(contentsOf: timesInText(string))
-            }
-        }
-        return Array(Set(times))
-    }
-
-    private static func isAllDayToken(_ string: String) -> Bool {
-        switch string.lowercased() {
-        case "all day", "all-day", "allday":
-            return true
-        default:
-            return false
-        }
-    }
-
     private nonisolated static func supplementTimes(from texts: [String], into deal: LegacyDeal) -> LegacyDeal {
         guard deal.times.isEmpty else { return deal }
 
         var times: [DealHours] = []
         for text in texts {
-            times.append(contentsOf: timesInText(text))
+            times.append(contentsOf: DealTimeParser.timesInText(text))
         }
 
         let resolvedTimes = times.isEmpty ? [DealHours.allDay] : Array(Set(times))
@@ -207,51 +175,6 @@ nonisolated enum DealMapper {
             days: deal.days,
             times: resolvedTimes
         )
-    }
-
-    private static func timesInText(_ text: String) -> [DealHours] {
-        if let time = parseTillOrUntilTime(in: text) {
-            return [time]
-        }
-        if let time = DealHours.parse(text) {
-            return [time]
-        }
-
-        let pattern = #"(?i)(?<!\d)(\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?)(?!\d)"#
-        guard let regex = try? NSRegularExpression(pattern: pattern) else { return [] }
-
-        let range = NSRange(text.startIndex..., in: text)
-        let matches = regex.matches(in: text, range: range)
-
-        return matches.compactMap { match in
-            guard let matchRange = Range(match.range(at: 1), in: text) else { return nil }
-            return DealHours.parse(String(text[matchRange]))
-        }
-    }
-
-    private static func parseTillOrUntilTime(in text: String) -> DealHours? {
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return nil }
-
-        let fromTillPattern = #"(?i)from\s+(\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?)\s+(?:till|until)\s+(\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?)"#
-        if let regex = try? NSRegularExpression(pattern: fromTillPattern),
-           let match = regex.firstMatch(in: trimmed, range: NSRange(trimmed.startIndex..., in: trimmed)),
-           let startRange = Range(match.range(at: 1), in: trimmed),
-           let endRange = Range(match.range(at: 2), in: trimmed),
-           let start = DealHours.toMinutes(string: String(trimmed[startRange])),
-           let end = DealHours.toMinutes(string: String(trimmed[endRange])) {
-            return .between(start, end)
-        }
-
-        let tillOnlyPattern = #"(?i)(?:till|until)\s+(\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?)"#
-        if let regex = try? NSRegularExpression(pattern: tillOnlyPattern),
-           let match = regex.firstMatch(in: trimmed, range: NSRange(trimmed.startIndex..., in: trimmed)),
-           let endRange = Range(match.range(at: 1), in: trimmed),
-           let end = DealHours.toMinutes(string: String(trimmed[endRange])) {
-            return .between(0, end)
-        }
-
-        return nil
     }
 
     private static func merge(_ deals: [LegacyDeal]) -> [LegacyDeal] {

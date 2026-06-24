@@ -93,27 +93,22 @@ nonisolated enum DealHours: Equatable, Hashable {
     }
 
     static func fromString(_ string: String) -> DealHours? {
-        let normalized = string
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .replacingOccurrences(of: "–", with: "-")
-        guard !normalized.isEmpty else { return nil }
-
-        var timePart = normalized
-        if normalized.lowercased().hasPrefix("from ") {
-            timePart = String(normalized.dropFirst(5))
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-        }
-        guard !timePart.isEmpty else { return nil }
-
-        return parse(timePart)
+        parse(string)
     }
 
     static func parse(_ string: String) -> DealHours? {
-        let normalized = string
+        var normalized = string
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .replacingOccurrences(of: "–", with: "-")
-            .lowercased()
         guard !normalized.isEmpty else { return nil }
+
+        if normalized.lowercased().hasPrefix("from ") {
+            normalized = String(normalized.dropFirst(5))
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        guard !normalized.isEmpty else { return nil }
+
+        normalized = normalized.lowercased()
 
         if normalized == "all day" || normalized == "all-day" || normalized == "allday" {
             return .allDay
