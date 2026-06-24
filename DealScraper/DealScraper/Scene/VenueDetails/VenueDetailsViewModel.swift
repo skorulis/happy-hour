@@ -27,6 +27,12 @@ final class VenueDetailsViewModel {
         case failed(message: String)
     }
 
+    enum AddDealSourceState: Equatable {
+        case idle
+        case completed
+        case failed(message: String)
+    }
+
     let googleMapId: String
     private(set) var venue: Venue?
     private(set) var venueLinks: VenueLinks?
@@ -34,6 +40,10 @@ final class VenueDetailsViewModel {
     private(set) var deals: [DealWithSchedules] = []
     private(set) var deleteSourcesState: DeleteSourcesState = .idle
     private(set) var deleteDealsState: DeleteDealsState = .idle
+    private(set) var addDealSourceState: AddDealSourceState = .idle
+
+    var newDealSourceURLString = ""
+    var newDealSourcePageString = ""
 
     var openRouterModel: String = LLMModelStore.defaultOpenRouterModel {
         didSet { llmModelStore.openRouterModel = openRouterModel }
@@ -114,6 +124,10 @@ final class VenueDetailsViewModel {
         venue?.id != nil && !isExtracting && !isCrawling
     }
 
+    var canAddDealSource: Bool {
+        venue?.id != nil && resolveDealSourceURL(newDealSourceURLString) != nil && !isCrawling
+    }
+
     var canClearHeroImage: Bool {
         guard let venue, venue.id != nil else { return false }
         return venue.heroImage?.isEmpty == false
@@ -188,6 +202,50 @@ final class VenueDetailsViewModel {
             load()
         } catch {
             deleteDealsState = .failed(message: error.localizedDescription)
+        }
+    }
+
+    func addDealSource() {
+        guard let venueId = venue?.id else { return }
+
+        guard let url = resolveDealSourceURL(newDealSourceURLString) else {
+            addDealSourceState = .failed(message: "Please enter a valid URL.")
+            return
+        }
+
+        let type = PageLinkFilter.sourceType(for: url)
+
+        let trimmedSource = newDealSourcePageString.trimmingCharacters(in: .whitespacesAndNewlines)
+        let sourceURLString: String
+        if !trimmedSource.isEmpty {
+            guard let resolvedSource = resolveURLString(trimmedSource) else {
+                addDealSourceState = .failed(message: "Please enter a valid source URL.")
+                return
+            }
+            sourceURLString = resolvedSource.absoluteString
+        } else if type == .image || type == .pdf {
+            sourceURLString = defaultSourcePageURL(for: url)
+        } else {
+            sourceURLString = url.absoluteString
+        }
+
+        let source = DealSource(
+            venueId: venueId,
+            url: url.absoluteString,
+            sourceURL: sourceURLString,
+            type: type,
+            status: .approved,
+            date: .now
+        )
+
+        do {
+            _ = try dealSourceRepository.upsert(sources: [source], forVenueId: venueId)
+            newDealSourceURLString = ""
+            newDealSourcePageString = ""
+            addDealSourceState = .completed
+            load()
+        } catch {
+            addDealSourceState = .failed(message: error.localizedDescription)
         }
     }
 
@@ -306,5 +364,51 @@ final class VenueDetailsViewModel {
     var mapsURL: URL? {
         guard let venue else { return nil }
         return URL(string: "https://www.google.com/maps/search/?api=1&query=\(venue.lat),\(venue.lng)&query_place_id=\(venue.googleMapId)")
+    }
+
+    private func defaultSourcePageURL(for contentURL: URL) -> String {
+        if let whatsOn = venueLinks?.whatsOn,
+           !whatsOn.isEmpty,
+           resolveURLString(whatsOn) != nil
+        {
+            return whatsOn
+        }
+        if let website = venue?.websiteUri,
+           !website.isEmpty,
+           resolveURLString(website) != nil
+        {
+            return website
+        }
+        return contentURL.absoluteString
+    }
+
+    private func resolveDealSourceURL(_ string: String) -> URL? {
+        resolveURLString(string)
+    }
+
+    private func resolveURLString(_ string: String) -> URL? {
+        let trimmed = string.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+
+        if let url = URL(string: trimmed), url.scheme != nil {
+            return URLNormalizer.normalize(url) ?? url
+        }
+
+        guard let baseURL = baseURLForRelativeLinks else { return nil }
+        return URLNormalizer.resolve(trimmed, relativeTo: baseURL)
+    }
+
+    private var baseURLForRelativeLinks: URL? {
+        if let website = venue?.websiteUri,
+           let url = URL(string: website)
+        {
+            return URLNormalizer.normalize(url) ?? url
+        }
+        if let whatsOn = venueLinks?.whatsOn,
+           let url = URL(string: whatsOn)
+        {
+            return URLNormalizer.normalize(url) ?? url
+        }
+        return nil
     }
 }

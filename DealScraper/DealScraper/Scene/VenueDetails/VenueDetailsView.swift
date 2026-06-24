@@ -373,18 +373,43 @@ struct VenueDetailsView: View {
     private var dealSourcesSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             extractionSection
+            dealSourcesListSection
+        }
+    }
 
-            if viewModel.dealSources.isEmpty {
-                ContentUnavailableView(
-                    "No Deal Sources",
-                    systemImage: "doc.text.magnifyingglass",
-                    description: Text("Crawl the venue website from the Details tab to discover deal sources.")
-                )
-            } else {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Deal Sources")
-                        .font(.headline)
+    @ViewBuilder
+    private var dealSourcesListSection: some View {
+        detailSection(title: "Deal Sources") {
+            VStack(alignment: .leading, spacing: 12) {
+                TextField("URL", text: $viewModel.newDealSourceURLString)
+                    .textFieldStyle(.roundedBorder)
 
+                TextField("Source page (optional)", text: $viewModel.newDealSourcePageString)
+                    .textFieldStyle(.roundedBorder)
+
+                Button("Add Source") {
+                    viewModel.addDealSource()
+                }
+                .disabled(!viewModel.canAddDealSource)
+
+                switch viewModel.addDealSourceState {
+                case .idle:
+                    EmptyView()
+                case .completed:
+                    Text("Source added.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                case let .failed(message):
+                    Text(message)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                }
+
+                if viewModel.dealSources.isEmpty {
+                    Text("No deal sources yet. Crawl the venue website from the Details tab or add a URL above.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                } else {
                     ForEach(viewModel.dealSources, id: \.url) { source in
                         DealSourceRow(source: source) { status in
                             viewModel.setDealSourceStatus(source, status: status)
