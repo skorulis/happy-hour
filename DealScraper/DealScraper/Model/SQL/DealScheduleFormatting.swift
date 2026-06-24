@@ -4,7 +4,9 @@ import Foundation
 
 enum DealScheduleFormatting {
     /// Mon → Sun display order (calendar weekday values 2–7, 1).
-    private static let weekdayDisplayOrder = [2, 3, 4, 5, 6, 7, 1]
+    static let weekdaysInDisplayOrder = [2, 3, 4, 5, 6, 7, 1]
+
+    private static var weekdayDisplayOrder: [Int] { weekdaysInDisplayOrder }
 
     static func formattedSummary(_ schedules: [DealSchedule]) -> String {
         guard !schedules.isEmpty else { return "" }
@@ -83,7 +85,7 @@ enum DealScheduleFormatting {
         return "\(dayName(for: start))-\(dayName(for: end))"
     }
 
-    private static func dayName(for weekday: Int) -> String {
+    static func dayName(for weekday: Int) -> String {
         switch weekday {
         case 1: return "Sun"
         case 2: return "Mon"
@@ -100,6 +102,28 @@ enum DealScheduleFormatting {
         let hours = minute / 60
         let minutes = minute % 60
         return String(format: "%d:%02d", hours, minutes)
+    }
+
+    static func date(fromMinutes minutes: Int) -> Date {
+        var components = DateComponents()
+        components.hour = minutes / 60
+        components.minute = minutes % 60
+        return Calendar.current.date(from: components) ?? .now
+    }
+
+    static func minutes(from date: Date) -> Int {
+        let components = Calendar.current.dateComponents([.hour, .minute], from: date)
+        return (components.hour ?? 0) * 60 + (components.minute ?? 0)
+    }
+
+    static func sortedSchedules(_ schedules: [DealSchedule]) -> [DealSchedule] {
+        schedules.sorted { lhs, rhs in
+            let lhsDay = weekdayDisplayOrder.firstIndex(of: lhs.dayOfWeek) ?? Int.max
+            let rhsDay = weekdayDisplayOrder.firstIndex(of: rhs.dayOfWeek) ?? Int.max
+            if lhsDay != rhsDay { return lhsDay < rhsDay }
+            if lhs.startMinute != rhs.startMinute { return lhs.startMinute < rhs.startMinute }
+            return lhs.endMinute < rhs.endMinute
+        }
     }
 }
 

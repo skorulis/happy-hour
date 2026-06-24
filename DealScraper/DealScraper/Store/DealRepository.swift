@@ -120,6 +120,7 @@ final class DealRepository {
         title: String?,
         details: String?,
         conditions: String?,
+        schedules: [DealSchedule]? = nil,
         status: DealStatus
     ) throws {
         try store.dbQueue.write { db in
@@ -129,6 +130,22 @@ final class DealRepository {
             deal.conditions = conditions
             deal.status = status
             try deal.update(db)
+
+            if let schedules {
+                try DealSchedule
+                    .filter(Column("deal_id") == id)
+                    .deleteAll(db)
+
+                for schedule in schedules {
+                    var newSchedule = DealSchedule(
+                        dealId: id,
+                        dayOfWeek: schedule.dayOfWeek,
+                        startMinute: schedule.startMinute,
+                        endMinute: schedule.endMinute
+                    )
+                    try newSchedule.insert(db)
+                }
+            }
         }
     }
 }

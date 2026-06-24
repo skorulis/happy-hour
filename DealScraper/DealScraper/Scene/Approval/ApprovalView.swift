@@ -213,10 +213,18 @@ struct ApprovalView: View {
                                 }
                         }
 
-                        if !item.schedules.isEmpty {
-                            Text(item.formattedScheduleSummary)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                        if !viewModel.editSchedules.isEmpty {
+                            editableField(label: "Schedule") {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text(viewModel.formattedEditScheduleSummary)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+
+                                    ForEach($viewModel.editSchedules) { $schedule in
+                                        scheduleEditRow(schedule: $schedule)
+                                    }
+                                }
+                            }
                         }
 
                         dealSourceLinks(for: item)
@@ -226,6 +234,54 @@ struct ApprovalView: View {
                 .padding(16)
             }
         }
+    }
+
+    private func scheduleEditRow(schedule: Binding<EditableDealSchedule>) -> some View {
+        HStack(spacing: 8) {
+            Picker("Day", selection: schedule.dayOfWeek) {
+                ForEach(DealScheduleFormatting.weekdaysInDisplayOrder, id: \.self) { weekday in
+                    Text(DealScheduleFormatting.dayName(for: weekday))
+                        .tag(weekday)
+                }
+            }
+            .frame(width: 88)
+            .labelsHidden()
+
+            DatePicker(
+                "Start",
+                selection: Binding(
+                    get: { DealScheduleFormatting.date(fromMinutes: schedule.wrappedValue.startMinute) },
+                    set: { schedule.wrappedValue.startMinute = DealScheduleFormatting.minutes(from: $0) }
+                ),
+                displayedComponents: .hourAndMinute
+            )
+            .labelsHidden()
+            .frame(width: 90)
+
+            Text("–")
+                .foregroundStyle(.secondary)
+
+            DatePicker(
+                "End",
+                selection: Binding(
+                    get: { DealScheduleFormatting.date(fromMinutes: schedule.wrappedValue.endMinute) },
+                    set: { schedule.wrappedValue.endMinute = DealScheduleFormatting.minutes(from: $0) }
+                ),
+                displayedComponents: .hourAndMinute
+            )
+            .labelsHidden()
+            .frame(width: 90)
+
+            Button {
+                viewModel.removeEditSchedule(id: schedule.wrappedValue.id)
+            } label: {
+                Image(systemName: "minus.circle")
+                    .foregroundStyle(.red)
+            }
+            .buttonStyle(.plain)
+            .help("Remove schedule")
+        }
+        .font(.caption)
     }
 
     private func editableField<Content: View>(

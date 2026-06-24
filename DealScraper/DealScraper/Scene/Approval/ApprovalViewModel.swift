@@ -5,6 +5,32 @@ import Knit
 import KnitMacros
 import PDFKit
 
+struct EditableDealSchedule: Identifiable, Sendable {
+    let id: Int64
+    let dealId: Int64
+    var dayOfWeek: Int
+    var startMinute: Int
+    var endMinute: Int
+
+    init(schedule: DealSchedule, fallbackID: Int64) {
+        id = schedule.id ?? fallbackID
+        dealId = schedule.dealId
+        dayOfWeek = schedule.dayOfWeek
+        startMinute = schedule.startMinute
+        endMinute = schedule.endMinute
+    }
+
+    func toDealSchedule() -> DealSchedule {
+        DealSchedule(
+            id: id,
+            dealId: dealId,
+            dayOfWeek: dayOfWeek,
+            startMinute: startMinute,
+            endMinute: endMinute
+        )
+    }
+}
+
 @MainActor
 @Observable
 final class ApprovalViewModel {
@@ -45,6 +71,7 @@ final class ApprovalViewModel {
     var editTitle = ""
     var editDetails = ""
     var editConditions = ""
+    var editSchedules: [EditableDealSchedule] = []
 
     private(set) var pendingSources: [DealSource] = []
     private(set) var pendingDeals: [DealWithSchedules] = []
@@ -137,6 +164,7 @@ final class ApprovalViewModel {
             editTitle = ""
             editDetails = ""
             editConditions = ""
+            editSchedules = []
             previewState = .failed(error.localizedDescription)
         }
     }
@@ -168,6 +196,7 @@ final class ApprovalViewModel {
                     title: editTitle.isEmpty ? nil : editTitle,
                     details: editDetails.isEmpty ? nil : editDetails,
                     conditions: editConditions.isEmpty ? nil : editConditions,
+                    schedules: editSchedules.map { $0.toDealSchedule() },
                     status: status
                 )
             case .new, .rejected:
@@ -196,6 +225,20 @@ final class ApprovalViewModel {
         editTitle = currentDeal?.deal.title ?? ""
         editDetails = currentDeal?.deal.details ?? ""
         editConditions = currentDeal?.deal.conditions ?? ""
+        editSchedules = DealScheduleFormatting
+            .sortedSchedules(currentDeal?.schedules ?? [])
+            .enumerated()
+            .map { index, schedule in
+                EditableDealSchedule(schedule: schedule, fallbackID: Int64(-index - 1))
+            }
+    }
+
+    var formattedEditScheduleSummary: String {
+        DealScheduleFormatting.formattedSummary(editSchedules.map { $0.toDealSchedule() })
+    }
+
+    func removeEditSchedule(id: Int64) {
+        editSchedules.removeAll { $0.id == id }
     }
 
     private func loadPreview() {
