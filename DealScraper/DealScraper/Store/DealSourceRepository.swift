@@ -78,6 +78,7 @@ final class DealSourceRepository {
 
         return try store.dbQueue.write { db in
             var newCount = 0
+            var seenContentHashes = Set<String>()
 
             for source in sources {
                 let existing = try DealSource
@@ -89,12 +90,40 @@ final class DealSourceRepository {
                     updated.date = source.date
                     updated.textPieces = source.textPieces
                     updated.sourceURL = source.sourceURL
+                    if let contentHash = source.contentHash {
+                        updated.contentHash = contentHash
+                    }
                     try updated.update(db)
-                } else {
-                    var newSource = source
-                    newSource.id = nil
-                    try newSource.insert(db)
-                    newCount += 1
+                    if let contentHash = source.contentHash {
+                        seenContentHashes.insert(contentHash)
+                    }
+                    continue
+                }
+
+                if let contentHash = source.contentHash {
+                    if seenContentHashes.contains(contentHash) {
+                        continue
+                    }
+
+                    let duplicateByContent = try DealSource
+                        .filter(
+                            Column("venue_id") == venueId
+                                && Column("content_hash") == contentHash
+                        )
+                        .fetchOne(db)
+
+                    if duplicateByContent != nil {
+                        seenContentHashes.insert(contentHash)
+                        continue
+                    }
+                }
+
+                var newSource = source
+                newSource.id = nil
+                try newSource.insert(db)
+                newCount += 1
+                if let contentHash = source.contentHash {
+                    seenContentHashes.insert(contentHash)
                 }
             }
 

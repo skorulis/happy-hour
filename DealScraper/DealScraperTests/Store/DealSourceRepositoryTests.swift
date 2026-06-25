@@ -344,4 +344,150 @@ struct DealSourceRepositoryTests {
             "https://b.example.com/new.pdf",
         ])
     }
+
+    @Test func upsertPersistsContentHash() throws {
+        let store = SQLStore.inMemory()
+        let venueRepository = VenueRepository(store: store)
+        let dealSourceRepository = DealSourceRepository(store: store)
+
+        try venueRepository.upsert(Venue(
+            googleMapId: "places/test",
+            name: "Test Pub",
+            lat: 0,
+            lng: 0,
+            websiteUri: "https://example.com",
+            json: "{}"
+        ))
+
+        let venueId = try #require(try venueRepository.find(googleMapId: "places/test")?.id)
+        let contentHash = "abc123deadbeef"
+
+        _ = try dealSourceRepository.upsert(sources: [
+            DealSource(
+                venueId: venueId,
+                url: "https://example.com/menu.pdf",
+                type: .pdf,
+                contentHash: contentHash
+            ),
+        ], forVenueId: venueId)
+
+        let found = try #require(try dealSourceRepository.find(venueId: venueId).first)
+        #expect(found.contentHash == contentHash)
+    }
+
+    @Test func upsertSkipsDuplicateContentHashWithDifferentURL() throws {
+        let store = SQLStore.inMemory()
+        let venueRepository = VenueRepository(store: store)
+        let dealSourceRepository = DealSourceRepository(store: store)
+
+        try venueRepository.upsert(Venue(
+            googleMapId: "places/test",
+            name: "Test Pub",
+            lat: 0,
+            lng: 0,
+            websiteUri: "https://example.com",
+            json: "{}"
+        ))
+
+        let venueId = try #require(try venueRepository.find(googleMapId: "places/test")?.id)
+        let contentHash = "same-content-hash"
+
+        let newCount1 = try dealSourceRepository.upsert(sources: [
+            DealSource(
+                venueId: venueId,
+                url: "https://example.com/menu-v1.pdf?token=aaa",
+                type: .pdf,
+                contentHash: contentHash
+            ),
+        ], forVenueId: venueId)
+        #expect(newCount1 == 1)
+
+        let newCount2 = try dealSourceRepository.upsert(sources: [
+            DealSource(
+                venueId: venueId,
+                url: "https://example.com/menu-v1.pdf?token=bbb",
+                type: .pdf,
+                contentHash: contentHash
+            ),
+        ], forVenueId: venueId)
+        #expect(newCount2 == 0)
+
+        let found = try dealSourceRepository.find(venueId: venueId)
+        #expect(found.count == 1)
+        #expect(found[0].url == "https://example.com/menu-v1.pdf?token=aaa")
+    }
+
+    @Test func upsertSkipsDuplicateContentHashWithinBatch() throws {
+        let store = SQLStore.inMemory()
+        let venueRepository = VenueRepository(store: store)
+        let dealSourceRepository = DealSourceRepository(store: store)
+
+        try venueRepository.upsert(Venue(
+            googleMapId: "places/test",
+            name: "Test Pub",
+            lat: 0,
+            lng: 0,
+            websiteUri: "https://example.com",
+            json: "{}"
+        ))
+
+        let venueId = try #require(try venueRepository.find(googleMapId: "places/test")?.id)
+        let contentHash = "shared-image-hash"
+
+        let newCount = try dealSourceRepository.upsert(sources: [
+            DealSource(
+                venueId: venueId,
+                url: "https://example.com/specials.png?v=1",
+                type: .image,
+                contentHash: contentHash
+            ),
+            DealSource(
+                venueId: venueId,
+                url: "https://example.com/specials.png?v=2",
+                type: .image,
+                contentHash: contentHash
+            ),
+        ], forVenueId: venueId)
+        #expect(newCount == 1)
+        #expect(try dealSourceRepository.find(venueId: venueId).count == 1)
+    }
+
+    @Test func upsertUpdatesContentHashOnURLMatch() throws {
+        let store = SQLStore.inMemory()
+        let venueRepository = VenueRepository(store: store)
+        let dealSourceRepository = DealSourceRepository(store: store)
+
+        try venueRepository.upsert(Venue(
+            googleMapId: "places/test",
+            name: "Test Pub",
+            lat: 0,
+            lng: 0,
+            websiteUri: "https://example.com",
+            json: "{}"
+        ))
+
+        let venueId = try #require(try venueRepository.find(googleMapId: "places/test")?.id)
+
+        _ = try dealSourceRepository.upsert(sources: [
+            DealSource(
+                venueId: venueId,
+                url: "https://example.com/menu.pdf",
+                type: .pdf,
+                contentHash: "old-hash"
+            ),
+        ], forVenueId: venueId)
+
+        _ = try dealSourceRepository.upsert(sources: [
+            DealSource(
+                venueId: venueId,
+                url: "https://example.com/menu.pdf",
+                type: .pdf,
+                contentHash: "new-hash"
+            ),
+        ], forVenueId: venueId)
+
+        let found = try #require(try dealSourceRepository.find(venueId: venueId).first)
+        #expect(found.contentHash == "new-hash")
+        #expect(try dealSourceRepository.find(venueId: venueId).count == 1)
+    }
 }

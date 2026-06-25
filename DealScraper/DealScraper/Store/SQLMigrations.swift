@@ -160,5 +160,17 @@ final class SQLMigrations {
                 t.add(column: "hero_image", .text)
             }
         }
+
+        migrator.registerMigration("v17_deal_source_content_hash") { db in
+            try db.alter(table: "deal_source") { t in
+                t.add(column: "content_hash", .text)
+            }
+            try db.create(
+                index: "deal_source_venue_content_hash",
+                on: "deal_source",
+                columns: ["venue_id", "content_hash"],
+                unique: true
+            )
+        }
     }
 }

@@ -37,6 +37,10 @@ final class CrawlImageValidator {
             return nil
         }
 
+        guard let contentHash = try? ContentHasher.hash(fileURL: localURL) else {
+            return nil
+        }
+
         guard let dimensions = Self.imagePixelDimensions(at: localURL) else {
             return nil
         }
@@ -59,7 +63,8 @@ final class CrawlImageValidator {
             url: url,
             lines: lines,
             dimensions: dimensions,
-            featurePrint: featurePrint
+            featurePrint: featurePrint,
+            contentHash: contentHash
         )
     }
 
@@ -104,4 +109,5 @@ struct ImageValidationResult {
     let lines: [ExtractedTextLine]
     let dimensions: CGSize
     let featurePrint: Data?
+    let contentHash: String
 }

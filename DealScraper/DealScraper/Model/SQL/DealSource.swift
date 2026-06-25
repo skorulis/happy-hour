@@ -51,6 +51,7 @@ nonisolated struct DealSource: Codable, Sendable {
     var status: DealStatus
     var date: Date
     var textPieces: DealSourceTextPieces?
+    var contentHash: String?
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -61,6 +62,7 @@ nonisolated struct DealSource: Codable, Sendable {
         case status
         case date
         case textPieces = "text_pieces"
+        case contentHash = "content_hash"
     }
 
     init(
@@ -71,7 +73,8 @@ nonisolated struct DealSource: Codable, Sendable {
         type: DealSourceType,
         status: DealStatus = .new,
         date: Date = .now,
-        textPieces: DealSourceTextPieces? = nil
+        textPieces: DealSourceTextPieces? = nil,
+        contentHash: String? = nil
     ) {
         self.id = id
         self.venueId = venueId
@@ -81,6 +84,7 @@ nonisolated struct DealSource: Codable, Sendable {
         self.status = status
         self.date = date
         self.textPieces = textPieces
+        self.contentHash = contentHash
     }
 }
 

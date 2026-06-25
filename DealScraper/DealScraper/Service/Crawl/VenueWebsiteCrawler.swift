@@ -173,7 +173,8 @@ final class VenueWebsiteCrawler {
                     type: .image,
                     imageDimensions: validation.dimensions,
                     textPieces: .textLines(validation.lines.map(\.text)),
-                    imageFeaturePrint: validation.featurePrint
+                    imageFeaturePrint: validation.featurePrint,
+                    contentHash: validation.contentHash
                 )
             }
             
@@ -230,7 +231,8 @@ final class VenueWebsiteCrawler {
                     validation.text
                         .components(separatedBy: CharacterSet.newlines)
                         .filter { !$0.isEmpty }
-                )
+                ),
+                contentHash: validation.contentHash
             )
         }
 
@@ -250,7 +252,8 @@ final class VenueWebsiteCrawler {
                 type: discovered.type,
                 status: .new,
                 date: now,
-                textPieces: discovered.textPieces
+                textPieces: discovered.textPieces,
+                contentHash: discovered.contentHash
             )
         }
         

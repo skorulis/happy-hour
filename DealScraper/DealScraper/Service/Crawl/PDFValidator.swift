@@ -7,6 +7,7 @@ import Knit
 struct PDFValidationResult: Equatable, Sendable {
     let url: URL
     let text: String
+    let contentHash: String
 }
 
 @MainActor
@@ -26,11 +27,15 @@ final class PDFValidator {
             return nil
         }
 
+        guard let contentHash = try? ContentHasher.hash(fileURL: localURL) else {
+            return nil
+        }
+
         guard let extraction = textExtractor.extractText(from: localURL) else {
             return nil
         }
 
-        return PDFValidationResult(url: url, text: extraction.filteredText)
+        return PDFValidationResult(url: url, text: extraction.filteredText, contentHash: contentHash)
     }
 
     func validatePDFs(urls: [URL]) async -> [PDFValidationResult] {

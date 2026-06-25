@@ -9,6 +9,7 @@ nonisolated struct DiscoveredSource: Equatable, Sendable {
     let imageDimensions: CGSize?
     let textPieces: DealSourceTextPieces?
     let imageFeaturePrint: Data?
+    let contentHash: String?
 
     init(
         url: URL,
@@ -16,7 +17,8 @@ nonisolated struct DiscoveredSource: Equatable, Sendable {
         type: DealSourceType,
         imageDimensions: CGSize? = nil,
         textPieces: DealSourceTextPieces? = nil,
-        imageFeaturePrint: Data? = nil
+        imageFeaturePrint: Data? = nil,
+        contentHash: String? = nil
     ) {
         self.url = url
         self.sourceURL = sourceURL
@@ -24,5 +26,6 @@ nonisolated struct DiscoveredSource: Equatable, Sendable {
         self.imageDimensions = imageDimensions
         self.textPieces = textPieces
         self.imageFeaturePrint = imageFeaturePrint
+        self.contentHash = contentHash
     }
 }
