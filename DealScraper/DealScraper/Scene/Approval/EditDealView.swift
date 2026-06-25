@@ -36,10 +36,18 @@ struct EditDealDraft: Sendable {
 }
 
 struct EditDealView: View {
+    enum ActionStyle {
+        case approval
+        case edit
+    }
+
     let item: DealWithSchedules
     var venueName: String = "Unknown Venue"
     var remainingCount: Int?
-    var onAction: (DealStatus, EditDealDraft) -> Void
+    var actionStyle: ActionStyle = .approval
+    var onAction: (DealStatus, EditDealDraft) -> Void = { _, _ in }
+    var onSave: ((EditDealDraft) -> Void)?
+    var onCancel: (() -> Void)?
 
     @State private var title = ""
     @State private var details = ""
@@ -139,17 +147,36 @@ struct EditDealView: View {
 
     private var actionBar: some View {
         HStack(spacing: 32) {
-            statusButton(
-                systemImage: "checkmark",
-                color: .green,
-                action: { onAction(.approved, currentDraft) }
-            )
+            switch actionStyle {
+            case .approval:
+                statusButton(
+                    systemImage: "checkmark",
+                    color: .green,
+                    help: "Approve",
+                    action: { onAction(.approved, currentDraft) }
+                )
 
-            statusButton(
-                systemImage: "xmark",
-                color: .red,
-                action: { onAction(.rejected, currentDraft) }
-            )
+                statusButton(
+                    systemImage: "xmark",
+                    color: .red,
+                    help: "Reject",
+                    action: { onAction(.rejected, currentDraft) }
+                )
+            case .edit:
+                statusButton(
+                    systemImage: "checkmark",
+                    color: .green,
+                    help: "Save",
+                    action: { onSave?(currentDraft) }
+                )
+
+                statusButton(
+                    systemImage: "xmark",
+                    color: .red,
+                    help: "Cancel",
+                    action: { onCancel?() }
+                )
+            }
         }
         .frame(maxWidth: .infinity)
     }
@@ -323,6 +350,7 @@ struct EditDealView: View {
     private func statusButton(
         systemImage: String,
         color: Color,
+        help: String,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
@@ -341,6 +369,7 @@ struct EditDealView: View {
                 .contentShape(Circle())
         }
         .buttonStyle(.plain)
+        .help(help)
     }
 }
 

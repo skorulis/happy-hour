@@ -490,9 +490,16 @@ struct VenueDetailsView: View {
                     .font(.headline)
 
                 ForEach(viewModel.deals, id: \.deal.id) { item in
-                    DealRow(item: item) { status in
-                        viewModel.setDealStatus(item, status: status)
-                    }
+                    DealRow(
+                        item: item,
+                        venueName: viewModel.venue?.name ?? "Unknown Venue",
+                        onStatusChange: { status in
+                            viewModel.setDealStatus(item, status: status)
+                        },
+                        onEdit: { draft in
+                            viewModel.updateDeal(item, draft: draft)
+                        }
+                    )
                 }
             }
         }

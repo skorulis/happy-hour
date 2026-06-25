@@ -5,31 +5,47 @@ import SwiftUI
 
 struct DealRow: View {
     let item: DealWithSchedules
+    var venueName: String = "Unknown Venue"
     var onStatusChange: ((DealStatus) -> Void)?
+    var onEdit: ((EditDealDraft) -> Void)?
+
+    @State private var isEditing = false
 
     var body: some View {
         HStack(alignment: .top) {
             maybeImage
             mainContent
 
-            if let onStatusChange {
+            if onEdit != nil || onStatusChange != nil {
                 Spacer(minLength: 8)
 
                 VStack(spacing: 8) {
-                    statusButton(
-                        systemImage: "checkmark",
-                        color: .green,
-                        isSelected: item.deal.status == .approved
-                    ) {
-                        onStatusChange(.approved)
+                    if onEdit != nil {
+                        actionButton(
+                            systemImage: "pencil",
+                            color: .accentColor,
+                            help: "Edit"
+                        ) {
+                            isEditing = true
+                        }
                     }
 
-                    statusButton(
-                        systemImage: "xmark",
-                        color: .red,
-                        isSelected: item.deal.status == .rejected
-                    ) {
-                        onStatusChange(.rejected)
+                    if let onStatusChange {
+                        statusButton(
+                            systemImage: "checkmark",
+                            color: .green,
+                            isSelected: item.deal.status == .approved
+                        ) {
+                            onStatusChange(.approved)
+                        }
+
+                        statusButton(
+                            systemImage: "xmark",
+                            color: .red,
+                            isSelected: item.deal.status == .rejected
+                        ) {
+                            onStatusChange(.rejected)
+                        }
                     }
                 }
             }
@@ -39,6 +55,21 @@ struct DealRow: View {
         .background {
             RoundedRectangle(cornerRadius: 8)
                 .fill(Color(nsColor: .controlBackgroundColor))
+        }
+        .sheet(isPresented: $isEditing) {
+            EditDealView(
+                item: item,
+                venueName: venueName,
+                actionStyle: .edit,
+                onSave: { draft in
+                    onEdit?(draft)
+                    isEditing = false
+                },
+                onCancel: {
+                    isEditing = false
+                }
+            )
+            .frame(minWidth: 720, minHeight: 560)
         }
     }
     
@@ -148,6 +179,31 @@ struct DealRow: View {
         case .webpage:
             return "Creative source"
         }
+    }
+
+    private func actionButton(
+        systemImage: String,
+        color: Color,
+        help: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
+                .font(.body.weight(.semibold))
+                .foregroundStyle(color)
+                .frame(width: 32, height: 32)
+                .background {
+                    Circle()
+                        .fill(.clear)
+                }
+                .overlay {
+                    Circle()
+                        .strokeBorder(color, lineWidth: 1.5)
+                }
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .help(help)
     }
 
     private func statusButton(

@@ -275,6 +275,33 @@ final class VenueDetailsViewModel {
         }
     }
 
+    func updateDeal(_ item: DealWithSchedules, draft: EditDealDraft) {
+        guard let id = item.deal.id else { return }
+
+        do {
+            try dealRepository.update(
+                id: id,
+                title: draft.title.isEmpty ? nil : draft.title,
+                details: draft.details.isEmpty ? nil : draft.details,
+                conditions: draft.conditions.isEmpty ? nil : draft.conditions,
+                schedules: draft.schedules.map { $0.toDealSchedule() },
+                status: item.deal.status
+            )
+            if let index = deals.firstIndex(where: { $0.deal.id == id }) {
+                var updatedDeal = deals[index].deal
+                updatedDeal.title = draft.title.isEmpty ? nil : draft.title
+                updatedDeal.details = draft.details.isEmpty ? nil : draft.details
+                updatedDeal.conditions = draft.conditions.isEmpty ? nil : draft.conditions
+                deals[index] = DealWithSchedules(
+                    deal: updatedDeal,
+                    schedules: draft.schedules.map { $0.toDealSchedule() }
+                )
+            }
+        } catch {
+            // Keep the current UI state if persistence fails.
+        }
+    }
+
     func setVenueStatus(_ status: VenueStatus) {
         guard let venueId = venue?.id else { return }
 
