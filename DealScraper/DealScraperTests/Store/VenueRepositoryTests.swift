@@ -151,6 +151,36 @@ struct VenueRepositoryTests {
         #expect(found.status == .broken)
     }
 
+    @Test func upsertPreservesExistingHeroImageAndDates() throws {
+        let repository = VenueRepository(store: SQLStore.inMemory())
+        let crawlDate = Date(timeIntervalSince1970: 1_700_000_000)
+        let extractionDate = Date(timeIntervalSince1970: 1_700_100_000)
+        let heroURL = "https://example.com/hero.jpg"
+
+        let place = GooglePlace(
+            id: "places/ChIJFromAPI",
+            displayName: .init(text: "Harbour Pub", languageCode: "en"),
+            location: .init(latitude: -33.8600, longitude: 151.2100),
+            formattedAddress: "1 Circular Quay, Sydney",
+            websiteUri: "https://harbourpub.example.com",
+            types: ["bar"]
+        )
+
+        try repository.upsert(places: [place])
+
+        let venueId = try #require(try repository.find(googleMapId: "places/ChIJFromAPI")?.id)
+        try repository.updateHeroImage(venueId: venueId, url: heroURL)
+        try repository.updateLastCrawlDate(venueId: venueId, date: crawlDate)
+        try repository.updateLastExtractionDate(venueId: venueId, date: extractionDate)
+
+        try repository.upsert(places: [place])
+
+        let found = try #require(try repository.find(id: venueId))
+        #expect(found.heroImage == heroURL)
+        #expect(found.lastCrawlDate == crawlDate)
+        #expect(found.lastExtractionDate == extractionDate)
+    }
+
     @Test func updateHeroImagePersistsURL() throws {
         let repository = VenueRepository(store: SQLStore.inMemory())
 

@@ -21,8 +21,20 @@ final class VenueRepository {
                 .filter(Column("google_map_id") == mutableVenue.googleMapId)
                 .fetchOne(db)
             {
-                mutableVenue.id = existing.id
-                mutableVenue.status = existing.status
+                mutableVenue = Venue(
+                    id: existing.id,
+                    suburbId: mutableVenue.suburbId,
+                    googleMapId: mutableVenue.googleMapId,
+                    name: mutableVenue.name,
+                    lat: mutableVenue.lat,
+                    lng: mutableVenue.lng,
+                    websiteUri: mutableVenue.websiteUri,
+                    heroImage: existing.heroImage,
+                    lastCrawlDate: existing.lastCrawlDate,
+                    lastExtractionDate: existing.lastExtractionDate,
+                    status: existing.status,
+                    json: mutableVenue.json
+                )
                 try mutableVenue.update(db)
                 return false
             } else {
