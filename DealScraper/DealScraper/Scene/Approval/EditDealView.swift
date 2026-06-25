@@ -17,6 +17,20 @@ struct EditableDealSchedule: Identifiable, Sendable {
         endMinute = schedule.endMinute
     }
 
+    init(
+        dealId: Int64,
+        id: Int64,
+        dayOfWeek: Int = 2,
+        startMinute: Int = 960,
+        endMinute: Int = 1_080
+    ) {
+        self.id = id
+        self.dealId = dealId
+        self.dayOfWeek = dayOfWeek
+        self.startMinute = startMinute
+        self.endMinute = endMinute
+    }
+
     func toDealSchedule() -> DealSchedule {
         DealSchedule(
             id: id,
@@ -123,17 +137,23 @@ struct EditDealView: View {
                             }
                     }
 
-                    if !schedules.isEmpty {
-                        editableField(label: "Schedule") {
-                            VStack(alignment: .leading, spacing: 8) {
+                    editableField(label: "Schedule") {
+                        VStack(alignment: .leading, spacing: 8) {
+                            if !schedules.isEmpty {
                                 Text(formattedScheduleSummary)
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
-
-                                ForEach($schedules) { $schedule in
-                                    scheduleEditRow(schedule: $schedule)
-                                }
                             }
+
+                            ForEach($schedules) { $schedule in
+                                scheduleEditRow(schedule: $schedule)
+                            }
+
+                            Button(action: addSchedule) {
+                                Label("Add schedule", systemImage: "plus.circle")
+                            }
+                            .buttonStyle(.plain)
+                            .font(.caption)
                         }
                     }
 
@@ -204,6 +224,12 @@ struct EditDealView: View {
             .map { index, schedule in
                 EditableDealSchedule(schedule: schedule, fallbackID: Int64(-index - 1))
             }
+    }
+
+    private func addSchedule() {
+        let dealId = item.deal.id ?? schedules.first?.dealId ?? 0
+        let newID = (schedules.map(\.id).min() ?? 0) - 1
+        schedules.append(EditableDealSchedule(dealId: dealId, id: newID))
     }
 
     private func scheduleEditRow(schedule: Binding<EditableDealSchedule>) -> some View {
