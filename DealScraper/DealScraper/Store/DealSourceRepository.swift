@@ -52,6 +52,13 @@ final class DealSourceRepository {
     }
 
     @discardableResult
+    func delete(id: Int64) throws -> Bool {
+        try store.dbQueue.write { db in
+            try DealSource.deleteOne(db, key: id)
+        }
+    }
+
+    @discardableResult
     func deleteAll(venueId: Int64) throws -> Int {
         try store.dbQueue.write { db in
             let count = try DealSource

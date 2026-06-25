@@ -262,6 +262,17 @@ final class VenueDetailsViewModel {
         }
     }
 
+    func deleteDealSource(_ source: DealSource) {
+        guard let id = source.id, venue?.id != nil, !isCrawling else { return }
+
+        do {
+            guard try dealSourceRepository.delete(id: id) else { return }
+            dealSources.removeAll { $0.id == id }
+        } catch {
+            // Keep the current UI state if persistence fails.
+        }
+    }
+
     func setDealStatus(_ item: DealWithSchedules, status: DealStatus) {
         guard let id = item.deal.id else { return }
 

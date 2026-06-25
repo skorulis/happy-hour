@@ -6,6 +6,7 @@ import SwiftUI
 struct DealSourceRow: View {
     let source: DealSource
     let onStatusChange: (DealStatus) -> Void
+    let onDelete: () -> Void
 
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
@@ -46,6 +47,8 @@ struct DealSourceRow: View {
                 ) {
                     onStatusChange(.rejected)
                 }
+
+                deleteButton
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -74,6 +77,26 @@ struct DealSourceRow: View {
             Text(source.sourceURL)
                 .lineLimit(2)
         }
+    }
+
+    private var deleteButton: some View {
+        Button(action: onDelete) {
+            Image(systemName: "trash")
+                .font(.body.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .frame(width: 32, height: 32)
+                .background {
+                    Circle()
+                        .fill(.clear)
+                }
+                .overlay {
+                    Circle()
+                        .strokeBorder(Color.secondary.opacity(0.6), lineWidth: 1.5)
+                }
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .help("Delete source")
     }
 
     private func statusButton(

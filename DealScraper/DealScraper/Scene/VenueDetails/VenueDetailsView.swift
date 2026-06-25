@@ -411,9 +411,15 @@ struct VenueDetailsView: View {
                         .foregroundStyle(.secondary)
                 } else {
                     ForEach(viewModel.dealSources, id: \.url) { source in
-                        DealSourceRow(source: source) { status in
-                            viewModel.setDealSourceStatus(source, status: status)
-                        }
+                        DealSourceRow(
+                            source: source,
+                            onStatusChange: { status in
+                                viewModel.setDealSourceStatus(source, status: status)
+                            },
+                            onDelete: {
+                                viewModel.deleteDealSource(source)
+                            }
+                        )
                     }
                 }
             }

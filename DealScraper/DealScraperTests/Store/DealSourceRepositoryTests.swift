@@ -175,6 +175,36 @@ struct DealSourceRepositoryTests {
         #expect(try dealSourceRepository.find(venueId: venueId).first?.status == .rejected)
     }
 
+    @Test func deleteRemovesSingleSource() throws {
+        let store = SQLStore.inMemory()
+        let venueRepository = VenueRepository(store: store)
+        let dealSourceRepository = DealSourceRepository(store: store)
+
+        try venueRepository.upsert(Venue(
+            googleMapId: "places/test",
+            name: "Test Pub",
+            lat: 0,
+            lng: 0,
+            websiteUri: "https://example.com",
+            json: "{}"
+        ))
+
+        let venue = try #require(try venueRepository.find(googleMapId: "places/test"))
+        let venueId = try #require(venue.id)
+
+        _ = try dealSourceRepository.upsert(sources: [
+            DealSource(venueId: venueId, url: "https://example.com/menu.pdf", type: .pdf),
+            DealSource(venueId: venueId, url: "https://example.com/specials", type: .webpage),
+        ], forVenueId: venueId)
+
+        let toDelete = try #require(try dealSourceRepository.find(venueId: venueId).first)
+        let sourceId = try #require(toDelete.id)
+
+        #expect(try dealSourceRepository.delete(id: sourceId))
+        #expect(try dealSourceRepository.find(venueId: venueId).count == 1)
+        #expect(try dealSourceRepository.delete(id: sourceId) == false)
+    }
+
     @Test func deleteAllRemovesSourcesForVenue() throws {
         let store = SQLStore.inMemory()
         let venueRepository = VenueRepository(store: store)
