@@ -102,9 +102,7 @@ nonisolated enum FilterKeywords {
         "mothers day",
         "mothers-day",
         "mother's day",
-        "new years",
-        "new years",
-        "new-years",
+        "newyears",
         "origin",
         "parties",
         "this week",
@@ -134,7 +132,14 @@ nonisolated enum FilterKeywords {
     }
     
     static func containsExcludedKeyword(_ text: String) -> Bool {
-        let lowercased = text.lowercased().replacingOccurrences(of: "-", with: "")
-        return excludedKeywords.contains { lowercased.contains($0) }
+        let normalized = normalizeForKeywordMatch(text)
+        return excludedKeywords.contains { normalized.contains(normalizeForKeywordMatch($0)) }
+    }
+
+    private static func normalizeForKeywordMatch(_ text: String) -> String {
+        text.lowercased()
+            .replacingOccurrences(of: "-", with: "")
+            .replacingOccurrences(of: "'", with: "")
+            .replacingOccurrences(of: " ", with: "")
     }
 }

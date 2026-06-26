@@ -58,8 +58,7 @@ struct DealTextFilter {
     ]
 
     private static func containsExcludedKeyword(in text: String) -> Bool {
-        let lowercased = text.lowercased()
-        return FilterKeywords.excludedKeywords.contains { lowercased.contains($0) }
+        FilterKeywords.containsExcludedKeyword(text)
     }
 
     private static func containsHeadlineKeyword(in text: String) -> Bool {

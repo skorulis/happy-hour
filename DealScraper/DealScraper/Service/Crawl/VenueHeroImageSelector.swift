@@ -155,8 +155,7 @@ final class VenueHeroImageSelector {
         if url.host() == nil {
             return true
         }
-        let absoluteString = url.absoluteString.lowercased()
-        return FilterKeywords.excludedKeywords.contains { absoluteString.contains($0) }
+        return FilterKeywords.containsExcludedKeyword(url.absoluteString)
     }
 
     private static func meetsMinimumDimensions(dimensions: CGSize) -> Bool {

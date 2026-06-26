@@ -102,6 +102,18 @@ struct PageLinkFilterTests {
         #expect(result.crawlURLs.isEmpty)
     }
 
+    @Test func excludesNewYearsEveLink() {
+        let result = filter.filter(links: [
+            link(
+                text: "New Year's Eve",
+                url: "https://theoldcommodorehotel.com.au/events/new-years-eve/"
+            ),
+        ])
+
+        #expect(result.pdfURLs.isEmpty)
+        #expect(result.crawlURLs.isEmpty)
+    }
+
     @Test func excludesImageLinkWithKeywordFromCrawlURLs() {
         let result = filter.filter(links: [
             link(text: "Happy Hour Board", url: "https://pub.example.com/images/happy-hour.png"),
