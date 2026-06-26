@@ -335,6 +335,45 @@ struct DealMapperTests {
         #expect(deal.title == "Cheeseburger Tuesdays")
     }
 
+    @Test func filtersDealsWithExcludedKeywordsInTitle() {
+        let footy = DealExtractionPayload.RawDeal(
+            title: "LIVE & LOUD FOOTY",
+            details: ["Hahn super dry pints for schooner prices whenever the games on."],
+            days: ["FRIDAY"],
+            times: ["all day"]
+        )
+        let origin = DealExtractionPayload.RawDeal(
+            title: "WELCOME TO ORIGIN 2026",
+            details: ["Catch the action live, loud and with $9 pints of tooheys new."],
+            days: ["WEDNESDAY"],
+            times: ["all day"]
+        )
+        let happyHour = DealExtractionPayload.RawDeal(
+            title: "HAPPY HOUR",
+            details: ["$7.50 schooners & $10 pints of select house beers"],
+            days: ["MONDAY - FRIDAY"],
+            times: ["4PM - 6PM"]
+        )
+
+        let deals = DealMapper.map([footy, origin, happyHour])
+
+        #expect(deals.count == 1)
+        #expect(deals.first?.title == "Happy Hour")
+    }
+
+    @Test func filtersExcludedKeywordsInResolvedDayOnlyTitle() {
+        let raw = DealExtractionPayload.RawDeal(
+            title: "FRIDAY",
+            details: ["LIVE & LOUD FOOTY", "Pints for schooner prices"],
+            days: ["FRIDAY"],
+            times: ["all day"]
+        )
+
+        let deals = DealMapper.map([raw])
+
+        #expect(deals.isEmpty)
+    }
+
     @Test func sentenceCasesMultilineDetails() throws {
         let raw = DealExtractionPayload.RawDeal(
             title: "STEAK NIGHT",

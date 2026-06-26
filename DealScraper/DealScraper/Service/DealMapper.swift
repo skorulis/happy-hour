@@ -26,6 +26,9 @@ nonisolated enum DealMapper {
         (title, details) = dayOnlyResolved
         (title, details) = withLeadingPriceInTitle(title: title, details: details)
         title = titleCased(title)
+        if !title.isEmpty, FilterKeywords.containsExcludedKeyword(title) {
+            return nil
+        }
         details = details.map(sentenceCased)
         let conditions = deal.conditions
             .map { normalizeCondition($0) }
