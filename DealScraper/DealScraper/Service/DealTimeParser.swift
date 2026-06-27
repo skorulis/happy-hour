@@ -6,7 +6,7 @@ nonisolated enum DealTimeParser {
 
     static func parse(_ strings: [String]) -> [DealHours] {
         let trimmed = strings
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .map(sanitizeTimeString)
             .filter { !$0.isEmpty }
         guard !trimmed.isEmpty else { return [] }
 
@@ -45,6 +45,23 @@ nonisolated enum DealTimeParser {
             guard let matchRange = Range(match.range(at: 1), in: text) else { return nil }
             return DealHours.parse(String(text[matchRange]))
         }
+    }
+
+    private static func sanitizeTimeString(_ string: String) -> String {
+        var result = string.trimmingCharacters(in: .whitespacesAndNewlines)
+        let wrappers: [(Character, Character)] = [("(", ")"), ("[", "]")]
+        var changed = true
+        while changed {
+            changed = false
+            result = result.trimmingCharacters(in: .whitespacesAndNewlines)
+            for (open, close) in wrappers {
+                if result.first == open, result.last == close, result.count > 1 {
+                    result = String(result.dropFirst().dropLast())
+                    changed = true
+                }
+            }
+        }
+        return result
     }
 
     private static func isAllDayToken(_ string: String) -> Bool {

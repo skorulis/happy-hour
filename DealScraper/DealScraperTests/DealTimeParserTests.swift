@@ -56,4 +56,8 @@ struct DealTimeParserTests {
         let times = DealTimeParser.timesInText("TUES - THURS 4PM - 6PM / FRI 3PM - 5PM")
         #expect(!times.isEmpty)
     }
+
+    @Test func parsesParenthesizedTimeRange() {
+        #expect(DealTimeParser.parse(["(11 AM - 2 PM )"]) == [.between(11 * 60, 14 * 60)])
+    }
 }

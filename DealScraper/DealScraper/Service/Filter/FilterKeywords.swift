@@ -61,6 +61,7 @@ nonisolated enum FilterKeywords {
         "schnitzel",
         "schnitty",
         "sirloin",
+        "snacks",
         "steak",
         "taco",
         "wings",
