@@ -44,6 +44,7 @@ final class ExperimentViewModel {
     private let imageExtractor: DealImageExtractor
     private let pdfFetcher: CrawlPDFFetcher
     private let pdfTextExtractor: PDFTextExtractor
+    private let dealAdvancedTextFilter: DealAdvancedTextFilter
 
     @Resolvable<Resolver>
     init(
@@ -53,7 +54,8 @@ final class ExperimentViewModel {
         imageFetcher: CrawlImageFetcher,
         imageExtractor: DealImageExtractor,
         pdfFetcher: CrawlPDFFetcher,
-        pdfTextExtractor: PDFTextExtractor
+        pdfTextExtractor: PDFTextExtractor,
+        dealAdvancedTextFilter: DealAdvancedTextFilter
     ) {
         self.webPageLoaderFactory = webPageLoaderFactory
         self.crawlImageValidator = crawlImageValidator
@@ -62,6 +64,7 @@ final class ExperimentViewModel {
         self.imageExtractor = imageExtractor
         self.pdfFetcher = pdfFetcher
         self.pdfTextExtractor = pdfTextExtractor
+        self.dealAdvancedTextFilter = dealAdvancedTextFilter
     }
 
     func loadPage() {
@@ -186,16 +189,43 @@ final class ExperimentViewModel {
     }
 
     private func validateImageForCrawl(url: URL) async -> CrawlDealValidation {
-        if await crawlImageValidator.validateImage(url: url) != nil {
+        guard let validation = await crawlImageValidator.validateImage(url: url) else {
             return CrawlDealValidation(
-                isAccepted: true,
-                message: "Accepted by crawler — image meets size requirements and contains valid deal text."
+                isAccepted: false,
+                message: "Rejected by crawler — image is too small, has no deal text, or matches an excluded URL pattern."
             )
         }
-        return CrawlDealValidation(
-            isAccepted: false,
-            message: "Rejected by crawler — image is too small, has no deal text, or matches an excluded URL pattern."
+
+        let text = validation.lines.map(\.text).joined(separator: "\n")
+        return await validateWithDealClassifier(
+            text: text,
+            coarsePassedMessage: "Accepted by crawler — image meets size requirements and contains valid deal text."
         )
+    }
+
+    private func validateWithDealClassifier(text: String, coarsePassedMessage: String) async -> CrawlDealValidation {
+        do {
+            if try await dealAdvancedTextFilter.describesSpecificDeals(text: text) {
+                return CrawlDealValidation(
+                    isAccepted: true,
+                    message: "\(coarsePassedMessage) Passed deal classifier."
+                )
+            }
+            return CrawlDealValidation(
+                isAccepted: false,
+                message: "Passes keyword filter but rejected by deal classifier."
+            )
+        } catch DealAdvancedTextFilter.Error.modelUnavailable {
+            return CrawlDealValidation(
+                isAccepted: true,
+                message: "\(coarsePassedMessage) Deal classifier skipped — model unavailable."
+            )
+        } catch {
+            return CrawlDealValidation(
+                isAccepted: false,
+                message: "Rejected by deal classifier — classification failed."
+            )
+        }
     }
 
     private func validatePDFForCrawl(url: URL) -> CrawlDealValidation {

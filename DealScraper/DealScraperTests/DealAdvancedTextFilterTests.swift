@@ -48,11 +48,42 @@ struct DealAdvancedTextFilterTests {
         #expect(result)
     }
 
-//    @Test func rejectsGenericDealAvailabilityText() async throws {
-//        let text = "Our Monday to Friday meal deals are only available in our public bar, beer garden and Nude with bar service"
-//        let result = try await filter.describesSpecificDeals(text: text)
-//        #expect(!result)
-//    }
+    @Test func rejectsGenericDealAvailabilityText() async throws {
+        let text = "Our Monday to Friday meal deals are only available in our public bar, beer garden and Nude with bar service"
+        let result = try await filter.describesSpecificDeals(text: text)
+        #expect(!result)
+    }
+
+    @Test func rejectsStandardMenuWithServiceChargeFooter() async throws {
+        let text = [
+            "DESSERT AND CHEESE",
+            "Rhubarb Soufflé $14",
+            "Quince Trifle $15",
+            "Profiterole $14",
+            "Valrhona Chocolate Cake $15",
+            "DD Ice Cream Sundae $15",
+            "Scoops $5",
+            "Dark Chocolate Truffle $5",
+            "Cheese Selection 1 piece $12 / 3 pieces $30 / 5 pieces $45",
+            "Groups of 8 or more will incur a 10% service charge (Monday to Saturday).",
+            "A surcharge of 10% will apply on Sundays and 15% on public holidays.",
+            "Credit and debit cards incur a surcharge of 1.5%.",
+        ].joined(separator: "\n")
+
+        let result = try await filter.describesSpecificDeals(text: text)
+        #expect(!result)
+    }
+
+    @Test func acceptsDealWithSurchargeFooter() async throws {
+        let text = [
+            "HAPPY HOUR MON–FRI 4–6PM",
+            "$8 schooners",
+            "10% surcharge applies Sundays",
+        ].joined(separator: "\n")
+
+        let result = try await filter.describesSpecificDeals(text: text)
+        #expect(result)
+    }
 
     @Test func acceptsPosterStyleDealText() async throws {
         let text = [

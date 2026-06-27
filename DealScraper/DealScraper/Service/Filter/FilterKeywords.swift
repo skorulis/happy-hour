@@ -4,6 +4,7 @@ import Foundation
 
 nonisolated enum FilterKeywords {
     static let dealKeywords = [
+        "bottomless",
         "happy hour",
         "specials",
         "what's on",
@@ -125,6 +126,7 @@ nonisolated enum FilterKeywords {
         "this week",
         "this-week",
         "tonight",
+        "tourdefrance",
         "tournament",
         "ufc",
         "valentines",
