@@ -428,4 +428,20 @@ struct DealMapperTests {
 
         #expect(deal.details == ["Raise the steaks\nWith all the trimmings\n$22 Each"])
     }
+
+    @Test func mapsHappyHourWithSplitEveryWeekdayDays() throws {
+        let json = """
+        {"deals":[{"conditions":["* SELECTED RANGE OF BEER & WINE"],"times":["4PM-6PM"],"details":["BEERS","$7-"],"days":["EVERY","WEEKDAY"],"title":"HAPPY HOUR"}]}
+        """
+        let payload = try JSONDecoder().decode(DealExtractionPayload.self, from: Data(json.utf8))
+        let raw = try #require(payload.deals.first)
+
+        let deal = try #require(DealMapper.map([raw]).first)
+
+        #expect(deal.title == "Happy Hour")
+        #expect(deal.details == ["Beers", "$7-"])
+        #expect(deal.conditions == ["SELECTED RANGE OF BEER & WINE"])
+        #expect(deal.days == [.monday, .tuesday, .wednesday, .thursday, .friday])
+        #expect(deal.times == [.between(16 * 60, 18 * 60)])
+    }
 }

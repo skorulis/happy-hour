@@ -54,6 +54,14 @@ nonisolated enum DealDay: String, CaseIterable {
         return abbreviations[normalized]
     }
 
+    static func parseAll(in strings: [String]) -> [DealDay] {
+        let trimmed = strings
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        guard !trimmed.isEmpty else { return [] }
+        return parseAll(in: trimmed.joined(separator: " "))
+    }
+
     static func parseAll(in string: String) -> [DealDay] {
         if let day = parse(string) {
             return [day]
@@ -71,6 +79,10 @@ nonisolated enum DealDay: String, CaseIterable {
         }
 
         var found = Set<DealDay>()
+
+        if normalized.range(of: #"\bweekdays?\b"#, options: .regularExpression) != nil {
+            found.formUnion([.monday, .tuesday, .wednesday, .thursday, .friday])
+        }
 
         if normalized.range(of: #"\bweekends?\b"#, options: .regularExpression) != nil {
             found.insert(.saturday)

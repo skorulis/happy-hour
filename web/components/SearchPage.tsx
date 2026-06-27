@@ -1,30 +1,72 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { groupDealsByVenue, VenueSearchCard } from "@/components/VenueSearchCard";
 import { SearchBar, type SearchFilters } from "@/components/search/SearchBar";
 import type { TimeRange } from "@/components/search/DayPicker";
 import type { DealSearchResult } from "@/lib/search/queries";
+import {
+  filtersToSearchParams,
+  searchParamsToFilters,
+} from "@/lib/search/url";
 
 export function SearchPage() {
-  const [filters, setFilters] = useState<SearchFilters>({
-    days: [],
-    timeRange: null,
-    where: { kind: "anywhere" },
-    query: "",
-  });
-  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const isUpdatingUrl = useRef(false);
+
+  const [filters, setFilters] = useState<SearchFilters>(() =>
+    searchParamsToFilters(searchParams),
+  );
+  const [debouncedQuery, setDebouncedQuery] = useState(
+    () => (searchParams.get("q") ?? "").trim(),
+  );
   const [deals, setDeals] = useState<DealSearchResult[]>([]);
   const [loadingDeals, setLoadingDeals] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const fromUrl = searchParamsToFilters(searchParams);
+
+    if (isUpdatingUrl.current) {
+      isUpdatingUrl.current = false;
+      setFilters((current) => ({
+        ...fromUrl,
+        query: current.query,
+      }));
+      return;
+    }
+
+    setFilters(fromUrl);
+    setDebouncedQuery(fromUrl.query.trim());
+  }, [searchParams]);
+
+  useEffect(() => {
     const timeout = setTimeout(() => {
-      setDebouncedQuery(filters.query);
+      setDebouncedQuery(filters.query.trim());
     }, 250);
 
     return () => clearTimeout(timeout);
   }, [filters.query]);
+
+  useEffect(() => {
+    const nextParams = filtersToSearchParams(filters, debouncedQuery);
+    const next = nextParams.toString();
+    const current = searchParams.toString();
+
+    if (next !== current) {
+      isUpdatingUrl.current = true;
+      router.replace(next ? `/?${next}` : "/", { scroll: false });
+    }
+  }, [
+    debouncedQuery,
+    filters.days,
+    filters.timeRange,
+    filters.where,
+    router,
+    searchParams,
+  ]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -34,24 +76,7 @@ export function SearchPage() {
       setError(null);
 
       try {
-        const params = new URLSearchParams();
-
-        if (filters.days.length > 0) {
-          params.set("days", filters.days.join(","));
-        }
-        if (filters.where.kind === "suburb") {
-          params.set("suburbId", String(filters.where.id));
-        } else if (filters.where.kind === "nearMe") {
-          params.set("lat", String(filters.where.lat));
-          params.set("lng", String(filters.where.lng));
-        }
-        if (filters.timeRange) {
-          params.set("startMinute", String(filters.timeRange.startMinute));
-          params.set("endMinute", String(filters.timeRange.endMinute));
-        }
-        if (debouncedQuery.trim()) {
-          params.set("q", debouncedQuery.trim());
-        }
+        const params = filtersToSearchParams(filters, debouncedQuery);
 
         const response = await fetch(`/api/deals?${params.toString()}`, {
           signal: controller.signal,

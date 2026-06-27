@@ -139,6 +139,30 @@ struct VenueDealPersistenceMapperTests {
         #expect(mapped[0].deal.creativeURL == "https://example.com/menu.pdf")
     }
 
+    @Test func mapsHappyHourWithSplitEveryWeekdayDays() throws {
+        let json = """
+        {"deals":[{"conditions":["* SELECTED RANGE OF BEER & WINE"],"times":["4PM-6PM"],"details":["BEERS","$7-"],"days":["EVERY","WEEKDAY"],"title":"HAPPY HOUR"}]}
+        """
+        let payload = try JSONDecoder().decode(DealExtractionPayload.self, from: Data(json.utf8))
+        let material = VenueDealSourceMaterial.fixture()
+
+        let mapped = VenueDealPersistenceMapper.map(
+            payload: payload,
+            venueId: 1,
+            material: material
+        )
+
+        #expect(mapped.count == 1)
+
+        let result = try #require(mapped.first)
+        #expect(result.deal.title == "Happy Hour")
+        #expect(result.deal.details == "Beers\n$7-")
+        #expect(result.deal.conditions == "SELECTED RANGE OF BEER & WINE")
+        #expect(result.schedules.count == 5)
+        #expect(result.schedules.allSatisfy { $0.startMinute == 16 * 60 && $0.endMinute == 18 * 60 })
+        #expect(Set(result.schedules.map(\.dayOfWeek)) == Set([2, 3, 4, 5, 6]))
+    }
+
     @Test func mapsGlebeSteakNightFixture() throws {
         let payload = try DealExtractionPayload.fixture(named: "glebe-steak-nights")
         let material = VenueDealSourceMaterial.fixture()

@@ -36,7 +36,7 @@ nonisolated enum DealMapper {
             .filter { !$0.isEmpty }
         guard !title.isEmpty || !details.isEmpty || !conditions.isEmpty else { return nil }
 
-        let days = deal.days.flatMap { DealDay.parseAll(in: $0) }
+        let days = DealDay.parseAll(in: deal.days)
         let times = DealTimeParser.parse(deal.times)
 
         return deduplicated(

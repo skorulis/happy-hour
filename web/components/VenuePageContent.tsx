@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { BackToSearchLink } from "@/components/BackToSearchLink";
 import { DealCard } from "@/components/DealCard";
 import type { VenueDetailResult } from "@/lib/search/queries";
 import { groupDealsByDay } from "@/lib/search/schedule";
@@ -16,12 +16,7 @@ export function VenuePageContent({ venue }: VenuePageContentProps) {
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-10">
       <div>
-        <Link
-          href="/"
-          className="text-sm font-medium text-amber-700 hover:underline dark:text-amber-400"
-        >
-          ← Back to search
-        </Link>
+        <BackToSearchLink />
       </div>
 
       <header className="space-y-4">
