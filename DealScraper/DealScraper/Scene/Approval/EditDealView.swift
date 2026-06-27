@@ -61,6 +61,7 @@ struct EditDealView: View {
     var venueName: String = "Unknown Venue"
     var remainingCount: Int?
     var actionStyle: ActionStyle = .approval
+    var onVenueTap: ((Int64) -> Void)?
     var onAction: (DealStatus, EditDealDraft) -> Void = { _, _ in }
     var onSave: ((EditDealDraft) -> Void)?
     var onCancel: (() -> Void)?
@@ -94,8 +95,17 @@ struct EditDealView: View {
 
     private var header: some View {
         HStack {
-            Text(venueName)
+            if let onVenueTap {
+                Button(venueName) {
+                    onVenueTap(item.deal.venueId)
+                }
+                .buttonStyle(.plain)
                 .font(.headline)
+                .help("View venue details")
+            } else {
+                Text(venueName)
+                    .font(.headline)
+            }
 
             Spacer()
 
@@ -430,6 +440,7 @@ struct EditDealView: View {
             ]
         ),
         venueName: "The Local",
-        remainingCount: 3
-    ) { _, _ in }
+        remainingCount: 3,
+        onAction: { _, _ in }
+    )
 }

@@ -46,6 +46,7 @@ nonisolated enum FilterKeywords {
         "curry",
         "gyros",
         "meal",
+        "muscles",
         "pasta",
         "pizza",
         "porterhouse",

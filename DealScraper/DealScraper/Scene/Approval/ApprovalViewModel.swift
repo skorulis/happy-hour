@@ -1,5 +1,6 @@
 //Created by Alex Skorulis on 19/6/2026.
 
+import ASKCoordinator
 import Foundation
 import Knit
 import KnitMacros
@@ -7,8 +8,9 @@ import PDFKit
 
 @MainActor
 @Observable
-final class ApprovalViewModel {
-
+final class ApprovalViewModel: CoordinatorViewModel {
+    weak var coordinator: ASKCoordinator.Coordinator?
+    
     enum Mode: String, CaseIterable {
         case sources = "Sources"
         case deals = "Deals"
@@ -45,6 +47,7 @@ final class ApprovalViewModel {
     private(set) var pendingSources: [DealSource] = []
     private(set) var pendingDeals: [DealWithSchedules] = []
     private(set) var venueNames: [Int64: String] = [:]
+    private(set) var venueGoogleMapIds: [Int64: String] = [:]
     private(set) var previewState: PreviewState = .idle
 
     private let dealSourceRepository: DealSourceRepository
@@ -96,6 +99,10 @@ final class ApprovalViewModel {
         }
     }
 
+    func googleMapId(for venueId: Int64) -> String? {
+        venueGoogleMapIds[venueId]
+    }
+
     var currentSourceURL: String? {
         guard let source = currentSource else { return nil }
         switch source.type {
@@ -110,6 +117,11 @@ final class ApprovalViewModel {
         guard let url = currentSourceURL else { return }
         experimentViewModel.load(urlString: url)
     }
+    
+    func openVenueDetails(venueId: Int64) {
+        guard let id = googleMapId(for: venueId) else { return }
+        coordinator?.push(MainPath.venueDetails(id))
+    }
 
     func load() {
         previewTask?.cancel()
@@ -118,10 +130,17 @@ final class ApprovalViewModel {
         do {
             pendingSources = try dealSourceRepository.findNew()
             pendingDeals = try dealRepository.findNew()
+            let venues = try venueRepository.all()
             venueNames = Dictionary(
-                uniqueKeysWithValues: try venueRepository.all().compactMap { venue in
+                uniqueKeysWithValues: venues.compactMap { venue in
                     guard let id = venue.id else { return nil }
                     return (id, venue.name)
+                }
+            )
+            venueGoogleMapIds = Dictionary(
+                uniqueKeysWithValues: venues.compactMap { venue in
+                    guard let id = venue.id else { return nil }
+                    return (id, venue.googleMapId)
                 }
             )
             reloadForCurrentMode()
@@ -129,6 +148,7 @@ final class ApprovalViewModel {
             pendingSources = []
             pendingDeals = []
             venueNames = [:]
+            venueGoogleMapIds = [:]
             previewState = .failed(error.localizedDescription)
         }
     }

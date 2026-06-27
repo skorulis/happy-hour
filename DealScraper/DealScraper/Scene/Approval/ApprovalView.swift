@@ -1,10 +1,12 @@
 //Created by Alex Skorulis on 19/6/2026.
 
+import ASKCore
 import Knit
 import SwiftUI
 
 struct ApprovalView: View {
 
+    @Environment(\.resolver) private var resolver
     @State var viewModel: ApprovalViewModel
     var onOpenInExperiment: () -> Void
 
@@ -43,6 +45,21 @@ struct ApprovalView: View {
         }
     }
 
+    @ViewBuilder
+    private func venueNameLabel(name: String, venueId: Int64) -> some View {
+        if viewModel.googleMapId(for: venueId) != nil {
+            Button(name) {
+                viewModel.openVenueDetails(venueId: venueId)
+            }
+            .buttonStyle(.plain)
+            .font(.headline)
+            .help("View venue details")
+        } else {
+            Text(name)
+                .font(.headline)
+        }
+    }
+
     private var emptyState: some View {
         ContentUnavailableView(
             "All Caught Up",
@@ -70,7 +87,8 @@ struct ApprovalView: View {
                 EditDealView(
                     item: item,
                     venueName: viewModel.venueNames[item.deal.venueId] ?? "Unknown Venue",
-                    remainingCount: viewModel.remainingCount
+                    remainingCount: viewModel.remainingCount,
+                    onVenueTap: { viewModel.openVenueDetails(venueId: $0) }
                 ) { status, draft in
                     viewModel.decideDeal(status: status, draft: draft)
                 }
@@ -101,8 +119,10 @@ struct ApprovalView: View {
         if let source = viewModel.currentSource {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Text(viewModel.venueNames[source.venueId] ?? "Unknown Venue")
-                        .font(.headline)
+                    venueNameLabel(
+                        name: viewModel.venueNames[source.venueId] ?? "Unknown Venue",
+                        venueId: source.venueId
+                    )
 
                     Spacer()
 

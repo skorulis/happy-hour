@@ -47,9 +47,8 @@ struct ContentView: View {
                 }
                 .tag(Tab.jobs)
 
-            ApprovalView(viewModel: resolver!.approvalViewModel()) {
-                selectedTab = .experiment
-            }
+            CoordinatorView(coordinator: .init(root: MainPath.approval))
+                .withRenderers(resolver: resolver!)
             .tabItem {
                 Label("Approval", systemImage: "checkmark.seal")
             }
