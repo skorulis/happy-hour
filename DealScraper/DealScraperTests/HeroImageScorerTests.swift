@@ -30,6 +30,41 @@ struct HeroImageScorerTests {
         #expect(HeroImageScorer.totalScore(aspect: 1, text: 0.5, building: 0.2) == 0.5666666666666666)
     }
 
+    @Test func totalScoreAddsVenueNameBonus() {
+        #expect(HeroImageScorer.totalScore(aspect: 1, text: 0.5, building: 0.2, venueName: 1) == 1.5666666666666666)
+    }
+
+    @Test func namePiecesSplitsOnNonAlphanumerics() {
+        #expect(HeroImageScorer.namePieces(from: "The Toxteth") == ["the", "toxteth"])
+        #expect(HeroImageScorer.namePieces(from: "Royal-Hotel & Bar") == ["royal", "hotel", "bar"])
+    }
+
+    @Test func venueNameScoreRewardsFocusedNameMatch() {
+        let logoLines = [ExtractedTextLine(text: "The Toxteth", lineHeight: 0.1, relativeSize: .large)]
+        #expect(abs(HeroImageScorer.venueNameScore(venueName: "The Toxteth", lines: logoLines) - 1) < 0.001)
+
+        let menuLines = [
+            ExtractedTextLine(text: "The Toxteth", lineHeight: 0.1, relativeSize: .large),
+            ExtractedTextLine(text: "Beer $8", lineHeight: 0.05, relativeSize: .medium),
+            ExtractedTextLine(text: "Wine $10", lineHeight: 0.05, relativeSize: .medium),
+            ExtractedTextLine(text: "Cocktails $15", lineHeight: 0.05, relativeSize: .medium),
+            ExtractedTextLine(text: "Happy Hour 4-6pm", lineHeight: 0.05, relativeSize: .medium),
+        ]
+        let menuScore = HeroImageScorer.venueNameScore(venueName: "The Toxteth", lines: menuLines)
+        #expect(menuScore > 0)
+        #expect(menuScore < 0.5)
+    }
+
+    @Test func venueNameScoreReturnsZeroWhenNameMissing() {
+        let lines = [ExtractedTextLine(text: "Happy Hour Menu", lineHeight: 0.1, relativeSize: .large)]
+        #expect(HeroImageScorer.venueNameScore(venueName: "The Toxteth", lines: lines) == 0)
+    }
+
+    @Test func venueNameScorePartialPieceMatch() {
+        let lines = [ExtractedTextLine(text: "Toxteth", lineHeight: 0.1, relativeSize: .large)]
+        #expect(abs(HeroImageScorer.venueNameScore(venueName: "The Toxteth", lines: lines) - 0.5) < 0.001)
+    }
+
     @Test func isViableCandidateRequiresBuildingSignalOrMinimumTotal() {
         #expect(HeroImageScorer.isViableCandidate(buildingScore: 0.1, totalScore: 0.1))
         #expect(HeroImageScorer.isViableCandidate(buildingScore: 0, totalScore: 0.3))

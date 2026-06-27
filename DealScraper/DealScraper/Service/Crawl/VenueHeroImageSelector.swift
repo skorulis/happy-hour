@@ -26,83 +26,54 @@ final class VenueHeroImageSelector {
         self.classifier = classifier
     }
 
-    func scoreHeroImage(url: URL) async -> HeroImageScore {
+    func scoreHeroImage(url: URL, venueName: String? = nil) async -> HeroImageScore {
         if Self.shouldIgnore(url: url) {
-            return HeroImageScore(
-                dimensions: nil,
-                aspectScore: 0,
-                textCoverageRatio: 0,
-                textScore: 0,
-                buildingScore: 0,
-                totalScore: 0,
-                isViable: false,
-                skipReason: "Excluded URL pattern"
-            )
+            return Self.skippedScore(skipReason: "Excluded URL pattern")
         }
 
         let hash = URLNormalizer.hash(url)
         guard let localURL = try? await fetcher.localFileURL(for: url, hash: hash) else {
-            return HeroImageScore(
-                dimensions: nil,
-                aspectScore: 0,
-                textCoverageRatio: 0,
-                textScore: 0,
-                buildingScore: 0,
-                totalScore: 0,
-                isViable: false,
-                skipReason: "Could not download image"
-            )
+            return Self.skippedScore(skipReason: "Could not download image")
         }
 
         guard let dimensions = Self.imagePixelDimensions(at: localURL) else {
-            return HeroImageScore(
-                dimensions: nil,
-                aspectScore: 0,
-                textCoverageRatio: 0,
-                textScore: 0,
-                buildingScore: 0,
-                totalScore: 0,
-                isViable: false,
-                skipReason: "Could not read image dimensions"
-            )
+            return Self.skippedScore(skipReason: "Could not read image dimensions")
         }
 
         guard Self.meetsMinimumDimensions(dimensions: dimensions) else {
-            return HeroImageScore(
-                dimensions: dimensions,
-                aspectScore: 0,
-                textCoverageRatio: 0,
-                textScore: 0,
-                buildingScore: 0,
-                totalScore: 0,
-                isViable: false,
-                skipReason: "Below minimum \(Int(Self.minimumPixelDimension))×\(Int(Self.minimumPixelDimension)) pixels"
+            return Self.skippedScore(
+                skipReason: "Below minimum \(Int(Self.minimumPixelDimension))×\(Int(Self.minimumPixelDimension)) pixels",
+                dimensions: dimensions
             )
         }
 
-        let coverage = (try? await imageExtractor.textCoverageRatio(from: localURL)) ?? 0
-        let building = (try? await classifier.buildingScore(for: localURL)) ?? 0
-        let aspect = HeroImageScorer.aspectScore(width: dimensions.width, height: dimensions.height)
-        let text = HeroImageScorer.textScore(coverageRatio: coverage)
-        let total = HeroImageScorer.totalScore(aspect: aspect, text: text, building: building)
-        let isViable = HeroImageScorer.isViableCandidate(buildingScore: building, totalScore: total)
+        let components = await scoreComponents(
+            localURL: localURL,
+            dimensions: dimensions,
+            venueName: venueName
+        )
+        let isViable = HeroImageScorer.isViableCandidate(
+            buildingScore: components.building,
+            totalScore: components.total
+        )
 
         return HeroImageScore(
             dimensions: dimensions,
-            aspectScore: aspect,
-            textCoverageRatio: coverage,
-            textScore: text,
-            buildingScore: building,
-            totalScore: total,
+            aspectScore: components.aspect,
+            textCoverageRatio: components.coverage,
+            textScore: components.text,
+            buildingScore: components.building,
+            venueNameScore: components.venueName,
+            totalScore: components.total,
             isViable: isViable,
             skipReason: isViable ? nil : "Below viability threshold"
         )
     }
 
-    func rankHeroImages(from urls: [URL]) async -> [RankedHeroImage] {
+    func rankHeroImages(from urls: [URL], venueName: String? = nil) async -> [RankedHeroImage] {
         var scored: [(url: URL, score: HeroImageScore)] = []
         for url in urls {
-            let score = await scoreHeroImage(url: url)
+            let score = await scoreHeroImage(url: url, venueName: venueName)
             scored.append((url, score))
         }
 
@@ -118,7 +89,7 @@ final class VenueHeroImageSelector {
         }
     }
 
-    func selectHeroImage(from urls: [URL]) async -> URL? {
+    func selectHeroImage(from urls: [URL], venueName: String? = nil) async -> URL? {
         var best: (url: URL, score: CGFloat)?
 
         for url in urls {
@@ -129,26 +100,81 @@ final class VenueHeroImageSelector {
             guard let dimensions = Self.imagePixelDimensions(at: localURL) else { continue }
             guard Self.meetsMinimumDimensions(dimensions: dimensions) else { continue }
 
-            let coverage = (try? await imageExtractor.textCoverageRatio(from: localURL)) ?? 0
-            let building = (try? await classifier.buildingScore(for: localURL)) ?? 0
-
-            let aspect = HeroImageScorer.aspectScore(
-                width: dimensions.width,
-                height: dimensions.height
+            let components = await scoreComponents(
+                localURL: localURL,
+                dimensions: dimensions,
+                venueName: venueName
             )
-            let text = HeroImageScorer.textScore(coverageRatio: coverage)
-            let total = HeroImageScorer.totalScore(aspect: aspect, text: text, building: building)
 
-            guard HeroImageScorer.isViableCandidate(buildingScore: building, totalScore: total) else {
+            guard HeroImageScorer.isViableCandidate(
+                buildingScore: components.building,
+                totalScore: components.total
+            ) else {
                 continue
             }
 
-            if best == nil || total > best!.score {
-                best = (url, total)
+            if best == nil || components.total > best!.score {
+                best = (url, components.total)
             }
         }
 
         return best?.url
+    }
+
+    private struct ScoreComponents {
+        let aspect: CGFloat
+        let coverage: CGFloat
+        let text: CGFloat
+        let building: CGFloat
+        let venueName: CGFloat
+        let total: CGFloat
+    }
+
+    private func scoreComponents(
+        localURL: URL,
+        dimensions: CGSize,
+        venueName: String?
+    ) async -> ScoreComponents {
+        let coverage = (try? await imageExtractor.textCoverageRatio(from: localURL)) ?? 0
+        let building = (try? await classifier.buildingScore(for: localURL)) ?? 0
+        let lines = (try? await imageExtractor.extractTexts(from: localURL)) ?? []
+        let aspect = HeroImageScorer.aspectScore(width: dimensions.width, height: dimensions.height)
+        let text = HeroImageScorer.textScore(coverageRatio: coverage)
+        let venueNameScore = venueName.map {
+            HeroImageScorer.venueNameScore(venueName: $0, lines: lines)
+        } ?? 0
+        let total = HeroImageScorer.totalScore(
+            aspect: aspect,
+            text: text,
+            building: building,
+            venueName: venueNameScore
+        )
+
+        return ScoreComponents(
+            aspect: aspect,
+            coverage: coverage,
+            text: text,
+            building: building,
+            venueName: venueNameScore,
+            total: total
+        )
+    }
+
+    private static func skippedScore(
+        skipReason: String,
+        dimensions: CGSize? = nil
+    ) -> HeroImageScore {
+        HeroImageScore(
+            dimensions: dimensions,
+            aspectScore: 0,
+            textCoverageRatio: 0,
+            textScore: 0,
+            buildingScore: 0,
+            venueNameScore: 0,
+            totalScore: 0,
+            isViable: false,
+            skipReason: skipReason
+        )
     }
 
     private static func shouldIgnore(url: URL) -> Bool {

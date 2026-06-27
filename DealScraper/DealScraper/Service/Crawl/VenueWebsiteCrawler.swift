@@ -210,7 +210,10 @@ final class VenueWebsiteCrawler {
 
                 if venue.heroImage?.isEmpty != false {
                     await progress("Selecting hero image…")
-                    if let heroURL = await heroImageSelector.selectHeroImage(from: loadedPage.imageURLs) {
+                    if let heroURL = await heroImageSelector.selectHeroImage(
+                        from: loadedPage.imageURLs,
+                        venueName: venue.name
+                    ) {
                         try venueRepository.updateHeroImage(
                             venueId: venueId,
                             url: heroURL.absoluteString

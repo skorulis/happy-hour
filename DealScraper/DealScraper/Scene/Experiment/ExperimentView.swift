@@ -205,6 +205,9 @@ struct ExperimentView: View {
                     detail: "coverage \(percentString(score.textCoverageRatio))"
                 )
                 scoreRow(label: "Building", value: score.buildingScore)
+                if score.venueNameScore > 0 {
+                    scoreRow(label: "Venue Name", value: score.venueNameScore)
+                }
                 Divider()
                 scoreRow(label: "Total", value: score.totalScore, emphasized: true)
 
