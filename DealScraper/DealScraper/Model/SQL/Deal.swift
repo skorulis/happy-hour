@@ -13,8 +13,8 @@ nonisolated struct Deal: Codable, Sendable {
     var id: Int64?
     let venueId: Int64
     var title: String?
-    let creativeURL: String?
-    let sourceURL: String?
+    var creativeURL: String?
+    var sourceURL: String?
     var details: String?
     var conditions: String?
     var status: DealStatus

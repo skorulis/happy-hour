@@ -213,6 +213,8 @@ struct DealRepositoryTests {
             title: "Edited Title",
             details: "Edited details",
             conditions: "Edited conditions",
+            sourceURL: "https://example.com/page",
+            creativeURL: "https://example.com/image.png",
             status: .approved
         )
 
@@ -221,6 +223,8 @@ struct DealRepositoryTests {
         #expect(found[0].deal.title == "Edited Title")
         #expect(found[0].deal.details == "Edited details")
         #expect(found[0].deal.conditions == "Edited conditions")
+        #expect(found[0].deal.sourceURL == "https://example.com/page")
+        #expect(found[0].deal.creativeURL == "https://example.com/image.png")
         #expect(found[0].deal.status == .approved)
     }
 

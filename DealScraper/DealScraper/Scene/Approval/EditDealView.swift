@@ -46,6 +46,8 @@ struct EditDealDraft: Sendable {
     var title: String
     var details: String
     var conditions: String
+    var sourceURL: String
+    var creativeURL: String
     var schedules: [EditableDealSchedule]
 }
 
@@ -66,6 +68,8 @@ struct EditDealView: View {
     @State private var title = ""
     @State private var details = ""
     @State private var conditions = ""
+    @State private var sourceURL = ""
+    @State private var creativeURL = ""
     @State private var schedules: [EditableDealSchedule] = []
 
     var body: some View {
@@ -157,7 +161,12 @@ struct EditDealView: View {
                         }
                     }
 
-                    dealSourceLinks
+                    editableURLField(label: "Source URL", text: $sourceURL, linkLabel: "Page source")
+                    editableURLField(
+                        label: "Creative URL",
+                        text: $creativeURL,
+                        linkLabel: resolvedURL(from: creativeURL).map { creativeSourceLinkLabel(for: $0) }
+                    )
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -206,6 +215,8 @@ struct EditDealView: View {
             title: title,
             details: details,
             conditions: conditions,
+            sourceURL: sourceURL,
+            creativeURL: creativeURL,
             schedules: schedules
         )
     }
@@ -218,6 +229,8 @@ struct EditDealView: View {
         title = item.deal.title ?? ""
         details = item.deal.details ?? ""
         conditions = item.deal.conditions ?? ""
+        sourceURL = item.deal.sourceURL ?? ""
+        creativeURL = item.deal.creativeURL ?? ""
         schedules = DealScheduleFormatting
             .sortedSchedules(item.schedules)
             .enumerated()
@@ -293,11 +306,29 @@ struct EditDealView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    private func editableURLField(label: String, text: Binding<String>, linkLabel: String?) -> some View {
+        editableField(label: label) {
+            HStack(spacing: 8) {
+                TextField(label, text: text)
+                    .textFieldStyle(.roundedBorder)
+
+                if let url = resolvedURL(from: text.wrappedValue), let linkLabel {
+                    Link(linkLabel, destination: url)
+                }
+            }
+            .font(.caption)
+        }
+    }
+
+    private func resolvedURL(from string: String) -> URL? {
+        let trimmed = string.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        return URL(string: trimmed)
+    }
+
     @ViewBuilder
     private var dealImage: some View {
-        if let creativeURLString = item.deal.creativeURL,
-           !creativeURLString.isEmpty,
-           let creativeURL = URL(string: creativeURLString) {
+        if let creativeURL = resolvedURL(from: creativeURL) {
             switch PageLinkFilter.sourceType(for: creativeURL) {
             case .image:
                 Link(destination: creativeURL) {
@@ -344,22 +375,6 @@ struct EditDealView: View {
                 EmptyView()
             }
         }
-    }
-
-    @ViewBuilder
-    private var dealSourceLinks: some View {
-        HStack(spacing: 16) {
-            if let sourceURL = item.deal.sourceURL, let url = URL(string: sourceURL) {
-                Link("Page source", destination: url)
-            }
-
-            if let creativeURLString = item.deal.creativeURL,
-               !creativeURLString.isEmpty,
-               let url = URL(string: creativeURLString) {
-                Link(creativeSourceLinkLabel(for: url), destination: url)
-            }
-        }
-        .font(.caption)
     }
 
     private func creativeSourceLinkLabel(for url: URL) -> String {

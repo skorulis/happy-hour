@@ -81,9 +81,12 @@ nonisolated enum FilterKeywords {
         "2 for 1",
         "karaoke",
         "jazz",
+        "hospo",
+        "hospitality",
     ]
     
     static let excludedKeywords = [
+        "birthday",
         "christmas in july",
         "christmas",
         "conferences",
@@ -109,6 +112,7 @@ nonisolated enum FilterKeywords {
         "mother's day",
         "newyears",
         "origin",
+        "oktoberfest",
         "parties",
         "pridemonth",
         "privateevents",
@@ -132,6 +136,7 @@ nonisolated enum FilterKeywords {
         "valentines",
         "vivid",
         "weddings",
+        "worldcup",
         "xmas",
         "/post",
         "/blog",

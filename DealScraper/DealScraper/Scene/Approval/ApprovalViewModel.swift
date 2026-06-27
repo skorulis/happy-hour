@@ -160,6 +160,8 @@ final class ApprovalViewModel {
                     title: draft.title.isEmpty ? nil : draft.title,
                     details: draft.details.isEmpty ? nil : draft.details,
                     conditions: draft.conditions.isEmpty ? nil : draft.conditions,
+                    sourceURL: draft.sourceURL.isEmpty ? nil : draft.sourceURL,
+                    creativeURL: draft.creativeURL.isEmpty ? nil : draft.creativeURL,
                     schedules: draft.schedules.map { $0.toDealSchedule() },
                     status: status
                 )
