@@ -21,6 +21,7 @@ final class VenueRepository {
                 .filter(Column("google_map_id") == mutableVenue.googleMapId)
                 .fetchOne(db)
             {
+                let importedStatus = Venue.statusWhenImported(from: mutableVenue.websiteUri)
                 mutableVenue = Venue(
                     id: existing.id,
                     suburbId: mutableVenue.suburbId,
@@ -32,7 +33,7 @@ final class VenueRepository {
                     heroImage: existing.heroImage,
                     lastCrawlDate: existing.lastCrawlDate,
                     lastExtractionDate: existing.lastExtractionDate,
-                    status: existing.status,
+                    status: importedStatus == .broken ? .broken : existing.status,
                     json: mutableVenue.json
                 )
                 try mutableVenue.update(db)

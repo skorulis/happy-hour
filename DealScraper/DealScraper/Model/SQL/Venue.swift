@@ -82,8 +82,18 @@ nonisolated struct Venue: Codable, Sendable {
             lat: place.location.latitude,
             lng: place.location.longitude,
             websiteUri: place.websiteUri,
+            status: Self.statusWhenImported(from: place.websiteUri),
             json: jsonString
         )
+    }
+
+    static func statusWhenImported(from websiteUri: String?) -> VenueStatus {
+        guard let websiteUri,
+              !websiteUri.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        else {
+            return .broken
+        }
+        return .normal
     }
 }
 
