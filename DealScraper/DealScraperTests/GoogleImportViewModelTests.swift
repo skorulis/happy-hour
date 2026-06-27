@@ -157,6 +157,47 @@ struct GoogleImportViewModelTests {
         #expect(viewModel.state == GoogleImportViewModel.State.completed(totalCount: 2, newCount: 2))
     }
 
+    @Test func searchAreaImportsVenues() async {
+        let store = SQLStore.inMemory()
+        let repository = VenueRepository(store: store)
+        let assembler = DealScraperAssembly.testing()
+        let apiKeyStore = assembler.resolver.apiKeyStore()
+        apiKeyStore.googlePlacesAPIKey = "google-test-key"
+
+        let client = GooglePlacesClient { request in
+            let httpRequest = try #require(request as? HTTPJSONRequest<GooglePlacesSearchResponse>)
+            #expect(httpRequest.endpoint == "https://places.googleapis.com/v1/places:searchNearby")
+            return GooglePlacesSearchResponse(
+                places: [Self.samplePlace(id: "places/area-1", name: "Area Pub")],
+                nextPageToken: nil
+            )
+        }
+
+        let viewModel = GoogleImportViewModel(
+            googlePlacesClient: client,
+            venueRepository: repository,
+            apiKeyStore: apiKeyStore
+        )
+        viewModel.searchMode = .area
+        viewModel.southWestLatitude = "-33.870"
+        viewModel.southWestLongitude = "151.205"
+        viewModel.northEastLatitude = "-33.868"
+        viewModel.northEastLongitude = "151.210"
+        viewModel.cellRadiusMeters = "500"
+
+        viewModel.search()
+        await waitForSearchCompletion(viewModel)
+
+        if case let .completed(totalCount, newCount, saturatedCellCount, apiCallCount) = viewModel.state {
+            #expect(totalCount == 1)
+            #expect(newCount == 1)
+            #expect(saturatedCellCount == 0)
+            #expect(apiCallCount >= 1)
+        } else {
+            Issue.record("Expected completed state, got \(viewModel.state)")
+        }
+    }
+
     private static func samplePlace(id: String, name: String) -> GooglePlace {
         GooglePlace(
             id: id,
@@ -171,7 +212,7 @@ struct GoogleImportViewModelTests {
     private func waitForSearchCompletion(_ viewModel: GoogleImportViewModel) async {
         for _ in 0..<500 {
             switch viewModel.state {
-            case .searching, .idle:
+            case .searching, .idle, .sweeping:
                 try? await Task.sleep(for: .milliseconds(20))
             case .completed, .failed:
                 return

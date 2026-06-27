@@ -11,7 +11,10 @@ enum GooglePlacesAPI {
         case decodingFailure
     }
 
-    nonisolated static let defaultFieldMask = "places.id,places.displayName,places.location,places.formattedAddress,places.websiteUri,places.types,nextPageToken"
+    nonisolated static let placeFieldMask =
+        "places.id,places.displayName,places.location,places.formattedAddress,places.websiteUri,places.types"
+    nonisolated static let textSearchFieldMask = "\(placeFieldMask),nextPageToken"
+    nonisolated static let nearbySearchFieldMask = placeFieldMask
 
     nonisolated static func searchTextRequest(
         apiKey: String,
@@ -30,7 +33,7 @@ enum GooglePlacesAPI {
             )
         )
         request.headers["X-Goog-Api-Key"] = apiKey
-        request.headers["X-Goog-FieldMask"] = defaultFieldMask
+        request.headers["X-Goog-FieldMask"] = textSearchFieldMask
         return request
     }
 
@@ -56,7 +59,7 @@ enum GooglePlacesAPI {
             )
         )
         request.headers["X-Goog-Api-Key"] = apiKey
-        request.headers["X-Goog-FieldMask"] = defaultFieldMask
+        request.headers["X-Goog-FieldMask"] = nearbySearchFieldMask
         return request
     }
 }

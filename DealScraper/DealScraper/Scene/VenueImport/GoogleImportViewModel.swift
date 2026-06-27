@@ -7,6 +7,7 @@ import KnitMacros
 enum VenueSearchMode: String, CaseIterable {
     case text = "Text"
     case nearby = "Nearby"
+    case area = "Area"
 }
 
 @MainActor
@@ -16,7 +17,13 @@ final class GoogleImportViewModel {
     enum State: Equatable {
         case idle
         case searching
-        case completed(totalCount: Int, newCount: Int)
+        case sweeping(VenueAreaSweepProgress)
+        case completed(
+            totalCount: Int,
+            newCount: Int,
+            saturatedCellCount: Int = 0,
+            apiCallCount: Int = 0
+        )
         case failed(message: String)
     }
 
@@ -28,10 +35,27 @@ final class GoogleImportViewModel {
     var latitude: String = "-33.8688"
     var longitude: String = "151.2093"
     var radiusMeters: String = "1500"
+    var southWestLatitude: String = "-33.875"
+    var southWestLongitude: String = "151.200"
+    var northEastLatitude: String = "-33.862"
+    var northEastLongitude: String = "151.220"
+    var cellRadiusMeters: String = "500"
 
     private let googlePlacesClient: GooglePlacesClient
     private let venueRepository: VenueRepository
     private let apiKeyStore: APIKeyStore
+
+    var estimatedAreaCellCount: Int {
+        guard let boundingBox = parsedBoundingBox(),
+              let cellRadius = parsedCellRadius()
+        else {
+            return 0
+        }
+        return VenueAreaSweep.generateGrid(
+            boundingBox: boundingBox,
+            cellRadiusMeters: cellRadius
+        ).count
+    }
 
     @Resolvable<Resolver>
     init(
@@ -72,37 +96,61 @@ final class GoogleImportViewModel {
             guard parsedCoordinate(latitude, name: "latitude") != nil else { return }
             guard parsedCoordinate(longitude, name: "longitude") != nil else { return }
             guard parsedRadius() != nil else { return }
+        case .area:
+            guard parsedBoundingBox() != nil else { return }
+            guard parsedCellRadius() != nil else { return }
         }
 
         state = .searching
 
         do {
-            let response: GooglePlacesSearchResponse
             switch searchMode {
             case .text:
                 let query = textQuery.trimmingCharacters(in: .whitespacesAndNewlines)
                 let region = regionCode.trimmingCharacters(in: .whitespacesAndNewlines)
-                response = try await googlePlacesClient.searchTextAllPages(
+                let response = try await googlePlacesClient.searchTextAllPages(
                     apiKey: apiKey,
                     textQuery: query,
                     includedType: "bar",
                     regionCode: region.isEmpty ? nil : region
                 )
+                let newCount = try venueRepository.upsert(places: response.places)
+                state = .completed(totalCount: response.places.count, newCount: newCount)
+
             case .nearby:
                 let lat = parsedCoordinate(latitude, name: "latitude")!
                 let lng = parsedCoordinate(longitude, name: "longitude")!
                 let radius = parsedRadius()!
-                response = try await googlePlacesClient.searchNearby(
+                let response = try await googlePlacesClient.searchNearby(
                     apiKey: apiKey,
                     latitude: lat,
                     longitude: lng,
                     radiusMeters: radius,
-                    includedTypes: ["bar"]
+                    includedTypes: VenueAreaSweep.defaultIncludedTypes
+                )
+                let newCount = try venueRepository.upsert(places: response.places)
+                state = .completed(totalCount: response.places.count, newCount: newCount)
+
+            case .area:
+                let boundingBox = parsedBoundingBox()!
+                let cellRadius = parsedCellRadius()!
+                let result = try await googlePlacesClient.searchArea(
+                    apiKey: apiKey,
+                    boundingBox: boundingBox,
+                    cellRadiusMeters: cellRadius,
+                    includedTypes: VenueAreaSweep.defaultIncludedTypes,
+                    onProgress: { [weak self] progress in
+                        self?.state = .sweeping(progress)
+                    }
+                )
+                let newCount = try venueRepository.upsert(places: result.places)
+                state = .completed(
+                    totalCount: result.places.count,
+                    newCount: newCount,
+                    saturatedCellCount: result.saturatedCells.count,
+                    apiCallCount: result.apiCallCount
                 )
             }
-
-            let newCount = try venueRepository.upsert(places: response.places)
-            state = .completed(totalCount: response.places.count, newCount: newCount)
         } catch {
             state = .failed(message: localizedMessage(for: error))
         }
@@ -124,6 +172,41 @@ final class GoogleImportViewModel {
             return nil
         }
         return radius
+    }
+
+    private func parsedCellRadius() -> Double? {
+        let trimmed = cellRadiusMeters.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let radius = Double(trimmed), radius > 0 else {
+            state = .failed(message: "Enter a valid cell radius in meters.")
+            return nil
+        }
+        return radius
+    }
+
+    private func parsedBoundingBox() -> VenueAreaSweepBoundingBox? {
+        guard let southWestLat = parsedCoordinate(southWestLatitude, name: "south-west latitude"),
+              let southWestLng = parsedCoordinate(southWestLongitude, name: "south-west longitude"),
+              let northEastLat = parsedCoordinate(northEastLatitude, name: "north-east latitude"),
+              let northEastLng = parsedCoordinate(northEastLongitude, name: "north-east longitude")
+        else {
+            return nil
+        }
+
+        let boundingBox = VenueAreaSweepBoundingBox(
+            southWestLat: southWestLat,
+            southWestLng: southWestLng,
+            northEastLat: northEastLat,
+            northEastLng: northEastLng
+        )
+
+        guard boundingBox.isValid else {
+            state = .failed(
+                message: "Bounding box is invalid. South-west corner must be south and west of north-east corner."
+            )
+            return nil
+        }
+
+        return boundingBox
     }
 
     private func localizedMessage(for error: Error) -> String {

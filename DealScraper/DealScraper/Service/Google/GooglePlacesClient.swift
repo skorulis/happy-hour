@@ -143,6 +143,31 @@ final class GooglePlacesClient: HTTPService {
         )
     }
 
+    func searchArea(
+        apiKey: String,
+        boundingBox: VenueAreaSweepBoundingBox,
+        cellRadiusMeters: Double,
+        includedTypes: [String] = VenueAreaSweep.defaultIncludedTypes,
+        onProgress: ((VenueAreaSweepProgress) -> Void)? = nil
+    ) async throws -> VenueAreaSweepResult {
+        try await VenueAreaSweep.sweep(
+            boundingBox: boundingBox,
+            cellRadiusMeters: cellRadiusMeters,
+            searchNearby: { latitude, longitude, radiusMeters in
+                let response = try await searchNearby(
+                    apiKey: apiKey,
+                    latitude: latitude,
+                    longitude: longitude,
+                    radiusMeters: radiusMeters,
+                    includedTypes: includedTypes,
+                    maxResultCount: VenueAreaSweep.nearbyResultCap
+                )
+                return response.places
+            },
+            onProgress: onProgress
+        )
+    }
+
     private func perform<R: HTTPRequest>(
         _ request: R
     ) async throws -> R.ResponseType where R.ResponseType == GooglePlacesSearchResponse {

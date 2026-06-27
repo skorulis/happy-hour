@@ -50,7 +50,7 @@ struct GooglePlacesClientTests {
         #expect(request.endpoint == "https://places.googleapis.com/v1/places:searchText")
         #expect(request.method == "POST")
         #expect(request.headers["X-Goog-Api-Key"] == "google-test-key")
-        #expect(request.headers["X-Goog-FieldMask"] == GooglePlacesAPI.defaultFieldMask)
+        #expect(request.headers["X-Goog-FieldMask"] == GooglePlacesAPI.textSearchFieldMask)
 
         let body = try #require(request.body)
         let json = try #require(JSONSerialization.jsonObject(with: body) as? [String: Any])
@@ -148,6 +148,8 @@ struct GooglePlacesClientTests {
 
         let request = try #require(captured.request as? HTTPJSONRequest<GooglePlacesSearchResponse>)
         #expect(request.endpoint == "https://places.googleapis.com/v1/places:searchNearby")
+        #expect(request.headers["X-Goog-FieldMask"] == GooglePlacesAPI.nearbySearchFieldMask)
+        #expect(request.headers["X-Goog-FieldMask"]?.contains("nextPageToken") == false)
 
         let body = try #require(request.body)
         let json = try #require(JSONSerialization.jsonObject(with: body) as? [String: Any])
