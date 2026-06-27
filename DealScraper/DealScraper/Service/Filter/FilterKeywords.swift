@@ -73,6 +73,7 @@ nonisolated enum FilterKeywords {
         
         // Other
         "bingo",
+        "comedy",
         "pool",
         "meat tray",
         "2-4-1",

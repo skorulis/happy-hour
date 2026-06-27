@@ -280,6 +280,48 @@ struct DealMapperTests {
         #expect(deal.details == ["Raise the steaks"])
     }
 
+    @Test func stripsDayFromStartOfTitle() throws {
+        let raw = DealExtractionPayload.RawDeal(
+            title: "MONDAY STEAK NIGHT",
+            details: ["Raise the steaks"],
+            days: ["MONDAY"],
+            times: ["all day"]
+        )
+
+        let deal = try #require(DealMapper.map([raw]).first)
+
+        #expect(deal.title == "Steak Night")
+        #expect(deal.details == ["Raise the steaks"])
+    }
+
+    @Test func stripsDayFromEndOfTitle() throws {
+        let raw = DealExtractionPayload.RawDeal(
+            title: "STEAK NIGHT TUESDAY",
+            details: ["Raise the steaks"],
+            days: ["TUESDAY"],
+            times: ["all day"]
+        )
+
+        let deal = try #require(DealMapper.map([raw]).first)
+
+        #expect(deal.title == "Steak Night")
+        #expect(deal.details == ["Raise the steaks"])
+    }
+
+    @Test func appendsFirstDetailLineWhenTitleIsPriceOnly() throws {
+        let raw = DealExtractionPayload.RawDeal(
+            title: "$22",
+            details: ["Premium cut with sides", "Selected cuts only"],
+            days: ["MONDAY"],
+            times: ["all day"]
+        )
+
+        let deal = try #require(DealMapper.map([raw]).first)
+
+        #expect(deal.title == "$22 Premium Cut With Sides")
+        #expect(deal.details == ["Selected cuts only"])
+    }
+
     @Test func replacesDayOnlyTitleWithFirstDetailLine() throws {
         let raw = DealExtractionPayload.RawDeal(
             title: "Monday",

@@ -22,8 +22,9 @@ nonisolated enum DealMapper {
         var details = deal.details
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
-        guard let dayOnlyResolved = withDayOnlyTitle(title: title, details: details) else { return nil }
-        (title, details) = dayOnlyResolved
+        guard let dayResolved = resolveDayInTitle(title: title, details: details) else { return nil }
+        (title, details) = dayResolved
+        (title, details) = withPriceOnlyTitle(title: title, details: details)
         (title, details) = withLeadingPriceInTitle(title: title, details: details)
         title = titleCased(title)
         if !title.isEmpty, FilterKeywords.containsExcludedKeyword(title) {
@@ -49,14 +50,48 @@ nonisolated enum DealMapper {
         )
     }
 
-    private static func withDayOnlyTitle(title: String, details: [String]) -> (title: String, details: [String])? {
-        guard DealDay.parse(title) != nil else {
+    private static func resolveDayInTitle(title: String, details: [String]) -> (title: String, details: [String])? {
+        let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if DealDay.parse(trimmedTitle) != nil {
+            guard let (firstLine, remainingDetails) = popFirstDetailLine(from: details) else {
+                return nil
+            }
+            return (firstLine, remainingDetails)
+        }
+
+        var resolvedTitle = stripDayWord(from: trimmedTitle, atStart: true)
+        resolvedTitle = stripDayWord(from: resolvedTitle, atStart: false)
+        resolvedTitle = resolvedTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+        return (resolvedTitle, details)
+    }
+
+    private static func stripDayWord(from title: String, atStart: Bool) -> String {
+        let parts = title.split(separator: " ", omittingEmptySubsequences: true).map(String.init)
+        guard !parts.isEmpty else { return title }
+
+        if atStart {
+            guard DealDay.parse(parts[0]) != nil else { return title }
+            return parts.dropFirst().joined(separator: " ")
+        }
+
+        guard parts.count > 1, DealDay.parse(parts[parts.count - 1]) != nil else { return title }
+        return parts.dropLast().joined(separator: " ")
+    }
+
+    private static func withPriceOnlyTitle(title: String, details: [String]) -> (title: String, details: [String]) {
+        guard isPriceLine(title), let (firstLine, remainingDetails) = popFirstDetailLine(from: details) else {
             return (title, details)
         }
-        guard let (firstLine, remainingDetails) = popFirstDetailLine(from: details) else {
-            return nil
+
+        let resolvedTitle: String
+        if normalizeLine(title).contains(normalizeLine(firstLine)) {
+            resolvedTitle = title
+        } else {
+            resolvedTitle = "\(title) \(firstLine)"
         }
-        return (firstLine, remainingDetails)
+
+        return (resolvedTitle, remainingDetails)
     }
 
     private static func popFirstDetailLine(from details: [String]) -> (line: String, remaining: [String])? {
