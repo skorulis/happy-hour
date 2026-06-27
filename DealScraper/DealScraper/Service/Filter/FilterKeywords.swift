@@ -112,6 +112,7 @@ nonisolated enum FilterKeywords {
         "seinfeld",
         "simpsons",
         "stpatricks",
+        "stpaddys",
         "superbowl",
         "takeover",
         "theashes",

@@ -128,6 +128,25 @@ final class WebPageLoader: NSObject {
     })()
     """
 
+    private static let resourceTimingImageURLsScript = """
+    (function() {
+        var urls = [];
+        var imagePattern = /\\.(jpe?g|png|gif|webp|svg|avif|bmp|ico)(\\?|#|$)/i;
+        var entries = performance.getEntriesByType('resource');
+        for (var i = 0; i < entries.length; i++) {
+            var entry = entries[i];
+            var url = entry.name;
+            if (!url || url.indexOf('data:') === 0) {
+                continue;
+            }
+            if (entry.initiatorType === 'img' || imagePattern.test(url)) {
+                urls.push(url);
+            }
+        }
+        return JSON.stringify(urls);
+    })()
+    """
+
     private static let wixStaticImagePattern = try! NSRegularExpression(
         pattern: #"https://static\.wixstatic\.com/media/[^\s"'<>]+"#,
         options: .caseInsensitive
@@ -199,7 +218,11 @@ final class WebPageLoader: NSObject {
             ?? finalURL
         print("LOADER: Final URL: \(finalURL), effective URL: \(effectiveURL)")
 
-        let imageURLs = harvestImageURLs(html: resolvedHTML, liveDOMURLs: await harvestLiveImageURLStrings())
+        let imageURLs = harvestImageURLs(
+            html: resolvedHTML,
+            liveDOMURLs: await harvestLiveImageURLStrings(),
+            resourceTimingURLs: await harvestResourceTimingImageURLStrings()
+        )
         let contentBlocks = (try? contentBlockGrouper.group(html: resolvedHTML, pageURL: effectiveURL)) ?? []
         let links = (try? pageLinkExtractor.extract(html: resolvedHTML, pageURL: effectiveURL)) ?? []
         let markdown = try? await webMarkdownGenerator.markdown(from: resolvedHTML)
@@ -248,7 +271,15 @@ final class WebPageLoader: NSObject {
     }
 
     private func harvestLiveImageURLStrings() async -> [String] {
-        guard let json: String = try? await evaluateJavaScript(Self.liveImageURLsScript),
+        await evaluateJavaScriptStringArray(Self.liveImageURLsScript)
+    }
+
+    private func harvestResourceTimingImageURLStrings() async -> [String] {
+        await evaluateJavaScriptStringArray(Self.resourceTimingImageURLsScript)
+    }
+
+    private func evaluateJavaScriptStringArray(_ script: String) async -> [String] {
+        guard let json: String = try? await evaluateJavaScript(script),
               let data = json.data(using: .utf8),
               let strings = try? JSONDecoder().decode([String].self, from: data)
         else {
@@ -257,8 +288,9 @@ final class WebPageLoader: NSObject {
         return strings
     }
 
-    private func harvestImageURLs(html: String, liveDOMURLs: [String]) -> [URL] {
+    private func harvestImageURLs(html: String, liveDOMURLs: [String], resourceTimingURLs: [String]) -> [URL] {
         var urlStrings = Set(liveDOMURLs)
+        urlStrings.formUnion(resourceTimingURLs)
         let range = NSRange(html.startIndex..., in: html)
         Self.wixStaticImagePattern.enumerateMatches(in: html, options: [], range: range) { match, _, _ in
             guard let match, let matchRange = Range(match.range, in: html) else { return }
