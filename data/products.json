@@ -1,0 +1,46 @@
+
+[
+    {
+        "name": "drinks",
+        "groups": [
+            "beer",
+            "cocktails",
+            "wine"
+        ]
+    },
+    {
+        "name": "beer",
+        "groups": [
+            "schooner",
+            "pint",
+            "jugs"
+        ]
+    },
+    {
+        "name": "schooner"
+    },
+    {
+        "name": "pint"
+    },
+    {
+        "name": "jugs"
+    },
+    {
+        "name": "cocktails"
+    },
+    {
+        "name": "spirits"
+    },
+    {
+        "name": "trivia"
+    },
+    {
+        "name": "wine"
+    },
+    {
+        "name": "bottomless"
+    },
+    {
+        "name": "happy hour"
+    }
+]
