@@ -1,15 +1,34 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { groupDealsByVenue, VenueSearchCard } from "@/components/VenueSearchCard";
 import { SearchBar, type SearchFilters } from "@/components/search/SearchBar";
+import { ViewToggle } from "@/components/search/ViewToggle";
 import type { TimeRange } from "@/components/search/DayPicker";
 import type { DealSearchResult } from "@/lib/search/queries";
 import {
   filtersToSearchParams,
+  parseViewMode,
   searchParamsToFilters,
+  type SearchViewMode,
 } from "@/lib/search/url";
+
+const SearchMapView = dynamic(
+  () =>
+    import("@/components/search/SearchMapView").then(
+      (mod) => mod.SearchMapView,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex min-h-[60vh] items-center justify-center rounded-xl border border-dashed border-zinc-300 text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+        Loading map...
+      </div>
+    ),
+  },
+);
 
 export function SearchPage() {
   const searchParams = useSearchParams();
@@ -18,6 +37,9 @@ export function SearchPage() {
 
   const [filters, setFilters] = useState<SearchFilters>(() =>
     searchParamsToFilters(searchParams),
+  );
+  const [viewMode, setViewMode] = useState<SearchViewMode>(() =>
+    parseViewMode(searchParams),
   );
   const [debouncedQuery, setDebouncedQuery] = useState(
     () => (searchParams.get("q") ?? "").trim(),
@@ -40,6 +62,7 @@ export function SearchPage() {
 
     setFilters(fromUrl);
     setDebouncedQuery(fromUrl.query.trim());
+    setViewMode(parseViewMode(searchParams));
   }, [searchParams]);
 
   useEffect(() => {
@@ -51,7 +74,7 @@ export function SearchPage() {
   }, [filters.query]);
 
   useEffect(() => {
-    const nextParams = filtersToSearchParams(filters, debouncedQuery);
+    const nextParams = filtersToSearchParams(filters, debouncedQuery, viewMode);
     const next = nextParams.toString();
     const current = searchParams.toString();
 
@@ -64,6 +87,7 @@ export function SearchPage() {
     filters.days,
     filters.timeRange,
     filters.where,
+    viewMode,
     router,
     searchParams,
   ]);
@@ -123,9 +147,18 @@ export function SearchPage() {
   }
 
   const venueGroups = groupDealsByVenue(deals);
+  const userLocation =
+    filters.where.kind === "nearMe"
+      ? { lat: filters.where.lat, lng: filters.where.lng }
+      : null;
+  const isEmpty = !loadingDeals && deals.length === 0;
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-10">
+    <div
+      className={`mx-auto flex w-full flex-1 flex-col gap-8 px-6 py-10 ${
+        viewMode === "map" ? "max-w-6xl" : "max-w-4xl"
+      }`}
+    >
       <header className="space-y-2">
         <p className="text-sm font-medium uppercase tracking-wide text-amber-700 dark:text-amber-400">
           Happy Hour
@@ -143,15 +176,18 @@ export function SearchPage() {
       />
 
       <section className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
             Results
           </h2>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            {loadingDeals
-              ? "Loading..."
-              : `${venueGroups.length} venues · ${deals.length} deals`}
-          </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              {loadingDeals
+                ? "Loading..."
+                : `${venueGroups.length} venues · ${deals.length} deals`}
+            </p>
+            <ViewToggle view={viewMode} onChange={setViewMode} />
+          </div>
         </div>
 
         {error ? (
@@ -160,17 +196,25 @@ export function SearchPage() {
           </p>
         ) : null}
 
-        {!loadingDeals && deals.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-zinc-300 px-4 py-8 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
-            No deals matched your filters. Try syncing data from DealScraper or
-            broadening your search.
-          </p>
+        {viewMode === "list" ? (
+          isEmpty ? (
+            <p className="rounded-xl border border-dashed border-zinc-300 px-4 py-8 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+              No deals matched your filters. Try syncing data from DealScraper or
+              broadening your search.
+            </p>
+          ) : (
+            <div className="grid gap-4">
+              {venueGroups.map((group) => (
+                <VenueSearchCard key={group.venue.id} group={group} />
+              ))}
+            </div>
+          )
         ) : (
-          <div className="grid gap-4">
-            {venueGroups.map((group) => (
-              <VenueSearchCard key={group.venue.id} group={group} />
-            ))}
-          </div>
+          <SearchMapView
+            venueGroups={venueGroups}
+            userLocation={userLocation}
+            isEmpty={isEmpty}
+          />
         )}
       </section>
     </div>

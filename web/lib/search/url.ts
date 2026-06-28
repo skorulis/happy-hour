@@ -2,12 +2,20 @@ import type { SearchFilters } from "@/components/search/SearchBar";
 import type { TimeRange } from "@/components/search/DayPicker";
 import type { WhereFilter } from "@/components/search/SuburbSelect";
 
+export type SearchViewMode = "list" | "map";
+
 export const DEFAULT_SEARCH_FILTERS: SearchFilters = {
   days: [],
   timeRange: null,
   where: { kind: "anywhere" },
   query: "",
 };
+
+export const DEFAULT_VIEW_MODE: SearchViewMode = "list";
+
+export function parseViewMode(params: URLSearchParams): SearchViewMode {
+  return params.get("view") === "map" ? "map" : "list";
+}
 
 function parseDaysParam(value: string | null): number[] {
   if (value === null || value.trim() === "") {
@@ -102,6 +110,7 @@ function parseWhereFilter(params: URLSearchParams): WhereFilter {
 export function filtersToSearchParams(
   filters: SearchFilters,
   query: string,
+  viewMode: SearchViewMode = DEFAULT_VIEW_MODE,
 ): URLSearchParams {
   const params = new URLSearchParams();
 
@@ -124,6 +133,9 @@ export function filtersToSearchParams(
   }
   if (query.trim()) {
     params.set("q", query.trim());
+  }
+  if (viewMode === "map") {
+    params.set("view", "map");
   }
 
   return params;
