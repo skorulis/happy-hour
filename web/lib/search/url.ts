@@ -8,13 +8,24 @@ export const DEFAULT_SEARCH_FILTERS: SearchFilters = {
   days: [],
   timeRange: null,
   where: { kind: "anywhere" },
-  query: "",
+  what: [],
 };
 
 export const DEFAULT_VIEW_MODE: SearchViewMode = "list";
 
 export function parseViewMode(params: URLSearchParams): SearchViewMode {
   return params.get("view") === "map" ? "map" : "list";
+}
+
+function parseWhatParam(value: string | null): string[] {
+  if (value === null || value.trim() === "") {
+    return [];
+  }
+
+  return value
+    .split(",")
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0);
 }
 
 function parseDaysParam(value: string | null): number[] {
@@ -107,9 +118,44 @@ function parseWhereFilter(params: URLSearchParams): WhereFilter {
   return { kind: "anywhere" };
 }
 
+export function whatToQuery(what: string[]): string {
+  return what.join(" ");
+}
+
+export function whatTokensEqual(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+
+  return a.every((token, index) => token === b[index]);
+}
+
+export function searchParamsEqual(a: string, b: string): boolean {
+  const left = new URLSearchParams(a);
+  const right = new URLSearchParams(b);
+  const keys = new Set([...left.keys(), ...right.keys()]);
+
+  for (const key of keys) {
+    const leftValues = left.getAll(key).sort();
+    const rightValues = right.getAll(key).sort();
+
+    if (leftValues.length !== rightValues.length) {
+      return false;
+    }
+
+    for (let index = 0; index < leftValues.length; index++) {
+      if (leftValues[index] !== rightValues[index]) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
 export function filtersToSearchParams(
   filters: SearchFilters,
-  query: string,
+  what: string[],
   viewMode: SearchViewMode = DEFAULT_VIEW_MODE,
 ): URLSearchParams {
   const params = new URLSearchParams();
@@ -131,8 +177,8 @@ export function filtersToSearchParams(
     params.set("startMinute", String(filters.timeRange.startMinute));
     params.set("endMinute", String(filters.timeRange.endMinute));
   }
-  if (query.trim()) {
-    params.set("q", query.trim());
+  if (what.length > 0) {
+    params.set("q", what.join(","));
   }
   if (viewMode === "map") {
     params.set("view", "map");
@@ -149,6 +195,20 @@ export function searchParamsToFilters(params: URLSearchParams): SearchFilters {
       params.get("endMinute"),
     ),
     where: parseWhereFilter(params),
-    query: params.get("q") ?? "",
+    what: parseWhatParam(params.get("q")),
   };
+}
+
+export function filtersToApiSearchParams(
+  filters: SearchFilters,
+  what: string[],
+): URLSearchParams {
+  const params = filtersToSearchParams(filters, what);
+  const query = whatToQuery(what);
+  if (query) {
+    params.set("q", query);
+  } else {
+    params.delete("q");
+  }
+  return params;
 }

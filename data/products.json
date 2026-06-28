@@ -2,6 +2,7 @@
 [
     {
         "name": "drinks",
+        "rank": 2,
         "groups": [
             "beer",
             "cocktails",
@@ -16,31 +17,86 @@
             "jugs"
         ]
     },
-    {
-        "name": "schooner"
+    
+    { 
+        "name": "cocktails",
+        "groups": [
+            "negroni",
+            "martini",
+            "spritz"
+        ]
     },
-    {
-        "name": "pint"
-    },
-    {
-        "name": "jugs"
-    },
-    {
-        "name": "cocktails"
-    },
-    {
-        "name": "spirits"
-    },
-    {
-        "name": "trivia"
-    },
+    { "name": "schooner" },
+    { "name": "pint" },
+    { "name": "jugs" },
+    { "name": "martini" },
+    { "name": "negroni" },
+    { "name": "spirits" },
+    { "name": "spritz" },
+    { "name": "tastingpaddle" },
     {
         "name": "wine"
     },
+    { "name": "bottomless" },
     {
-        "name": "bottomless"
+        "name": "happy hour",
+        "rank": 1
     },
     {
-        "name": "happy hour"
-    }
+        "name": "food",
+        "rank": 3,
+        "groups": [
+            "burger",
+            "calamari",
+            "chicken",
+            "curry",
+            "gyros",
+            "meal",
+            "muscles",
+            "pasta",
+            "pizza",
+            "porterhouse",
+            "ribs",
+            "roast",
+            "rump",
+            "parma",
+            "parmi",
+            "parmy",
+            "salad",
+            "steak"
+        ]
+    },
+    { "name": "burger" },
+    { "name": "calamari" },
+    { "name": "chicken" },  
+    { "name": "curry" },
+    { "name": "gyros" },
+    { "name": "meal" },
+    { "name": "muscles" },
+    { "name": "pasta" },
+    { "name": "pizza" },
+    { "name": "porterhouse" },
+    { "name": "ribs" },
+    { "name": "roast" },
+    { "name": "rump" },
+    { "name": "parma" },
+    { "name": "parmi" },
+    { "name": "parmy" },
+    { "name": "salad" },
+    {
+        "name": "steak",
+        "groups": [
+            "porterhouse",
+            "rump"
+        ]
+    },
+    {
+        "name": "events",
+        "groups": [
+            "trivia",
+            "bingo"
+        ]
+    },
+    { "name": "trivia" },
+    { "name": "bingo" }
 ]

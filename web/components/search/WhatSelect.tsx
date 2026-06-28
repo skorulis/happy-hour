@@ -1,0 +1,241 @@
+"use client";
+
+import {
+  filterSuggestions,
+  getInitialSuggestions,
+  type Product,
+} from "@data/products";
+import { useEffect, useMemo, useRef, useState } from "react";
+
+type WhatSelectProps = {
+  tokens: string[];
+  onChange: (tokens: string[]) => void;
+};
+
+function tokenSet(tokens: string[]): Set<string> {
+  return new Set(tokens.map((token) => token.toLowerCase()));
+}
+
+function hasToken(tokens: string[], value: string): boolean {
+  const lower = value.toLowerCase();
+  return tokens.some((token) => token.toLowerCase() === lower);
+}
+
+export function WhatSelect({ tokens, onChange }: WhatSelectProps) {
+  const [open, setOpen] = useState(false);
+  const [input, setInput] = useState("");
+  const [highlightIndex, setHighlightIndex] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const exclude = useMemo(() => tokenSet(tokens), [tokens]);
+  const suggestions = useMemo(() => {
+    if (!open) {
+      return [];
+    }
+    return input.trim()
+      ? filterSuggestions(input, exclude)
+      : getInitialSuggestions(exclude);
+  }, [open, input, exclude]);
+  const activeHighlightIndex =
+    suggestions.length === 0
+      ? 0
+      : Math.min(highlightIndex, suggestions.length - 1);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    function handlePointerDown(event: MouseEvent) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        setOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => document.removeEventListener("mousedown", handlePointerDown);
+  }, [open]);
+
+  function addToken(value: string) {
+    const trimmed = value.trim();
+    if (!trimmed || hasToken(tokens, trimmed)) {
+      setInput("");
+      return;
+    }
+    onChange([...tokens, trimmed]);
+    setInput("");
+    setHighlightIndex(0);
+    inputRef.current?.focus();
+  }
+
+  function removeToken(index: number) {
+    onChange(tokens.filter((_, tokenIndex) => tokenIndex !== index));
+    inputRef.current?.focus();
+  }
+
+  function removeLastToken() {
+    if (tokens.length === 0) {
+      return;
+    }
+    onChange(tokens.slice(0, -1));
+  }
+
+  function selectSuggestion(product: Product) {
+    addToken(product.name);
+  }
+
+  function handleInputKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      if (!open) {
+        setOpen(true);
+        return;
+      }
+      setHighlightIndex((current) =>
+        suggestions.length === 0
+          ? 0
+          : Math.min(current + 1, suggestions.length - 1),
+      );
+      return;
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setHighlightIndex((current) => Math.max(current - 1, 0));
+      return;
+    }
+
+    if (event.key === "Enter" || event.key === "Tab") {
+      if (open && suggestions.length > 0 && event.key === "Enter") {
+        event.preventDefault();
+        selectSuggestion(suggestions[activeHighlightIndex]);
+        return;
+      }
+      if (input.trim()) {
+        event.preventDefault();
+        addToken(input);
+      }
+      return;
+    }
+
+    if (event.key === "Backspace" && !input && tokens.length > 0) {
+      event.preventDefault();
+      removeLastToken();
+      return;
+    }
+
+    if (event.key === "Escape") {
+      setOpen(false);
+    }
+  }
+
+  const listboxId = "what-select-listbox";
+
+  return (
+    <div ref={containerRef} className="relative min-w-0 flex-1">
+      <div
+        className={`flex min-h-[2.25rem] w-full flex-wrap items-center gap-1.5 rounded-full border bg-white px-3 py-1.5 transition-colors dark:bg-zinc-950 ${
+          open
+            ? "border-amber-500 ring-2 ring-amber-500"
+            : "border-zinc-300 dark:border-zinc-600"
+        }`}
+        onClick={() => {
+          setOpen(true);
+          inputRef.current?.focus();
+        }}
+      >
+        {tokens.map((token, index) => (
+          <span
+            key={`${token}-${index}`}
+            className="inline-flex max-w-full items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-950/50 dark:text-amber-300"
+          >
+            <span className="truncate">{token}</span>
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                removeToken(index);
+              }}
+              className="rounded p-0.5 text-amber-600 hover:bg-amber-200/80 hover:text-amber-900 dark:text-amber-400 dark:hover:bg-amber-900/60 dark:hover:text-amber-200"
+              aria-label={`Remove ${token}`}
+            >
+              <svg
+                className="h-3 w-3"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </span>
+        ))}
+        <input
+          ref={inputRef}
+          type="text"
+          value={input}
+          role="combobox"
+          aria-expanded={open}
+          aria-autocomplete="list"
+          aria-controls={listboxId}
+          aria-activedescendant={
+            open && suggestions.length > 0
+              ? `what-option-${activeHighlightIndex}`
+              : undefined
+          }
+          onChange={(event) => {
+            setInput(event.target.value);
+            setHighlightIndex(0);
+            setOpen(true);
+          }}
+          onFocus={() => setOpen(true)}
+          onKeyDown={handleInputKeyDown}
+          placeholder={tokens.length === 0 ? "steak, happy hour, pizza..." : ""}
+          className="min-w-[6ch] flex-1 border-0 bg-transparent text-sm font-medium text-zinc-900 outline-none placeholder:text-zinc-400 dark:text-zinc-50 dark:placeholder:text-zinc-500"
+        />
+      </div>
+
+      {open ? (
+        <div
+          id={listboxId}
+          role="listbox"
+          className="absolute left-0 z-20 mt-2 max-h-48 w-full min-w-56 overflow-y-auto rounded-xl border border-zinc-200 bg-white p-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
+        >
+          {suggestions.length === 0 ? (
+            <p className="px-2 py-2 text-sm text-zinc-500">
+              {input.trim() ? "No matches." : "No suggestions."}
+            </p>
+          ) : (
+            suggestions.map((product, index) => (
+              <button
+                key={product.name}
+                id={`what-option-${index}`}
+                type="button"
+                role="option"
+                aria-selected={index === activeHighlightIndex}
+                onMouseEnter={() => setHighlightIndex(index)}
+                onClick={() => selectSuggestion(product)}
+                className={`block w-full rounded-lg px-2 py-2 text-left text-sm ${
+                  index === activeHighlightIndex
+                    ? "bg-amber-50 font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-400"
+                    : "text-zinc-800 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                }`}
+              >
+                {product.name}
+              </button>
+            ))
+          )}
+        </div>
+      ) : null}
+    </div>
+  );
+}

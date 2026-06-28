@@ -9,9 +9,12 @@ import { ViewToggle } from "@/components/search/ViewToggle";
 import type { TimeRange } from "@/components/search/DayPicker";
 import type { DealSearchResult } from "@/lib/search/queries";
 import {
+  filtersToApiSearchParams,
   filtersToSearchParams,
   parseViewMode,
+  searchParamsEqual,
   searchParamsToFilters,
+  whatTokensEqual,
   type SearchViewMode,
 } from "@/lib/search/url";
 
@@ -41,55 +44,58 @@ export function SearchPage() {
   const [viewMode, setViewMode] = useState<SearchViewMode>(() =>
     parseViewMode(searchParams),
   );
-  const [debouncedQuery, setDebouncedQuery] = useState(
-    () => (searchParams.get("q") ?? "").trim(),
+  const [debouncedWhat, setDebouncedWhat] = useState<string[]>(
+    () => searchParamsToFilters(searchParams).what,
   );
   const [deals, setDeals] = useState<DealSearchResult[]>([]);
   const [loadingDeals, setLoadingDeals] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fromUrl = searchParamsToFilters(searchParams);
+  const whatKey = filters.what.join("\0");
+  const debouncedWhatKey = debouncedWhat.join("\0");
 
+  useEffect(() => {
     if (isUpdatingUrl.current) {
       isUpdatingUrl.current = false;
-      setFilters((current) => ({
-        ...fromUrl,
-        query: current.query,
-      }));
       return;
     }
 
+    const fromUrl = searchParamsToFilters(searchParams);
     setFilters(fromUrl);
-    setDebouncedQuery(fromUrl.query.trim());
+    setDebouncedWhat(fromUrl.what);
     setViewMode(parseViewMode(searchParams));
   }, [searchParams]);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
-      setDebouncedQuery(filters.query.trim());
+      setDebouncedWhat((current) =>
+        whatTokensEqual(filters.what, current) ? current : filters.what,
+      );
     }, 250);
 
     return () => clearTimeout(timeout);
-  }, [filters.query]);
+  }, [whatKey]);
 
   useEffect(() => {
-    const nextParams = filtersToSearchParams(filters, debouncedQuery, viewMode);
-    const next = nextParams.toString();
+    const next = filtersToSearchParams(
+      filters,
+      debouncedWhat,
+      viewMode,
+    ).toString();
     const current = searchParams.toString();
 
-    if (next !== current) {
+    if (!searchParamsEqual(next, current)) {
       isUpdatingUrl.current = true;
       router.replace(next ? `/?${next}` : "/", { scroll: false });
     }
   }, [
-    debouncedQuery,
+    debouncedWhatKey,
+    debouncedWhat,
     filters.days,
     filters.timeRange,
     filters.where,
     viewMode,
     router,
-    searchParams,
   ]);
 
   useEffect(() => {
@@ -100,7 +106,7 @@ export function SearchPage() {
       setError(null);
 
       try {
-        const params = filtersToSearchParams(filters, debouncedQuery);
+        const params = filtersToApiSearchParams(filters, debouncedWhat);
 
         const response = await fetch(`/api/deals?${params.toString()}`, {
           signal: controller.signal,
@@ -122,7 +128,7 @@ export function SearchPage() {
     void loadDeals();
 
     return () => controller.abort();
-  }, [filters.days, filters.where, filters.timeRange, debouncedQuery]);
+  }, [filters.days, filters.where, filters.timeRange, debouncedWhatKey]);
 
   function handleDaysApply(days: number[], timeRange: TimeRange) {
     setFilters((current) => ({
@@ -139,10 +145,10 @@ export function SearchPage() {
     }));
   }
 
-  function handleQueryChange(query: string) {
+  function handleWhatChange(what: string[]) {
     setFilters((current) => ({
       ...current,
-      query,
+      what,
     }));
   }
 
@@ -172,7 +178,7 @@ export function SearchPage() {
         filters={filters}
         onDaysApply={handleDaysApply}
         onWhereChange={handleWhereChange}
-        onQueryChange={handleQueryChange}
+        onWhatChange={handleWhatChange}
       />
 
       <section className="space-y-4">
