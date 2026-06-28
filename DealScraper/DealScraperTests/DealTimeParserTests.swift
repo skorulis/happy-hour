@@ -60,4 +60,8 @@ struct DealTimeParserTests {
     @Test func parsesParenthesizedTimeRange() {
         #expect(DealTimeParser.parse(["(11 AM - 2 PM )"]) == [.between(11 * 60, 14 * 60)])
     }
+
+    @Test func parsesNoonTimeRange() {
+        #expect(DealTimeParser.parse(["NOON - 4PM"]) == [.between(12 * 60, 16 * 60)])
+    }
 }

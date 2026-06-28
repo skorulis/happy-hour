@@ -40,6 +40,15 @@ struct DealHoursTests {
         #expect(DealHours.toMinutes(string: "12:00") == 720)
     }
 
+    @Test func parsesNamedTimes() {
+        #expect(DealHours.toMinutes(string: "NOON") == 12 * 60)
+        #expect(DealHours.toMinutes(string: "midnight") == 0)
+    }
+
+    @Test func parseNoonTimeRange() {
+        #expect(DealHours.parse("NOON - 4PM") == .between(12 * 60, 16 * 60))
+    }
+
     @Test func prefersPMWhenBothAMAndPMFitInRange() {
         #expect(DealHours.toMinutes(string: "7:00") == 1140)
         #expect(DealHours.toMinutes(string: "8:30") == 1230)

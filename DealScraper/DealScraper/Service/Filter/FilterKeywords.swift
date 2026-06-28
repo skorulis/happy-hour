@@ -42,6 +42,7 @@ nonisolated enum FilterKeywords {
         
         // Food
         "burger",
+        "calamari",
         "chicken",
         "curry",
         "gyros",
@@ -50,6 +51,7 @@ nonisolated enum FilterKeywords {
         "pasta",
         "pizza",
         "porterhouse",
+        "ribs",
         "roast",
         "rump",
         "parma",
@@ -88,6 +90,7 @@ nonisolated enum FilterKeywords {
     ]
     
     static let excludedKeywords = [
+        "anzac",
         "birthday",
         "christmas in july",
         "christmas",

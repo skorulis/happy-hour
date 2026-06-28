@@ -15,6 +15,15 @@ nonisolated enum DealHours: Equatable, Hashable {
         let normalized = normalizeTimeComponent(string)
         guard !normalized.isEmpty else { return nil }
 
+        switch normalized {
+        case "noon", "midday":
+            return 12 * 60
+        case "midnight":
+            return 0
+        default:
+            break
+        }
+
         let pattern = #"^(\d{1,2})(?:[:.](\d{2}))?\s*(am|pm)?$"#
         guard let regex = try? NSRegularExpression(pattern: pattern),
               let match = regex.firstMatch(

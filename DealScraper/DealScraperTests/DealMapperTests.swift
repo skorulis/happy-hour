@@ -443,6 +443,20 @@ struct DealMapperTests {
         #expect(deal.times == [.between(11 * 60, 14 * 60)])
     }
 
+    @Test func parsesNoonTimeRangeFromRawDeal() throws {
+        let json = """
+        {"deals":[{"title":"Sunday ROOFTOP PARMA","conditions":["AVAILABLE ON THE ROOFTOP TERRACE & FIRST FLOOR, WITH A DRINK PURCHASE*","Qualifying drinks: Bottle of beer or RTD. Pint of beer or soft drink. Glass of wine or cocktail","Specials & Promos are not available for functions\\/events or on Public Holidays\\/Special Event Days.","Promos subject to change without notice."],"days":["SUNDAYS"],"times":["NOON - 4PM"],"details":["$7.5","Chicken Parma","SERVED WITH CHIPS"]}]}
+        """
+        let payload = try JSONDecoder().decode(DealExtractionPayload.self, from: Data(json.utf8))
+        let raw = try #require(payload.deals.first)
+
+        let deal = try #require(DealMapper.map([raw]).first)
+
+        #expect(deal.title == "Rooftop Parma $7.5")
+        #expect(deal.days == [.sunday])
+        #expect(deal.times == [.between(12 * 60, 16 * 60)])
+    }
+
     @Test func mapsHappyHourWithSplitEveryWeekdayDays() throws {
         let json = """
         {"deals":[{"conditions":["* SELECTED RANGE OF BEER & WINE"],"times":["4PM-6PM"],"details":["BEERS","$7-"],"days":["EVERY","WEEKDAY"],"title":"HAPPY HOUR"}]}
