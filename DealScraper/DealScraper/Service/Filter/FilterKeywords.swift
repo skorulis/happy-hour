@@ -38,6 +38,7 @@ nonisolated enum FilterKeywords {
         "porter",
         "rose",
         "spritz",
+        "tastingpaddle",
         "wine",
         
         // Food

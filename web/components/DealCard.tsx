@@ -1,10 +1,11 @@
 import Link from "next/link";
+import { isCreativeImageUrl } from "@/lib/search/creative-url";
+import type { DealSearchResult } from "@/lib/search/queries";
 import {
   formatDealTimeBadge,
   formatScheduleSummary,
   schedulesForDay,
 } from "@/lib/search/schedule";
-import type { DealSearchResult } from "@/lib/search/queries";
 import { venuePath } from "@/lib/search/slugs";
 
 type DealCardProps = {
@@ -26,14 +27,32 @@ export function DealCard({
       : deal.schedules;
   const timeBadge =
     dayOfWeek !== undefined ? formatDealTimeBadge(daySchedules) : null;
+  const creativeImageUrl = isCreativeImageUrl(deal.imageUrl)
+    ? deal.imageUrl
+    : null;
 
   return (
     <article
       id={id}
       className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-950"
     >
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-2">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+        {creativeImageUrl ? (
+          <a
+            href={creativeImageUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="shrink-0 self-start"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={creativeImageUrl}
+              alt={deal.title || "Deal image"}
+              className="max-h-[120px] max-w-[200px] rounded-lg object-contain"
+            />
+          </a>
+        ) : null}
+        <div className="min-w-0 flex-1 space-y-2">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
               {deal.title || "Untitled deal"}
@@ -70,14 +89,6 @@ export function DealCard({
             </p>
           ) : null}
         </div>
-        {deal.imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={deal.imageUrl}
-            alt={deal.title || "Deal image"}
-            className="h-28 w-28 rounded-lg object-cover"
-          />
-        ) : null}
       </div>
       {deal.sourceUrl ? (
         <a

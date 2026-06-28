@@ -5,16 +5,28 @@ import Foundation
 enum CrawlPolicy {
 
     private static let defaultMaxPages = 20
-    private static let merivaleBaseURL = URL(string: "https://merivale.com/")!
+    
+    private static let sharedSites: [String] = [
+        "https://merivale.com/",
+        "https://hotelpalisade.com.au/",
+        "https://sydneybrewery.com/",
+        "https://www.oddculture.group/",
+    ]
+    
+    private static let sharedSiteURLs: [URL] = sharedSites.map { URL(string: $0)! }
+    
+    private static func isSharedSite(_ url: URL) -> Bool {
+        sharedSiteURLs.contains(where: { URLNormalizer.isSameOrigin($0, as: url) })
+    }
 
     static func maxPages(for baseURL: URL) -> Int {
-        if URLNormalizer.isSameOrigin(baseURL, as: merivaleBaseURL) {
+        if isSharedSite(baseURL) {
             return 1
         }
         return defaultMaxPages
     }
 
     static func shouldUseSitemap(for baseURL: URL) -> Bool {
-        !URLNormalizer.isSameOrigin(baseURL, as: merivaleBaseURL)
+        !isSharedSite(baseURL)
     }
 }

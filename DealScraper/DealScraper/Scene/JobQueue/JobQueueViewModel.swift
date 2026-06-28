@@ -124,6 +124,20 @@ final class JobQueueViewModel: CoordinatorViewModel {
         }
     }
 
+    private static func extractionPrioritySort(_ lhs: Venue, _ rhs: Venue) -> Bool {
+        switch (lhs.lastExtractionDate, rhs.lastExtractionDate) {
+        case (nil, nil):
+            return (lhs.id ?? .max) < (rhs.id ?? .max)
+        case (nil, .some):
+            return true
+        case (.some, nil):
+            return false
+        case let (.some(lhsDate), .some(rhsDate)):
+            if lhsDate != rhsDate { return lhsDate < rhsDate }
+            return (lhs.id ?? .max) < (rhs.id ?? .max)
+        }
+    }
+
     private static func sortOrder(for status: JobStatus) -> Int {
         switch status {
         case .running:
@@ -161,7 +175,7 @@ final class JobQueueViewModel: CoordinatorViewModel {
         else { return nil }
 
         return venues
-            .sorted { ($0.id ?? .max) < ($1.id ?? .max) }
+            .sorted(by: Self.extractionPrioritySort)
             .first { venue in
                 guard let venueId = venue.id else { return false }
                 guard venue.status != .broken else { return false }
