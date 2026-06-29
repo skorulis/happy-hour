@@ -1,5 +1,6 @@
 import { BackToSearchLink } from "@/components/BackToSearchLink";
 import { DealCard } from "@/components/DealCard";
+import { googleMapsPlaceUrl } from "@/lib/search/google-maps";
 import type { VenueDetailResult } from "@/lib/search/queries";
 import { groupDealsByDay } from "@/lib/search/schedule";
 import { dealAnchorId } from "@/lib/search/slugs";
@@ -99,7 +100,7 @@ function FacebookIcon() {
 }
 
 export function VenuePageContent({ venue }: VenuePageContentProps) {
-  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${venue.lat},${venue.lng}`;
+  const mapsUrl = googleMapsPlaceUrl(venue.name, venue.googleMapId);
   const dealsByDay = groupDealsByDay(venue.deals);
   const anchoredDealIds = new Set<number>();
 

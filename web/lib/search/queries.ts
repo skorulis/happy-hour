@@ -65,6 +65,7 @@ function parseVenueFormattedAddress(json: unknown): string | null {
 }
 
 export type VenueDetailResult = VenueSearchResult & {
+  googleMapId: string;
   heroImage: string | null;
   suburbName: string | null;
   links: {
@@ -426,6 +427,7 @@ async function buildVenueDetail(
   return {
     id: venueRow.id,
     name: venueRow.name,
+    googleMapId: venueRow.googleMapId,
     suburbName,
     lat: venueRow.lat,
     lng: venueRow.lng,

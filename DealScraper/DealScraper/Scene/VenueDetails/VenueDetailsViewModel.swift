@@ -405,7 +405,16 @@ final class VenueDetailsViewModel {
 
     var mapsURL: URL? {
         guard let venue else { return nil }
-        return URL(string: "https://www.google.com/maps/search/?api=1&query=\(venue.lat),\(venue.lng)&query_place_id=\(venue.googleMapId)")
+        let placeId = venue.googleMapId.hasPrefix("places/")
+            ? String(venue.googleMapId.dropFirst("places/".count))
+            : venue.googleMapId
+        var components = URLComponents(string: "https://www.google.com/maps/search/")!
+        components.queryItems = [
+            URLQueryItem(name: "api", value: "1"),
+            URLQueryItem(name: "query", value: venue.name),
+            URLQueryItem(name: "query_place_id", value: placeId),
+        ]
+        return components.url
     }
 
     private func defaultSourcePageURL(for contentURL: URL) -> String {
