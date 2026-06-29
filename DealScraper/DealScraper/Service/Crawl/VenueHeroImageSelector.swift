@@ -47,6 +47,10 @@ final class VenueHeroImageSelector {
             )
         }
 
+        guard !Self.hasTransparency(at: localURL) else {
+            return Self.skippedScore(skipReason: "Image has transparency", dimensions: dimensions)
+        }
+
         let components = await scoreComponents(
             localURL: localURL,
             dimensions: dimensions,
@@ -99,6 +103,7 @@ final class VenueHeroImageSelector {
             guard let localURL = try? await fetcher.localFileURL(for: url, hash: hash) else { continue }
             guard let dimensions = Self.imagePixelDimensions(at: localURL) else { continue }
             guard Self.meetsMinimumDimensions(dimensions: dimensions) else { continue }
+            guard !Self.hasTransparency(at: localURL) else { continue }
 
             let components = await scoreComponents(
                 localURL: localURL,
@@ -199,5 +204,50 @@ final class VenueHeroImageSelector {
         }
 
         return CGSize(width: width, height: height)
+    }
+
+    private static func hasTransparency(at url: URL) -> Bool {
+        guard let source = CGImageSourceCreateWithURL(url as CFURL, nil),
+              let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
+              let hasAlpha = properties[kCGImagePropertyHasAlpha] as? Bool,
+              hasAlpha,
+              let cgImage = CGImageSourceCreateImageAtIndex(source, 0, nil)
+        else {
+            return false
+        }
+
+        let width = cgImage.width
+        let height = cgImage.height
+        let bytesPerPixel = 4
+        let bytesPerRow = bytesPerPixel * width
+        var pixelData = [UInt8](repeating: 0, count: bytesPerRow * height)
+
+        guard let colorSpace = CGColorSpace(name: CGColorSpace.sRGB),
+              let context = CGContext(
+                  data: &pixelData,
+                  width: width,
+                  height: height,
+                  bitsPerComponent: 8,
+                  bytesPerRow: bytesPerRow,
+                  space: colorSpace,
+                  bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+              )
+        else {
+            return false
+        }
+
+        context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
+
+        let sampleStep = max(1, Int(sqrt(Double(width * height) / 10_000)))
+        for y in stride(from: 0, to: height, by: sampleStep) {
+            for x in stride(from: 0, to: width, by: sampleStep) {
+                let alphaOffset = y * bytesPerRow + x * bytesPerPixel + 3
+                if pixelData[alphaOffset] < 255 {
+                    return true
+                }
+            }
+        }
+
+        return false
     }
 }

@@ -63,6 +63,7 @@
             "parmi",
             "parmy",
             "salad",
+            "skewer",
             "steak",
             "taco",
             "wings"
@@ -88,6 +89,7 @@
     { "name": "parmi" },
     { "name": "parmy" },
     { "name": "salad" },
+    { "name": "skewer" },
     { "name": "snacks" },
     { "name": "schnitty", "hidden": true },
     {
