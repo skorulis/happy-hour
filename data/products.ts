@@ -91,23 +91,36 @@ export function filterSuggestions(
 }
 
 export function expandKeywords(tokens: string[]): string[] {
-  const expanded = new Set<string>();
+  const expanded: string[] = [];
+  const seen = new Set<string>();
+  const queue = tokens
+    .map((token) => token.trim())
+    .filter((token) => token.length > 0);
 
-  for (const token of tokens) {
-    const trimmed = token.trim();
-    if (!trimmed) {
+  while (queue.length > 0) {
+    const token = queue.shift()!;
+    const key = token.toLowerCase();
+    if (seen.has(key)) {
       continue;
     }
 
-    expanded.add(trimmed);
+    seen.add(key);
+    expanded.push(token);
 
-    const product = productsByName.get(trimmed.toLowerCase());
+    const product = productsByName.get(key);
     if (product?.groups) {
       for (const group of product.groups) {
-        expanded.add(group);
+        queue.push(group);
       }
     }
   }
 
-  return [...expanded];
+  return expanded;
+}
+
+export function expandKeywordGroups(tokens: string[]): string[][] {
+  return tokens
+    .map((token) => token.trim())
+    .filter((token) => token.length > 0)
+    .map((token) => expandKeywords([token]));
 }

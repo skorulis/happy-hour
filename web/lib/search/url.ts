@@ -22,10 +22,7 @@ function parseWhatParam(value: string | null): string[] {
     return [];
   }
 
-  return value
-    .split(",")
-    .map((part) => part.trim())
-    .filter((part) => part.length > 0);
+  return parseWhatTokens(value);
 }
 
 function parseDaysParam(value: string | null): number[] {
@@ -133,7 +130,14 @@ function parseWhereFilter(params: URLSearchParams): WhereFilter {
 }
 
 export function whatToQuery(what: string[]): string {
-  return what.join(" ");
+  return what.join(",");
+}
+
+export function parseWhatTokens(query: string): string[] {
+  return query
+    .split(",")
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0);
 }
 
 export function whatTokensEqual(a: string[], b: string[]): boolean {
@@ -240,12 +244,5 @@ export function filtersToApiSearchParams(
   filters: SearchFilters,
   what: string[],
 ): URLSearchParams {
-  const params = filtersToSearchParams(filters, what);
-  const query = whatToQuery(what);
-  if (query) {
-    params.set("q", query);
-  } else {
-    params.delete("q");
-  }
-  return params;
+  return filtersToSearchParams(filters, what);
 }

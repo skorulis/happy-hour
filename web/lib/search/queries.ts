@@ -15,7 +15,9 @@ import {
   currentCalendarWeekday,
   currentMinuteOfDay,
 } from "@/lib/search/schedule";
+import { expandKeywordGroups } from "@data/products";
 import { nearbySuburbRadiusKm } from "@/lib/search/nearby-radius";
+import { parseWhatTokens } from "@/lib/search/url";
 import { slugify, UNKNOWN_SUBURB_SLUG } from "@/lib/search/slugs";
 import { deal, dealSchedule, suburb, venue, venueLinks } from "@/db/schema";
 
@@ -169,6 +171,28 @@ function scheduleTimeFilter(
 
 function textSearchFilter(query: string): SQL {
   return sql`${dealSearchVector} @@ plainto_tsquery('english', ${query})`;
+}
+
+function textSearchFilterForWhatQuery(query: string): SQL {
+  const tokens = parseWhatTokens(query);
+  if (tokens.length === 0) {
+    return textSearchFilter(query);
+  }
+
+  const groups = expandKeywordGroups(tokens);
+  const groupFilters = groups.map((group) => {
+    if (group.length === 1) {
+      return textSearchFilter(group[0]);
+    }
+
+    return or(...group.map((term) => textSearchFilter(term)))!;
+  });
+
+  if (groupFilters.length === 1) {
+    return groupFilters[0];
+  }
+
+  return and(...groupFilters)!;
 }
 
 const dealSearchVector = sql`to_tsvector('english', coalesce(${deal.title}, '') || ' ' || coalesce(${deal.details}, '') || ' ' || coalesce(${deal.conditions}, ''))`;
@@ -354,7 +378,7 @@ export async function searchDeals(
 
   const trimmedQuery = options.query?.trim();
   if (trimmedQuery) {
-    filters.push(textSearchFilter(trimmedQuery));
+    filters.push(textSearchFilterForWhatQuery(trimmedQuery));
   }
 
   const rows = await db
