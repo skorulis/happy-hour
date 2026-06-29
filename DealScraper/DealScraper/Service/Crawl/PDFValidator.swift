@@ -34,6 +34,10 @@ final class PDFValidator {
         guard let extraction = textExtractor.extractText(from: localURL) else {
             return nil
         }
+        
+        guard DealTextFilter().isValidDeal(extraction.fullText) else {
+            return nil
+        }
 
         return PDFValidationResult(url: url, text: extraction.filteredText, contentHash: contentHash)
     }

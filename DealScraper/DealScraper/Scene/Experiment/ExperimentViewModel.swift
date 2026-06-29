@@ -44,6 +44,7 @@ final class ExperimentViewModel {
     private let imageExtractor: DealImageExtractor
     private let pdfFetcher: CrawlPDFFetcher
     private let pdfTextExtractor: PDFTextExtractor
+    private let pdfValidator: PDFValidator
     private let dealAdvancedTextFilter: DealAdvancedTextFilter
 
     @Resolvable<Resolver>
@@ -55,6 +56,7 @@ final class ExperimentViewModel {
         imageExtractor: DealImageExtractor,
         pdfFetcher: CrawlPDFFetcher,
         pdfTextExtractor: PDFTextExtractor,
+        pdfValidator: PDFValidator,
         dealAdvancedTextFilter: DealAdvancedTextFilter
     ) {
         self.webPageLoaderFactory = webPageLoaderFactory
@@ -64,6 +66,7 @@ final class ExperimentViewModel {
         self.imageExtractor = imageExtractor
         self.pdfFetcher = pdfFetcher
         self.pdfTextExtractor = pdfTextExtractor
+        self.pdfValidator = pdfValidator
         self.dealAdvancedTextFilter = dealAdvancedTextFilter
     }
 
@@ -166,7 +169,7 @@ final class ExperimentViewModel {
                 state = .failed(message: "No deal-related text could be extracted from the PDF.")
                 return
             }
-            crawlDealValidation = validatePDFForCrawl(url: url)
+            crawlDealValidation = await validatePDFForCrawl(url: url, hash: hash)
             state = .loaded(.pdf(url: url, extraction: extraction))
         } catch {
             state = .failed(message: error.localizedDescription)
@@ -234,7 +237,7 @@ final class ExperimentViewModel {
         }
     }
 
-    private func validatePDFForCrawl(url: URL) -> CrawlDealValidation {
+    private func validatePDFForCrawl(url: URL, hash: String) async -> CrawlDealValidation {
         let currentYear = Calendar.current.component(.year, from: Date())
         if let year = PDFVersionFilter.year(from: url), year < currentYear {
             return CrawlDealValidation(
@@ -242,6 +245,14 @@ final class ExperimentViewModel {
                 message: "Rejected by crawler — PDF appears to be from \(year) and outdated menus are skipped."
             )
         }
+
+        guard await pdfValidator.validatePDF(url: url, hash: hash) != nil else {
+            return CrawlDealValidation(
+                isAccepted: false,
+                message: "Rejected by crawler — no deal-related text could be extracted from the PDF."
+            )
+        }
+
         return CrawlDealValidation(
             isAccepted: true,
             message: "Accepted by crawler — PDF contains deal-related text."
