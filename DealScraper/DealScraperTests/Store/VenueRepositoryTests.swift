@@ -58,6 +58,40 @@ struct VenueRepositoryTests {
         #expect(found.json == #"{"name":"New Name"}"#)
     }
 
+    @Test func upsertPlacesPersistsRegularOpeningHoursInJson() throws {
+        let repository = VenueRepository(store: SQLStore.inMemory())
+
+        let place = GooglePlace(
+            id: "places/ChIJHours",
+            displayName: .init(text: "Hours Pub", languageCode: "en"),
+            location: .init(latitude: -33.8600, longitude: 151.2100),
+            formattedAddress: "1 Circular Quay, Sydney",
+            websiteUri: "https://hourspub.example.com",
+            types: ["bar"],
+            regularOpeningHours: GooglePlace.OpeningHours(
+                periods: [
+                    GooglePlace.OpeningHours.Period(
+                        open: GooglePlace.OpeningHours.Period.Point(
+                            day: 1, hour: 11, minute: 0, truncated: nil
+                        ),
+                        close: GooglePlace.OpeningHours.Period.Point(
+                            day: 1, hour: 22, minute: 0, truncated: nil
+                        )
+                    ),
+                ],
+                weekdayDescriptions: ["Monday: 11:00 AM – 10:00 PM"],
+                openNow: true
+            )
+        )
+
+        try repository.upsert(places: [place])
+
+        let found = try #require(try repository.find(googleMapId: "places/ChIJHours"))
+        #expect(found.json.contains("regularOpeningHours"))
+        #expect(found.json.contains("weekdayDescriptions"))
+        #expect(found.json.contains("openNow"))
+    }
+
     @Test func upsertPlacesMapsGooglePlaceToVenue() throws {
         let store = SQLStore.inMemory()
         let repository = VenueRepository(store: store)

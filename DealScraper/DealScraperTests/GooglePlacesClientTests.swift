@@ -23,7 +23,25 @@ struct GooglePlacesClientTests {
           },
           "formattedAddress": "123 George St, Sydney NSW 2000",
           "websiteUri": "https://theroyalpub.example.com",
-          "types": ["bar", "point_of_interest"]
+          "types": ["bar", "point_of_interest"],
+          "regularOpeningHours": {
+            "openNow": true,
+            "weekdayDescriptions": [
+              "Monday: 11:00 AM – 10:00 PM",
+              "Tuesday: 11:00 AM – 10:00 PM",
+              "Wednesday: 11:00 AM – 10:00 PM",
+              "Thursday: 11:00 AM – 11:00 PM",
+              "Friday: 11:00 AM – 11:00 PM",
+              "Saturday: 10:00 AM – 11:00 PM",
+              "Sunday: 10:00 AM – 10:00 PM"
+            ],
+            "periods": [
+              {
+                "open": { "day": 1, "hour": 11, "minute": 0 },
+                "close": { "day": 1, "hour": 22, "minute": 0 }
+              }
+            ]
+          }
         }
       ],
       "nextPageToken": "next-page-token"
@@ -64,7 +82,16 @@ struct GooglePlacesClientTests {
         #expect(response.places.first?.displayName.text == "The Royal Pub")
         #expect(response.places.first?.location.latitude == -33.8688)
         #expect(response.places.first?.websiteUri == "https://theroyalpub.example.com")
+        #expect(response.places.first?.regularOpeningHours?.openNow == true)
+        #expect(response.places.first?.regularOpeningHours?.weekdayDescriptions?.count == 7)
+        #expect(response.places.first?.regularOpeningHours?.periods?.first?.open?.hour == 11)
         #expect(response.nextPageToken == "next-page-token")
+    }
+
+    @Test func fieldMaskIncludesRegularOpeningHours() {
+        #expect(GooglePlacesAPI.placeFieldMask.contains("places.regularOpeningHours"))
+        #expect(GooglePlacesAPI.textSearchFieldMask.contains("places.regularOpeningHours"))
+        #expect(GooglePlacesAPI.nearbySearchFieldMask.contains("places.regularOpeningHours"))
     }
 
     @Test func searchTextAllPagesFetchesSubsequentPages() async throws {
