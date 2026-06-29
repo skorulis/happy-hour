@@ -107,6 +107,43 @@ final class DealRepository {
         }
     }
 
+    func duplicate(id: Int64) throws -> DealWithSchedules? {
+        try store.dbQueue.write { db in
+            guard let original = try Deal.fetchOne(db, key: id) else { return nil }
+            let schedules = try DealSchedule
+                .filter(Column("deal_id") == id)
+                .fetchAll(db)
+
+            var newDeal = Deal(
+                venueId: original.venueId,
+                title: original.title,
+                creativeURL: original.creativeURL,
+                sourceURL: original.sourceURL,
+                details: original.details,
+                conditions: original.conditions,
+                status: original.status
+            )
+            try newDeal.insert(db)
+            guard let newDealId = newDeal.id else {
+                throw DealRepositoryError.missingDealID
+            }
+
+            var newSchedules: [DealSchedule] = []
+            for schedule in schedules {
+                var newSchedule = DealSchedule(
+                    dealId: newDealId,
+                    dayOfWeek: schedule.dayOfWeek,
+                    startMinute: schedule.startMinute,
+                    endMinute: schedule.endMinute
+                )
+                try newSchedule.insert(db)
+                newSchedules.append(newSchedule)
+            }
+
+            return DealWithSchedules(deal: newDeal, schedules: newSchedules)
+        }
+    }
+
     func updateStatus(id: Int64, status: DealStatus) throws {
         try store.dbQueue.write { db in
             guard var deal = try Deal.fetchOne(db, key: id) else { return }

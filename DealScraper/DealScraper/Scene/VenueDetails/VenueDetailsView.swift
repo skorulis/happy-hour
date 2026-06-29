@@ -529,6 +529,9 @@ struct VenueDetailsView: View {
                         },
                         onEdit: { draft in
                             viewModel.updateDeal(item, draft: draft)
+                        },
+                        onDuplicate: {
+                            viewModel.duplicateDeal(item)
                         }
                     )
                 }

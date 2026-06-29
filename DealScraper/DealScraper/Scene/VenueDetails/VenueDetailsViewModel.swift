@@ -296,6 +296,17 @@ final class VenueDetailsViewModel {
         }
     }
 
+    func duplicateDeal(_ item: DealWithSchedules) {
+        guard let id = item.deal.id else { return }
+
+        do {
+            guard let duplicated = try dealRepository.duplicate(id: id) else { return }
+            deals.append(duplicated)
+        } catch {
+            // Keep the current UI state if persistence fails.
+        }
+    }
+
     func updateDeal(_ item: DealWithSchedules, draft: EditDealDraft) {
         guard let id = item.deal.id else { return }
 

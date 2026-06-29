@@ -8,6 +8,7 @@ struct DealRow: View {
     var venueName: String = "Unknown Venue"
     var onStatusChange: ((DealStatus) -> Void)?
     var onEdit: ((EditDealDraft) -> Void)?
+    var onDuplicate: (() -> Void)?
 
     @State private var isEditing = false
 
@@ -16,37 +17,12 @@ struct DealRow: View {
             maybeImage
             mainContent
 
-            if onEdit != nil || onStatusChange != nil {
+            if onEdit != nil || onDuplicate != nil || onStatusChange != nil {
                 Spacer(minLength: 8)
 
                 VStack(spacing: 8) {
-                    if onEdit != nil {
-                        actionButton(
-                            systemImage: "pencil",
-                            color: .accentColor,
-                            help: "Edit"
-                        ) {
-                            isEditing = true
-                        }
-                    }
-
-                    if let onStatusChange {
-                        statusButton(
-                            systemImage: "checkmark",
-                            color: .green,
-                            isSelected: item.deal.status == .approved
-                        ) {
-                            onStatusChange(.approved)
-                        }
-
-                        statusButton(
-                            systemImage: "xmark",
-                            color: .red,
-                            isSelected: item.deal.status == .rejected
-                        ) {
-                            onStatusChange(.rejected)
-                        }
-                    }
+                    maybeStatusButtons
+                    actionButtons
                 }
             }
         }
@@ -70,6 +46,54 @@ struct DealRow: View {
                 }
             )
             .frame(minWidth: 720, minHeight: 560)
+        }
+    }
+    
+    @ViewBuilder
+    private var actionButtons: some View {
+        HStack(spacing: 8) {
+            if onEdit != nil {
+                actionButton(
+                    systemImage: "pencil",
+                    color: .accentColor,
+                    help: "Edit"
+                ) {
+                    isEditing = true
+                }
+            }
+
+            if onDuplicate != nil {
+                actionButton(
+                    systemImage: "doc.on.doc",
+                    color: .accentColor,
+                    help: "Duplicate"
+                ) {
+                    onDuplicate?()
+                }
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var maybeStatusButtons: some View {
+        if let onStatusChange {
+            HStack(spacing: 8) {
+                statusButton(
+                    systemImage: "checkmark",
+                    color: .green,
+                    isSelected: item.deal.status == .approved
+                ) {
+                    onStatusChange(.approved)
+                }
+
+                statusButton(
+                    systemImage: "xmark",
+                    color: .red,
+                    isSelected: item.deal.status == .rejected
+                ) {
+                    onStatusChange(.rejected)
+                }
+            }
         }
     }
     

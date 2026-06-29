@@ -200,7 +200,15 @@ nonisolated enum DealMapper {
             result = stripped
         }
 
-        return result
+        return stripTrailingFromWord(from: result)
+    }
+
+    private static func stripTrailingFromWord(from title: String) -> String {
+        let parts = title.split(separator: " ", omittingEmptySubsequences: true).map(String.init)
+        guard parts.count > 1, parts.last?.caseInsensitiveCompare("from") == .orderedSame else {
+            return title
+        }
+        return parts.dropLast().joined(separator: " ")
     }
 
     private static func stripSuffix(
