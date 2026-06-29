@@ -289,7 +289,9 @@ final class VenueDetailsViewModel {
         do {
             try dealRepository.updateStatus(id: id, status: status)
             if let index = deals.firstIndex(where: { $0.deal.id == id }) {
-                deals[index].deal.status = status
+                var updated = deals[index]
+                updated.deal.status = status
+                deals[index] = updated
             }
         } catch {
             // Keep the current UI state if persistence fails.
@@ -307,7 +309,7 @@ final class VenueDetailsViewModel {
         }
     }
 
-    func updateDeal(_ item: DealWithSchedules, draft: EditDealDraft) {
+    func updateDeal(_ item: DealWithSchedules, draft: EditDealDraft, status: DealStatus = .approved) {
         guard let id = item.deal.id else { return }
 
         do {
@@ -319,7 +321,7 @@ final class VenueDetailsViewModel {
                 sourceURL: draft.sourceURL.isEmpty ? nil : draft.sourceURL,
                 creativeURL: draft.creativeURL.isEmpty ? nil : draft.creativeURL,
                 schedules: draft.schedules.map { $0.toDealSchedule() },
-                status: item.deal.status
+                status: status
             )
             if let index = deals.firstIndex(where: { $0.deal.id == id }) {
                 var updatedDeal = deals[index].deal
@@ -328,6 +330,7 @@ final class VenueDetailsViewModel {
                 updatedDeal.conditions = draft.conditions.isEmpty ? nil : draft.conditions
                 updatedDeal.sourceURL = draft.sourceURL.isEmpty ? nil : draft.sourceURL
                 updatedDeal.creativeURL = draft.creativeURL.isEmpty ? nil : draft.creativeURL
+                updatedDeal.status = status
                 deals[index] = DealWithSchedules(
                     deal: updatedDeal,
                     schedules: draft.schedules.map { $0.toDealSchedule() }
