@@ -173,6 +173,10 @@ export function SearchPage() {
       ? { lat: filters.where.lat, lng: filters.where.lng }
       : null;
   const isEmpty = !loadingDeals && deals.length === 0;
+  const resultsTitle =
+    filters.where.kind === "suburb"
+      ? `Results in ${filters.where.suburb.name}`
+      : "Results";
 
   return (
     <div
@@ -199,7 +203,7 @@ export function SearchPage() {
       <section className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
-            Results
+            {resultsTitle}
           </h2>
           <div className="flex flex-wrap items-center gap-3">
             <p className="text-sm text-zinc-500 dark:text-zinc-400">

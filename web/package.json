@@ -10,7 +10,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
-    "sync": "tsx scripts/sync-sqlite.ts"
+    "sync": "tsx scripts/sync-sqlite.ts",
+    "import-suburbs": "tsx scripts/import-suburbs.ts"
   },
   "dependencies": {
     "dotenv": "^17.4.2",
