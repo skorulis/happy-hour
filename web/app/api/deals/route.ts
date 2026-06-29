@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { searchDeals } from "@/lib/search/queries";
+import { searchDeals, searchDealsForSuburb } from "@/lib/search/queries";
 
 function parseDaysParam(value: string | null): number[] | undefined | "invalid" {
   if (value === null || value.trim() === "") {
@@ -116,18 +116,33 @@ export async function GET(request: Request) {
   }
 
   try {
+    if (suburbId !== undefined) {
+      const { deals, nearbyDeals } = await searchDealsForSuburb({
+        venueId,
+        day,
+        days,
+        suburbId,
+        startMinute,
+        endMinute,
+        query,
+        activeNow,
+        limit: Number.isFinite(limit) ? limit : 100,
+      });
+
+      return NextResponse.json({ deals, nearbyDeals });
+    }
+
     const deals = await searchDeals({
       venueId,
       day,
       days,
-      suburbId,
-      lat,
-      lng,
       startMinute,
       endMinute,
       query,
       activeNow,
       limit: Number.isFinite(limit) ? limit : 100,
+      lat,
+      lng,
     });
 
     return NextResponse.json({ deals });

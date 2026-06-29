@@ -58,6 +58,7 @@ export function SearchPage() {
     () => searchParamsToFilters(searchParams).what,
   );
   const [deals, setDeals] = useState<DealSearchResult[]>([]);
+  const [nearbyDeals, setNearbyDeals] = useState<DealSearchResult[]>([]);
   const [loadingDeals, setLoadingDeals] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -129,8 +130,12 @@ export function SearchPage() {
         if (!response.ok) {
           throw new Error("Failed to load deals");
         }
-        const data = (await response.json()) as { deals: DealSearchResult[] };
+        const data = (await response.json()) as {
+          deals: DealSearchResult[];
+          nearbyDeals?: DealSearchResult[];
+        };
         setDeals(data.deals);
+        setNearbyDeals(data.nearbyDeals ?? []);
       } catch (fetchError) {
         if ((fetchError as Error).name !== "AbortError") {
           setError("Could not load deals.");
@@ -168,14 +173,17 @@ export function SearchPage() {
   }
 
   const venueGroups = groupDealsByVenue(deals);
+  const nearbyVenueGroups = groupDealsByVenue(nearbyDeals);
+  const allVenueGroups = [...venueGroups, ...nearbyVenueGroups];
+  const totalDeals = deals.length + nearbyDeals.length;
   const userLocation =
     filters.where.kind === "nearMe"
       ? { lat: filters.where.lat, lng: filters.where.lng }
       : null;
-  const isEmpty = !loadingDeals && deals.length === 0;
+  const isEmpty = !loadingDeals && totalDeals === 0;
   const resultsTitle =
     filters.where.kind === "suburb"
-      ? `Results in ${filters.where.suburb.name}`
+      ? `Deals in ${filters.where.suburb.name}`
       : "Results";
 
   return (
@@ -209,7 +217,7 @@ export function SearchPage() {
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
               {loadingDeals
                 ? "Loading..."
-                : `${venueGroups.length} venues · ${deals.length} deals`}
+                : `${allVenueGroups.length} venues · ${totalDeals} deals`}
             </p>
             <ViewToggle view={viewMode} onChange={setViewMode} />
           </div>
@@ -228,15 +236,32 @@ export function SearchPage() {
               broadening your search.
             </p>
           ) : (
-            <div className="grid gap-2">
-              {venueGroups.map((group) => (
-                <VenueSearchCard key={group.venue.id} group={group} />
-              ))}
+            <div className="space-y-8">
+              {venueGroups.length > 0 ? (
+                <div className="grid gap-2">
+                  {venueGroups.map((group) => (
+                    <VenueSearchCard key={group.venue.id} group={group} />
+                  ))}
+                </div>
+              ) : null}
+
+              {nearbyVenueGroups.length > 0 ? (
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
+                    Nearby
+                  </h2>
+                  <div className="grid gap-2">
+                    {nearbyVenueGroups.map((group) => (
+                      <VenueSearchCard key={group.venue.id} group={group} />
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </div>
           )
         ) : (
           <SearchMapView
-            venueGroups={venueGroups}
+            venueGroups={allVenueGroups}
             userLocation={userLocation}
             isEmpty={isEmpty}
           />

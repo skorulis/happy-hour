@@ -5,6 +5,7 @@ import {
   ilike,
   inArray,
   isNull,
+  ne,
   or,
   sql,
   type SQL,
@@ -172,6 +173,7 @@ function textSearchFilter(query: string): SQL {
 const dealSearchVector = sql`to_tsvector('english', coalesce(${deal.title}, '') || ' ' || coalesce(${deal.details}, '') || ' ' || coalesce(${deal.conditions}, ''))`;
 
 const DEFAULT_NEAR_ME_RADIUS_KM = 30;
+const NEARBY_SUBURB_RADIUS_KM = 1;
 
 function distanceKmExpression(lat: number, lng: number): SQL {
   return sql`(
@@ -263,11 +265,12 @@ export async function searchVenues(
     .limit(limit);
 }
 
-export async function searchDeals(options: {
+export type SearchDealsOptions = {
   venueId?: number;
   day?: number;
   days?: number[];
   suburbId?: number;
+  excludeSuburbId?: number;
   lat?: number;
   lng?: number;
   radiusKm?: number;
@@ -276,7 +279,11 @@ export async function searchDeals(options: {
   query?: string;
   activeNow?: boolean;
   limit?: number;
-}): Promise<DealSearchResult[]> {
+};
+
+export async function searchDeals(
+  options: SearchDealsOptions,
+): Promise<DealSearchResult[]> {
   const filters: SQL[] = [];
   const hasNearLocation =
     options.lat !== undefined && options.lng !== undefined;
@@ -287,6 +294,15 @@ export async function searchDeals(options: {
 
   if (options.suburbId !== undefined) {
     filters.push(eq(venue.suburbId, options.suburbId));
+  }
+
+  if (options.excludeSuburbId !== undefined) {
+    filters.push(
+      or(
+        isNull(venue.suburbId),
+        ne(venue.suburbId, options.excludeSuburbId),
+      )!,
+    );
   }
 
   if (hasNearLocation) {
@@ -410,6 +426,41 @@ export async function searchDeals(options: {
     },
     schedules: schedulesByDeal.get(row.dealId) ?? [],
   }));
+}
+
+export async function searchDealsForSuburb(
+  options: Omit<
+    SearchDealsOptions,
+    "suburbId" | "lat" | "lng" | "radiusKm" | "excludeSuburbId"
+  > & { suburbId: number },
+): Promise<{ deals: DealSearchResult[]; nearbyDeals: DealSearchResult[] }> {
+  const { suburbId, ...sharedOptions } = options;
+
+  const deals = await searchDeals({ ...sharedOptions, suburbId });
+
+  const [suburbRow] = await db
+    .select({ lat: suburb.lat, lng: suburb.lng })
+    .from(suburb)
+    .where(eq(suburb.id, suburbId))
+    .limit(1);
+
+  if (
+    !suburbRow ||
+    suburbRow.lat === null ||
+    suburbRow.lng === null
+  ) {
+    return { deals, nearbyDeals: [] };
+  }
+
+  const nearbyDeals = await searchDeals({
+    ...sharedOptions,
+    lat: suburbRow.lat,
+    lng: suburbRow.lng,
+    radiusKm: NEARBY_SUBURB_RADIUS_KM,
+    excludeSuburbId: suburbId,
+  });
+
+  return { deals, nearbyDeals };
 }
 
 async function buildVenueDetail(
