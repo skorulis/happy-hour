@@ -78,6 +78,42 @@ export function formatTimeInput(minute: number): string {
   return formatMinute(minute);
 }
 
+export const TIME_FILTER_START_MINUTE = 10 * 60;
+export const TIME_FILTER_END_MINUTE = 24 * 60;
+
+export function formatHourDropdownLabel(minute: number): string {
+  if (minute === TIME_FILTER_END_MINUTE) {
+    return "12am";
+  }
+
+  const hours24 = Math.floor(minute / 60);
+  const suffix = hours24 >= 12 ? "pm" : "am";
+  const hours12 = hours24 % 12 || 12;
+  return `${hours12}${suffix}`;
+}
+
+export const TIME_FILTER_HOUR_OPTIONS = Array.from(
+  {
+    length:
+      (TIME_FILTER_END_MINUTE - TIME_FILTER_START_MINUTE) / 60 + 1,
+  },
+  (_, index) => {
+    const minute = TIME_FILTER_START_MINUTE + index * 60;
+    return {
+      value: minute,
+      label: formatHourDropdownLabel(minute),
+    };
+  },
+);
+
+export function snapToTimeFilterHour(minute: number): number {
+  const snapped = Math.round(minute / 60) * 60;
+  return Math.min(
+    TIME_FILTER_END_MINUTE,
+    Math.max(TIME_FILTER_START_MINUTE, snapped),
+  );
+}
+
 /** Matches DealDay.calendarWeekday in the Swift app (1 = Sunday … 7 = Saturday). */
 export function currentCalendarWeekday(date = new Date()): number {
   return date.getDay() + 1;

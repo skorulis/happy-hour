@@ -224,7 +224,7 @@ export function SearchPage() {
               broadening your search.
             </p>
           ) : (
-            <div className="grid gap-4">
+            <div className="grid gap-2">
               {venueGroups.map((group) => (
                 <VenueSearchCard key={group.venue.id} group={group} />
               ))}

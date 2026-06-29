@@ -6,14 +6,14 @@ import {
   currentCalendarWeekday,
   DAY_LABELS,
   formatDaySelectionLabel,
-  formatTimeInput,
-  parseTimeInput,
+  snapToTimeFilterHour,
+  TIME_FILTER_HOUR_OPTIONS,
   WEEKDAY_UI_ORDER,
 } from "@/lib/search/schedule";
 
 export type TimeRange = {
-  startMinute: number;
-  endMinute: number;
+  startMinute?: number;
+  endMinute?: number;
 } | null;
 
 type DayPickerProps = {
@@ -89,11 +89,15 @@ export function DayPicker({ days, timeRange, onApply }: DayPickerProps) {
   const [open, setOpen] = useState(false);
   const [draftDays, setDraftDays] = useState<number[]>(days);
   const [showTimeFilter, setShowTimeFilter] = useState(timeRange !== null);
-  const [startTime, setStartTime] = useState(
-    timeRange ? formatTimeInput(timeRange.startMinute) : "",
+  const [startMinute, setStartMinute] = useState<number | null>(
+    timeRange?.startMinute !== undefined
+      ? snapToTimeFilterHour(timeRange.startMinute)
+      : null,
   );
-  const [endTime, setEndTime] = useState(
-    timeRange ? formatTimeInput(timeRange.endMinute) : "",
+  const [endMinute, setEndMinute] = useState<number | null>(
+    timeRange?.endMinute !== undefined
+      ? snapToTimeFilterHour(timeRange.endMinute)
+      : null,
   );
   const containerRef = useRef<HTMLDivElement>(null);
   const today = currentCalendarWeekday();
@@ -135,23 +139,35 @@ export function DayPicker({ days, timeRange, onApply }: DayPickerProps) {
   function handleClear() {
     setDraftDays([]);
     setShowTimeFilter(false);
-    setStartTime("");
-    setEndTime("");
+    setStartMinute(null);
+    setEndMinute(null);
+  }
+
+  const timeRangeError =
+    showTimeFilter &&
+    startMinute !== null &&
+    endMinute !== null &&
+    endMinute < startMinute
+      ? "End time must be after start time"
+      : null;
+
+  function buildTimeRange(): TimeRange {
+    if (!showTimeFilter || timeRangeError) {
+      return null;
+    }
+
+    if (startMinute === null && endMinute === null) {
+      return null;
+    }
+
+    return {
+      ...(startMinute !== null ? { startMinute } : {}),
+      ...(endMinute !== null ? { endMinute } : {}),
+    };
   }
 
   function handleApply() {
-    let nextTimeRange: TimeRange = null;
-
-    if (showTimeFilter) {
-      const startMinute = parseTimeInput(startTime);
-      const endMinute = parseTimeInput(endTime);
-
-      if (startMinute !== null && endMinute !== null && endMinute > startMinute) {
-        nextTimeRange = { startMinute, endMinute };
-      }
-    }
-
-    onApply(draftDays, nextTimeRange);
+    onApply(draftDays, buildTimeRange());
     setOpen(false);
   }
 
@@ -166,8 +182,16 @@ export function DayPicker({ days, timeRange, onApply }: DayPickerProps) {
           if (!open) {
             setDraftDays(days);
             setShowTimeFilter(timeRange !== null);
-            setStartTime(timeRange ? formatTimeInput(timeRange.startMinute) : "");
-            setEndTime(timeRange ? formatTimeInput(timeRange.endMinute) : "");
+            setStartMinute(
+              timeRange?.startMinute !== undefined
+                ? snapToTimeFilterHour(timeRange.startMinute)
+                : null,
+            );
+            setEndMinute(
+              timeRange?.endMinute !== undefined
+                ? snapToTimeFilterHour(timeRange.endMinute)
+                : null,
+            );
           }
           setOpen((current) => !current);
         }}
@@ -221,7 +245,11 @@ export function DayPicker({ days, timeRange, onApply }: DayPickerProps) {
           {!showTimeFilter ? (
             <button
               type="button"
-              onClick={() => setShowTimeFilter(true)}
+              onClick={() => {
+                setShowTimeFilter(true);
+                setStartMinute(null);
+                setEndMinute(null);
+              }}
               className="text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
             >
               + Filter by time
@@ -232,27 +260,50 @@ export function DayPicker({ days, timeRange, onApply }: DayPickerProps) {
                 Time range
               </p>
               <div className="grid grid-cols-2 gap-2">
-                <input
-                  type="text"
-                  value={startTime}
-                  onChange={(event) => setStartTime(event.target.value)}
-                  placeholder="5:00pm"
+                <select
+                  value={startMinute ?? ""}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    setStartMinute(value === "" ? null : Number(value));
+                  }}
+                  aria-label="Start time"
                   className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none ring-amber-500 focus:ring-2 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-50"
-                />
-                <input
-                  type="text"
-                  value={endTime}
-                  onChange={(event) => setEndTime(event.target.value)}
-                  placeholder="7:00pm"
+                >
+                  <option value="">Any</option>
+                  {TIME_FILTER_HOUR_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={endMinute ?? ""}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    setEndMinute(value === "" ? null : Number(value));
+                  }}
+                  aria-label="End time"
                   className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none ring-amber-500 focus:ring-2 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-50"
-                />
+                >
+                  <option value="">Any</option>
+                  {TIME_FILTER_HOUR_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
               </div>
+              {timeRangeError ? (
+                <p className="text-xs text-red-600 dark:text-red-400">
+                  {timeRangeError}
+                </p>
+              ) : null}
               <button
                 type="button"
                 onClick={() => {
                   setShowTimeFilter(false);
-                  setStartTime("");
-                  setEndTime("");
+                  setStartMinute(null);
+                  setEndMinute(null);
                 }}
                 className="text-xs text-zinc-500 hover:text-zinc-700 dark:text-zinc-400"
               >

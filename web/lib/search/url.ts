@@ -45,31 +45,45 @@ function parseTimeRange(
   startMinuteParam: string | null,
   endMinuteParam: string | null,
 ): TimeRange {
+  const hasStart =
+    startMinuteParam !== null && startMinuteParam !== "";
+  const hasEnd = endMinuteParam !== null && endMinuteParam !== "";
+
+  if (!hasStart && !hasEnd) {
+    return null;
+  }
+
+  const startMinute = hasStart ? Number(startMinuteParam) : undefined;
+  const endMinute = hasEnd ? Number(endMinuteParam) : undefined;
+
   if (
-    startMinuteParam === null ||
-    startMinuteParam === "" ||
-    endMinuteParam === null ||
-    endMinuteParam === ""
+    hasStart &&
+    (!Number.isFinite(startMinute) ||
+      startMinute! < 0 ||
+      startMinute! > 1439)
   ) {
     return null;
   }
 
-  const startMinute = Number(startMinuteParam);
-  const endMinute = Number(endMinuteParam);
-
   if (
-    !Number.isFinite(startMinute) ||
-    !Number.isFinite(endMinute) ||
-    startMinute < 0 ||
-    startMinute > 1439 ||
-    endMinute < 1 ||
-    endMinute > 1440 ||
-    endMinute <= startMinute
+    hasEnd &&
+    (!Number.isFinite(endMinute) || endMinute! < 1 || endMinute! > 1440)
   ) {
     return null;
   }
 
-  return { startMinute, endMinute };
+  if (
+    hasStart &&
+    hasEnd &&
+    endMinute! < startMinute!
+  ) {
+    return null;
+  }
+
+  return {
+    ...(hasStart ? { startMinute: startMinute! } : {}),
+    ...(hasEnd ? { endMinute: endMinute! } : {}),
+  };
 }
 
 function parseWhereFilter(params: URLSearchParams): WhereFilter {
@@ -144,7 +158,9 @@ export function timeRangeKey(timeRange: TimeRange): string {
   if (!timeRange) {
     return "";
   }
-  return `${timeRange.startMinute}-${timeRange.endMinute}`;
+  const start = timeRange.startMinute ?? "";
+  const end = timeRange.endMinute ?? "";
+  return `${start}-${end}`;
 }
 
 export function searchParamsEqual(a: string, b: string): boolean {
@@ -191,8 +207,12 @@ export function filtersToSearchParams(
     params.set("lng", String(filters.where.lng));
   }
   if (filters.timeRange) {
-    params.set("startMinute", String(filters.timeRange.startMinute));
-    params.set("endMinute", String(filters.timeRange.endMinute));
+    if (filters.timeRange.startMinute !== undefined) {
+      params.set("startMinute", String(filters.timeRange.startMinute));
+    }
+    if (filters.timeRange.endMinute !== undefined) {
+      params.set("endMinute", String(filters.timeRange.endMinute));
+    }
   }
   if (what.length > 0) {
     params.set("q", what.join(","));

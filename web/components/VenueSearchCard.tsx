@@ -40,10 +40,10 @@ export function VenueSearchCard({ group }: VenueSearchCardProps) {
     null;
 
   return (
-    <article className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0 flex-1 space-y-4">
-          <ul className="space-y-2">
+    <article className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 flex-1 space-y-2">
+          <ul className="space-y-0.5">
             {group.deals.map((deal) => {
               const timeBadge = formatDealTimeBadge(deal.schedules);
 
@@ -55,7 +55,7 @@ export function VenueSearchCard({ group }: VenueSearchCardProps) {
                       group.venue.name,
                       deal.id,
                     )}
-                    className="-mx-2 flex flex-wrap items-center gap-2 rounded-md px-2 py-1 text-sm hover:bg-zinc-50 hover:text-amber-700 dark:hover:bg-zinc-900 dark:hover:text-amber-400"
+                    className="-mx-2 flex flex-wrap items-center gap-2 rounded-md px-2 py-0.5 text-sm hover:bg-zinc-50 hover:text-amber-700 dark:hover:bg-zinc-900 dark:hover:text-amber-400"
                   >
                     <span className="font-semibold text-zinc-900 hover:underline dark:text-zinc-50">
                       {deal.title || "Untitled deal"}

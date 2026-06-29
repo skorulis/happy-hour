@@ -112,15 +112,43 @@ function daysScheduleFilter(days: number[]): SQL {
   );
 }
 
-function timeRangeScheduleFilter(
+function scheduleTimeFilter(
   days: number[] | undefined,
-  startMinute: number,
-  endMinute: number,
-): SQL {
+  startMinute?: number,
+  endMinute?: number,
+): SQL | undefined {
+  if (startMinute === undefined && endMinute === undefined) {
+    return undefined;
+  }
+
   const dayFilter =
     days && days.length > 0
       ? inArray(dealSchedule.dayOfWeek, days)
       : undefined;
+
+  const timeConditions: SQL[] = [];
+
+  if (startMinute !== undefined && endMinute !== undefined) {
+    if (endMinute < startMinute) {
+      return undefined;
+    }
+
+    if (startMinute === endMinute) {
+      timeConditions.push(
+        sql`${dealSchedule.startMinute} <= ${startMinute}`,
+        sql`${dealSchedule.endMinute} > ${startMinute}`,
+      );
+    } else {
+      timeConditions.push(
+        sql`${dealSchedule.startMinute} < ${endMinute}`,
+        sql`${dealSchedule.endMinute} > ${startMinute}`,
+      );
+    }
+  } else if (startMinute !== undefined) {
+    timeConditions.push(sql`${dealSchedule.endMinute} > ${startMinute}`);
+  } else {
+    timeConditions.push(sql`${dealSchedule.startMinute} < ${endMinute}`);
+  }
 
   return exists(
     db
@@ -130,8 +158,7 @@ function timeRangeScheduleFilter(
         and(
           eq(dealSchedule.dealId, deal.id),
           dayFilter,
-          sql`${dealSchedule.startMinute} < ${endMinute}`,
-          sql`${dealSchedule.endMinute} > ${startMinute}`,
+          ...timeConditions,
         ),
       ),
   );
@@ -272,46 +299,36 @@ export async function searchDeals(options: {
   }
 
   if (options.days !== undefined && options.days.length > 0) {
-    if (
-      options.startMinute !== undefined &&
-      options.endMinute !== undefined
-    ) {
-      filters.push(
-        timeRangeScheduleFilter(
-          options.days,
-          options.startMinute,
-          options.endMinute,
-        ),
-      );
+    const timeFilter = scheduleTimeFilter(
+      options.days,
+      options.startMinute,
+      options.endMinute,
+    );
+    if (timeFilter) {
+      filters.push(timeFilter);
     } else {
       filters.push(daysScheduleFilter(options.days));
     }
   } else if (options.day !== undefined) {
-    if (
-      options.startMinute !== undefined &&
-      options.endMinute !== undefined
-    ) {
-      filters.push(
-        timeRangeScheduleFilter(
-          [options.day],
-          options.startMinute,
-          options.endMinute,
-        ),
-      );
+    const timeFilter = scheduleTimeFilter(
+      [options.day],
+      options.startMinute,
+      options.endMinute,
+    );
+    if (timeFilter) {
+      filters.push(timeFilter);
     } else {
       filters.push(dayScheduleFilter(options.day));
     }
-  } else if (
-    options.startMinute !== undefined &&
-    options.endMinute !== undefined
-  ) {
-    filters.push(
-      timeRangeScheduleFilter(
-        undefined,
-        options.startMinute,
-        options.endMinute,
-      ),
+  } else {
+    const timeFilter = scheduleTimeFilter(
+      undefined,
+      options.startMinute,
+      options.endMinute,
     );
+    if (timeFilter) {
+      filters.push(timeFilter);
+    }
   }
 
   if (options.activeNow) {
