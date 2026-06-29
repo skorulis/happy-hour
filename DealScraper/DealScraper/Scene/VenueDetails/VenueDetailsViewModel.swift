@@ -33,6 +33,11 @@ final class VenueDetailsViewModel {
         case failed(message: String)
     }
 
+    enum DeleteVenueState: Equatable {
+        case idle
+        case failed(message: String)
+    }
+
     let googleMapId: String
     private(set) var venue: Venue?
     private(set) var venueLinks: VenueLinks?
@@ -41,6 +46,7 @@ final class VenueDetailsViewModel {
     private(set) var deleteSourcesState: DeleteSourcesState = .idle
     private(set) var deleteDealsState: DeleteDealsState = .idle
     private(set) var addDealSourceState: AddDealSourceState = .idle
+    private(set) var deleteVenueState: DeleteVenueState = .idle
 
     var newDealSourceURLString = ""
     var newDealSourcePageString = ""
@@ -121,6 +127,10 @@ final class VenueDetailsViewModel {
     }
 
     var canDeleteDeals: Bool {
+        venue?.id != nil && !isExtracting && !isCrawling
+    }
+
+    var canDeleteVenue: Bool {
         venue?.id != nil && !isExtracting && !isCrawling
     }
 
@@ -325,6 +335,28 @@ final class VenueDetailsViewModel {
             venue?.status = status
         } catch {
             // Keep the current UI state if persistence fails.
+        }
+    }
+
+    @discardableResult
+    func deleteVenue() -> Bool {
+        guard let venueId = venue?.id, canDeleteVenue else { return false }
+
+        do {
+            jobQueue.clearAll(for: venueId)
+            guard try venueRepository.delete(id: venueId) else {
+                deleteVenueState = .failed(message: "Venue not found.")
+                return false
+            }
+            venue = nil
+            venueLinks = nil
+            dealSources = []
+            deals = []
+            deleteVenueState = .idle
+            return true
+        } catch {
+            deleteVenueState = .failed(message: error.localizedDescription)
+            return false
         }
     }
 

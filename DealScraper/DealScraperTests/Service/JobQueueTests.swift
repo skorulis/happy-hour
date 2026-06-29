@@ -238,6 +238,33 @@ struct JobQueueTests {
         #expect(jobQueue.jobs(for: 99).isEmpty)
     }
 
+    @Test func clearAllRemovesJobsForVenue() async {
+        let venueOne = makeVenue(id: 1)
+        let venueTwo = makeVenue(id: 2)
+        let repository = makeRepository(with: venueOne)
+        try! repository.upsert(venueTwo)
+
+        let jobQueue = JobQueue(
+            venueRepository: repository,
+            venueWebsiteCrawler: FakeVenueWebsiteCrawler { _, _ in
+                try await Task.sleep(for: .milliseconds(100))
+                return VenueCrawlResults(dealsFound: 0, visitedPages: [], imagesAnalyzed: 0, duration: 0)
+            },
+            venueDealExtractionService: FakeVenueDealExtractor { _, _ in
+                VenueDealExtractionResults(dealsFoundBeforeCondensing: 0, dealsFound: 0, duration: 0, errorCount: 0)
+            }
+        )
+
+        _ = jobQueue.enqueue(venueId: 1, type: .crawlWebsite)
+        _ = jobQueue.enqueue(venueId: 2, type: .crawlWebsite)
+
+        jobQueue.clearAll(for: 1)
+
+        #expect(jobQueue.jobs(for: 1).isEmpty)
+        #expect(jobQueue.jobs(for: 2).count == 1)
+        #expect(!jobQueue.isJobActive(venueId: 1, type: .crawlWebsite))
+    }
+
     private func waitForJobs(toFinish count: Int, in jobQueue: JobQueue) async {
         for _ in 0..<100 {
             let finished = jobQueue.jobs.filter { job in

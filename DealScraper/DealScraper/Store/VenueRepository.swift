@@ -77,6 +77,13 @@ final class VenueRepository {
         }
     }
 
+    @discardableResult
+    func delete(id: Int64) throws -> Bool {
+        try store.dbQueue.write { db in
+            try Venue.deleteOne(db, key: id)
+        }
+    }
+
     func updateLastCrawlDate(venueId: Int64, date: Date) throws {
         try store.dbQueue.write { db in
             try db.execute(

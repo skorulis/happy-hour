@@ -252,4 +252,58 @@ struct VenueRepositoryTests {
         let found = try #require(try repository.find(id: venueId))
         #expect(found.heroImage == heroURL)
     }
+
+    @Test func deleteRemovesVenueAndRelatedRecords() throws {
+        let store = SQLStore.inMemory()
+        let venueRepository = VenueRepository(store: store)
+        let dealSourceRepository = DealSourceRepository(store: store)
+        let dealRepository = DealRepository(store: store)
+        let venueLinksRepository = VenueLinksRepository(store: store)
+
+        try venueRepository.upsert(Venue(
+            googleMapId: "places/ChIJDelete",
+            name: "Delete Me Pub",
+            lat: -33.8688,
+            lng: 151.2093,
+            json: "{}"
+        ))
+
+        let venueId = try #require(try venueRepository.find(googleMapId: "places/ChIJDelete")?.id)
+
+        try venueLinksRepository.setMissing(
+            venueId: venueId,
+            whatsOn: "https://example.com/whats-on",
+            instagram: nil,
+            facebook: nil
+        )
+
+        try dealSourceRepository.upsert(
+            sources: [
+                DealSource(
+                    venueId: venueId,
+                    url: "https://example.com/deals",
+                    type: .webpage,
+                    status: .approved
+                ),
+            ],
+            forVenueId: venueId
+        )
+
+        try dealRepository.replaceAll(
+            venueId: venueId,
+            deals: [
+                DealWithSchedules(
+                    deal: Deal(venueId: venueId, title: "Happy Hour"),
+                    schedules: []
+                ),
+            ]
+        )
+
+        #expect(try venueRepository.delete(id: venueId))
+        #expect(try venueRepository.find(id: venueId) == nil)
+        #expect(try dealSourceRepository.find(venueId: venueId).isEmpty)
+        #expect(try dealRepository.find(venueId: venueId).isEmpty)
+        #expect(try venueLinksRepository.find(venueId: venueId) == nil)
+        #expect(try venueRepository.delete(id: venueId) == false)
+    }
 }

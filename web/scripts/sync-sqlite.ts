@@ -11,6 +11,10 @@ type SqliteSuburb = {
   id: number;
   name: string;
   postcode: string | null;
+  state: string | null;
+  lat: number | null;
+  lng: number | null;
+  sqkm: number | null;
 };
 
 type SqliteVenue = {
@@ -123,6 +127,11 @@ async function main() {
 
   let venuesSynced = 0;
   let dealsInserted = 0;
+  const syncedSuburbKeys = new Set<string>();
+
+  function suburbKey(name: string, postcode: string | null): string {
+    return `${name}\u0000${postcode ?? ""}`;
+  }
 
   async function upsertSuburb(
     tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
@@ -133,12 +142,20 @@ async function main() {
       .values({
         name: suburbRow.name,
         postcode: suburbRow.postcode,
+        state: suburbRow.state,
+        lat: suburbRow.lat,
+        lng: suburbRow.lng,
+        sqkm: suburbRow.sqkm,
       })
       .onConflictDoUpdate({
         target: [schema.suburb.name, schema.suburb.postcode],
         set: {
           name: suburbRow.name,
           postcode: suburbRow.postcode,
+          state: suburbRow.state,
+          lat: suburbRow.lat,
+          lng: suburbRow.lng,
+          sqkm: suburbRow.sqkm,
         },
       })
       .returning({ id: schema.suburb.id });
@@ -157,6 +174,7 @@ async function main() {
 
         if (suburbRow) {
           suburbId = await upsertSuburb(tx, suburbRow);
+          syncedSuburbKeys.add(suburbKey(suburbRow.name, suburbRow.postcode));
         }
       }
 
@@ -264,6 +282,7 @@ async function main() {
 
   console.log("Sync complete");
   console.log(`  SQLite: ${sqlitePath}`);
+  console.log(`  Suburbs synced: ${syncedSuburbKeys.size}`);
   console.log(`  Venues synced: ${venuesSynced}`);
   console.log(`  Deals inserted: ${dealsInserted}`);
 }

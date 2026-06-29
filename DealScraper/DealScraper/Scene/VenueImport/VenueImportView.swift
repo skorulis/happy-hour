@@ -80,7 +80,8 @@ struct VenueImportView: View {
     private var detail: some View {
         if let googleMapId = viewModel.selectedGoogleMapId {
             VenueDetailsView(
-                viewModel: resolver!.venueDetailsViewModel(googleID: googleMapId)
+                viewModel: resolver!.venueDetailsViewModel(googleID: googleMapId),
+                onVenueDeleted: { viewModel.loadSavedVenues() }
             )
             .id(googleMapId)
         } else {

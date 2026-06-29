@@ -93,6 +93,18 @@ final class JobQueue {
         }
     }
 
+    func clearAll(for venueId: Int64) {
+        for job in jobs where job.venueId == venueId {
+            switch job.status {
+            case .pending, .running:
+                cancel(jobId: job.id)
+            case .completed, .failed, .cancelled:
+                completionHandlers.removeValue(forKey: job.id)
+            }
+        }
+        jobs.removeAll { $0.venueId == venueId }
+    }
+
     private func pumpQueue() {
         while runningTasks.count < maxConcurrentJobs,
               let nextIndex = jobs.firstIndex(where: { job in

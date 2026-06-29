@@ -37,7 +37,10 @@ struct MainPathRenderer: CoordinatorPathRenderer {
         case .settings:
             SettingsView(viewModel: resolver.settingsViewModel())
         case let .venueDetails(id):
-            VenueDetailsView(viewModel: resolver.venueDetailsViewModel(googleID: id))
+            VenueDetailsView(
+                viewModel: resolver.venueDetailsViewModel(googleID: id),
+                onVenueDeleted: { coordinator.pop() }
+            )
         case .jobQueue:
             JobQueueView(viewModel: coordinator.apply(resolver.jobQueueViewModel()))
         case .approval:

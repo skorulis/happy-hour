@@ -17,6 +17,10 @@ export const suburb = pgTable(
     id: serial("id").primaryKey(),
     name: text("name").notNull(),
     postcode: text("postcode"),
+    state: text("state"),
+    lat: doublePrecision("lat"),
+    lng: doublePrecision("lng"),
+    sqkm: doublePrecision("sqkm"),
   },
   (table) => [
     uniqueIndex("suburb_name_postcode_idx").on(table.name, table.postcode),

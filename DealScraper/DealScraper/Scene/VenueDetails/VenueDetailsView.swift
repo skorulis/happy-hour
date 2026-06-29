@@ -6,9 +6,11 @@ import SwiftUI
 struct VenueDetailsView: View {
 
     @State var viewModel: VenueDetailsViewModel
+    var onVenueDeleted: (() -> Void)?
     @State private var selectedTab: VenueDetailsTab = .details
     @State private var showHeroImageURLPrompt = false
     @State private var heroImageURLString = ""
+    @State private var showDeleteVenueConfirmation = false
 
     var body: some View {
         Group {
@@ -36,6 +38,19 @@ struct VenueDetailsView: View {
             .disabled(!isValidHeroImageURL(heroImageURLString))
         } message: {
             Text("Enter the URL for the hero image.")
+        }
+        .confirmationDialog(
+            "Delete this venue?",
+            isPresented: $showDeleteVenueConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Delete Venue", role: .destructive) {
+                if viewModel.deleteVenue() {
+                    onVenueDeleted?()
+                }
+            }
+        } message: {
+            Text("This permanently removes the venue, all deal sources, and all deals. This cannot be undone.")
         }
     }
 
@@ -304,6 +319,16 @@ struct VenueDetailsView: View {
                 LabeledContent("Types", value: viewModel.types.joined(separator: ", "))
             }
 
+            Button("Delete Venue", role: .destructive) {
+                showDeleteVenueConfirmation = true
+            }
+            .disabled(!viewModel.canDeleteVenue)
+
+            if case let .failed(message) = viewModel.deleteVenueState {
+                Text(message)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+            }
         }
     }
 
