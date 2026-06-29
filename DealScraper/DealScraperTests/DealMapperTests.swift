@@ -457,6 +457,32 @@ struct DealMapperTests {
         #expect(deal.times == [.between(12 * 60, 16 * 60)])
     }
 
+    @Test func stripsTrailingTimeFromTitle() throws {
+        let raw = DealExtractionPayload.RawDeal(
+            title: "NIGHT TRIVIA 6:30PM",
+            details: [],
+            days: ["TUESDAY"],
+            times: ["6:30PM"]
+        )
+
+        let deal = try #require(DealMapper.map([raw]).first)
+
+        #expect(deal.title == "Night Trivia")
+    }
+
+    @Test func stripsAvailableFromTimeSuffixFromTitle() throws {
+        let raw = DealExtractionPayload.RawDeal(
+            title: "BOTTLE SHOP WINES FROM $20 AVAILABLE FROM 5PM",
+            details: [],
+            days: ["FRIDAY"],
+            times: ["5PM"]
+        )
+
+        let deal = try #require(DealMapper.map([raw]).first)
+
+        #expect(deal.title == "Bottle Shop Wines From $20")
+    }
+
     @Test func mapsHappyHourWithSplitEveryWeekdayDays() throws {
         let json = """
         {"deals":[{"conditions":["* SELECTED RANGE OF BEER & WINE"],"times":["4PM-6PM"],"details":["BEERS","$7-"],"days":["EVERY","WEEKDAY"],"title":"HAPPY HOUR"}]}

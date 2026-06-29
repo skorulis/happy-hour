@@ -26,6 +26,7 @@ nonisolated enum DealMapper {
         (title, details) = dayResolved
         (title, details) = withPriceOnlyTitle(title: title, details: details)
         (title, details) = withLeadingPriceInTitle(title: title, details: details)
+        title = stripTimeFromTitle(title)
         title = titleCased(title)
         if !title.isEmpty, FilterKeywords.containsExcludedKeyword(title) {
             return nil
@@ -182,6 +183,44 @@ nonisolated enum DealMapper {
             result.append(line)
         }
         return result
+    }
+
+    private static func stripTimeFromTitle(_ title: String) -> String {
+        var result = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !result.isEmpty else { return result }
+
+        let time = #"(?:\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?|\d{3,4}\s*(?:am|pm))"#
+        let availableFromPattern = #"(?i)\s+available\s+from\s+(\#(time))\s*$"#
+        if let stripped = stripSuffix(matching: availableFromPattern, in: result, timeCaptureGroup: 1) {
+            result = stripped
+        }
+
+        let trailingTimePattern = #"(?i)\s+(\#(time))\s*$"#
+        if let stripped = stripSuffix(matching: trailingTimePattern, in: result, timeCaptureGroup: 1) {
+            result = stripped
+        }
+
+        return result
+    }
+
+    private static func stripSuffix(
+        matching pattern: String,
+        in text: String,
+        timeCaptureGroup: Int
+    ) -> String? {
+        guard let regex = try? NSRegularExpression(pattern: pattern),
+              let match = regex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)),
+              let matchRange = Range(match.range, in: text),
+              let timeRange = Range(match.range(at: timeCaptureGroup), in: text)
+        else {
+            return nil
+        }
+
+        let timeText = String(text[timeRange])
+        guard DealHours.toMinutes(string: timeText) != nil else { return nil }
+
+        return String(text[..<matchRange.lowerBound])
+            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private static func titleCased(_ title: String) -> String {
