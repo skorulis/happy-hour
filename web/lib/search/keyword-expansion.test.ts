@@ -37,6 +37,23 @@ describe("expandKeywords", () => {
     );
     expect(expanded).toHaveLength(4);
   });
+
+  it("merges expansions from multiple selected tags for OR search", () => {
+    const expanded = expandKeywords(["beer", "steak"]);
+    expect(expanded).toEqual(
+      expect.arrayContaining([
+        "beer",
+        "schooner",
+        "pint",
+        "jugs",
+        "steak",
+        "porterhouse",
+        "rump",
+        "sirloin",
+      ]),
+    );
+    expect(expanded).toHaveLength(8);
+  });
 });
 
 describe("expandKeywordGroups", () => {

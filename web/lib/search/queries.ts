@@ -15,7 +15,7 @@ import {
   currentCalendarWeekday,
   currentMinuteOfDay,
 } from "@/lib/search/schedule";
-import { expandKeywordGroups } from "@data/products";
+import { expandKeywords } from "@data/products";
 import { nearbySuburbRadiusKm } from "@/lib/search/nearby-radius";
 import { parseWhatTokens } from "@/lib/search/url";
 import { slugify, UNKNOWN_SUBURB_SLUG } from "@/lib/search/slugs";
@@ -179,20 +179,12 @@ function textSearchFilterForWhatQuery(query: string): SQL {
     return textSearchFilter(query);
   }
 
-  const groups = expandKeywordGroups(tokens);
-  const groupFilters = groups.map((group) => {
-    if (group.length === 1) {
-      return textSearchFilter(group[0]);
-    }
-
-    return or(...group.map((term) => textSearchFilter(term)))!;
-  });
-
-  if (groupFilters.length === 1) {
-    return groupFilters[0];
+  const terms = expandKeywords(tokens);
+  if (terms.length === 1) {
+    return textSearchFilter(terms[0]);
   }
 
-  return and(...groupFilters)!;
+  return or(...terms.map((term) => textSearchFilter(term)))!;
 }
 
 const dealSearchVector = sql`to_tsvector('english', coalesce(${deal.title}, '') || ' ' || coalesce(${deal.details}, '') || ' ' || coalesce(${deal.conditions}, ''))`;

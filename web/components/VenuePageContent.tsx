@@ -171,7 +171,7 @@ export function VenuePageContent({ venue }: VenuePageContentProps) {
 
       <section className="space-y-4">
         <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
-          Deals ({venue.deals.length})
+          Weekly Deals ({venue.deals.length})
         </h2>
         {dealsByDay.length === 0 ? (
           <p className="rounded-xl border border-dashed border-zinc-300 px-4 py-8 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
