@@ -1,6 +1,7 @@
 //  Created by Alexander Skorulis on 14/6/2026.
 
 import ASKCore
+import ASKCoordinator
 import SwiftUI
 import Knit
 
@@ -20,6 +21,7 @@ struct DealScraperApp: App {
         WindowGroup {
             ContentView()
                 .environment(\.resolver, assembler.resolver)
+                .environment(\.ask_debugging, true)
         }
     }
 }

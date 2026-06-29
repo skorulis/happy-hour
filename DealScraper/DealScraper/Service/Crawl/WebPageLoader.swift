@@ -16,8 +16,13 @@ struct LoadedPage: Sendable {
     var normalizedURL: URL {
         URLNormalizer.normalize(url) ?? url
     }
+
+    var isExpiredEventPage: Bool {
+        FilterKeywords.isExpiredPage(html)
+    }
     
     var dealContentBlocks: [ContentBlock] {
+        guard !isExpiredEventPage else { return [] }
         let filter = DealTextFilter()
         return contentBlocks.filter {
             filter.isValidDeal($0.fullText)

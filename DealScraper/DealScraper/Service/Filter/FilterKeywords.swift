@@ -26,9 +26,14 @@ nonisolated enum FilterKeywords {
     
     static let productKeywords: [String] = ProductsCatalog.productNames
     
+    static let expiredPagePhrases = [
+        "this event has passed",
+    ]
+
     static let excludedKeywords = [
         "anzac",
         "birthday",
+        "catering",
         "christmas in july",
         "christmas",
         "conferences",
@@ -90,6 +95,11 @@ nonisolated enum FilterKeywords {
         "/blog",
     ]
     
+    static func isExpiredPage(_ text: String) -> Bool {
+        let lowercased = text.lowercased()
+        return expiredPagePhrases.contains { lowercased.contains($0) }
+    }
+
     static func containsDealKeyword(_ text: String) -> Bool {
         let lowercased = text.lowercased()
         return dealKeywords.contains { lowercased.contains($0) }

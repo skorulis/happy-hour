@@ -527,8 +527,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/skorulis/ASKCoordinator";
 			requirement = {
-				branch = main;
-				kind = branch;
+				kind = revision;
+				revision = 9d5997c0f282b9b0e91cf845c5142d6fcbce351d;
 			};
 		};
 		FA312C0E2FE1000100D1DD06 /* XCRemoteSwiftPackageReference "SwiftSoup" */ = {
