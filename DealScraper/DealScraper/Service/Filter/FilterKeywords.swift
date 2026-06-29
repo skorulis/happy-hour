@@ -24,71 +24,7 @@ nonisolated enum FilterKeywords {
         "weekdays",
     ]
     
-    static let productKeywords: [String] = [
-        // drinks
-        "beer",
-        "cocktails",
-        "drinks",
-        "guinness",
-        "jug",
-        "marg",
-        "martini",
-        "negroni",
-        "pints",
-        "porter",
-        "rose",
-        "spritz",
-        "tastingpaddle",
-        "wine",
-        
-        // Food
-        "burger",
-        "calamari",
-        "chicken",
-        "curry",
-        "gyros",
-        "meal",
-        "muscles",
-        "pasta",
-        "pizza",
-        "porterhouse",
-        "ribs",
-        "roast",
-        "rump",
-        "parma",
-        "parmi",
-        "parmy",
-        "ribs",
-        "salad",
-        "sandwich",
-        "schnitzel",
-        "schnitty",
-        "sirloin",
-        "snacks",
-        "steak",
-        "taco",
-        "wings",
-        
-        // Events
-        "brunch",
-        "lunch",
-        "dinner",
-        "night",
-        "trivia",
-        "bottomless",
-        
-        // Other
-        "bingo",
-        "comedy",
-        "pool",
-        "meat tray",
-        "2-4-1",
-        "2 for 1",
-        "karaoke",
-        "jazz",
-        "hospo",
-        "hospitality",
-    ]
+    static let productKeywords: [String] = ProductsCatalog.productNames
     
     static let excludedKeywords = [
         "anzac",
