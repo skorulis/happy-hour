@@ -1,36 +1,92 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Happy Hour Web
 
-## Getting Started
+Next.js website that serves deal search results from PostgreSQL. Approved deals are synced from the DealScraper SQLite database — see the [root README](../README.md) for the full data flow.
 
-First, run the development server:
+## Prerequisites
+
+- Node.js 20+
+- Docker (for local PostgreSQL)
+
+## Database setup
+
+From this directory, start the Postgres container:
+
+```bash
+docker compose up -d
+```
+
+This runs Postgres 16 with:
+
+| Setting | Value |
+|---------|-------|
+| Host port | `5433` (mapped to container port 5432) |
+| Database | `happyhour` |
+| User | `happyhour` |
+| Password | `happyhour` |
+
+Port **5433** is used locally to avoid conflicting with other Postgres instances on 5432.
+
+Copy the environment file and confirm `DATABASE_URL` points at the Docker instance:
+
+```bash
+cp .env.example .env.local
+```
+
+The default connection string is:
+
+```text
+postgresql://happyhour:happyhour@localhost:5433/happyhour
+```
+
+Apply the schema:
+
+```bash
+npm install
+npm run db:migrate
+```
+
+Check that Postgres is running:
+
+```bash
+docker compose ps
+```
+
+## Running the app
+
+Sync approved deals from DealScraper (set `SQLITE_PATH` in `.env.local` first):
+
+```bash
+npm run sync
+```
+
+Start the dev server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Delete the database
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+**Stop the container** (data is kept in the Docker volume and will be there when you start again):
 
-## Learn More
+```bash
+docker compose down
+```
 
-To learn more about Next.js, take a look at the following resources:
+**Stop and remove all data** (wipes the database — use this for a clean slate):
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+docker compose down -v
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The `-v` flag removes the `pgdata` volume defined in `docker-compose.yml`. After that, run `docker compose up -d` and `npm run db:migrate` again to recreate an empty database.
 
-## Deploy on Vercel
+To remove only the volume without using compose:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+docker volume rm web_pgdata
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+(The volume name is prefixed with the compose project directory name — run `docker volume ls` if yours differs.)

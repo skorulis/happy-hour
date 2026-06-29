@@ -1,6 +1,7 @@
 //Created by Alex Skorulis on 15/6/2026.
 
 import Foundation
+import GRDB
 import Testing
 @testable import DealScraper
 
@@ -95,6 +96,11 @@ struct VenueRepositoryTests {
     @Test func upsertPlacesMapsGooglePlaceToVenue() throws {
         let store = SQLStore.inMemory()
         let repository = VenueRepository(store: store)
+        let suburbId = try store.dbQueue.write { db -> Int64 in
+            var suburb = Suburb(name: "Sydney", postcode: "2000", state: "NSW")
+            try suburb.insert(db)
+            return try #require(suburb.id)
+        }
 
         let place = GooglePlace(
             id: "places/ChIJFromAPI",
@@ -115,12 +121,7 @@ struct VenueRepositoryTests {
         #expect(found.websiteUri == "https://harbourpub.example.com")
         #expect(found.lastCrawlDate == nil)
         #expect(found.json.contains("Harbour Pub"))
-
-        let suburb = try #require(try SuburbRepository(store: store).find(
-            name: "Sydney",
-            postcode: nil
-        ))
-        #expect(found.suburbId == suburb.id)
+        #expect(found.suburbId == suburbId)
     }
 
     @Test func upsertPlacesMarksVenueBrokenWhenWebsiteMissing() throws {

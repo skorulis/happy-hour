@@ -10,12 +10,14 @@ struct SuburbExtractorTests {
         let result = SuburbExtractor.extract(from: "123 George St, Sydney NSW 2000")
         #expect(result?.name == "Sydney")
         #expect(result?.postcode == "2000")
+        #expect(result?.state == "NSW")
     }
 
     @Test func extractsSuburbFromAddressWithoutPostcode() {
         let result = SuburbExtractor.extract(from: "1 Circular Quay, Sydney")
         #expect(result?.name == "Sydney")
         #expect(result?.postcode == nil)
+        #expect(result?.state == nil)
     }
 
     @Test func extractsSuburbFromAddressWithAustraliaSuffix() {
@@ -24,12 +26,14 @@ struct SuburbExtractorTests {
         )
         #expect(result?.name == "Surry Hills")
         #expect(result?.postcode == "2010")
+        #expect(result?.state == "NSW")
     }
 
     @Test func extractsSuburbFromStandaloneAddressWithAustraliaSuffix() {
         let result = SuburbExtractor.extract(from: "Glebe NSW 2037, Australia")
         #expect(result?.name == "Glebe")
         #expect(result?.postcode == "2037")
+        #expect(result?.state == "NSW")
     }
 
     @Test func returnsNilForEmptyAddress() {

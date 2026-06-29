@@ -129,9 +129,10 @@ final class VenueRepository {
             return
         }
 
-        venue.suburbId = try SuburbRepository.upsert(
+        venue.suburbId = try SuburbRepository.resolve(
             name: extracted.name,
             postcode: extracted.postcode,
+            state: extracted.state,
             in: db
         )
     }

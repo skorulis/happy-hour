@@ -11,14 +11,14 @@ final class SuburbRepository {
         self.store = store
     }
 
-    func upsert(name: String, postcode: String?) throws -> Int64 {
-        try store.dbQueue.write { db in
-            try Self.upsert(name: name, postcode: postcode, in: db)
+    func resolve(name: String, postcode: String?, state: String?) throws -> Int64? {
+        try store.dbQueue.read { db in
+            try Self.resolve(name: name, postcode: postcode, state: state, in: db)
         }
     }
 
-    func upsert(name: String, postcode: String?, in db: Database) throws -> Int64 {
-        try Self.upsert(name: name, postcode: postcode, in: db)
+    func resolve(name: String, postcode: String?, state: String?, in db: Database) throws -> Int64? {
+        try Self.resolve(name: name, postcode: postcode, state: state, in: db)
     }
 
     func find(name: String, postcode: String?) throws -> Suburb? {
@@ -27,21 +27,73 @@ final class SuburbRepository {
         }
     }
 
-    static func upsert(name: String, postcode: String?, in db: Database) throws -> Int64 {
+    static func resolve(name: String, postcode: String?, state: String?, in db: Database) throws -> Int64? {
         let normalizedPostcode = normalized(postcode)
+        let normalizedState = normalizedState(state)
 
-        if let existing = try find(name: name, postcode: normalizedPostcode, in: db),
-           let existingId = existing.id
+        if let normalizedState, let normalizedPostcode,
+           let id = try exactMatch(
+               name: name,
+               postcode: normalizedPostcode,
+               state: normalizedState,
+               in: db
+           )
         {
-            return existingId
+            return id
         }
 
-        var suburb = Suburb(name: name, postcode: normalizedPostcode)
-        try suburb.insert(db)
-        guard let suburbId = suburb.id else {
-            throw DatabaseError(resultCode: .SQLITE_ERROR, message: "Failed to insert suburb")
+        if let normalizedState,
+           let id = try firstMatch(name: name, state: normalizedState, in: db)
+        {
+            return id
         }
-        return suburbId
+
+        if let normalizedPostcode,
+           let id = try firstByPostcode(normalizedPostcode, in: db)
+        {
+            return id
+        }
+
+        return try firstByName(name, in: db)
+    }
+
+    private static func exactMatch(
+        name: String,
+        postcode: String,
+        state: String,
+        in db: Database
+    ) throws -> Int64? {
+        try Suburb
+            .filter(Column("name") == name)
+            .filter(Column("postcode") == postcode)
+            .filter(Column("state") == state)
+            .fetchOne(db)?
+            .id
+    }
+
+    private static func firstMatch(name: String, state: String, in db: Database) throws -> Int64? {
+        try Suburb
+            .filter(Column("name") == name)
+            .filter(Column("state") == state)
+            .order(Column("id"))
+            .fetchOne(db)?
+            .id
+    }
+
+    private static func firstByPostcode(_ postcode: String, in db: Database) throws -> Int64? {
+        try Suburb
+            .filter(Column("postcode") == postcode)
+            .order(Column("id"))
+            .fetchOne(db)?
+            .id
+    }
+
+    private static func firstByName(_ name: String, in db: Database) throws -> Int64? {
+        try Suburb
+            .filter(Column("name") == name)
+            .order(Column("id"))
+            .fetchOne(db)?
+            .id
     }
 
     private static func find(name: String, postcode: String?, in db: Database) throws -> Suburb? {
@@ -58,5 +110,11 @@ final class SuburbRepository {
         guard let postcode else { return nil }
         let trimmed = postcode.trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed.isEmpty ? nil : trimmed
+    }
+
+    private static func normalizedState(_ state: String?) -> String? {
+        guard let state else { return nil }
+        let trimmed = state.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed.uppercased()
     }
 }
