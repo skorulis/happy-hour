@@ -7,17 +7,37 @@ nonisolated struct Suburb: Codable, Sendable {
     var id: Int64?
     let name: String
     let postcode: String?
+    let state: String?
+    let lat: Double?
+    let lng: Double?
+    let sqkm: Double?
 
     enum CodingKeys: String, CodingKey {
         case id
         case name
         case postcode
+        case state
+        case lat
+        case lng
+        case sqkm
     }
 
-    init(id: Int64? = nil, name: String, postcode: String? = nil) {
+    init(
+        id: Int64? = nil,
+        name: String,
+        postcode: String? = nil,
+        state: String? = nil,
+        lat: Double? = nil,
+        lng: Double? = nil,
+        sqkm: Double? = nil
+    ) {
         self.id = id
         self.name = name
         self.postcode = postcode
+        self.state = state
+        self.lat = lat
+        self.lng = lng
+        self.sqkm = sqkm
     }
 }
 

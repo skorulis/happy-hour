@@ -172,5 +172,19 @@ final class SQLMigrations {
                 unique: true
             )
         }
+
+        migrator.registerMigration("v18_suburb_state_and_coordinates") { db in
+            try db.alter(table: "suburb") { t in
+                t.add(column: "state", .text)
+                t.add(column: "lat", .double)
+                t.add(column: "lng", .double)
+            }
+        }
+
+        migrator.registerMigration("v19_suburb_sqkm") { db in
+            try db.alter(table: "suburb") { t in
+                t.add(column: "sqkm", .double)
+            }
+        }
     }
 }
