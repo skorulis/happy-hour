@@ -26,17 +26,17 @@
             "spritz"
         ]
     },
-    { "name": "schooner" },
-    { "name": "pint" },
+    { "name": "guinness"},
     { "name": "jugs" },
     { "name": "martini" },
     { "name": "negroni" },
+    { "name": "pint" },
+    { "name": "porter" },
+    { "name": "schooner" },
     { "name": "spirits" },
     { "name": "spritz" },
     { "name": "tastingpaddle" },
-    {
-        "name": "wine"
-    },
+    { "name": "wine" },
     { "name": "bottomless" },
     {
         "name": "happy hour",
@@ -63,9 +63,13 @@
             "parmi",
             "parmy",
             "salad",
-            "steak"
+            "steak",
+            "taco",
+            "wings"
         ]
     },
+    { "name": "2-4-1", "hidden": true },
+    { "name": "2 for 1", "groups": [ "2-4-1" ] },
     { "name": "burger" },
     { "name": "calamari" },
     { "name": "chicken" },  
@@ -73,6 +77,7 @@
     { "name": "gyros" },
     { "name": "meal" },
     { "name": "muscles" },
+    { "name": "oysters" },
     { "name": "pasta" },
     { "name": "pizza" },
     { "name": "porterhouse" },
@@ -83,20 +88,52 @@
     { "name": "parmi" },
     { "name": "parmy" },
     { "name": "salad" },
+    { "name": "snacks" },
+    { "name": "schnitty", "hidden": true },
+    {
+        "name": "schnitzel",
+        "groups": [
+            "schnitty"
+        ]
+    },
+    { "name": "sirloin" },
     {
         "name": "steak",
         "groups": [
             "porterhouse",
-            "rump"
+            "rump",
+            "sirloin"
         ]
     },
+    { "name": "taco" },
+    { "name": "wings" },
     {
         "name": "events",
         "groups": [
             "trivia",
-            "bingo"
+            "bingo",
+            "comedy",
+            "karaoke",
+            "jazz",
+            "live music",
+            "meat tray",
+            "pool",
+            "run club"
         ]
     },
+    { "name": "brunch" },
+    { "name": "lunch" },
+    { "name": "dinner" },
+    { "name": "night" },
+    { "name": "bingo" },
+    { "name": "comedy" },
+    { "name": "hospo" },
+    { "name": "hospitality" },
     { "name": "trivia" },
-    { "name": "bingo" }
+    { "name": "jazz" },
+    { "name": "karaoke" },
+    { "name": "live music" },
+    { "name": "meat tray" },
+    { "name": "pool" },
+    { "name": "run club"}
 ]

@@ -130,6 +130,23 @@ export function whatTokensEqual(a: string[], b: string[]): boolean {
   return a.every((token, index) => token === b[index]);
 }
 
+export function whereFilterKey(where: WhereFilter): string {
+  if (where.kind === "anywhere") {
+    return "anywhere";
+  }
+  if (where.kind === "nearMe") {
+    return `near:${where.lat},${where.lng}`;
+  }
+  return `suburb:${where.id}:${where.suburb.name}:${where.suburb.postcode ?? ""}`;
+}
+
+export function timeRangeKey(timeRange: TimeRange): string {
+  if (!timeRange) {
+    return "";
+  }
+  return `${timeRange.startMinute}-${timeRange.endMinute}`;
+}
+
 export function searchParamsEqual(a: string, b: string): boolean {
   const left = new URLSearchParams(a);
   const right = new URLSearchParams(b);

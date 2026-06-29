@@ -4,6 +4,7 @@ export type Product = {
   name: string;
   rank?: number;
   groups?: string[];
+  hidden?: boolean;
 };
 
 function mergeProducts(raw: Product[]): Product[] {
@@ -18,6 +19,7 @@ function mergeProducts(raw: Product[]): Product[] {
         name: product.name,
         rank: product.rank,
         groups: product.groups ? [...new Set(product.groups)] : undefined,
+        hidden: product.hidden,
       });
       continue;
     }
@@ -30,6 +32,7 @@ function mergeProducts(raw: Product[]): Product[] {
       name: existing.name,
       rank: existing.rank ?? product.rank,
       groups: groups.length > 0 ? groups : undefined,
+      hidden: existing.hidden || product.hidden,
     });
   }
 
@@ -46,11 +49,17 @@ function isExcluded(name: string, exclude: Set<string>): boolean {
   return exclude.has(name.toLowerCase());
 }
 
+function isVisible(product: Product): boolean {
+  return !product.hidden;
+}
+
 export function getInitialSuggestions(exclude: Set<string> = new Set()): Product[] {
   return products
     .filter(
       (product) =>
-        product.rank !== undefined && !isExcluded(product.name, exclude),
+        isVisible(product) &&
+        product.rank !== undefined &&
+        !isExcluded(product.name, exclude),
     )
     .sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0));
 }
@@ -67,6 +76,7 @@ export function filterSuggestions(
   return products
     .filter(
       (product) =>
+        isVisible(product) &&
         product.name.toLowerCase().includes(trimmed) &&
         !isExcluded(product.name, exclude),
     )

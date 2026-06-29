@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { groupDealsByVenue, VenueSearchCard } from "@/components/VenueSearchCard";
 import { SearchBar, type SearchFilters } from "@/components/search/SearchBar";
 import { ViewToggle } from "@/components/search/ViewToggle";
@@ -14,7 +14,9 @@ import {
   parseViewMode,
   searchParamsEqual,
   searchParamsToFilters,
+  timeRangeKey,
   whatTokensEqual,
+  whereFilterKey,
   type SearchViewMode,
 } from "@/lib/search/url";
 
@@ -33,10 +35,18 @@ const SearchMapView = dynamic(
   },
 );
 
+function currentSearchString(): string {
+  return window.location.search.startsWith("?")
+    ? window.location.search.slice(1)
+    : window.location.search;
+}
+
 export function SearchPage() {
   const searchParams = useSearchParams();
-  const router = useRouter();
-  const isUpdatingUrl = useRef(false);
+  const pathname = usePathname();
+  const syncedParamsRef = useRef(
+    typeof window === "undefined" ? searchParams.toString() : currentSearchString(),
+  );
 
   const [filters, setFilters] = useState<SearchFilters>(() =>
     searchParamsToFilters(searchParams),
@@ -53,18 +63,29 @@ export function SearchPage() {
 
   const whatKey = filters.what.join("\0");
   const debouncedWhatKey = debouncedWhat.join("\0");
+  const daysKey = filters.days.join(",");
+  const whereKey = whereFilterKey(filters.where);
+  const scheduleKey = timeRangeKey(filters.timeRange);
 
   useEffect(() => {
-    if (isUpdatingUrl.current) {
-      isUpdatingUrl.current = false;
-      return;
+    function syncFromBrowserUrl() {
+      const current = currentSearchString();
+      if (searchParamsEqual(current, syncedParamsRef.current)) {
+        return;
+      }
+
+      syncedParamsRef.current = current;
+
+      const params = new URLSearchParams(current);
+      const fromUrl = searchParamsToFilters(params);
+      setFilters(fromUrl);
+      setDebouncedWhat(fromUrl.what);
+      setViewMode(parseViewMode(params));
     }
 
-    const fromUrl = searchParamsToFilters(searchParams);
-    setFilters(fromUrl);
-    setDebouncedWhat(fromUrl.what);
-    setViewMode(parseViewMode(searchParams));
-  }, [searchParams]);
+    window.addEventListener("popstate", syncFromBrowserUrl);
+    return () => window.removeEventListener("popstate", syncFromBrowserUrl);
+  }, []);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -82,21 +103,15 @@ export function SearchPage() {
       debouncedWhat,
       viewMode,
     ).toString();
-    const current = searchParams.toString();
 
-    if (!searchParamsEqual(next, current)) {
-      isUpdatingUrl.current = true;
-      router.replace(next ? `/?${next}` : "/", { scroll: false });
+    if (searchParamsEqual(next, syncedParamsRef.current)) {
+      return;
     }
-  }, [
-    debouncedWhatKey,
-    debouncedWhat,
-    filters.days,
-    filters.timeRange,
-    filters.where,
-    viewMode,
-    router,
-  ]);
+
+    syncedParamsRef.current = next;
+    const href = next ? `${pathname}?${next}` : pathname;
+    window.history.replaceState(window.history.state, "", href);
+  }, [debouncedWhatKey, daysKey, scheduleKey, whereKey, viewMode, pathname]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -128,7 +143,7 @@ export function SearchPage() {
     void loadDeals();
 
     return () => controller.abort();
-  }, [filters.days, filters.where, filters.timeRange, debouncedWhatKey]);
+  }, [daysKey, whereKey, scheduleKey, debouncedWhatKey]);
 
   function handleDaysApply(days: number[], timeRange: TimeRange) {
     setFilters((current) => ({
