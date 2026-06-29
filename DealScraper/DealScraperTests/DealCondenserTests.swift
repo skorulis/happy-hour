@@ -33,7 +33,77 @@ struct DealCondenserTests {
         #expect(merged.deal.sourceURL == "https://example.com/menu")
         #expect(merged.deal.details?.contains("$8 wines") == true)
         #expect(merged.deal.details?.contains("$8 schooners") == true)
-        #expect(merged.schedules.count == 2)
+        #expect(merged.schedules.count == 1)
+        #expect(merged.schedules[0].startMinute == 960)
+        #expect(merged.schedules[0].endMinute == 1_080)
+    }
+
+    @Test func dropsSupersetScheduleWhenMergingSubset() {
+        let fullDay = makeDeal(
+            title: "Happy Hour",
+            details: "$8 wines",
+            schedules: [schedule(day: 3, start: 0, end: 1_440)]
+        )
+        let specificTime = makeDeal(
+            title: "Happy Hour",
+            details: "$8 wines\n$8 schooners",
+            schedules: [schedule(day: 3, start: 720, end: 1_020)]
+        )
+
+        let result = condenser.condense([fullDay, specificTime])
+
+        #expect(result.count == 1)
+        #expect(result[0].schedules.count == 1)
+        #expect(result[0].schedules[0].startMinute == 720)
+        #expect(result[0].schedules[0].endMinute == 1_020)
+    }
+
+    @Test func keepsOverlappingSchedulesThatAreNotSubsets() {
+        let first = makeDeal(
+            title: "Happy Hour",
+            details: "$8 wines",
+            schedules: [schedule(day: 3, start: 720, end: 1_020)]
+        )
+        let second = makeDeal(
+            title: "Happy Hour",
+            details: "$8 beers",
+            schedules: [schedule(day: 3, start: 960, end: 1_320)]
+        )
+
+        let result = condenser.condense([first, second])
+
+        #expect(result.count == 1)
+        #expect(result[0].schedules.count == 2)
+    }
+
+    @Test func dropsSupersetScheduleOnlyOnMatchingDay() throws {
+        let tuesdayFullDay = makeDeal(
+            title: "Happy Hour",
+            details: "$8 wines",
+            schedules: [schedule(day: 3, start: 0, end: 1_440)]
+        )
+        let wednesdayFullDay = makeDeal(
+            title: "Happy Hour",
+            details: "$8 wines",
+            schedules: [schedule(day: 4, start: 0, end: 1_440)]
+        )
+        let tuesdaySpecific = makeDeal(
+            title: "Happy Hour",
+            details: "$8 schooners",
+            schedules: [schedule(day: 3, start: 720, end: 1_020)]
+        )
+
+        let result = condenser.condense([tuesdayFullDay, wednesdayFullDay, tuesdaySpecific])
+
+        #expect(result.count == 2)
+        let tuesday = try #require(result.first { $0.schedules.contains { $0.dayOfWeek == 3 } })
+        let wednesday = try #require(result.first { $0.schedules.contains { $0.dayOfWeek == 4 } })
+        #expect(tuesday.schedules.count == 1)
+        #expect(tuesday.schedules[0].startMinute == 720)
+        #expect(tuesday.schedules[0].endMinute == 1_020)
+        #expect(wednesday.schedules.count == 1)
+        #expect(wednesday.schedules[0].startMinute == 0)
+        #expect(wednesday.schedules[0].endMinute == 1_440)
     }
 
     @Test func leavesDistinctDealsUnchanged() {

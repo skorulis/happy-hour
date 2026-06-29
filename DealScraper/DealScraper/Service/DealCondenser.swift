@@ -323,7 +323,26 @@ struct TextMatchDealCondenser: DealCondenser {
             )
         }
 
-        return result
+        return removeSupersetSchedules(result)
+    }
+
+    private func removeSupersetSchedules(_ schedules: [DealSchedule]) -> [DealSchedule] {
+        schedules.filter { schedule in
+            !schedules.contains { other in
+                guard schedule.dayOfWeek == other.dayOfWeek else { return false }
+                guard schedule.startMinute != other.startMinute || schedule.endMinute != other.endMinute else {
+                    return false
+                }
+                return isStrictSubset(inner: other, outer: schedule)
+            }
+        }
+    }
+
+    private func isStrictSubset(inner: DealSchedule, outer: DealSchedule) -> Bool {
+        guard inner.dayOfWeek == outer.dayOfWeek else { return false }
+        return inner.startMinute >= outer.startMinute
+            && inner.endMinute <= outer.endMinute
+            && (inner.startMinute > outer.startMinute || inner.endMinute < outer.endMinute)
     }
 
     private func mergedStatus(_ lhs: DealStatus, _ rhs: DealStatus) -> DealStatus {

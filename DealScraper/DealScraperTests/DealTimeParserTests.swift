@@ -43,6 +43,16 @@ struct DealTimeParserTests {
         #expect(DealTimeParser.parse(["3PM 'TIL 6PM"]) == [.between(15 * 60, 18 * 60)])
     }
 
+    @Test func parsesPmTillPmTimeRange() {
+        #expect(DealTimeParser.parse(["4pm 'til 6pm"]) == [.between(16 * 60, 18 * 60)])
+        #expect(DealTimeParser.parse(["4pm \u{2019}til 6pm"]) == [.between(16 * 60, 18 * 60)])
+    }
+
+    @Test func parsesBareHourTillPmTimeRange() {
+        #expect(DealTimeParser.parse(["12 'TIL 3PM"]) == [.between(12 * 60, 15 * 60)])
+        #expect(DealTimeParser.parse(["12 \u{2019}TIL 3PM"]) == [.between(12 * 60, 15 * 60)])
+    }
+
     @Test func parsesAllDayTokens() {
         #expect(DealTimeParser.parse(["all day"]) == [.allDay])
         #expect(DealTimeParser.parse(["ALL DAY", "all-day"]) == [.allDay])

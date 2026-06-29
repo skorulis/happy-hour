@@ -21,7 +21,7 @@ final class ImageImportViewModel {
     }
 
     private(set) var state: State = .idle
-    var inputMode: InputMode = .image
+    var inputMode: InputMode = .url
     var sourceURLString: String = ""
     var openRouterModel: String = LLMModelStore.defaultOpenRouterModel {
         didSet { llmModelStore.openRouterModel = openRouterModel }

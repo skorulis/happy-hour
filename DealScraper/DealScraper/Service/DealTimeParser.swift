@@ -48,7 +48,10 @@ nonisolated enum DealTimeParser {
     }
 
     private static func sanitizeTimeString(_ string: String) -> String {
-        var result = string.trimmingCharacters(in: .whitespacesAndNewlines)
+        var result = string
+            .replacingOccurrences(of: "\u{2019}", with: "'")
+            .replacingOccurrences(of: "\u{2018}", with: "'")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
         let wrappers: [(Character, Character)] = [("(", ")"), ("[", "]")]
         var changed = true
         while changed {

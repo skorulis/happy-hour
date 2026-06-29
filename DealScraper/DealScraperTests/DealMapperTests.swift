@@ -114,6 +114,32 @@ struct DealMapperTests {
         #expect(deal.times == [.between(16 * 60, 22 * 60)])
     }
 
+    @Test func parsesPmTillPmTimeRangeFromRawDeal() throws {
+        let raw = DealExtractionPayload.RawDeal(
+            title: "HAPPY HOUR",
+            details: ["$8 WINES"],
+            days: ["FRIDAY"],
+            times: ["4pm \u{2019}til 6pm"]
+        )
+
+        let deal = try #require(DealMapper.map([raw]).first)
+
+        #expect(deal.times == [.between(16 * 60, 18 * 60)])
+    }
+
+    @Test func parsesBareHourTillPmTimeRangeFromRawDeal() throws {
+        let raw = DealExtractionPayload.RawDeal(
+            title: "LUNCH SPECIAL",
+            details: ["$15 MAINS"],
+            days: ["SATURDAY"],
+            times: ["12 \u{2019}TIL 3PM"]
+        )
+
+        let deal = try #require(DealMapper.map([raw]).first)
+
+        #expect(deal.times == [.between(12 * 60, 15 * 60)])
+    }
+
     @Test func parsesCompactTimeRangeFromRawDeal() throws {
         let raw = DealExtractionPayload.RawDeal(
             title: "HAPPY HOUR",
