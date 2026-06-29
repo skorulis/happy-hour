@@ -68,6 +68,7 @@ nonisolated enum FilterKeywords {
         "state-of-origin",
         "seinfeld",
         "simpsons",
+        "soccer",
         "stpatricks",
         "stpaddys",
         "superbowl",

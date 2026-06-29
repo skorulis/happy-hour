@@ -15,6 +15,7 @@ import {
   currentCalendarWeekday,
   currentMinuteOfDay,
 } from "@/lib/search/schedule";
+import { nearbySuburbRadiusKm } from "@/lib/search/nearby-radius";
 import { slugify, UNKNOWN_SUBURB_SLUG } from "@/lib/search/slugs";
 import { deal, dealSchedule, suburb, venue, venueLinks } from "@/db/schema";
 
@@ -173,7 +174,6 @@ function textSearchFilter(query: string): SQL {
 const dealSearchVector = sql`to_tsvector('english', coalesce(${deal.title}, '') || ' ' || coalesce(${deal.details}, '') || ' ' || coalesce(${deal.conditions}, ''))`;
 
 const DEFAULT_NEAR_ME_RADIUS_KM = 30;
-const NEARBY_SUBURB_RADIUS_KM = 1;
 
 function distanceKmExpression(lat: number, lng: number): SQL {
   return sql`(
@@ -439,7 +439,7 @@ export async function searchDealsForSuburb(
   const deals = await searchDeals({ ...sharedOptions, suburbId });
 
   const [suburbRow] = await db
-    .select({ lat: suburb.lat, lng: suburb.lng })
+    .select({ lat: suburb.lat, lng: suburb.lng, sqkm: suburb.sqkm })
     .from(suburb)
     .where(eq(suburb.id, suburbId))
     .limit(1);
@@ -456,7 +456,7 @@ export async function searchDealsForSuburb(
     ...sharedOptions,
     lat: suburbRow.lat,
     lng: suburbRow.lng,
-    radiusKm: NEARBY_SUBURB_RADIUS_KM,
+    radiusKm: nearbySuburbRadiusKm(suburbRow.sqkm),
     excludeSuburbId: suburbId,
   });
 
