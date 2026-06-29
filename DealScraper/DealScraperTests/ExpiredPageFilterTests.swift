@@ -14,7 +14,7 @@ struct ExpiredPageFilterTests {
         <p>From 5pm – 7pm daily.</p>
         </body></html>
         """
-        #expect(FilterKeywords.isExpiredPage(html))
+        #expect(DealTextFilter.isExpiredPage(html))
     }
 
     @Test func acceptsActiveEventPage() {
@@ -24,7 +24,7 @@ struct ExpiredPageFilterTests {
         <p>From 5pm – 7pm daily.</p>
         </body></html>
         """
-        #expect(!FilterKeywords.isExpiredPage(html))
+        #expect(!DealTextFilter.isExpiredPage(html))
     }
 
     @Test func expiredPageHasNoDealContentBlocks() {
@@ -42,7 +42,7 @@ struct ExpiredPageFilterTests {
             ],
             links: []
         )
-        #expect(page.isExpiredEventPage)
+        #expect(DealTextFilter.isExpiredPage(page.html))
         #expect(page.dealContentBlocks.isEmpty)
     }
 }

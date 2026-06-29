@@ -28,6 +28,7 @@ nonisolated enum FilterKeywords {
     
     static let expiredPagePhrases = [
         "this event has passed",
+        "expired",
     ]
 
     static let excludedKeywords = [

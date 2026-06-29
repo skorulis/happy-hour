@@ -60,6 +60,12 @@ struct DealTextFilterTests {
         #expect(!filter.isValidDeal("Deals this week only"))
     }
 
+    @Test func rejectsExpiredPageText() {
+        #expect(DealTextFilter.isExpiredPage("This event has passed."))
+        #expect(!filter.isValidDeal("This event has passed."))
+        #expect(!filter.isValidDeal("Happy Hour 4-7pm — expired"))
+    }
+
     @Test func rejectsExamples() {
         // TODO: Think about how to fix this
 //        #expect(!filter.isValidDeal(

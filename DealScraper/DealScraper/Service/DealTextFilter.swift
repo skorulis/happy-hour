@@ -4,9 +4,17 @@ import Foundation
 
 struct DealTextFilter {
 
+    static func isExpiredPage(_ text: String) -> Bool {
+        FilterKeywords.isExpiredPage(text)
+    }
+
     func isValidDeal(_ text: String) -> Bool {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return false }
+
+        if Self.isExpiredPage(trimmed) {
+            return false
+        }
 
         if Self.containsExcludedKeyword(in: trimmed) {
             return false

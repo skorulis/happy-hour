@@ -177,12 +177,6 @@ final class ExperimentViewModel {
     }
 
     private func validateWebpageForCrawl(_ page: LoadedPage) -> CrawlDealValidation {
-        if page.isExpiredEventPage {
-            return CrawlDealValidation(
-                isAccepted: false,
-                message: "Rejected by crawler — page indicates this event has passed."
-            )
-        }
         let count = page.dealContentBlocks.count
         if count > 0 {
             let blockLabel = count == 1 ? "block" : "blocks"
