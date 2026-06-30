@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { DealCard } from "@/components/DealCard";
+import { useFavorites } from "@/lib/favorites/useFavorites";
 import type { DealSearchResult } from "@/lib/search/queries";
 import {
   DAY_ABBREVIATIONS,
@@ -51,6 +52,7 @@ export function WeeklyDealsSection({
   const [selectedDay, setSelectedDay] = useState<number | null>(
     initialSelectedDay ?? null,
   );
+  const { isFavorite, toggleFavorite } = useFavorites();
   const dealsByDay = groupDealsByDay(deals);
   const anchoredDealIds = new Set<number>();
 
@@ -124,6 +126,8 @@ export function WeeklyDealsSection({
                           deal={deal}
                           showVenue={false}
                           dayOfWeek={dayOfWeek}
+                          isFavorited={isFavorite(deal.id)}
+                          onToggleFavorite={() => toggleFavorite(deal.id)}
                         />
                       );
                     })}
@@ -140,6 +144,8 @@ export function WeeklyDealsSection({
                   deal={deal}
                   showVenue={false}
                   dayOfWeek={selectedDay}
+                  isFavorited={isFavorite(deal.id)}
+                  onToggleFavorite={() => toggleFavorite(deal.id)}
                 />
               ))}
             </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { ChevronDown, MapPin, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { SuburbSearchResult } from "@/lib/search/queries";
 
@@ -168,21 +169,13 @@ export function SuburbSelect({ where, onChange }: SuburbSelectProps) {
               className="rounded p-0.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800"
               aria-label="Clear suburb"
             >
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <X className="h-3.5 w-3.5" />
             </span>
           ) : null}
-          <svg
-            aria-hidden="true"
+          <ChevronDown
+            aria-hidden
             className={`h-4 w-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-          </svg>
+          />
         </span>
       </button>
 
@@ -206,25 +199,7 @@ export function SuburbSelect({ where, onChange }: SuburbSelectProps) {
                 : "text-zinc-800 dark:text-zinc-200"
             }`}
           >
-            <svg
-              aria-hidden="true"
-              className="h-4 w-4 shrink-0"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 11c1.657 0 3-1.343 3-3S13.657 5 12 5 9 6.343 9 8s1.343 3 3 3z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 22s8-4.5 8-11a8 8 0 10-16 0c0 6.5 8 11 8 11z"
-              />
-            </svg>
+            <MapPin aria-hidden className="h-4 w-4 shrink-0" />
             {locating ? "Getting location..." : "Near me"}
           </button>
           {locationError ? (

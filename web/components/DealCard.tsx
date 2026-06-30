@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FavoriteDealButton } from "@/components/FavoriteDealButton";
 import { isCreativeImageUrl } from "@/lib/search/creative-url";
 import type { DealSearchResult } from "@/lib/search/queries";
 import {
@@ -13,6 +14,8 @@ type DealCardProps = {
   showVenue?: boolean;
   dayOfWeek?: number;
   id?: string;
+  isFavorited?: boolean;
+  onToggleFavorite?: () => void;
 };
 
 export function DealCard({
@@ -20,6 +23,8 @@ export function DealCard({
   showVenue = true,
   dayOfWeek,
   id,
+  isFavorited,
+  onToggleFavorite,
 }: DealCardProps) {
   const daySchedules =
     dayOfWeek !== undefined
@@ -53,14 +58,22 @@ export function DealCard({
           </a>
         ) : null}
         <div className="min-w-0 flex-1 space-y-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-              {deal.title || "Untitled deal"}
-            </h3>
-            {timeBadge && timeBadge !== "—" ? (
-              <span className="inline-flex items-center rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
-                {timeBadge}
-              </span>
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+                {deal.title || "Untitled deal"}
+              </h3>
+              {timeBadge && timeBadge !== "—" ? (
+                <span className="inline-flex items-center rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                  {timeBadge}
+                </span>
+              ) : null}
+            </div>
+            {onToggleFavorite ? (
+              <FavoriteDealButton
+                isFavorited={isFavorited ?? false}
+                onToggle={onToggleFavorite}
+              />
             ) : null}
           </div>
           {showVenue ? (

@@ -522,6 +522,27 @@ struct DealMapperTests {
         #expect(deal.title == "Lunch")
     }
 
+    @Test func mountbattenHappyHourAndCocktailsShouldStaySeparateWhenMappedTogether() throws {
+        let happyHourJSON = """
+        {"deals":[{"title":"Happy Hour","details":["LET'S DRINK TO THAT!"],"days":["EVERY DAY"],"times":["5PM - 8PM"],"conditions":["Conditions apply.","Available to LDA Rewards members only.","Selected beers and wines only.","This promotion is at management's discretion and may not be available on public holidays or some special events.","Mountbatten Hotel practices the Responsible Service of Alcohol.","Please drink responsibly."]}]}
+        """
+        let cocktailsJSON = """
+        {"deals":[{"title":"$14 Cocktails","details":["A TASTE OF PERFECTION"],"days":["EVERY DAY"],"times":["5PM - 8PM"],"conditions":["Conditions apply.","Available to JDA Rewards members only.","This promotion is at management's discretion and may not be available on public holidays or some special events.","Please drink responsibly."]}]}
+        """
+        let happyHourPayload = try JSONDecoder().decode(DealExtractionPayload.self, from: Data(happyHourJSON.utf8))
+        let cocktailsPayload = try JSONDecoder().decode(DealExtractionPayload.self, from: Data(cocktailsJSON.utf8))
+        let happyHour = try #require(happyHourPayload.deals.first)
+        let cocktails = try #require(cocktailsPayload.deals.first)
+
+        let deals = DealMapper.map([happyHour, cocktails])
+
+        // DealMapper.merge treats matching times as sufficient to merge, even when
+        // titles and products differ. That drops one of the two Mountbatten deals.
+        #expect(deals.count == 2)
+        #expect(deals.contains { $0.title == "Happy Hour" })
+        #expect(deals.contains { $0.title == "$14 Cocktails" })
+    }
+
     @Test func mapsHappyHourWithSplitEveryWeekdayDays() throws {
         let json = """
         {"deals":[{"conditions":["* SELECTED RANGE OF BEER & WINE"],"times":["4PM-6PM"],"details":["BEERS","$7-"],"days":["EVERY","WEEKDAY"],"title":"HAPPY HOUR"}]}

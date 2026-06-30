@@ -93,6 +93,31 @@ struct KeywordDealCondenserTests {
         #expect(result[0].schedules.count == 2)
     }
     
+    @Test func mountbattenHappyHourAndCocktailsShouldStaySeparate() throws {
+        let mapped = try mountbattenMappedDeals()
+
+        #expect(mapped.count == 2)
+
+        let happyHour = try #require(mapped.first { $0.deal.title == "Happy Hour" })
+        let cocktails = try #require(mapped.first { $0.deal.title == "$14 Cocktails" })
+
+        #expect(!condenser.shouldMerge(happyHour, cocktails))
+
+        let result = condenser.condense(mapped)
+
+        #expect(result.count == 2)
+        #expect(result.contains { $0.deal.title == "Happy Hour" })
+        #expect(result.contains { $0.deal.title == "$14 Cocktails" })
+    }
+
+    @Test func textMatchCondenserKeepsMountbattenDealsSeparate() throws {
+        let condenser = TextMatchDealCondenser()
+        let mapped = try mountbattenMappedDeals()
+
+        #expect(!condenser.shouldMerge(mapped[0], mapped[1]))
+        #expect(condenser.condense(mapped).count == 2)
+    }
+
     @Test func testBrewdogMerge() {
         let first = makeDeal(
             title: "Wings Wednesday",
@@ -116,6 +141,34 @@ struct KeywordDealCondenserTests {
         #expect(result[0].deal.title == "Wings Wednesday")
         #expect(result[0].deal.details?.isEmpty == false)
         
+    }
+
+    private func mountbattenMappedDeals() throws -> [DealWithSchedules] {
+        let happyHourMaterial = VenueDealSourceMaterial.fixture(
+            url: URL(string: "https://example.com/happy-hour.jpg")!,
+            sourceURL: URL(string: "https://example.com/happy-hour.jpg")!,
+            type: .image,
+            pngData: Data()
+        )
+        let cocktailsMaterial = VenueDealSourceMaterial.fixture(
+            index: 2,
+            dealSourceId: 2,
+            url: URL(string: "https://example.com/cocktails.jpg")!,
+            sourceURL: URL(string: "https://example.com/cocktails.jpg")!,
+            type: .image,
+            pngData: Data()
+        )
+
+        let happyHourPayload = try DealExtractionPayload.fixture(named: "mountbatten-happy-hour")
+        let cocktailsPayload = try DealExtractionPayload.fixture(named: "mountbatten-cocktails")
+
+        return VenueDealPersistenceMapper.map(
+            sourced: [
+                SourcedDealExtraction(material: happyHourMaterial, deals: happyHourPayload.deals),
+                SourcedDealExtraction(material: cocktailsMaterial, deals: cocktailsPayload.deals),
+            ],
+            venueId: 1
+        )
     }
 
     private func makeDeal(

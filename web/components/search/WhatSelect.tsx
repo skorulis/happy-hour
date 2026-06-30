@@ -5,6 +5,7 @@ import {
   getInitialSuggestions,
   type Product,
 } from "@data/products";
+import { X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 type WhatSelectProps = {
@@ -163,19 +164,7 @@ export function WhatSelect({ tokens, onChange }: WhatSelectProps) {
               className="rounded p-0.5 text-amber-600 hover:bg-amber-200/80 hover:text-amber-900 dark:text-amber-400 dark:hover:bg-amber-900/60 dark:hover:text-amber-200"
               aria-label={`Remove ${token}`}
             >
-              <svg
-                className="h-3 w-3"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
+              <X className="h-3 w-3" />
             </button>
           </span>
         ))}

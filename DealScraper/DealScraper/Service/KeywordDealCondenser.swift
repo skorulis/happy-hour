@@ -58,15 +58,24 @@ struct KeywordDealCondenser: DealCondenser {
     }
 
     private func productKeywords(in item: DealWithSchedules) -> Set<String> {
-        let text = dealText(item).lowercased()
+        let text = offerText(item).lowercased()
         return Set(FilterKeywords.productKeywords.filter { text.contains($0) })
     }
 
-    private func dealText(_ item: DealWithSchedules) -> String {
-        [item.deal.title, item.deal.details, item.deal.conditions]
+    private func offerText(_ item: DealWithSchedules) -> String {
+        [item.deal.title, item.deal.details]
             .compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
             .joined(separator: " ")
+    }
+
+    private func dealText(_ item: DealWithSchedules) -> String {
+        var parts = [offerText(item)]
+        if let conditions = item.deal.conditions?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !conditions.isEmpty {
+            parts.append(conditions)
+        }
+        return parts.joined(separator: " ")
     }
 
     private func textLength(_ item: DealWithSchedules) -> Int {

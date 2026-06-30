@@ -1,5 +1,6 @@
 "use client";
 
+import { Check, ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import {
   ALL_WEEKDAYS,
@@ -21,21 +22,6 @@ type DayPickerProps = {
   timeRange: TimeRange;
   onApply: (days: number[], timeRange: TimeRange) => void;
 };
-
-function ChevronIcon({ open }: { open: boolean }) {
-  return (
-    <svg
-      aria-hidden="true"
-      className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth={2}
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-    </svg>
-  );
-}
 
 function Checkbox({
   checked,
@@ -62,9 +48,7 @@ function Checkbox({
         }`}
       >
         {checked ? (
-          <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-          </svg>
+          <Check className="h-3 w-3" strokeWidth={3} />
         ) : null}
       </span>
       <input
@@ -202,7 +186,10 @@ export function DayPicker({ days, timeRange, onApply }: DayPickerProps) {
         }`}
       >
         {label}
-        <ChevronIcon open={open} />
+        <ChevronDown
+          aria-hidden
+          className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`}
+        />
       </button>
 
       {open ? (
