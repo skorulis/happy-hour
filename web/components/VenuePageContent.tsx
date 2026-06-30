@@ -1,9 +1,7 @@
 import { BackToSearchLink } from "@/components/BackToSearchLink";
-import { DealCard } from "@/components/DealCard";
+import { WeeklyDealsSection } from "@/components/WeeklyDealsSection";
 import { googleMapsPlaceUrl } from "@/lib/search/google-maps";
 import type { VenueDetailResult } from "@/lib/search/queries";
-import { groupDealsByDay } from "@/lib/search/schedule";
-import { dealAnchorId } from "@/lib/search/slugs";
 import type { ReactNode } from "react";
 
 type VenuePageContentProps = {
@@ -101,8 +99,6 @@ function FacebookIcon() {
 
 export function VenuePageContent({ venue }: VenuePageContentProps) {
   const mapsUrl = googleMapsPlaceUrl(venue.name, venue.googleMapId);
-  const dealsByDay = groupDealsByDay(venue.deals);
-  const anchoredDealIds = new Set<number>();
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-10">
@@ -169,46 +165,7 @@ export function VenuePageContent({ venue }: VenuePageContentProps) {
         </div>
       </header>
 
-      <section className="space-y-4">
-        <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
-          Weekly Deals ({venue.deals.length})
-        </h2>
-        {dealsByDay.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-zinc-300 px-4 py-8 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
-            No approved deals have been synced for this venue yet.
-          </p>
-        ) : (
-          <div className="space-y-8">
-            {dealsByDay.map(({ dayOfWeek, dayLabel, deals }) => (
-              <div key={dayOfWeek} className="space-y-4">
-                <h3 className="text-2xl font-bold text-zinc-700 dark:text-zinc-300">
-                  {dayLabel}
-                </h3>
-                <div className="grid gap-4">
-                  {deals.map((deal) => {
-                    const anchorId = anchoredDealIds.has(deal.id)
-                      ? undefined
-                      : dealAnchorId(deal.id);
-                    if (anchorId) {
-                      anchoredDealIds.add(deal.id);
-                    }
-
-                    return (
-                      <DealCard
-                        key={`${dayOfWeek}-${deal.id}`}
-                        id={anchorId}
-                        deal={deal}
-                        showVenue={false}
-                        dayOfWeek={dayOfWeek}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+      <WeeklyDealsSection deals={venue.deals} />
     </div>
   );
 }
