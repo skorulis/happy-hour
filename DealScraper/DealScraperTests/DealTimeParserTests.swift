@@ -89,4 +89,10 @@ struct DealTimeParserTests {
     @Test func parsesMarkdownBoldWrappedTillCloseTime() {
         #expect(DealTimeParser.parse(["**9PM till close**"]) == [.from(21 * 60)])
     }
+
+    @Test func parsesFromAndDrawnAtSplitTimeRange() {
+        let expected = [DealHours.between(17 * 60, 19 * 60 + 30)]
+        #expect(DealTimeParser.parse(["FROM 5PM", "DRAWN AT 7:30PM"]) == expected)
+        #expect(DealTimeParser.parse(["5pm-7:30pm"]) == expected)
+    }
 }
