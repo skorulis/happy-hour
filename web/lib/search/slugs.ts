@@ -21,11 +21,3 @@ export function venuePath(
 export function dealAnchorId(dealId: number): string {
   return `deal-${dealId}`;
 }
-
-export function dealPath(
-  suburbName: string | null,
-  venueName: string,
-  dealId: number,
-): string {
-  return `${venuePath(suburbName, venueName)}#${dealAnchorId(dealId)}`;
-}

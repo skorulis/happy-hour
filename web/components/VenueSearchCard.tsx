@@ -4,7 +4,7 @@ import {
   formatDealTimeBadge,
 } from "@/lib/search/schedule";
 import type { DealSearchResult } from "@/lib/search/queries";
-import { dealPath, venuePath } from "@/lib/search/slugs";
+import { venuePath } from "@/lib/search/slugs";
 
 export type VenueGroupedDeals = {
   venue: DealSearchResult["venue"];
@@ -50,10 +50,9 @@ export function VenueSearchCard({ group }: VenueSearchCardProps) {
               return (
                 <li key={deal.id}>
                   <Link
-                    href={dealPath(
+                    href={venuePath(
                       group.venue.suburbName,
                       group.venue.name,
-                      deal.id,
                     )}
                     className="-mx-2 flex flex-wrap items-center gap-2 rounded-md px-2 py-0.5 text-sm hover:bg-zinc-50 hover:text-amber-700 dark:hover:bg-zinc-900 dark:hover:text-amber-400"
                   >
