@@ -7,13 +7,14 @@ enum CrawlPolicy {
     private static let defaultMaxPages = 20
     
     private static let sharedSites: [String] = [
-        "https://merivale.com/",
         "https://hotelpalisade.com.au/",
+        "https://merivale.com/",
+        "https://paisanoanddaughters.com.au/",
+        "https://plateitforward.org.au/",
         "https://sydneybrewery.com/",
         "https://www.oddculture.group/",
         "https://www.muchogroup.com.au/",
         "https://www.liquidandlarder.com.au/",
-        "https://paisanoanddaughters.com.au/"
     ]
     
     private static let sharedSiteURLs: [URL] = sharedSites.map { URL(string: $0)! }

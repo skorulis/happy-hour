@@ -1,0 +1,144 @@
+
+[
+    {
+        "name": "drinks",
+        "rank": 2,
+        "groups": [
+            "beer",
+            "cocktails",
+            "wine"
+        ]
+    },
+    {
+        "name": "beer",
+        "groups": [
+            "schooner",
+            "pint",
+            "jugs"
+        ]
+    },
+    
+    { 
+        "name": "cocktails",
+        "groups": [
+            "negroni",
+            "martini",
+            "spritz"
+        ]
+    },
+    { "name": "guinness"},
+    { "name": "jugs" },
+    { "name": "martini" },
+    { "name": "negroni" },
+    { "name": "pint" },
+    { "name": "porter" },
+    { "name": "schooner" },
+    { "name": "spirits" },
+    { "name": "spritz" },
+    { "name": "tastingpaddle" },
+    { "name": "wine" },
+    { "name": "bottomless" },
+    {
+        "name": "happy hour",
+        "rank": 1
+    },
+    {
+        "name": "food",
+        "rank": 3,
+        "groups": [
+            "burger",
+            "calamari",
+            "chicken",
+            "chips",
+            "curry",
+            "dumplings",
+            "gyros",
+            "meal",
+            "muscles",
+            "pasta",
+            "pizza",
+            "porterhouse",
+            "ribs",
+            "roast",
+            "rump",
+            "parma",
+            "parmi",
+            "parmy",
+            "salad",
+            "skewer",
+            "steak",
+            "taco",
+            "wings"
+        ]
+    },
+    { "name": "2-4-1", "hidden": true },
+    { "name": "2 for 1", "groups": [ "2-4-1" ] },
+    { "name": "burger" },
+    { "name": "calamari" },
+    { "name": "chicken" },
+    { "name": "chips" },
+    { "name": "curry" },
+    { "name": "gyros" },
+    { "name": "meal" },
+    { "name": "muscles" },
+    { "name": "oysters" },
+    { "name": "pasta" },
+    { "name": "pizza" },
+    { "name": "porterhouse" },
+    { "name": "ribs" },
+    { "name": "roast" },
+    { "name": "rump" },
+    { "name": "parma" },
+    { "name": "parmi" },
+    { "name": "parmy" },
+    { "name": "salad" },
+    { "name": "skewer" },
+    { "name": "snacks" },
+    { "name": "schnitty", "hidden": true },
+    {
+        "name": "schnitzel",
+        "groups": [
+            "schnitty"
+        ]
+    },
+    { "name": "sirloin" },
+    {
+        "name": "steak",
+        "groups": [
+            "porterhouse",
+            "rump",
+            "sirloin"
+        ]
+    },
+    { "name": "taco" },
+    { "name": "wings" },
+    {
+        "name": "events",
+        "groups": [
+            "trivia",
+            "bingo",
+            "comedy",
+            "karaoke",
+            "jazz",
+            "live music",
+            "meat tray",
+            "pool",
+            "run club"
+        ]
+    },
+    { "name": "brunch" },
+    { "name": "lunch" },
+    { "name": "dinner" },
+    { "name": "night" },
+    { "name": "bingo" },
+    { "name": "comedy" },
+    { "name": "hospo" },
+    { "name": "hospitality" },
+    { "name": "trivia" },
+    { "name": "jazz" },
+    { "name": "karaoke" },
+    { "name": "live music" },
+    { "name": "meat tray" },
+    { "name": "pool" },
+    { "name": "run club"}
+]

@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
-    "build": "next build",
+    "build": "npm run prebuild && next build",
+    "prebuild": "node -e \"const fs=require('node:fs');const src='../data';const dest='./data';if(fs.existsSync(src)){fs.cpSync(src,dest,{recursive:true,force:true});}else if(!fs.existsSync(dest)){throw new Error('data/ missing: run from monorepo root or copy ../data into web/data');}\"",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
