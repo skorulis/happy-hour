@@ -14,7 +14,9 @@
         "groups": [
             "schooner",
             "pint",
-            "jugs"
+            "jugs",
+            "guinness",
+            "craft beer"
         ]
     },
     
@@ -26,6 +28,7 @@
             "spritz"
         ]
     },
+    { "name": "craft beer"},
     { "name": "guinness"},
     { "name": "jugs" },
     { "name": "martini" },

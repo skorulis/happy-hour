@@ -1,4 +1,6 @@
-import "../load-env";
+import { loadScriptEnv } from "../load-script-env";
+
+loadScriptEnv();
 import Database from "better-sqlite3";
 import { readFileSync } from "node:fs";
 import { homedir } from "node:os";

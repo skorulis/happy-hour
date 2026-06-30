@@ -59,6 +59,20 @@ Sync approved deals from DealScraper (set `SQLITE_PATH` in `.env.local` first):
 npm run sync
 ```
 
+### Sync production (Neon)
+
+Create `.env.production.local` with your Neon **pooled** `DATABASE_URL` (see `.env.example`). `SQLITE_PATH` is read from `.env.local`.
+
+```bash
+npm run sync:prod
+```
+
+Run migrations against production first if the schema changed:
+
+```bash
+npm run sync:prod -- --migrate
+```
+
 Start the dev server:
 
 ```bash

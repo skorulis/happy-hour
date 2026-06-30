@@ -1,4 +1,6 @@
-import "../load-env";
+import { loadScriptEnv } from "../load-script-env";
+
+loadScriptEnv();
 import Database from "better-sqlite3";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";

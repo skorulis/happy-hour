@@ -131,7 +131,7 @@ struct PDFMarkdownGenerator {
             return "\(match.1) \(match.2)"
         }
 
-        if let first = trimmed.first, ["•", "·", "*", "-"].contains(first) {
+        if let first = trimmed.first, ["•", "·", "*", "-", "_"].contains(first) {
             let remainder = trimmed.dropFirst().trimmingCharacters(in: .whitespaces)
             return "- \(remainder)"
         }
