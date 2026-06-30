@@ -31,6 +31,21 @@ final class DealSourceRepository {
         }
     }
 
+    func nonRejectedCountsByVenueId() throws -> [Int64: Int] {
+        try store.dbQueue.read { db in
+            let rows = try Row.fetchAll(db, sql: """
+                SELECT venue_id, COUNT(*) AS count
+                FROM deal_source
+                WHERE status != ?
+                GROUP BY venue_id
+                """, arguments: [DealStatus.rejected.rawValue])
+            return Dictionary(uniqueKeysWithValues: rows.compactMap { row in
+                guard let venueId: Int64 = row["venue_id"] else { return nil }
+                return (venueId, Int(row["count"] ?? 0))
+            })
+        }
+    }
+
     func findApproved(venueId: Int64) throws -> [DealSource] {
         try store.dbQueue.read { db in
             try DealSource

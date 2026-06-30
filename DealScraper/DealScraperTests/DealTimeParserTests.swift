@@ -81,4 +81,12 @@ struct DealTimeParserTests {
                 == [.between(12 * 60, 15 * 60 + 15)]
         )
     }
+
+    @Test func parsesMarkdownBoldWrappedTimeRange() {
+        #expect(DealTimeParser.parse(["**3PM–6PM**"]) == [.between(15 * 60, 18 * 60)])
+    }
+
+    @Test func parsesMarkdownBoldWrappedTillCloseTime() {
+        #expect(DealTimeParser.parse(["**9PM till close**"]) == [.from(21 * 60)])
+    }
 }

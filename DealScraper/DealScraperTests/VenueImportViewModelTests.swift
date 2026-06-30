@@ -119,6 +119,69 @@ struct VenueImportViewModelTests {
         #expect(viewModel.filteredVenues.map(\.name) == ["Ready Pub"])
     }
 
+    @Test func extractionFilterExcludesVenuesWithOnlyRejectedSources() throws {
+        let store = SQLStore.inMemory()
+        let venueRepository = VenueRepository(store: store)
+        let dealSourceRepository = DealSourceRepository(store: store)
+        let dealRepository = DealRepository(store: store)
+
+        try venueRepository.upsert(Venue(
+            googleMapId: "places/needs-extraction",
+            name: "Needs Extraction",
+            lat: 0,
+            lng: 0,
+            json: "{}"
+        ))
+        try venueRepository.upsert(Venue(
+            googleMapId: "places/all-rejected",
+            name: "All Rejected",
+            lat: 0,
+            lng: 0,
+            json: "{}"
+        ))
+
+        let extractionVenueId = try #require(try venueRepository.find(googleMapId: "places/needs-extraction")?.id)
+        let rejectedVenueId = try #require(try venueRepository.find(googleMapId: "places/all-rejected")?.id)
+
+        try dealSourceRepository.upsert(
+            sources: [
+                DealSource(
+                    venueId: extractionVenueId,
+                    url: "https://example.com/menu.pdf",
+                    type: .pdf
+                ),
+            ],
+            forVenueId: extractionVenueId
+        )
+        try dealSourceRepository.upsert(
+            sources: [
+                DealSource(
+                    venueId: rejectedVenueId,
+                    url: "https://example.com/rejected.pdf",
+                    type: .pdf,
+                    status: .rejected
+                ),
+                DealSource(
+                    venueId: rejectedVenueId,
+                    url: "https://example.com/rejected-page",
+                    type: .webpage,
+                    status: .rejected
+                ),
+            ],
+            forVenueId: rejectedVenueId
+        )
+
+        let viewModel = VenueImportViewModel(
+            venueRepository: venueRepository,
+            dealSourceRepository: dealSourceRepository,
+            dealRepository: dealRepository
+        )
+        viewModel.loadSavedVenues()
+        viewModel.venueFilter = .extraction
+
+        #expect(viewModel.filteredVenues.map(\.name) == ["Needs Extraction"])
+    }
+
     @Test func venueFilterExcludesBrokenFromOtherFilters() throws {
         let store = SQLStore.inMemory()
         let venueRepository = VenueRepository(store: store)

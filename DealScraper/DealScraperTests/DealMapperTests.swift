@@ -573,6 +573,23 @@ struct DealMapperTests {
         #expect(happyHour.times == [.between(16 * 60, 18 * 60)])
     }
 
+    @Test func parsesMarkdownBoldWrappedTimesFromRawDeal() throws {
+        let json = """
+        {"deals":[{"details":["Enjoy $4 wings, $8 select beers, and $11 Boozy Juice while the vibes roll on."],"title":"**Butter Happy Hour**","days":["weekdays"],"times":["**3PM–6PM**"],"conditions":[]},{"details":["Grab a **$20 sando + fries**, **$5 donuts**, and **$15 selected cocktails** to keep the party going."],"title":"**Late Night Feast**","days":["daily"],"times":["**9PM till close**"],"conditions":[]}]}
+        """
+        let payload = try JSONDecoder().decode(DealExtractionPayload.self, from: Data(json.utf8))
+        let deals = DealMapper.map(payload.deals)
+
+        #expect(deals.count == 2)
+
+        let happyHour = try #require(deals.first { $0.title == "**Butter Happy Hour**" })
+        #expect(happyHour.days == [.monday, .tuesday, .wednesday, .thursday, .friday])
+        #expect(happyHour.times == [.between(15 * 60, 18 * 60)])
+
+        let lateNight = try #require(deals.first { $0.title == "**Late Night Feast**" })
+        #expect(lateNight.times == [.from(21 * 60)])
+    }
+
     @Test func mapsHappyHourWithSplitEveryWeekdayDays() throws {
         let json = """
         {"deals":[{"conditions":["* SELECTED RANGE OF BEER & WINE"],"times":["4PM-6PM"],"details":["BEERS","$7-"],"days":["EVERY","WEEKDAY"],"title":"HAPPY HOUR"}]}

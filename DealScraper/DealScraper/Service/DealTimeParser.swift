@@ -57,7 +57,7 @@ nonisolated enum DealTimeParser {
             .replacingOccurrences(of: "\u{2019}", with: "'")
             .replacingOccurrences(of: "\u{2018}", with: "'")
             .trimmingCharacters(in: .whitespacesAndNewlines)
-        let wrappers: [(Character, Character)] = [("(", ")"), ("[", "]")]
+        let wrappers: [(Character, Character)] = [("(", ")"), ("[", "]"), ("*", "*"), ("_", "_")]
         var changed = true
         while changed {
             changed = false

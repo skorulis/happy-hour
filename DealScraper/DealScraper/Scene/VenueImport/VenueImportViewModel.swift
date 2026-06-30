@@ -16,6 +16,7 @@ final class VenueImportViewModel {
     private(set) var state: State = .idle
     private(set) var savedVenues: [Venue] = []
     private(set) var sourceCountsByVenueId: [Int64: Int] = [:]
+    private(set) var nonRejectedSourceCountsByVenueId: [Int64: Int] = [:]
     private(set) var dealCountsByVenueId: [Int64: Int] = [:]
     var searchText = ""
     var venueFilter: VenueFilter = .all
@@ -53,7 +54,11 @@ final class VenueImportViewModel {
         case .crawl:
             venues = venues.filter { $0.status != .broken && sourceCount(for: $0) == 0 }
         case .extraction:
-            venues = venues.filter { $0.status != .broken && dealCount(for: $0) == 0 && sourceCount(for: $0) > 0 }
+            venues = venues.filter {
+                $0.status != .broken
+                    && dealCount(for: $0) == 0
+                    && nonRejectedSourceCount(for: $0) > 0
+            }
         case .ready:
             venues = venues.filter { $0.status != .broken && dealCount(for: $0) > 0 }
         case .broken:
@@ -88,6 +93,11 @@ final class VenueImportViewModel {
         return sourceCountsByVenueId[venueId] ?? 0
     }
 
+    func nonRejectedSourceCount(for venue: Venue) -> Int {
+        guard let venueId = venue.id else { return 0 }
+        return nonRejectedSourceCountsByVenueId[venueId] ?? 0
+    }
+
     func dealCount(for venue: Venue) -> Int {
         guard let venueId = venue.id else { return 0 }
         return dealCountsByVenueId[venueId] ?? 0
@@ -97,6 +107,7 @@ final class VenueImportViewModel {
         do {
             savedVenues = try venueRepository.all()
             sourceCountsByVenueId = try dealSourceRepository.countsByVenueId()
+            nonRejectedSourceCountsByVenueId = try dealSourceRepository.nonRejectedCountsByVenueId()
             dealCountsByVenueId = try dealRepository.countsByVenueId()
             if let selectedGoogleMapId,
                !savedVenues.contains(where: { $0.googleMapId == selectedGoogleMapId })
