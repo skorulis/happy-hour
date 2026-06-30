@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 
 type VenuePageContentProps = {
   venue: VenueDetailResult;
+  initialSelectedDay?: number | null;
 };
 
 const linkClassName =
@@ -97,7 +98,10 @@ function FacebookIcon() {
   );
 }
 
-export function VenuePageContent({ venue }: VenuePageContentProps) {
+export function VenuePageContent({
+  venue,
+  initialSelectedDay,
+}: VenuePageContentProps) {
   const mapsUrl = googleMapsPlaceUrl(venue.name, venue.googleMapId);
 
   return (
@@ -165,7 +169,10 @@ export function VenuePageContent({ venue }: VenuePageContentProps) {
         </div>
       </header>
 
-      <WeeklyDealsSection deals={venue.deals} />
+      <WeeklyDealsSection
+        deals={venue.deals}
+        initialSelectedDay={initialSelectedDay}
+      />
     </div>
   );
 }

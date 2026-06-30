@@ -5,6 +5,7 @@ import {
 } from "@/lib/search/schedule";
 import type { DealSearchResult } from "@/lib/search/queries";
 import { venuePath } from "@/lib/search/slugs";
+import { appendDaysParam } from "@/lib/search/url";
 
 export type VenueGroupedDeals = {
   venue: DealSearchResult["venue"];
@@ -31,9 +32,14 @@ export function groupDealsByVenue(deals: DealSearchResult[]): VenueGroupedDeals[
 
 type VenueSearchCardProps = {
   group: VenueGroupedDeals;
+  searchDays?: number[];
 };
 
-export function VenueSearchCard({ group }: VenueSearchCardProps) {
+export function VenueSearchCard({ group, searchDays = [] }: VenueSearchCardProps) {
+  const venueHref = appendDaysParam(
+    venuePath(group.venue.suburbName, group.venue.name),
+    searchDays,
+  );
   const imageUrl =
     group.venue.heroImage ??
     group.deals.find((deal) => deal.imageUrl)?.imageUrl ??
@@ -50,10 +56,7 @@ export function VenueSearchCard({ group }: VenueSearchCardProps) {
               return (
                 <li key={deal.id}>
                   <Link
-                    href={venuePath(
-                      group.venue.suburbName,
-                      group.venue.name,
-                    )}
+                    href={venueHref}
                     className="-mx-2 flex flex-wrap items-center gap-2 rounded-md px-2 py-0.5 text-sm hover:bg-zinc-50 hover:text-amber-700 dark:hover:bg-zinc-900 dark:hover:text-amber-400"
                   >
                     <span className="font-semibold text-zinc-900 hover:underline dark:text-zinc-50">
@@ -75,7 +78,7 @@ export function VenueSearchCard({ group }: VenueSearchCardProps) {
 
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
             <Link
-              href={venuePath(group.venue.suburbName, group.venue.name)}
+              href={venueHref}
               className="hover:text-amber-700 hover:underline dark:hover:text-amber-400"
             >
               {group.venue.name}

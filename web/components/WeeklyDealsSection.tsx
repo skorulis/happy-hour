@@ -13,6 +13,7 @@ import { dealAnchorId } from "@/lib/search/slugs";
 
 type WeeklyDealsSectionProps = {
   deals: DealSearchResult[];
+  initialSelectedDay?: number | null;
 };
 
 function DayFilterPill({
@@ -43,8 +44,13 @@ function DayFilterPill({
   );
 }
 
-export function WeeklyDealsSection({ deals }: WeeklyDealsSectionProps) {
-  const [selectedDay, setSelectedDay] = useState<number | null>(null);
+export function WeeklyDealsSection({
+  deals,
+  initialSelectedDay,
+}: WeeklyDealsSectionProps) {
+  const [selectedDay, setSelectedDay] = useState<number | null>(
+    initialSelectedDay ?? null,
+  );
   const dealsByDay = groupDealsByDay(deals);
   const anchoredDealIds = new Set<number>();
 

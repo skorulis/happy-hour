@@ -18,6 +18,7 @@ import {
   formatDealTimeBadge,
 } from "@/lib/search/schedule";
 import { venuePath } from "@/lib/search/slugs";
+import { appendDaysParam } from "@/lib/search/url";
 
 const DEFAULT_CENTER: [number, number] = [-33.87, 151.21];
 const DEFAULT_ZOOM = 11;
@@ -44,6 +45,7 @@ type SearchMapViewProps = {
   venueGroups: VenueGroupedDeals[];
   userLocation: UserLocation | null;
   isEmpty: boolean;
+  searchDays?: number[];
 };
 
 function FitBounds({
@@ -81,16 +83,26 @@ function FitBounds({
   return null;
 }
 
-function VenuePopup({ group }: { group: VenueGroupedDeals }) {
+function VenuePopup({
+  group,
+  searchDays = [],
+}: {
+  group: VenueGroupedDeals;
+  searchDays?: number[];
+}) {
   const previewDeals = group.deals.slice(0, 2);
   const dealLabel =
     group.deals.length === 1 ? "1 deal" : `${group.deals.length} deals`;
+  const venueHref = appendDaysParam(
+    venuePath(group.venue.suburbName, group.venue.name),
+    searchDays,
+  );
 
   return (
     <div className="min-w-[10rem] space-y-2 text-sm">
       <div>
         <Link
-          href={venuePath(group.venue.suburbName, group.venue.name)}
+          href={venueHref}
           className="font-semibold text-amber-700 hover:underline dark:text-amber-400"
         >
           {group.venue.name}
@@ -130,6 +142,7 @@ export function SearchMapView({
   venueGroups,
   userLocation,
   isEmpty,
+  searchDays = [],
 }: SearchMapViewProps) {
   return (
     <div className="relative min-h-[60vh] overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800">
@@ -166,7 +179,7 @@ export function SearchMapView({
             position={[group.venue.lat, group.venue.lng]}
           >
             <Popup>
-              <VenuePopup group={group} />
+              <VenuePopup group={group} searchDays={searchDays} />
             </Popup>
           </Marker>
         ))}

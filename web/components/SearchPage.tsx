@@ -240,7 +240,11 @@ export function SearchPage() {
               {venueGroups.length > 0 ? (
                 <div className="grid gap-2">
                   {venueGroups.map((group) => (
-                    <VenueSearchCard key={group.venue.id} group={group} />
+                    <VenueSearchCard
+                      key={group.venue.id}
+                      group={group}
+                      searchDays={filters.days}
+                    />
                   ))}
                 </div>
               ) : null}
@@ -252,7 +256,11 @@ export function SearchPage() {
                   </h2>
                   <div className="grid gap-2">
                     {nearbyVenueGroups.map((group) => (
-                      <VenueSearchCard key={group.venue.id} group={group} />
+                      <VenueSearchCard
+                        key={group.venue.id}
+                        group={group}
+                        searchDays={filters.days}
+                      />
                     ))}
                   </div>
                 </div>
@@ -264,6 +272,7 @@ export function SearchPage() {
             venueGroups={allVenueGroups}
             userLocation={userLocation}
             isEmpty={isEmpty}
+            searchDays={filters.days}
           />
         )}
       </section>

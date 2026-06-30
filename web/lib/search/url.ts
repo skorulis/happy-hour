@@ -25,7 +25,7 @@ function parseWhatParam(value: string | null): string[] {
   return parseWhatTokens(value);
 }
 
-function parseDaysParam(value: string | null): number[] {
+export function parseDaysParam(value: string | null): number[] {
   if (value === null || value.trim() === "") {
     return [];
   }
@@ -36,6 +36,18 @@ function parseDaysParam(value: string | null): number[] {
     .filter((day) => Number.isFinite(day) && day >= 1 && day <= 7);
 
   return days;
+}
+
+export function appendDaysParam(path: string, days: number[]): string {
+  if (days.length === 0) {
+    return path;
+  }
+
+  return `${path}?days=${days.join(",")}`;
+}
+
+export function initialVenueDay(days: number[]): number | null {
+  return days.length === 1 ? days[0]! : null;
 }
 
 function parseTimeRange(
