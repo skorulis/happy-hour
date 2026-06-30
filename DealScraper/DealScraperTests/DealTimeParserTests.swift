@@ -74,4 +74,11 @@ struct DealTimeParserTests {
     @Test func parsesNoonTimeRange() {
         #expect(DealTimeParser.parse(["NOON - 4PM"]) == [.between(12 * 60, 16 * 60)])
     }
+
+    @Test func parsesStartBetweenTimeRange() {
+        #expect(
+            DealTimeParser.parse(["with a start between 12pm-3:15pm."])
+                == [.between(12 * 60, 15 * 60 + 15)]
+        )
+    }
 }

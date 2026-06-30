@@ -543,6 +543,36 @@ struct DealMapperTests {
         #expect(deals.contains { $0.title == "$14 Cocktails" })
     }
 
+    @Test func parsesStartBetweenTimeRangeFromRawDeal() throws {
+        let json = """
+        {"deals":[{"times":["with a start between 12pm-3:15pm."],"days":["Friday\\/Saturday\\/Sunday"],"title":"BOTTOMLESS DAIQUIRI LUNCH","conditions":["Please note - there is a 5% surcharge on Sundays, 7.5% service fee on groups of 8+ and a 12.5% surcharge on public holidays"],"details":["Get Tropical every weekend at Rosie Campbells.","Our Bottomless Lunch is perfect for your mini getaway for a celebration or catch up with friends!","DJ Kimani on the decks every Saturday.","Get the group together and enjoy 90 minutes of free flowing Daiquiri's & Pina Colada's, served with a 5 course island banquet for $99pp. Available, Friday\\/Saturday\\/Sunday with a start between 12pm-3:15pm.","90 Minute Drink & food package","- Unlimited Daiquiri's (3 Flavours available) & Pina Colada's","- Sparkling Wine & Tap Beer","- **Plantain Fritters** – Plantains, corn & jalapeno fritters with mango salsa","- **Island Taco** – Choice of jerk chicken or veggie","- **Kingston Prawns** – Coconut Chilli & coriander prawns with coconut pita bread","- **Famous Jerk Chicken** – Flame grilled jerk marinated chicken thigh, pineapple salsa & jerk sauce","- **Rice N Peas -** coconut jasmine rice, turtle peas, thyme, shallots"]},{"times":["all day"],"days":["TUESDAY"],"title":"TUESDAY | $1 JERK WINGS","conditions":[],"details":[]},{"times":["all day"],"days":["WEDNESDAY"],"title":"WEDNESDAY | SEAFOOD BOIL","conditions":[],"details":[]},{"times":["all day"],"days":["SUNDAY"],"title":"SUNDAY | SOUL FOOD PLATTER","conditions":[],"details":[]},{"times":["4-6PM"],"days":["WEEKDAYS"],"title":"WEEKDAYS 4-6PM | HAPPY HOUR","conditions":[],"details":[]}]}
+        """
+        let payload = try JSONDecoder().decode(DealExtractionPayload.self, from: Data(json.utf8))
+        let deals = DealMapper.map(payload.deals)
+
+        #expect(deals.count == 5)
+
+        let bottomless = try #require(deals.first { $0.title == "Bottomless Daiquiri Lunch" })
+        #expect(bottomless.days == [.friday, .saturday, .sunday])
+        #expect(bottomless.times == [.between(12 * 60, 15 * 60 + 15)])
+
+        let jerkWings = try #require(deals.first { $0.title == "Tuesday | $1 Jerk Wings" })
+        #expect(jerkWings.days == [.tuesday])
+        #expect(jerkWings.times == [.allDay])
+
+        let seafoodBoil = try #require(deals.first { $0.title == "Wednesday | Seafood Boil" })
+        #expect(seafoodBoil.days == [.wednesday])
+        #expect(seafoodBoil.times == [.allDay])
+
+        let soulFood = try #require(deals.first { $0.title == "Sunday | Soul Food Platter" })
+        #expect(soulFood.days == [.sunday])
+        #expect(soulFood.times == [.allDay])
+
+        let happyHour = try #require(deals.first { $0.title == "Weekdays 4-6Pm | Happy Hour" })
+        #expect(happyHour.days == [.monday, .tuesday, .wednesday, .thursday, .friday])
+        #expect(happyHour.times == [.between(16 * 60, 18 * 60)])
+    }
+
     @Test func mapsHappyHourWithSplitEveryWeekdayDays() throws {
         let json = """
         {"deals":[{"conditions":["* SELECTED RANGE OF BEER & WINE"],"times":["4PM-6PM"],"details":["BEERS","$7-"],"days":["EVERY","WEEKDAY"],"title":"HAPPY HOUR"}]}

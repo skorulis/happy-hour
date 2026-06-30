@@ -192,10 +192,7 @@ export function SearchPage() {
         viewMode === "map" ? "max-w-6xl" : "max-w-4xl"
       }`}
     >
-      <header className="space-y-2">
-        <p className="text-sm font-medium uppercase tracking-wide text-amber-700 dark:text-amber-400">
-          Happy Hour
-        </p>
+      <header>
         <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">
           Find pub and bar deals
         </h1>
