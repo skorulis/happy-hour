@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { BackToSearchLink } from "@/components/BackToSearchLink";
 import { WeeklyDealsSection } from "@/components/WeeklyDealsSection";
 import { useFavorites } from "@/lib/favorites/useFavorites";
 import type { DealSearchResult } from "@/lib/search/queries";
@@ -70,10 +69,6 @@ export function FavouritesPageContent() {
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-10">
-      <div>
-        <BackToSearchLink />
-      </div>
-
       <header className="space-y-2">
         <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">
           Favourites

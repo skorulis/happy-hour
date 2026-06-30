@@ -1,4 +1,3 @@
-import { BackToSearchLink } from "@/components/BackToSearchLink";
 import { WeeklyDealsSection } from "@/components/WeeklyDealsSection";
 import { googleMapsPlaceUrl } from "@/lib/search/google-maps";
 import type { VenueDetailResult } from "@/lib/search/queries";
@@ -39,10 +38,6 @@ export function VenuePageContent({
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-10">
-      <div>
-        <BackToSearchLink />
-      </div>
-
       <header className="space-y-4">
         {venue.heroImage ? (
           // eslint-disable-next-line @next/next/no-img-element
