@@ -444,6 +444,79 @@ export async function searchDeals(
   }));
 }
 
+export async function getDealsByIds(
+  dealIds: number[],
+): Promise<DealSearchResult[]> {
+  if (dealIds.length === 0) {
+    return [];
+  }
+
+  const rows = await db
+    .select({
+      dealId: deal.id,
+      title: deal.title,
+      details: deal.details,
+      conditions: deal.conditions,
+      imageUrl: deal.imageUrl,
+      sourceUrl: deal.sourceUrl,
+      venueId: venue.id,
+      venueName: venue.name,
+      venueSuburbName: suburb.name,
+      venueLat: venue.lat,
+      venueLng: venue.lng,
+      venueWebsiteUri: venue.websiteUri,
+      venueHeroImage: venue.heroImage,
+      venueJson: venue.json,
+    })
+    .from(deal)
+    .innerJoin(venue, eq(deal.venueId, venue.id))
+    .leftJoin(suburb, eq(venue.suburbId, suburb.id))
+    .where(inArray(deal.id, dealIds))
+    .orderBy(venue.name, deal.title);
+
+  if (rows.length === 0) {
+    return [];
+  }
+
+  const matchedDealIds = rows.map((row) => row.dealId);
+  const schedules = await db
+    .select()
+    .from(dealSchedule)
+    .where(inArray(dealSchedule.dealId, matchedDealIds))
+    .orderBy(dealSchedule.dayOfWeek, dealSchedule.startMinute);
+
+  const schedulesByDeal = new Map<number, DealSearchResult["schedules"]>();
+  for (const schedule of schedules) {
+    const existing = schedulesByDeal.get(schedule.dealId) ?? [];
+    existing.push({
+      dayOfWeek: schedule.dayOfWeek,
+      startMinute: schedule.startMinute,
+      endMinute: schedule.endMinute,
+    });
+    schedulesByDeal.set(schedule.dealId, existing);
+  }
+
+  return rows.map((row) => ({
+    id: row.dealId,
+    title: row.title,
+    details: row.details,
+    conditions: row.conditions,
+    imageUrl: row.imageUrl,
+    sourceUrl: row.sourceUrl,
+    venue: {
+      id: row.venueId,
+      name: row.venueName,
+      suburbName: row.venueSuburbName,
+      lat: row.venueLat,
+      lng: row.venueLng,
+      websiteUri: row.venueWebsiteUri,
+      heroImage: row.venueHeroImage,
+      formattedAddress: parseVenueFormattedAddress(row.venueJson),
+    },
+    schedules: schedulesByDeal.get(row.dealId) ?? [],
+  }));
+}
+
 export async function searchDealsForSuburb(
   options: Omit<
     SearchDealsOptions,

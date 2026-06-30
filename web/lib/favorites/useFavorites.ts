@@ -37,5 +37,5 @@ export function useFavorites() {
     });
   }, []);
 
-  return { isFavorite, toggleFavorite };
+  return { favoriteIds, isFavorite, toggleFavorite };
 }

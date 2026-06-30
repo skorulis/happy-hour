@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { searchDeals, searchDealsForSuburb } from "@/lib/search/queries";
+import { parseDealIdsParam } from "@/lib/search/parse-deal-ids";
+import { getDealsByIds, searchDeals, searchDealsForSuburb } from "@/lib/search/queries";
 
 function parseDaysParam(value: string | null): number[] | undefined | "invalid" {
   if (value === null || value.trim() === "") {
@@ -26,6 +27,7 @@ function parseDaysParam(value: string | null): number[] | undefined | "invalid" 
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
+  const idsParam = searchParams.get("ids");
   const venueIdParam = searchParams.get("venueId");
   const dayParam = searchParams.get("day");
   const daysParam = searchParams.get("days");
@@ -113,6 +115,24 @@ export async function GET(request: Request) {
     (!Number.isFinite(endMinute) || endMinute < 1 || endMinute > 1440)
   ) {
     return NextResponse.json({ error: "Invalid endMinute" }, { status: 400 });
+  }
+
+  if (idsParam !== null) {
+    const parsedIds = parseDealIdsParam(idsParam);
+    if (!parsedIds.ok) {
+      return NextResponse.json({ error: parsedIds.error }, { status: 400 });
+    }
+
+    try {
+      const deals = await getDealsByIds(parsedIds.ids);
+      return NextResponse.json({ deals });
+    } catch (error) {
+      console.error("Failed to load deals by ids", error);
+      return NextResponse.json(
+        { error: "Failed to load deals" },
+        { status: 500 },
+      );
+    }
   }
 
   try {

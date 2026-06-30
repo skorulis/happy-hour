@@ -2,57 +2,44 @@
 
 import { useState } from "react";
 import { DealCard } from "@/components/DealCard";
+import { DealDayFilter } from "@/components/DealDayFilter";
 import { useFavorites } from "@/lib/favorites/useFavorites";
 import type { DealSearchResult } from "@/lib/search/queries";
-import {
-  DAY_ABBREVIATIONS,
-  DAY_LABELS,
-  groupDealsByDay,
-  WEEKDAY_UI_ORDER,
-} from "@/lib/search/schedule";
+import { DAY_LABELS, groupDealsByDay } from "@/lib/search/schedule";
 import { dealAnchorId } from "@/lib/search/slugs";
 
 type WeeklyDealsSectionProps = {
   deals: DealSearchResult[];
   initialSelectedDay?: number | null;
+  showVenue?: boolean;
+  heading?: (count: number) => string;
+  emptyMessage?: string;
+  emptyDayMessage?: (dayLabel: string) => string;
+  isFavorite?: (dealId: number) => boolean;
+  onToggleFavorite?: (dealId: number) => void;
 };
 
-function DayFilterPill({
-  label,
-  ariaLabel,
-  isActive,
-  onClick,
-}: {
-  label: string;
-  ariaLabel?: string;
-  isActive: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={isActive}
-      aria-label={ariaLabel}
-      className={`rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
-        isActive
-          ? "border-amber-600 bg-amber-600 text-white dark:border-amber-500 dark:bg-amber-500"
-          : "border-zinc-300 text-zinc-700 hover:border-amber-500 hover:bg-amber-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:border-amber-500 dark:hover:bg-amber-950/30"
-      }`}
-    >
-      {label}
-    </button>
-  );
-}
+const defaultHeading = (count: number) => `Weekly Deals (${count})`;
+const defaultEmptyMessage =
+  "No approved deals have been synced for this venue yet.";
+const defaultEmptyDayMessage = (dayLabel: string) => `No deals on ${dayLabel}.`;
 
 export function WeeklyDealsSection({
   deals,
   initialSelectedDay,
+  showVenue = false,
+  heading = defaultHeading,
+  emptyMessage = defaultEmptyMessage,
+  emptyDayMessage = defaultEmptyDayMessage,
+  isFavorite: isFavoriteProp,
+  onToggleFavorite: onToggleFavoriteProp,
 }: WeeklyDealsSectionProps) {
   const [selectedDay, setSelectedDay] = useState<number | null>(
     initialSelectedDay ?? null,
   );
-  const { isFavorite, toggleFavorite } = useFavorites();
+  const favorites = useFavorites();
+  const isFavorite = isFavoriteProp ?? favorites.isFavorite;
+  const toggleFavorite = onToggleFavoriteProp ?? favorites.toggleFavorite;
   const dealsByDay = groupDealsByDay(deals);
   const anchoredDealIds = new Set<number>();
 
@@ -69,39 +56,23 @@ export function WeeklyDealsSection({
   return (
     <section className="space-y-4">
       <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
-        Weekly Deals ({visibleCount})
+        {heading(visibleCount)}
       </h2>
 
       {dealsByDay.length === 0 ? (
         <p className="rounded-xl border border-dashed border-zinc-300 px-4 py-8 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
-          No approved deals have been synced for this venue yet.
+          {emptyMessage}
         </p>
       ) : (
         <>
-          <div
-            className="flex flex-wrap gap-2"
-            role="group"
-            aria-label="Filter deals by day"
-          >
-            <DayFilterPill
-              label="Any"
-              isActive={selectedDay === null}
-              onClick={() => setSelectedDay(null)}
-            />
-            {WEEKDAY_UI_ORDER.map((day) => (
-              <DayFilterPill
-                key={day}
-                label={DAY_ABBREVIATIONS[day] ?? `Day ${day}`}
-                ariaLabel={DAY_LABELS[day]}
-                isActive={selectedDay === day}
-                onClick={() => setSelectedDay(day)}
-              />
-            ))}
-          </div>
+          <DealDayFilter
+            selectedDay={selectedDay}
+            onSelectedDayChange={setSelectedDay}
+          />
 
           {selectedDay !== null && filteredDeals!.length === 0 ? (
             <p className="rounded-xl border border-dashed border-zinc-300 px-4 py-8 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
-              No deals on {DAY_LABELS[selectedDay]}.
+              {emptyDayMessage(DAY_LABELS[selectedDay] ?? `Day ${selectedDay}`)}
             </p>
           ) : selectedDay === null ? (
             <div className="space-y-8">
@@ -124,7 +95,7 @@ export function WeeklyDealsSection({
                           key={`${dayOfWeek}-${deal.id}`}
                           id={anchorId}
                           deal={deal}
-                          showVenue={false}
+                          showVenue={showVenue}
                           dayOfWeek={dayOfWeek}
                           isFavorited={isFavorite(deal.id)}
                           onToggleFavorite={() => toggleFavorite(deal.id)}
@@ -142,7 +113,7 @@ export function WeeklyDealsSection({
                   key={deal.id}
                   id={dealAnchorId(deal.id)}
                   deal={deal}
-                  showVenue={false}
+                  showVenue={showVenue}
                   dayOfWeek={selectedDay}
                   isFavorited={isFavorite(deal.id)}
                   onToggleFavorite={() => toggleFavorite(deal.id)}
