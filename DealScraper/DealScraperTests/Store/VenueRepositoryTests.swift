@@ -254,6 +254,74 @@ struct VenueRepositoryTests {
         #expect(found.heroImage == heroURL)
     }
 
+    @Test func upsertPlacesSkipsClosedVenues() throws {
+        let repository = VenueRepository(store: SQLStore.inMemory())
+
+        let operational = GooglePlace(
+            id: "places/ChIJOpen",
+            displayName: .init(text: "Open Pub", languageCode: "en"),
+            location: .init(latitude: -33.8600, longitude: 151.2100),
+            formattedAddress: "1 Circular Quay, Sydney",
+            websiteUri: "https://openpub.example.com",
+            types: ["bar"],
+            businessStatus: .operational
+        )
+        let temporarilyClosed = GooglePlace(
+            id: "places/ChIJTempClosed",
+            displayName: .init(text: "Temp Closed Pub", languageCode: "en"),
+            location: .init(latitude: -33.8610, longitude: 151.2110),
+            formattedAddress: "2 Circular Quay, Sydney",
+            websiteUri: "https://tempclosed.example.com",
+            types: ["bar"],
+            businessStatus: .closedTemporarily
+        )
+        let permanentlyClosed = GooglePlace(
+            id: "places/ChIJPermClosed",
+            displayName: .init(text: "Closed Pub", languageCode: "en"),
+            location: .init(latitude: -33.8620, longitude: 151.2120),
+            formattedAddress: "3 Circular Quay, Sydney",
+            websiteUri: "https://closedpub.example.com",
+            types: ["bar"],
+            businessStatus: .closedPermanently
+        )
+
+        let newCount = try repository.upsert(places: [operational, temporarilyClosed, permanentlyClosed])
+        #expect(newCount == 1)
+
+        let all = try repository.all()
+        #expect(all.count == 1)
+        #expect(all.first?.googleMapId == "places/ChIJOpen")
+    }
+
+    @Test func upsertPlacesRemovesExistingPermanentlyClosedVenue() throws {
+        let repository = VenueRepository(store: SQLStore.inMemory())
+
+        let place = GooglePlace(
+            id: "places/ChIJWasOpen",
+            displayName: .init(text: "Former Pub", languageCode: "en"),
+            location: .init(latitude: -33.8600, longitude: 151.2100),
+            formattedAddress: "1 Circular Quay, Sydney",
+            websiteUri: "https://formerpub.example.com",
+            types: ["bar"],
+            businessStatus: .operational
+        )
+        try repository.upsert(places: [place])
+        #expect(try repository.find(googleMapId: "places/ChIJWasOpen") != nil)
+
+        let closedPlace = GooglePlace(
+            id: place.id,
+            displayName: place.displayName,
+            location: place.location,
+            formattedAddress: place.formattedAddress,
+            websiteUri: place.websiteUri,
+            types: place.types,
+            businessStatus: .closedPermanently
+        )
+        let newCount = try repository.upsert(places: [closedPlace])
+        #expect(newCount == 0)
+        #expect(try repository.find(googleMapId: "places/ChIJWasOpen") == nil)
+    }
+
     @Test func deleteRemovesVenueAndRelatedRecords() throws {
         let store = SQLStore.inMemory()
         let venueRepository = VenueRepository(store: store)

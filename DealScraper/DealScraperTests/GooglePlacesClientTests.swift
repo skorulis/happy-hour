@@ -94,6 +94,12 @@ struct GooglePlacesClientTests {
         #expect(GooglePlacesAPI.nearbySearchFieldMask.contains("places.regularOpeningHours"))
     }
 
+    @Test func fieldMaskIncludesBusinessStatus() {
+        #expect(GooglePlacesAPI.placeFieldMask.contains("places.businessStatus"))
+        #expect(GooglePlacesAPI.textSearchFieldMask.contains("places.businessStatus"))
+        #expect(GooglePlacesAPI.nearbySearchFieldMask.contains("places.businessStatus"))
+    }
+
     @Test func searchTextAllPagesFetchesSubsequentPages() async throws {
         var capturedRequests: [any HTTPRequest] = []
 

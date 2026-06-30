@@ -7,6 +7,21 @@ nonisolated struct GooglePlacesSearchResponse: Decodable, Sendable {
     let nextPageToken: String?
 }
 
+nonisolated enum GooglePlaceBusinessStatus: String, Codable, Sendable {
+    case operational = "OPERATIONAL"
+    case closedTemporarily = "CLOSED_TEMPORARILY"
+    case closedPermanently = "CLOSED_PERMANENTLY"
+
+    var isClosed: Bool {
+        switch self {
+        case .operational:
+            return false
+        case .closedTemporarily, .closedPermanently:
+            return true
+        }
+    }
+}
+
 nonisolated struct GooglePlace: Codable, Sendable {
     let id: String
     let displayName: LocalizedText
@@ -15,6 +30,11 @@ nonisolated struct GooglePlace: Codable, Sendable {
     let websiteUri: String?
     let types: [String]?
     let regularOpeningHours: OpeningHours?
+    let businessStatus: GooglePlaceBusinessStatus?
+
+    var isImportable: Bool {
+        businessStatus?.isClosed != true
+    }
 
     init(
         id: String,
@@ -23,7 +43,8 @@ nonisolated struct GooglePlace: Codable, Sendable {
         formattedAddress: String?,
         websiteUri: String?,
         types: [String]?,
-        regularOpeningHours: OpeningHours? = nil
+        regularOpeningHours: OpeningHours? = nil,
+        businessStatus: GooglePlaceBusinessStatus? = nil
     ) {
         self.id = id
         self.displayName = displayName
@@ -32,6 +53,7 @@ nonisolated struct GooglePlace: Codable, Sendable {
         self.websiteUri = websiteUri
         self.types = types
         self.regularOpeningHours = regularOpeningHours
+        self.businessStatus = businessStatus
     }
 
     struct LocalizedText: Codable, Sendable {

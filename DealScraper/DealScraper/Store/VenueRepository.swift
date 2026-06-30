@@ -50,6 +50,15 @@ final class VenueRepository {
     func upsert(places: [GooglePlace]) throws -> Int {
         var newCount = 0
         for place in places {
+            guard place.isImportable else {
+                if place.businessStatus == .closedPermanently,
+                   let existing = try find(googleMapId: place.id),
+                   let existingId = existing.id
+                {
+                    try delete(id: existingId)
+                }
+                continue
+            }
             if try upsert(try Venue(from: place)) {
                 newCount += 1
             }
