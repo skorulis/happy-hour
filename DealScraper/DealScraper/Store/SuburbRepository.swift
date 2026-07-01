@@ -27,6 +27,27 @@ final class SuburbRepository {
         }
     }
 
+    func find(id: Int64) throws -> Suburb? {
+        try store.dbQueue.read { db in
+            try Suburb.fetchOne(db, key: id)
+        }
+    }
+
+    func all() throws -> [Suburb] {
+        try store.dbQueue.read { db in
+            try Suburb.fetchAll(db)
+        }
+    }
+
+    func updateLastCrawlDate(suburbId: Int64, date: Date) throws {
+        try store.dbQueue.write { db in
+            try db.execute(
+                sql: "UPDATE suburb SET last_crawl_date = ? WHERE id = ?",
+                arguments: [date, suburbId]
+            )
+        }
+    }
+
     static func resolve(name: String, postcode: String?, state: String?, in db: Database) throws -> Int64? {
         let normalizedPostcode = normalized(postcode)
         let normalizedState = normalizedState(state)

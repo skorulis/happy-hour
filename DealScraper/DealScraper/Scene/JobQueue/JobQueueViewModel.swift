@@ -12,10 +12,12 @@ final class JobQueueViewModel: CoordinatorViewModel {
     
     private let jobQueue: JobQueue
     private let venueRepository: VenueRepository
+    private let suburbRepository: SuburbRepository
     private let dealSourceRepository: DealSourceRepository
     private let dealRepository: DealRepository
     private var venueNames: [Int64: String] = [:]
     private var venueGoogleMapIds: [Int64: String] = [:]
+    private var suburbNames: [Int64: String] = [:]
 
     var actionMessage: String?
 
@@ -32,11 +34,13 @@ final class JobQueueViewModel: CoordinatorViewModel {
     init(
         jobQueue: JobQueue,
         venueRepository: VenueRepository,
+        suburbRepository: SuburbRepository,
         dealSourceRepository: DealSourceRepository,
         dealRepository: DealRepository
     ) {
         self.jobQueue = jobQueue
         self.venueRepository = venueRepository
+        self.suburbRepository = suburbRepository
         self.dealSourceRepository = dealSourceRepository
         self.dealRepository = dealRepository
     }
@@ -69,6 +73,20 @@ final class JobQueueViewModel: CoordinatorViewModel {
         actionMessage = "Queued extraction for \(venueName(for: venueId))."
     }
 
+    func crawlNextSuburb() {
+        guard let suburbId = nextSuburbIdForCrawl() else {
+            actionMessage = "No suburbs found."
+            return
+        }
+
+        guard jobQueue.enqueue(suburbId: suburbId, type: .crawlSuburb) != nil else {
+            actionMessage = "A suburb crawl is already queued for \(suburbName(for: suburbId))."
+            return
+        }
+
+        actionMessage = "Queued suburb crawl for \(suburbName(for: suburbId))."
+    }
+
     func cancel(job: JobItem) {
         jobQueue.cancel(jobId: job.id)
     }
@@ -95,10 +113,51 @@ final class JobQueueViewModel: CoordinatorViewModel {
         return nil
     }
 
+    func suburbName(for suburbId: Int64) -> String {
+        if let cached = suburbNames[suburbId] {
+            return cached
+        }
+        if let suburb = try? suburbRepository.find(id: suburbId) {
+            cacheSuburb(suburb)
+            return Self.displayName(for: suburb)
+        }
+        return "Suburb #\(suburbId)"
+    }
+
+    func jobTitle(for job: JobItem) -> String {
+        switch job.subject {
+        case let .venue(venueId):
+            return venueName(for: venueId)
+        case let .suburb(suburbId):
+            return suburbName(for: suburbId)
+        }
+    }
+
+    func jobSubtitle(for job: JobItem) -> String {
+        switch job.subject {
+        case let .venue(venueId):
+            return "\(job.type.displayLabel) · Venue #\(venueId)"
+        case let .suburb(suburbId):
+            return "\(job.type.displayLabel) · Suburb #\(suburbId)"
+        }
+    }
+
     private func cacheVenue(_ venue: Venue) {
         guard let venueId = venue.id else { return }
         venueNames[venueId] = venue.name
         venueGoogleMapIds[venueId] = venue.googleMapId
+    }
+
+    private func cacheSuburb(_ suburb: Suburb) {
+        guard let suburbId = suburb.id else { return }
+        suburbNames[suburbId] = Self.displayName(for: suburb)
+    }
+
+    private static func displayName(for suburb: Suburb) -> String {
+        if let postcode = suburb.postcode, !postcode.isEmpty {
+            return "\(suburb.name) \(postcode)"
+        }
+        return suburb.name
     }
 
     func canCancel(_ job: JobItem) -> Bool {
@@ -126,6 +185,20 @@ final class JobQueueViewModel: CoordinatorViewModel {
 
     private static func extractionPrioritySort(_ lhs: Venue, _ rhs: Venue) -> Bool {
         switch (lhs.lastExtractionDate, rhs.lastExtractionDate) {
+        case (nil, nil):
+            return (lhs.id ?? .max) < (rhs.id ?? .max)
+        case (nil, .some):
+            return true
+        case (.some, nil):
+            return false
+        case let (.some(lhsDate), .some(rhsDate)):
+            if lhsDate != rhsDate { return lhsDate < rhsDate }
+            return (lhs.id ?? .max) < (rhs.id ?? .max)
+        }
+    }
+
+    private static func suburbCrawlPrioritySort(_ lhs: Suburb, _ rhs: Suburb) -> Bool {
+        switch (lhs.lastCrawlDate, rhs.lastCrawlDate) {
         case (nil, nil):
             return (lhs.id ?? .max) < (rhs.id ?? .max)
         case (nil, .some):
@@ -191,6 +264,18 @@ final class JobQueueViewModel: CoordinatorViewModel {
                     $0.status == .approved || $0.status == .rejected
                 }
                 return hasApproved && allReviewed
+            }?
+            .id
+    }
+
+    private func nextSuburbIdForCrawl() -> Int64? {
+        guard let suburbs = try? suburbRepository.all() else { return nil }
+
+        return suburbs
+            .sorted(by: Self.suburbCrawlPrioritySort)
+            .first { suburb in
+                guard let suburbId = suburb.id else { return false }
+                return !jobQueue.isJobActive(suburbId: suburbId, type: .crawlSuburb)
             }?
             .id
     }

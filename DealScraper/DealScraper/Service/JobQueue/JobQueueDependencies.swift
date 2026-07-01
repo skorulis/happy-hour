@@ -21,3 +21,13 @@ protocol VenueDealExtracting {
 }
 
 extension VenueDealExtractionService: VenueDealExtracting {}
+
+@MainActor
+protocol SuburbCrawling {
+    func crawl(
+        suburb: Suburb,
+        progress: ProgressMonitor<SuburbCrawlResults>
+    ) async throws -> SuburbCrawlResults
+}
+
+extension SuburbCrawler: SuburbCrawling {}

@@ -5,6 +5,7 @@ import Foundation
 enum JobType: String, Codable, Sendable {
     case crawlWebsite
     case extractDeals
+    case crawlSuburb
 
     var displayLabel: String {
         switch self {
@@ -12,6 +13,8 @@ enum JobType: String, Codable, Sendable {
             return "Crawl Website"
         case .extractDeals:
             return "Extract Deals"
+        case .crawlSuburb:
+            return "Crawl Suburb"
         }
     }
 }

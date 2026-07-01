@@ -2,9 +2,15 @@
 
 import Foundation
 
+enum JobSubject: Equatable, Sendable {
+    case venue(Int64)
+    case suburb(Int64)
+}
+
 enum JobResult: Equatable, Sendable {
     case crawl(VenueCrawlResults)
     case extract(VenueDealExtractionResults)
+    case crawlSuburb(SuburbCrawlResults)
 }
 
 enum JobStatus: Equatable, Sendable {
@@ -26,10 +32,20 @@ enum JobStatus: Equatable, Sendable {
 
 struct JobItem: Identifiable, Equatable, Sendable {
     let id: UUID
-    let venueId: Int64
+    let subject: JobSubject
     let type: JobType
     var status: JobStatus
     var startDate: Date?
+
+    var venueId: Int64? {
+        if case let .venue(id) = subject { return id }
+        return nil
+    }
+
+    var suburbId: Int64? {
+        if case let .suburb(id) = subject { return id }
+        return nil
+    }
 
     init(
         id: UUID = UUID(),
@@ -39,7 +55,21 @@ struct JobItem: Identifiable, Equatable, Sendable {
         startDate: Date? = nil
     ) {
         self.id = id
-        self.venueId = venueId
+        self.subject = .venue(venueId)
+        self.type = type
+        self.status = status
+        self.startDate = startDate
+    }
+
+    init(
+        id: UUID = UUID(),
+        suburbId: Int64,
+        type: JobType,
+        status: JobStatus = .pending,
+        startDate: Date? = nil
+    ) {
+        self.id = id
+        self.subject = .suburb(suburbId)
         self.type = type
         self.status = status
         self.startDate = startDate

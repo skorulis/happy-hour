@@ -112,4 +112,32 @@ struct SuburbRepositoryTests {
         #expect(found.name == "Newtown")
         #expect(found.postcode == "2042")
     }
+
+    @Test func findReturnsSuburbByID() throws {
+        let store = SQLStore.inMemory()
+        let repository = SuburbRepository(store: store)
+        let suburbId = try insertSuburb(
+            Suburb(name: "Newtown", postcode: "2042", state: "NSW"),
+            store: store
+        )
+
+        let found = try #require(try repository.find(id: suburbId))
+        #expect(found.id == suburbId)
+        #expect(found.name == "Newtown")
+    }
+
+    @Test func updateLastCrawlDatePersistsValue() throws {
+        let store = SQLStore.inMemory()
+        let repository = SuburbRepository(store: store)
+        let suburbId = try insertSuburb(
+            Suburb(name: "Newtown", postcode: "2042", state: "NSW"),
+            store: store
+        )
+        let crawlDate = Date(timeIntervalSince1970: 1_700_000_000)
+
+        try repository.updateLastCrawlDate(suburbId: suburbId, date: crawlDate)
+
+        let found = try #require(try repository.find(id: suburbId))
+        #expect(found.lastCrawlDate == crawlDate)
+    }
 }

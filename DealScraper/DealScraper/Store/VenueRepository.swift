@@ -12,10 +12,14 @@ final class VenueRepository {
     }
 
     @discardableResult
-    func upsert(_ venue: Venue) throws -> Bool {
+    func upsert(_ venue: Venue, preferredSuburbId: Int64? = nil) throws -> Bool {
         try store.dbQueue.write { db in
             var mutableVenue = venue
-            try Self.linkSuburb(for: &mutableVenue, in: db)
+            if let preferredSuburbId {
+                mutableVenue.suburbId = preferredSuburbId
+            } else {
+                try Self.linkSuburb(for: &mutableVenue, in: db)
+            }
 
             if let existing = try Venue
                 .filter(Column("google_map_id") == mutableVenue.googleMapId)
@@ -48,7 +52,7 @@ final class VenueRepository {
     }
 
     @discardableResult
-    func upsert(places: [GooglePlace]) throws -> Int {
+    func upsert(places: [GooglePlace], suburbId: Int64? = nil) throws -> Int {
         var newCount = 0
         for place in places {
             guard place.isImportable else {
@@ -60,7 +64,7 @@ final class VenueRepository {
                 }
                 continue
             }
-            if try upsert(try Venue(from: place)) {
+            if try upsert(try Venue(from: place), preferredSuburbId: suburbId) {
                 newCount += 1
             }
         }

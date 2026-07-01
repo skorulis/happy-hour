@@ -117,6 +117,8 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
 
         container.register(VenueWebsiteCrawler.self) { VenueWebsiteCrawler.make(resolver: $0) }
 
+        container.register(SuburbCrawler.self) { SuburbCrawler.make(resolver: $0) }
+
         container.register(JobQueue.self) { JobQueue.make(resolver: $0) }
             .inObjectScope(.container)
     }
@@ -154,6 +156,11 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
 
         container.register(VenueLinksRepository.self) { resolver in
             VenueLinksRepository(store: resolver.sqlStore())
+        }
+        .inObjectScope(.container)
+
+        container.register(SuburbRepository.self) { resolver in
+            SuburbRepository(store: resolver.sqlStore())
         }
         .inObjectScope(.container)
 

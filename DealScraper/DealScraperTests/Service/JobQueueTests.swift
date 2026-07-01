@@ -1,6 +1,7 @@
 //Created by Alex Skorulis on 22/6/2026.
 
 import Foundation
+import GRDB
 import Testing
 @testable import DealScraper
 
@@ -11,7 +12,7 @@ struct JobQueueTests {
     private func makeVenue(id: Int64 = 1) -> Venue {
         Venue(
             id: id,
-            googleMapId: "places/test",
+            googleMapId: "places/test-\(id)",
             name: "Test Pub",
             lat: -33.86,
             lng: 151.20,
@@ -20,16 +21,65 @@ struct JobQueueTests {
         )
     }
 
-    private func makeRepository(with venue: Venue) -> VenueRepository {
+    private func makeStore(with venue: Venue) -> SQLStore {
         let store = SQLStore.inMemory()
         let repository = VenueRepository(store: store)
         try! repository.upsert(venue)
-        return repository
+        return store
+    }
+
+    private func makeRepository(with venue: Venue) -> VenueRepository {
+        VenueRepository(store: makeStore(with: venue))
+    }
+
+    private func makeSuburb(id: Int64 = 1) -> Suburb {
+        Suburb(id: id, name: "Newtown", postcode: "2042", state: "NSW")
+    }
+
+    private func insertSuburb(_ suburb: Suburb, in store: SQLStore) throws -> Int64 {
+        try store.dbQueue.write { db in
+            var mutable = suburb
+            try mutable.insert(db)
+            return try #require(mutable.id)
+        }
+    }
+
+    private func makeJobQueue(
+        store: SQLStore,
+        venueWebsiteCrawler: (any VenueWebsiteCrawling)? = nil,
+        venueDealExtractionService: (any VenueDealExtracting)? = nil,
+        suburbCrawler: (any SuburbCrawling)? = nil
+    ) -> JobQueue {
+        JobQueue(
+            venueRepository: VenueRepository(store: store),
+            suburbRepository: SuburbRepository(store: store),
+            venueWebsiteCrawler: venueWebsiteCrawler ?? defaultVenueWebsiteCrawler,
+            venueDealExtractionService: venueDealExtractionService ?? defaultDealExtractor,
+            suburbCrawler: suburbCrawler ?? defaultSuburbCrawler
+        )
+    }
+
+    private var defaultVenueWebsiteCrawler: any VenueWebsiteCrawling {
+        FakeVenueWebsiteCrawler { _, _ in
+            VenueCrawlResults(dealsFound: 0, visitedPages: [], imagesAnalyzed: 0, duration: 0)
+        }
+    }
+
+    private var defaultDealExtractor: any VenueDealExtracting {
+        FakeVenueDealExtractor { _, _ in
+            VenueDealExtractionResults(dealsFoundBeforeCondensing: 0, dealsFound: 0, duration: 0, errorCount: 0)
+        }
+    }
+
+    private var defaultSuburbCrawler: any SuburbCrawling {
+        FakeSuburbCrawler { _, _ in
+            SuburbCrawlResults(venuesFound: 0, newVenues: 0, duration: 0)
+        }
     }
 
     @Test func enqueueCompletesAllJobsForSameVenue() async {
         let venue = makeVenue()
-        let repository = makeRepository(with: venue)
+        let store = makeStore(with: venue)
 
         let crawler = FakeVenueWebsiteCrawler { venue, progress in
             await progress("Crawling…")
@@ -45,10 +95,11 @@ struct JobQueueTests {
             )
         }
 
-        let jobQueue = JobQueue(
-            venueRepository: repository,
+        let jobQueue = makeJobQueue(
+            store: store,
             venueWebsiteCrawler: crawler,
-            venueDealExtractionService: extractor
+            venueDealExtractionService: extractor,
+            suburbCrawler: defaultSuburbCrawler
         )
 
         _ = jobQueue.enqueue(venueId: 1, type: .crawlWebsite)
@@ -64,7 +115,8 @@ struct JobQueueTests {
     }
 
     @Test func enqueueRunsUpToMaxConcurrentJobs() async {
-        let repository = makeRepository(with: makeVenue())
+        let store = makeStore(with: makeVenue())
+        let repository = VenueRepository(store: store)
         for id in 2...3 {
             try! repository.upsert(makeVenue(id: Int64(id)))
         }
@@ -74,13 +126,7 @@ struct JobQueueTests {
             return VenueCrawlResults(dealsFound: 0, visitedPages: [], imagesAnalyzed: 0, duration: 0)
         }
 
-        let jobQueue = JobQueue(
-            venueRepository: repository,
-            venueWebsiteCrawler: crawler,
-            venueDealExtractionService: FakeVenueDealExtractor { _, _ in
-                VenueDealExtractionResults(dealsFoundBeforeCondensing: 0, dealsFound: 0, duration: 0, errorCount: 0)
-            }
-        )
+        let jobQueue = makeJobQueue(store: store, venueWebsiteCrawler: crawler)
 
         _ = jobQueue.enqueue(venueId: 1, type: .crawlWebsite)
         _ = jobQueue.enqueue(venueId: 2, type: .crawlWebsite)
@@ -102,20 +148,13 @@ struct JobQueueTests {
     }
 
     @Test func duplicateEnqueueIsRejected() async {
-        let venue = makeVenue()
-        let repository = makeRepository(with: venue)
+        let store = makeStore(with: makeVenue())
         let crawler = FakeVenueWebsiteCrawler { _, _ in
             try await Task.sleep(for: .milliseconds(100))
             return VenueCrawlResults(dealsFound: 0, visitedPages: [], imagesAnalyzed: 0, duration: 0)
         }
 
-        let jobQueue = JobQueue(
-            venueRepository: repository,
-            venueWebsiteCrawler: crawler,
-            venueDealExtractionService: FakeVenueDealExtractor { _, _ in
-                VenueDealExtractionResults(dealsFoundBeforeCondensing: 0, dealsFound: 0, duration: 0, errorCount: 0)
-            }
-        )
+        let jobQueue = makeJobQueue(store: store, venueWebsiteCrawler: crawler)
 
         let first = jobQueue.enqueue(venueId: 1, type: .crawlWebsite)
         let second = jobQueue.enqueue(venueId: 1, type: .crawlWebsite)
@@ -128,7 +167,8 @@ struct JobQueueTests {
     }
 
     @Test func cancelPendingJobMarksCancelled() async {
-        let repository = makeRepository(with: makeVenue())
+        let store = makeStore(with: makeVenue())
+        let repository = VenueRepository(store: store)
         for id in 2...3 {
             try! repository.upsert(makeVenue(id: Int64(id)))
         }
@@ -138,13 +178,7 @@ struct JobQueueTests {
             return VenueCrawlResults(dealsFound: 0, visitedPages: [], imagesAnalyzed: 0, duration: 0)
         }
 
-        let jobQueue = JobQueue(
-            venueRepository: repository,
-            venueWebsiteCrawler: crawler,
-            venueDealExtractionService: FakeVenueDealExtractor { _, _ in
-                VenueDealExtractionResults(dealsFoundBeforeCondensing: 0, dealsFound: 0, duration: 0, errorCount: 0)
-            }
-        )
+        let jobQueue = makeJobQueue(store: store, venueWebsiteCrawler: crawler)
 
         _ = jobQueue.enqueue(venueId: 1, type: .crawlWebsite)
         _ = jobQueue.enqueue(venueId: 2, type: .crawlWebsite)
@@ -161,19 +195,13 @@ struct JobQueueTests {
     }
 
     @Test func cancelRunningJobMarksCancelled() async {
-        let repository = makeRepository(with: makeVenue())
+        let store = makeStore(with: makeVenue())
         let crawler = FakeVenueWebsiteCrawler { _, _ in
             try await Task.sleep(for: .milliseconds(200))
             return VenueCrawlResults(dealsFound: 0, visitedPages: [], imagesAnalyzed: 0, duration: 0)
         }
 
-        let jobQueue = JobQueue(
-            venueRepository: repository,
-            venueWebsiteCrawler: crawler,
-            venueDealExtractionService: FakeVenueDealExtractor { _, _ in
-                VenueDealExtractionResults(dealsFoundBeforeCondensing: 0, dealsFound: 0, duration: 0, errorCount: 0)
-            }
-        )
+        let jobQueue = makeJobQueue(store: store, venueWebsiteCrawler: crawler)
 
         let jobID = jobQueue.enqueue(venueId: 1, type: .crawlWebsite)
         await waitUntilRunning(jobId: jobID!, in: jobQueue)
@@ -185,21 +213,14 @@ struct JobQueueTests {
     }
 
     @Test func progressUpdatesPropagate() async {
-        let venue = makeVenue()
-        let repository = makeRepository(with: venue)
+        let store = makeStore(with: makeVenue())
         let crawler = FakeVenueWebsiteCrawler { _, progress in
             await progress("Step one")
             await progress("Step two")
             return VenueCrawlResults(dealsFound: 0, visitedPages: [], imagesAnalyzed: 0, duration: 0)
         }
 
-        let jobQueue = JobQueue(
-            venueRepository: repository,
-            venueWebsiteCrawler: crawler,
-            venueDealExtractionService: FakeVenueDealExtractor { _, _ in
-                VenueDealExtractionResults(dealsFoundBeforeCondensing: 0, dealsFound: 0, duration: 0, errorCount: 0)
-            }
-        )
+        let jobQueue = makeJobQueue(store: store, venueWebsiteCrawler: crawler)
 
         let jobID = jobQueue.enqueue(venueId: 1, type: .crawlWebsite)
         await waitForJob(toFinish: jobID!, in: jobQueue)
@@ -213,20 +234,11 @@ struct JobQueueTests {
     }
 
     @Test func jobsForVenueFiltersCorrectly() async {
-        let venueOne = makeVenue(id: 1)
-        let venueTwo = makeVenue(id: 2)
-        let repository = makeRepository(with: venueOne)
-        try! repository.upsert(venueTwo)
+        let store = makeStore(with: makeVenue(id: 1))
+        let repository = VenueRepository(store: store)
+        try! repository.upsert(makeVenue(id: 2))
 
-        let jobQueue = JobQueue(
-            venueRepository: repository,
-            venueWebsiteCrawler: FakeVenueWebsiteCrawler { _, _ in
-                VenueCrawlResults(dealsFound: 0, visitedPages: [], imagesAnalyzed: 0, duration: 0)
-            },
-            venueDealExtractionService: FakeVenueDealExtractor { _, _ in
-                VenueDealExtractionResults(dealsFoundBeforeCondensing: 0, dealsFound: 0, duration: 0, errorCount: 0)
-            }
-        )
+        let jobQueue = makeJobQueue(store: store)
 
         _ = jobQueue.enqueue(venueId: 1, type: .crawlWebsite)
         _ = jobQueue.enqueue(venueId: 2, type: .crawlWebsite)
@@ -239,21 +251,16 @@ struct JobQueueTests {
     }
 
     @Test func clearAllRemovesJobsForVenue() async {
-        let venueOne = makeVenue(id: 1)
-        let venueTwo = makeVenue(id: 2)
-        let repository = makeRepository(with: venueOne)
-        try! repository.upsert(venueTwo)
+        let store = makeStore(with: makeVenue(id: 1))
+        let repository = VenueRepository(store: store)
+        try! repository.upsert(makeVenue(id: 2))
 
-        let jobQueue = JobQueue(
-            venueRepository: repository,
-            venueWebsiteCrawler: FakeVenueWebsiteCrawler { _, _ in
-                try await Task.sleep(for: .milliseconds(100))
-                return VenueCrawlResults(dealsFound: 0, visitedPages: [], imagesAnalyzed: 0, duration: 0)
-            },
-            venueDealExtractionService: FakeVenueDealExtractor { _, _ in
-                VenueDealExtractionResults(dealsFoundBeforeCondensing: 0, dealsFound: 0, duration: 0, errorCount: 0)
-            }
-        )
+        let crawler = FakeVenueWebsiteCrawler { _, _ in
+            try await Task.sleep(for: .milliseconds(100))
+            return VenueCrawlResults(dealsFound: 0, visitedPages: [], imagesAnalyzed: 0, duration: 0)
+        }
+
+        let jobQueue = makeJobQueue(store: store, venueWebsiteCrawler: crawler)
 
         _ = jobQueue.enqueue(venueId: 1, type: .crawlWebsite)
         _ = jobQueue.enqueue(venueId: 2, type: .crawlWebsite)
@@ -263,6 +270,61 @@ struct JobQueueTests {
         #expect(jobQueue.jobs(for: 1).isEmpty)
         #expect(jobQueue.jobs(for: 2).count == 1)
         #expect(!jobQueue.isJobActive(venueId: 1, type: .crawlWebsite))
+    }
+
+    @Test func crawlSuburbCompletesWithResults() async throws {
+        let store = SQLStore.inMemory()
+        let suburbId = try insertSuburb(makeSuburb(), in: store)
+
+        let suburbCrawler = FakeSuburbCrawler { suburb, progress in
+            await progress("Searching…")
+            return SuburbCrawlResults(venuesFound: 5, newVenues: 2, duration: 1.5)
+        }
+
+        let jobQueue = makeJobQueue(
+            store: store,
+            venueWebsiteCrawler: defaultVenueWebsiteCrawler,
+            venueDealExtractionService: defaultDealExtractor,
+            suburbCrawler: suburbCrawler
+        )
+
+        let jobID = jobQueue.enqueue(suburbId: suburbId, type: .crawlSuburb)
+        #expect(jobID != nil)
+
+        await waitForJob(toFinish: jobID!, in: jobQueue)
+
+        let job = jobQueue.jobs.first { $0.id == jobID }
+        if case let .completed(.crawlSuburb(results)) = job?.status {
+            #expect(results.venuesFound == 5)
+            #expect(results.newVenues == 2)
+        } else {
+            Issue.record("Expected completed suburb crawl job")
+        }
+    }
+
+    @Test func duplicateSuburbCrawlEnqueueIsRejected() async throws {
+        let store = SQLStore.inMemory()
+        let suburbId = try insertSuburb(makeSuburb(), in: store)
+
+        let suburbCrawler = FakeSuburbCrawler { _, _ in
+            try await Task.sleep(for: .milliseconds(100))
+            return SuburbCrawlResults(venuesFound: 0, newVenues: 0, duration: 0)
+        }
+
+        let jobQueue = makeJobQueue(
+            store: store,
+            venueWebsiteCrawler: defaultVenueWebsiteCrawler,
+            venueDealExtractionService: defaultDealExtractor,
+            suburbCrawler: suburbCrawler
+        )
+
+        let first = jobQueue.enqueue(suburbId: suburbId, type: .crawlSuburb)
+        let second = jobQueue.enqueue(suburbId: suburbId, type: .crawlSuburb)
+
+        #expect(first != nil)
+        #expect(second == nil)
+
+        await waitForJobs(toFinish: 1, in: jobQueue)
     }
 
     private func waitForJobs(toFinish count: Int, in jobQueue: JobQueue) async {
@@ -336,5 +398,23 @@ private final class FakeVenueDealExtractor: VenueDealExtracting {
         progress: ProgressMonitor<VenueDealExtractionResults>
     ) async throws -> VenueDealExtractionResults {
         try await handler(venue, progress)
+    }
+}
+
+@MainActor
+private final class FakeSuburbCrawler: SuburbCrawling {
+    private let handler: (Suburb, ProgressMonitor<SuburbCrawlResults>) async throws -> SuburbCrawlResults
+
+    init(
+        handler: @escaping (Suburb, ProgressMonitor<SuburbCrawlResults>) async throws -> SuburbCrawlResults
+    ) {
+        self.handler = handler
+    }
+
+    func crawl(
+        suburb: Suburb,
+        progress: ProgressMonitor<SuburbCrawlResults>
+    ) async throws -> SuburbCrawlResults {
+        try await handler(suburb, progress)
     }
 }

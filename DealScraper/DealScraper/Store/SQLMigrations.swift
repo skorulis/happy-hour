@@ -198,5 +198,11 @@ final class SQLMigrations {
                 t.add(column: "statistic_area", .text)
             }
         }
+
+        migrator.registerMigration("v22_suburb_last_crawl_date") { db in
+            try db.alter(table: "suburb") { t in
+                t.add(column: "last_crawl_date", .datetime)
+            }
+        }
     }
 }

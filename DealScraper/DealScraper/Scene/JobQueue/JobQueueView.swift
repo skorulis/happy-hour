@@ -28,6 +28,10 @@ struct JobQueueView: View {
                 Button("Extract Next") {
                     viewModel.extractNext()
                 }
+
+                Button("Crawl Next Suburb") {
+                    viewModel.crawlNextSuburb()
+                }
             }
 
             if let message = viewModel.actionMessage {
@@ -86,12 +90,15 @@ struct JobQueueView: View {
     private func jobRow(for job: JobItem) -> some View {
         let row = JobRow(
             job: job,
-            venueName: viewModel.venueName(for: job.venueId),
+            title: viewModel.jobTitle(for: job),
+            subtitle: viewModel.jobSubtitle(for: job),
             canCancel: viewModel.canCancel(job),
             onCancel: { viewModel.cancel(job: job) }
         )
 
-        if let googleMapId = viewModel.googleMapId(for: job.venueId) {
+        if let venueId = job.venueId,
+           let googleMapId = viewModel.googleMapId(for: venueId)
+        {
             Button(action: {
                 viewModel.coordinator?.push(MainPath.venueDetails(googleMapId))
             }, label: { row })
@@ -103,7 +110,8 @@ struct JobQueueView: View {
 
 private struct JobRow: View {
     let job: JobItem
-    let venueName: String
+    let title: String
+    let subtitle: String
     let canCancel: Bool
     let onCancel: () -> Void
 
@@ -111,9 +119,9 @@ private struct JobRow: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(venueName)
+                    Text(title)
                         .font(.headline)
-                    Text("\(job.type.displayLabel) · Venue #\(job.venueId)")
+                    Text(subtitle)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -167,6 +175,8 @@ private struct JobRow: View {
             return "Found \(crawlResults.dealsFound) deal source\(crawlResults.dealsFound == 1 ? "" : "s") in \(formattedDuration(crawlResults.duration))."
         case let .extract(extractResults):
             return "Extracted \(extractResults.dealsFound) deal\(extractResults.dealsFound == 1 ? "" : "s") in \(formattedDuration(extractResults.duration))."
+        case let .crawlSuburb(suburbResults):
+            return "Found \(suburbResults.venuesFound) venue\(suburbResults.venuesFound == 1 ? "" : "s"), \(suburbResults.newVenues) new in \(formattedDuration(suburbResults.duration))."
         }
     }
 
