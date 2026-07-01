@@ -8,7 +8,8 @@
             "cocktails",
             "wine",
             "whiskey",
-            "champagne"
+            "champagne",
+            "saki"
         ]
     },
     {
@@ -39,6 +40,7 @@
     { "name": "negroni" },
     { "name": "pint" },
     { "name": "porter" },
+    { "name": "saki" },
     { "name": "sangria" },
     { "name": "schooner" },
     { "name": "spirits" },

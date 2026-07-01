@@ -18,7 +18,7 @@ struct CrawlPDFCacheTests {
         let data = Data("pdf-bytes".utf8)
         let stored = try cache.store(data: data, hash: "abc123", fileExtension: "pdf")
 
-        #expect(stored.lastPathComponent == "abc123.pdf")
+        #expect(stored.lastPathComponent == "abc123")
         #expect(try Data(contentsOf: stored) == data)
 
         let found = try #require(cache.findCachedFileURL(for: "abc123"))

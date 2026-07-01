@@ -17,7 +17,7 @@ struct CrawlImageCacheTests {
         let data = Data("image-bytes".utf8)
         let stored = try cache.store(data: data, hash: "abc123", fileExtension: "jpg")
 
-        #expect(stored.lastPathComponent == "abc123.jpg")
+        #expect(stored.lastPathComponent == "abc123")
         #expect(try Data(contentsOf: stored) == data)
 
         let found = try #require(cache.findCachedFileURL(for: "abc123"))

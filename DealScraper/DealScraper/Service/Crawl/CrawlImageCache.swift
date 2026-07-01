@@ -20,20 +20,15 @@ final class CrawlImageCache: @unchecked Sendable {
     }
 
     func findCachedFileURL(for hash: String) -> URL? {
-        guard let files = try? FileManager.default.contentsOfDirectory(
-            at: directory,
-            includingPropertiesForKeys: nil
-        ) else {
+        let fileURL = directory.appendingPathComponent(hash)
+        guard FileManager.default.fileExists(atPath: fileURL.path) else {
             return nil
         }
-
-        return files.first { $0.deletingPathExtension().lastPathComponent == hash }
+        return fileURL
     }
 
     func store(data: Data, hash: String, fileExtension: String) throws -> URL {
-        let sanitizedExtension = fileExtension.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        let ext = sanitizedExtension.isEmpty ? "img" : sanitizedExtension
-        let fileURL = directory.appendingPathComponent("\(hash).\(ext)")
+        let fileURL = directory.appendingPathComponent(hash)
 
         if FileManager.default.fileExists(atPath: fileURL.path) {
             try FileManager.default.removeItem(at: fileURL)

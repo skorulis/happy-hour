@@ -12,6 +12,7 @@ enum CrawlPolicy {
         "https://merivale.com/",
         "https://paisanoanddaughters.com.au/",
         "https://plateitforward.org.au/",
+        "https://sundayco.com/",
         "https://sydneybrewery.com/",
         "https://www.liquidandlarder.com.au/",
         "https://www.lovetillygroup.com/",
