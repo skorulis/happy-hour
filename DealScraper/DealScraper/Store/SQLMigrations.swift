@@ -192,5 +192,11 @@ final class SQLMigrations {
                 t.add(column: "last_crawl_url", .text)
             }
         }
+
+        migrator.registerMigration("v21_suburb_statistic_area") { db in
+            try db.alter(table: "suburb") { t in
+                t.add(column: "statistic_area", .text)
+            }
+        }
     }
 }

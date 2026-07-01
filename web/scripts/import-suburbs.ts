@@ -13,6 +13,7 @@ type AustralianSuburb = {
   lat: number;
   lng: number;
   sqkm: number;
+  statistic_area: string;
 };
 
 type SuburbsFile = {
@@ -27,6 +28,7 @@ type DbSuburb = {
   lat: number | null;
   lng: number | null;
   sqkm: number | null;
+  statistic_area: string | null;
 };
 
 type ImportStats = {
@@ -117,7 +119,8 @@ function hasMissingFields(
     (existing.state == null && entry.state != null) ||
     (existing.lat == null && entry.lat != null) ||
     (existing.lng == null && entry.lng != null) ||
-    (existing.sqkm == null && entry.sqkm != null)
+    (existing.sqkm == null && entry.sqkm != null) ||
+    (existing.statistic_area == null && entry.statistic_area != null)
   );
 }
 
@@ -136,7 +139,7 @@ function upsertCatalog(
 
   const findStmt = db.prepare<[string, string | null], DbSuburb | undefined>(
     `
-    SELECT id, name, postcode, state, lat, lng, sqkm
+    SELECT id, name, postcode, state, lat, lng, sqkm, statistic_area
     FROM suburb
     WHERE name = ? AND (
       (postcode IS NULL AND ? IS NULL) OR postcode = ?
@@ -146,8 +149,8 @@ function upsertCatalog(
 
   const insertStmt = db.prepare(
     `
-    INSERT INTO suburb (name, postcode, state, lat, lng, sqkm)
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT INTO suburb (name, postcode, state, lat, lng, sqkm, statistic_area)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
     `,
   );
 
@@ -157,7 +160,8 @@ function upsertCatalog(
     SET state = COALESCE(state, ?),
         lat = COALESCE(lat, ?),
         lng = COALESCE(lng, ?),
-        sqkm = COALESCE(sqkm, ?)
+        sqkm = COALESCE(sqkm, ?),
+        statistic_area = COALESCE(statistic_area, ?)
     WHERE id = ?
     `,
   );
@@ -184,6 +188,7 @@ function upsertCatalog(
             entry.lat,
             entry.lng,
             entry.sqkm,
+            entry.statistic_area,
           );
         });
         continue;
@@ -201,6 +206,7 @@ function upsertCatalog(
           entry.lat,
           entry.lng,
           entry.sqkm,
+          entry.statistic_area,
           existing.id,
         );
       });

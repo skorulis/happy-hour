@@ -11,6 +11,7 @@ nonisolated struct Suburb: Codable, Sendable {
     let lat: Double?
     let lng: Double?
     let sqkm: Double?
+    let statisticArea: String?
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -20,6 +21,7 @@ nonisolated struct Suburb: Codable, Sendable {
         case lat
         case lng
         case sqkm
+        case statisticArea = "statistic_area"
     }
 
     init(
@@ -29,7 +31,8 @@ nonisolated struct Suburb: Codable, Sendable {
         state: String? = nil,
         lat: Double? = nil,
         lng: Double? = nil,
-        sqkm: Double? = nil
+        sqkm: Double? = nil,
+        statisticArea: String? = nil
     ) {
         self.id = id
         self.name = name
@@ -38,6 +41,7 @@ nonisolated struct Suburb: Codable, Sendable {
         self.lat = lat
         self.lng = lng
         self.sqkm = sqkm
+        self.statisticArea = statisticArea
     }
 }
 
