@@ -284,7 +284,7 @@ struct EditDealView: View {
                 "End",
                 selection: Binding(
                     get: { DealScheduleFormatting.date(fromMinutes: schedule.wrappedValue.endMinute) },
-                    set: { schedule.wrappedValue.endMinute = DealScheduleFormatting.minutes(from: $0) }
+                    set: { schedule.wrappedValue.endMinute = DealScheduleFormatting.endMinutes(from: $0) }
                 ),
                 displayedComponents: .hourAndMinute
             )

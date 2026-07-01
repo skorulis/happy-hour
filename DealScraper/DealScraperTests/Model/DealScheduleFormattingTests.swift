@@ -62,6 +62,23 @@ struct DealScheduleFormattingTests {
         )
     }
 
+    @Test func datePickerRoundTripsEndOfDayAsMidnight() {
+        let endOfDay = 1_440
+        let date = DealScheduleFormatting.date(fromMinutes: endOfDay)
+        #expect(DealScheduleFormatting.endMinutes(from: date) == endOfDay)
+    }
+
+    @Test func endMinutesMapsMidnightToEndOfDay() {
+        let midnight = DealScheduleFormatting.date(fromMinutes: 0)
+        #expect(DealScheduleFormatting.endMinutes(from: midnight) == 1_440)
+        #expect(DealScheduleFormatting.minutes(from: midnight) == 0)
+    }
+
+    @Test func endMinutesPreservesNonMidnightTimes() {
+        let sixPM = DealScheduleFormatting.date(fromMinutes: 18 * 60)
+        #expect(DealScheduleFormatting.endMinutes(from: sixPM) == 18 * 60)
+    }
+
     @Test func dealWithSchedulesUsesFormattedSummary() {
         let item = DealWithSchedules(
             deal: Deal(

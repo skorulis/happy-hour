@@ -106,14 +106,22 @@ enum DealScheduleFormatting {
 
     static func date(fromMinutes minutes: Int) -> Date {
         var components = DateComponents()
-        components.hour = minutes / 60
-        components.minute = minutes % 60
+        // 24:00 is stored as 1440 minutes but DatePicker only represents midnight as 00:00.
+        let normalizedMinutes = minutes == 1_440 ? 0 : minutes
+        components.hour = normalizedMinutes / 60
+        components.minute = normalizedMinutes % 60
         return Calendar.current.date(from: components) ?? .now
     }
 
     static func minutes(from date: Date) -> Int {
         let components = Calendar.current.dateComponents([.hour, .minute], from: date)
         return (components.hour ?? 0) * 60 + (components.minute ?? 0)
+    }
+
+    /// Converts a DatePicker value for an end time. Midnight (00:00) means end of day (24:00).
+    static func endMinutes(from date: Date) -> Int {
+        let minutes = minutes(from: date)
+        return minutes == 0 ? 1_440 : minutes
     }
 
     static func sortedSchedules(_ schedules: [DealSchedule]) -> [DealSchedule] {
