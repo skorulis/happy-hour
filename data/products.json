@@ -121,6 +121,7 @@
         ]
     },
     { "name": "taco" },
+    { "name": "tomahawk" },
     { "name": "wings" },
     {
         "name": "events",
@@ -147,6 +148,7 @@
     { "name": "hospitality" },
     { "name": "tarot" },
     { "name": "trivia" },
+    { "name": "kids eat free" },
     { "name": "jazz" },
     { "name": "karaoke" },
     { "name": "live music" },

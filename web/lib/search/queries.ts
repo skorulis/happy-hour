@@ -30,6 +30,7 @@ export type SuburbSearchResult = {
 export type VenueSearchResult = {
   id: number;
   name: string;
+  suburbName: string | null;
   lat: number;
   lng: number;
   websiteUri: string | null;
@@ -254,11 +255,13 @@ export async function searchVenues(
       .select({
         id: venue.id,
         name: venue.name,
+        suburbName: suburb.name,
         lat: venue.lat,
         lng: venue.lng,
         websiteUri: venue.websiteUri,
       })
       .from(venue)
+      .leftJoin(suburb, eq(venue.suburbId, suburb.id))
       .orderBy(venue.name)
       .limit(limit);
   }
@@ -267,11 +270,13 @@ export async function searchVenues(
     .select({
       id: venue.id,
       name: venue.name,
+      suburbName: suburb.name,
       lat: venue.lat,
       lng: venue.lng,
       websiteUri: venue.websiteUri,
     })
     .from(venue)
+    .leftJoin(suburb, eq(venue.suburbId, suburb.id))
     .where(
       or(
         ilike(venue.name, `%${trimmed}%`),
