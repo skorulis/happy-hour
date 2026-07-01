@@ -3,6 +3,7 @@ import {
   formatDealDayBadge,
   formatDealTimeBadge,
 } from "@/lib/search/schedule";
+import { formatDistanceKm } from "@/lib/search/distance";
 import type { DealSearchResult } from "@/lib/search/queries";
 import { venuePath } from "@/lib/search/slugs";
 import { appendDaysParam } from "@/lib/search/url";
@@ -47,6 +48,11 @@ export function VenueSearchCard({ group, searchDays = [] }: VenueSearchCardProps
 
   return (
     <article className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+      {group.venue.distanceKm !== undefined ? (
+        <p className="mb-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+          {formatDistanceKm(group.venue.distanceKm)} away
+        </p>
+      ) : null}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1 space-y-2">
           <ul className="space-y-0.5">

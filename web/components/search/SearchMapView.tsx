@@ -17,6 +17,7 @@ import {
   formatDealDayBadge,
   formatDealTimeBadge,
 } from "@/lib/search/schedule";
+import { formatDistanceKm } from "@/lib/search/distance";
 import { venuePath } from "@/lib/search/slugs";
 import { appendDaysParam } from "@/lib/search/url";
 
@@ -107,7 +108,12 @@ function VenuePopup({
         >
           {group.venue.name}
         </Link>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">{dealLabel}</p>
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">
+          {group.venue.distanceKm !== undefined
+            ? `${formatDistanceKm(group.venue.distanceKm)} away · `
+            : ""}
+          {dealLabel}
+        </p>
       </div>
 
       {previewDeals.length > 0 ? (

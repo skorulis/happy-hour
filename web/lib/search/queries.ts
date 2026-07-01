@@ -51,6 +51,7 @@ export type DealSearchResult = {
     websiteUri: string | null;
     heroImage: string | null;
     formattedAddress: string | null;
+    distanceKm?: number;
   };
   schedules: Array<{
     dayOfWeek: number;
@@ -373,23 +374,32 @@ export async function searchDeals(
     filters.push(textSearchFilterForWhatQuery(trimmedQuery));
   }
 
+  const dealSelectFields = {
+    dealId: deal.id,
+    title: deal.title,
+    details: deal.details,
+    conditions: deal.conditions,
+    imageUrl: deal.imageUrl,
+    sourceUrl: deal.sourceUrl,
+    venueId: venue.id,
+    venueName: venue.name,
+    venueSuburbName: suburb.name,
+    venueLat: venue.lat,
+    venueLng: venue.lng,
+    venueWebsiteUri: venue.websiteUri,
+    venueHeroImage: venue.heroImage,
+    venueJson: venue.json,
+  };
+
   const rows = await db
-    .select({
-      dealId: deal.id,
-      title: deal.title,
-      details: deal.details,
-      conditions: deal.conditions,
-      imageUrl: deal.imageUrl,
-      sourceUrl: deal.sourceUrl,
-      venueId: venue.id,
-      venueName: venue.name,
-      venueSuburbName: suburb.name,
-      venueLat: venue.lat,
-      venueLng: venue.lng,
-      venueWebsiteUri: venue.websiteUri,
-      venueHeroImage: venue.heroImage,
-      venueJson: venue.json,
-    })
+    .select(
+      hasNearLocation
+        ? {
+            ...dealSelectFields,
+            distanceKm: sql<number>`${distanceKmExpression(options.lat!, options.lng!)}`,
+          }
+        : dealSelectFields,
+    )
     .from(deal)
     .innerJoin(venue, eq(deal.venueId, venue.id))
     .leftJoin(suburb, eq(venue.suburbId, suburb.id))
@@ -439,6 +449,9 @@ export async function searchDeals(
       websiteUri: row.venueWebsiteUri,
       heroImage: row.venueHeroImage,
       formattedAddress: parseVenueFormattedAddress(row.venueJson),
+      ...("distanceKm" in row && row.distanceKm != null
+        ? { distanceKm: Number(row.distanceKm) }
+        : {}),
     },
     schedules: schedulesByDeal.get(row.dealId) ?? [],
   }));

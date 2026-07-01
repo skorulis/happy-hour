@@ -12,9 +12,10 @@ enum CrawlPolicy {
         "https://paisanoanddaughters.com.au/",
         "https://plateitforward.org.au/",
         "https://sydneybrewery.com/",
-        "https://www.oddculture.group/",
-        "https://www.muchogroup.com.au/",
         "https://www.liquidandlarder.com.au/",
+        "https://www.lovetillygroup.com/",
+        "https://www.muchogroup.com.au/",
+        "https://www.oddculture.group/",
     ]
     
     private static let sharedSiteURLs: [URL] = sharedSites.map { URL(string: $0)! }
