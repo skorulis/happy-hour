@@ -32,6 +32,7 @@ final class VenueRepository {
                     websiteUri: mutableVenue.websiteUri,
                     heroImage: existing.heroImage,
                     lastCrawlDate: existing.lastCrawlDate,
+                    lastCrawlUrl: existing.lastCrawlUrl,
                     lastExtractionDate: existing.lastExtractionDate,
                     status: importedStatus == .broken ? .broken : existing.status,
                     json: mutableVenue.json
@@ -93,11 +94,11 @@ final class VenueRepository {
         }
     }
 
-    func updateLastCrawlDate(venueId: Int64, date: Date) throws {
+    func updateLastCrawlDate(venueId: Int64, date: Date, url: String?) throws {
         try store.dbQueue.write { db in
             try db.execute(
-                sql: "UPDATE venue SET last_crawl_date = ? WHERE id = ?",
-                arguments: [date, venueId]
+                sql: "UPDATE venue SET last_crawl_date = ?, last_crawl_url = ? WHERE id = ?",
+                arguments: [date, url, venueId]
             )
         }
     }

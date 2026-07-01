@@ -26,6 +26,8 @@ nonisolated enum DealTimeParser {
                 times.append(time)
             } else if let time = DealHours.parse(string) {
                 times.append(time)
+            } else if let time = parseMultipleTimesAsRange(in: string) {
+                times.append(time)
             } else {
                 times.append(contentsOf: timesInText(string))
             }
@@ -41,6 +43,9 @@ nonisolated enum DealTimeParser {
             return [time]
         }
         if let time = DealHours.parse(text) {
+            return [time]
+        }
+        if let time = parseMultipleTimesAsRange(in: text) {
             return [time]
         }
 
@@ -147,6 +152,34 @@ nonisolated enum DealTimeParser {
 
         guard let start = startMinutes, let end = endMinutes else { return nil }
         return .between(start, end)
+    }
+
+    private static func parseMultipleTimesAsRange(in text: String) -> DealHours? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+
+        let listPattern = #"(?i)[,&]|(?:\band\b)"#
+        guard trimmed.range(of: listPattern, options: .regularExpression) != nil else {
+            return nil
+        }
+
+        let timePattern = #"(?i)(?<!\d)(\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?)(?!\d)"#
+        guard let regex = try? NSRegularExpression(pattern: timePattern) else { return nil }
+
+        let range = NSRange(trimmed.startIndex..., in: trimmed)
+        let minutes = regex.matches(in: trimmed, range: range).compactMap { match -> Int? in
+            guard let matchRange = Range(match.range(at: 1), in: trimmed) else { return nil }
+            return DealHours.toMinutes(string: String(trimmed[matchRange]))
+        }
+
+        guard minutes.count >= 2,
+              let earliest = minutes.min(),
+              let latest = minutes.max()
+        else {
+            return nil
+        }
+
+        return .between(earliest, latest)
     }
 
     private static func parseBetweenTime(in text: String) -> DealHours? {

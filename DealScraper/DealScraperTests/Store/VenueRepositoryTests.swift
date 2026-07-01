@@ -224,7 +224,7 @@ struct VenueRepositoryTests {
 
         let venueId = try #require(try repository.find(googleMapId: "places/ChIJFromAPI")?.id)
         try repository.updateHeroImage(venueId: venueId, url: heroURL)
-        try repository.updateLastCrawlDate(venueId: venueId, date: crawlDate)
+        try repository.updateLastCrawlDate(venueId: venueId, date: crawlDate, url: "https://old.example.com")
         try repository.updateLastExtractionDate(venueId: venueId, date: extractionDate)
 
         try repository.upsert(places: [place])
@@ -232,6 +232,7 @@ struct VenueRepositoryTests {
         let found = try #require(try repository.find(id: venueId))
         #expect(found.heroImage == heroURL)
         #expect(found.lastCrawlDate == crawlDate)
+        #expect(found.lastCrawlUrl == "https://old.example.com")
         #expect(found.lastExtractionDate == extractionDate)
     }
 

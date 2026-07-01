@@ -95,4 +95,11 @@ struct DealTimeParserTests {
         #expect(DealTimeParser.parse(["FROM 5PM", "DRAWN AT 7:30PM"]) == expected)
         #expect(DealTimeParser.parse(["5pm-7:30pm"]) == expected)
     }
+
+    @Test func parsesMultipleListedTimesAsRange() {
+        #expect(
+            DealTimeParser.parse(["3pm, 3:30pm & 4pm"])
+                == [.between(15 * 60, 16 * 60)]
+        )
+    }
 }

@@ -186,5 +186,11 @@ final class SQLMigrations {
                 t.add(column: "sqkm", .double)
             }
         }
+
+        migrator.registerMigration("v20_venue_last_crawl_url") { db in
+            try db.alter(table: "venue") { t in
+                t.add(column: "last_crawl_url", .text)
+            }
+        }
     }
 }

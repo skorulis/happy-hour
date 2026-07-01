@@ -261,7 +261,7 @@ final class VenueWebsiteCrawler {
         }
         
         let newCount = try dealSourceRepository.upsert(sources: dealSources, forVenueId: venueId)
-        try venueRepository.updateLastCrawlDate(venueId: venueId, date: now)
+        try venueRepository.updateLastCrawlDate(venueId: venueId, date: now, url: venue.websiteUri)
         
         let results = VenueCrawlResults(
             dealsFound: newCount,

@@ -35,6 +35,7 @@ nonisolated enum FilterKeywords {
         "anzac",
         "birthday",
         "catering",
+        "city2surf",
         "christmas in july",
         "christmas",
         "conferences",
