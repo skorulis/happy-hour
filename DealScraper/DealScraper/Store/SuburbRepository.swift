@@ -5,6 +5,8 @@ import Foundation
 
 final class SuburbRepository {
 
+    static let greaterSydneyStatisticArea = "Greater Sydney"
+
     private let store: SQLStore
 
     init(store: SQLStore) {
@@ -37,6 +39,15 @@ final class SuburbRepository {
         try store.dbQueue.read { db in
             try Suburb.fetchAll(db)
         }
+    }
+
+    func allEligibleForCrawl() throws -> [Suburb] {
+        try all().filter(Self.isEligibleForCrawl)
+    }
+
+    static func isEligibleForCrawl(_ suburb: Suburb) -> Bool {
+        guard normalized(suburb.postcode) != nil else { return false }
+        return suburb.statisticArea == greaterSydneyStatisticArea
     }
 
     func updateLastCrawlDate(suburbId: Int64, date: Date) throws {
