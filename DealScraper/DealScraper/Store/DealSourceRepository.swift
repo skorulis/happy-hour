@@ -57,6 +57,16 @@ final class DealSourceRepository {
         }
     }
 
+    func count(status: DealStatus? = nil) throws -> Int {
+        try store.dbQueue.read { db in
+            var request = DealSource.all()
+            if let status {
+                request = request.filter(Column("status") == status.rawValue)
+            }
+            return try request.fetchCount(db)
+        }
+    }
+
     func findNew() throws -> [DealSource] {
         try store.dbQueue.read { db in
             try DealSource

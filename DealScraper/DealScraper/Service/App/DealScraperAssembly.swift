@@ -34,6 +34,7 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
         container.register(ExperimentViewModel.self) { ExperimentViewModel.make(resolver: $0) }
             .inObjectScope(.container)
         container.register(SettingsViewModel.self) { SettingsViewModel.make(resolver: $0) }
+        container.register(StatsViewModel.self) { StatsViewModel.make(resolver: $0) }
         container.register(VenueImportViewModel.self) { VenueImportViewModel.make(resolver: $0) }
         container.register(GoogleImportViewModel.self) { GoogleImportViewModel.make(resolver: $0) }
         container.register(VenueDetailsViewModel.self) { (resolver: Resolver, googleID: String) in

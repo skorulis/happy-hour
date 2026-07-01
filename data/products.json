@@ -6,11 +6,14 @@
         "groups": [
             "beer",
             "cocktails",
-            "wine"
+            "wine",
+            "whiskey",
+            "champagne"
         ]
     },
     {
         "name": "beer",
+        "rank": 4,
         "groups": [
             "schooner",
             "pint",
@@ -19,15 +22,16 @@
             "craft beer"
         ]
     },
-    
     { 
         "name": "cocktails",
+        "rank": 5,
         "groups": [
             "negroni",
             "martini",
             "spritz"
         ]
     },
+    { "name": "champagne"},
     { "name": "craft beer"},
     { "name": "guinness"},
     { "name": "jugs" },
@@ -40,6 +44,7 @@
     { "name": "spritz" },
     { "name": "tastingpaddle" },
     { "name": "wine" },
+    { "name": "whiskey" },
     { "name": "bottomless" },
     {
         "name": "happy hour",
@@ -51,6 +56,7 @@
         "groups": [
             "burger",
             "calamari",
+            "cheese",
             "chicken",
             "chips",
             "curry",
@@ -78,6 +84,7 @@
     { "name": "2 for 1", "groups": [ "2-4-1" ] },
     { "name": "burger" },
     { "name": "calamari" },
+    { "name": "cheese" },
     { "name": "chicken" },
     { "name": "chips" },
     { "name": "curry" },

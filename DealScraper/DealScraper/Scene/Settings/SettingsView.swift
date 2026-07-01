@@ -10,6 +10,14 @@ struct SettingsView: View {
     var body: some View {
         Form {
             Section {
+                Button {
+                    viewModel.showStats()
+                } label: {
+                    Label("Stats", systemImage: "chart.bar")
+                }
+            }
+
+            Section {
                 apiKeyField(
                     title: "Google Places API Key",
                     text: $viewModel.googlePlacesAPIKey

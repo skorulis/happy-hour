@@ -1,12 +1,15 @@
 //Created by Alex Skorulis on 15/6/2026.
 
+import ASKCoordinator
 import Foundation
 import Knit
 import KnitMacros
 
 @MainActor
 @Observable
-final class SettingsViewModel {
+final class SettingsViewModel: CoordinatorViewModel {
+
+    weak var coordinator: ASKCoordinator.Coordinator?
 
     var googlePlacesAPIKey: String = ""
     var openRouterAPIKey: String = ""
@@ -30,5 +33,9 @@ final class SettingsViewModel {
         apiKeyStore.googlePlacesAPIKey = googlePlacesAPIKey
         apiKeyStore.openRouterAPIKey = openRouterAPIKey
         apiKeyStore.markdownerAPIKey = markdownerAPIKey
+    }
+
+    func showStats() {
+        coordinator?.push(MainPath.stats)
     }
 }

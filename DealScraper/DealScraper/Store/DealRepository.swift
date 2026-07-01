@@ -48,6 +48,27 @@ final class DealRepository {
         }
     }
 
+    func count(status: DealStatus? = nil) throws -> Int {
+        try store.dbQueue.read { db in
+            var request = Deal.all()
+            if let status {
+                request = request.filter(Column("status") == status.rawValue)
+            }
+            return try request.fetchCount(db)
+        }
+    }
+
+    func countDistinctSuburbsWithDeals() throws -> Int {
+        try store.dbQueue.read { db in
+            try Int.fetchOne(db, sql: """
+                SELECT COUNT(DISTINCT v.suburb_id)
+                FROM venue v
+                INNER JOIN deal d ON d.venue_id = v.id
+                WHERE v.suburb_id IS NOT NULL
+                """) ?? 0
+        }
+    }
+
     func countsByVenueId() throws -> [Int64: Int] {
         try store.dbQueue.read { db in
             let rows = try Row.fetchAll(db, sql: """
