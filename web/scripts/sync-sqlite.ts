@@ -17,7 +17,10 @@ type SqliteSuburb = {
   lat: number | null;
   lng: number | null;
   sqkm: number | null;
+  statistic_area: string | null;
 };
+
+const GREATER_SYDNEY_STATISTIC_AREA = "Greater Sydney";
 
 type SqliteVenue = {
   id: number;
@@ -163,6 +166,19 @@ async function main() {
       .returning({ id: schema.suburb.id });
 
     return upsertedSuburb.id;
+  }
+
+  const greaterSydneySuburbs = sqlite
+    .prepare(
+      "SELECT * FROM suburb WHERE statistic_area = ? ORDER BY id",
+    )
+    .all(GREATER_SYDNEY_STATISTIC_AREA) as SqliteSuburb[];
+
+  for (const suburbRow of greaterSydneySuburbs) {
+    await db.transaction(async (tx) => {
+      await upsertSuburb(tx, suburbRow);
+    });
+    syncedSuburbKeys.add(suburbKey(suburbRow.name, suburbRow.postcode));
   }
 
   for (const venueRow of venueRows) {
