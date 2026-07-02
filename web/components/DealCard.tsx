@@ -1,4 +1,9 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
+import Lightbox from "yet-another-react-lightbox";
+import "yet-another-react-lightbox/styles.css";
 import { FavoriteDealButton } from "@/components/FavoriteDealButton";
 import { isCreativeImageUrl } from "@/lib/search/creative-url";
 import type { DealSearchResult } from "@/lib/search/queries";
@@ -35,6 +40,7 @@ export function DealCard({
   const creativeImageUrl = isCreativeImageUrl(deal.imageUrl)
     ? deal.imageUrl
     : null;
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   return (
     <article
@@ -43,19 +49,28 @@ export function DealCard({
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
         {creativeImageUrl ? (
-          <a
-            href={creativeImageUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="shrink-0 self-start"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={creativeImageUrl}
-              alt={deal.title || "Deal image"}
-              className="max-h-[120px] max-w-[200px] rounded-lg object-contain"
+          <>
+            <button
+              type="button"
+              onClick={() => setLightboxOpen(true)}
+              className="shrink-0 self-start cursor-zoom-in"
+              aria-label="View full-size deal image"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={creativeImageUrl}
+                alt={deal.title || "Deal image"}
+                className="max-h-[120px] max-w-[200px] rounded-lg object-contain"
+              />
+            </button>
+            <Lightbox
+              open={lightboxOpen}
+              close={() => setLightboxOpen(false)}
+              slides={[{ src: creativeImageUrl, alt: deal.title || "Deal image" }]}
+              carousel={{ finite: true }}
+              render={{ buttonPrev: () => null, buttonNext: () => null }}
             />
-          </a>
+          </>
         ) : null}
         <div className="min-w-0 flex-1 space-y-2">
           <div className="flex items-start justify-between gap-2">

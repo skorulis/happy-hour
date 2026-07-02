@@ -6,37 +6,51 @@
         "groups": [
             "beer",
             "cocktails",
-            "wine"
+            "wine",
+            "whiskey",
+            "champagne",
+            "saki"
         ]
     },
     {
         "name": "beer",
+        "rank": 4,
         "groups": [
             "schooner",
             "pint",
-            "jugs"
+            "jugs",
+            "guinness",
+            "craft beer"
         ]
     },
-    
     { 
         "name": "cocktails",
+        "rank": 5,
         "groups": [
             "negroni",
             "martini",
-            "spritz"
+            "spritz",
+            "mojito"
         ]
     },
+    { "name": "aperitivo"},
+    { "name": "champagne"},
+    { "name": "craft beer"},
     { "name": "guinness"},
     { "name": "jugs" },
     { "name": "martini" },
+    { "name": "mojito" },
     { "name": "negroni" },
     { "name": "pint" },
     { "name": "porter" },
+    { "name": "saki" },
+    { "name": "sangria" },
     { "name": "schooner" },
     { "name": "spirits" },
     { "name": "spritz" },
     { "name": "tastingpaddle" },
     { "name": "wine" },
+    { "name": "whiskey" },
     { "name": "bottomless" },
     {
         "name": "happy hour",
@@ -48,6 +62,7 @@
         "groups": [
             "burger",
             "calamari",
+            "cheese",
             "chicken",
             "chips",
             "curry",
@@ -68,13 +83,16 @@
             "skewer",
             "steak",
             "taco",
-            "wings"
+            "wings",
+            "tapas"
         ]
     },
     { "name": "2-4-1", "hidden": true },
     { "name": "2 for 1", "groups": [ "2-4-1" ] },
+    { "name": "bao" },
     { "name": "burger" },
     { "name": "calamari" },
+    { "name": "cheese" },
     { "name": "chicken" },
     { "name": "chips" },
     { "name": "curry" },
@@ -111,6 +129,8 @@
         ]
     },
     { "name": "taco" },
+    { "name": "tapas" },
+    { "name": "tomahawk" },
     { "name": "wings" },
     {
         "name": "events",
@@ -132,13 +152,19 @@
     { "name": "night" },
     { "name": "bingo" },
     { "name": "comedy" },
+    { "name": "dj" },
     { "name": "hospo" },
     { "name": "hospitality" },
+    { "name": "punters club" },
+    { "name": "tarot" },
     { "name": "trivia" },
+    { "name": "kids eat free" },
     { "name": "jazz" },
     { "name": "karaoke" },
     { "name": "live music" },
     { "name": "meat tray" },
     { "name": "pool" },
-    { "name": "run club"}
+    { "name": "run club"},
+    { "name": "student night"},
+    { "name": "locals night"}
 ]

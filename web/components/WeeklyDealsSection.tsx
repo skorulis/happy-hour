@@ -12,14 +12,20 @@ type WeeklyDealsSectionProps = {
   deals: DealSearchResult[];
   initialSelectedDay?: number | null;
   showVenue?: boolean;
-  heading?: (count: number) => string;
+  heading?: (count: number, selectedDay: number | null) => string;
   emptyMessage?: string;
   emptyDayMessage?: (dayLabel: string) => string;
   isFavorite?: (dealId: number) => boolean;
   onToggleFavorite?: (dealId: number) => void;
 };
 
-const defaultHeading = (count: number) => `Weekly Deals (${count})`;
+const defaultHeading = (count: number, selectedDay: number | null) => {
+  if (selectedDay === null) {
+    return `Weekly Deals (${count})`;
+  }
+  const dayLabel = DAY_LABELS[selectedDay] ?? `Day ${selectedDay}`;
+  return `${dayLabel} Deals (${count})`;
+};
 const defaultEmptyMessage =
   "No approved deals have been synced for this venue yet.";
 const defaultEmptyDayMessage = (dayLabel: string) => `No deals on ${dayLabel}.`;
@@ -56,7 +62,7 @@ export function WeeklyDealsSection({
   return (
     <section className="space-y-4">
       <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
-        {heading(visibleCount)}
+        {heading(visibleCount, selectedDay)}
       </h2>
 
       {dealsByDay.length === 0 ? (
