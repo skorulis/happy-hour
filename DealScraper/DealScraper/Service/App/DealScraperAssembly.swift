@@ -115,6 +115,13 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
             )
         }
 
+        container.register(VenueHeroImageStore.self) { resolver in
+            VenueHeroImageStore(
+                venueRepository: resolver.venueRepository(),
+                imageFetcher: resolver.crawlImageFetcher()
+            )
+        }
+
         container.register(VenueWebsiteCrawler.self) { VenueWebsiteCrawler.make(resolver: $0) }
 
         container.register(SuburbCrawler.self) { SuburbCrawler.make(resolver: $0) }

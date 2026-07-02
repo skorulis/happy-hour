@@ -38,6 +38,7 @@ final class VenueWebsiteCrawler {
     private let imageDeduper: ImageDeduper
     private let dealAdvancedTextFilter: DealAdvancedTextFilter
     private let heroImageSelector: VenueHeroImageSelector
+    private let heroImageStore: VenueHeroImageStore
     private let dealSourceRepository: DealSourceRepository
     private let venueRepository: VenueRepository
     private let venueLinksRepository: VenueLinksRepository
@@ -53,6 +54,7 @@ final class VenueWebsiteCrawler {
         imageDeduper: ImageDeduper,
         dealAdvancedTextFilter: DealAdvancedTextFilter,
         heroImageSelector: VenueHeroImageSelector,
+        heroImageStore: VenueHeroImageStore,
         dealSourceRepository: DealSourceRepository,
         venueRepository: VenueRepository,
         venueLinksRepository: VenueLinksRepository
@@ -66,6 +68,7 @@ final class VenueWebsiteCrawler {
         self.imageDeduper = imageDeduper
         self.dealAdvancedTextFilter = dealAdvancedTextFilter
         self.heroImageSelector = heroImageSelector
+        self.heroImageStore = heroImageStore
         self.dealSourceRepository = dealSourceRepository
         self.venueRepository = venueRepository
         self.venueLinksRepository = venueLinksRepository
@@ -214,9 +217,9 @@ final class VenueWebsiteCrawler {
                         from: loadedPage.imageURLs,
                         venueName: venue.name
                     ) {
-                        try venueRepository.updateHeroImage(
+                        try await heroImageStore.setHeroImage(
                             venueId: venueId,
-                            url: heroURL.absoluteString
+                            remoteURL: heroURL
                         )
                     }
                 }

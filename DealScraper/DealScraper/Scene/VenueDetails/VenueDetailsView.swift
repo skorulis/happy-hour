@@ -32,8 +32,11 @@ struct VenueDetailsView: View {
                 heroImageURLString = ""
             }
             Button("Save") {
-                viewModel.setHeroImage(urlString: heroImageURLString)
+                let urlString = heroImageURLString
                 heroImageURLString = ""
+                Task {
+                    await viewModel.setHeroImage(urlString: urlString)
+                }
             }
             .disabled(!isValidHeroImageURL(heroImageURLString))
         } message: {

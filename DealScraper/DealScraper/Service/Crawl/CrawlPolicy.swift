@@ -14,6 +14,7 @@ enum CrawlPolicy {
         "https://plateitforward.org.au/",
         "https://sundayco.com/",
         "https://sydneybrewery.com/",
+        "https://www.langhamhotels.com/",
         "https://www.liquidandlarder.com.au/",
         "https://www.lovetillygroup.com/",
         "https://www.muchogroup.com.au/",

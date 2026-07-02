@@ -32,6 +32,7 @@
             "spritz"
         ]
     },
+    { "name": "aperitivo"},
     { "name": "champagne"},
     { "name": "craft beer"},
     { "name": "guinness"},
@@ -80,7 +81,8 @@
             "skewer",
             "steak",
             "taco",
-            "wings"
+            "wings",
+            "tapas"
         ]
     },
     { "name": "2-4-1", "hidden": true },
@@ -124,6 +126,7 @@
         ]
     },
     { "name": "taco" },
+    { "name": "tapas" },
     { "name": "tomahawk" },
     { "name": "wings" },
     {
@@ -157,5 +160,7 @@
     { "name": "live music" },
     { "name": "meat tray" },
     { "name": "pool" },
-    { "name": "run club"}
+    { "name": "run club"},
+    { "name": "student night"},
+    { "name": "locals night"}
 ]

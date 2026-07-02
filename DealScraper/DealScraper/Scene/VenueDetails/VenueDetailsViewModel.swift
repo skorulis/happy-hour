@@ -59,6 +59,7 @@ final class VenueDetailsViewModel {
     private let dealSourceRepository: DealSourceRepository
     private let dealRepository: DealRepository
     private let venueLinksRepository: VenueLinksRepository
+    private let heroImageStore: VenueHeroImageStore
     private let jobQueue: JobQueue
     private let llmModelStore: LLMModelStore
 
@@ -69,6 +70,7 @@ final class VenueDetailsViewModel {
         dealSourceRepository: DealSourceRepository,
         dealRepository: DealRepository,
         venueLinksRepository: VenueLinksRepository,
+        heroImageStore: VenueHeroImageStore,
         jobQueue: JobQueue,
         llmModelStore: LLMModelStore
     ) {
@@ -77,6 +79,7 @@ final class VenueDetailsViewModel {
         self.dealSourceRepository = dealSourceRepository
         self.dealRepository = dealRepository
         self.venueLinksRepository = venueLinksRepository
+        self.heroImageStore = heroImageStore
         self.jobQueue = jobQueue
         self.llmModelStore = llmModelStore
         openRouterModel = llmModelStore.openRouterModel
@@ -147,14 +150,14 @@ final class VenueDetailsViewModel {
         guard let venueId = venue?.id, canClearHeroImage else { return }
 
         do {
-            try venueRepository.updateHeroImage(venueId: venueId, url: nil)
+            try heroImageStore.clearHeroImage(venueId: venueId)
             load()
         } catch {
             // Keep the current UI state if persistence fails.
         }
     }
 
-    func setHeroImage(urlString: String) {
+    func setHeroImage(urlString: String) async {
         guard let venueId = venue?.id else { return }
 
         let trimmed = urlString.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -166,7 +169,7 @@ final class VenueDetailsViewModel {
         }
 
         do {
-            try venueRepository.updateHeroImage(venueId: venueId, url: trimmed)
+            try await heroImageStore.setHeroImage(venueId: venueId, remoteURL: url)
             load()
         } catch {
             // Keep the current UI state if persistence fails.
@@ -369,6 +372,7 @@ final class VenueDetailsViewModel {
 
         do {
             jobQueue.clearAll(for: venueId)
+            try heroImageStore.deleteStoredImage(for: venueId)
             guard try venueRepository.delete(id: venueId) else {
                 deleteVenueState = .failed(message: "Venue not found.")
                 return false
