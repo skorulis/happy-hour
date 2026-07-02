@@ -8,7 +8,7 @@ nonisolated enum DealTextNormalizer {
         title
             .components(separatedBy: .newlines)
             .joined(separator: " ")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .cleanLine()
     }
 
     static func prepareDetails(_ details: [String]) -> [String] {

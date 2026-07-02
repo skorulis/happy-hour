@@ -570,15 +570,15 @@ struct DealMapperTests {
         #expect(bottomless.days == [.friday, .saturday, .sunday])
         #expect(bottomless.times == [.between(12 * 60, 15 * 60 + 15)])
 
-        let jerkWings = try #require(deals.first { $0.title == "Tuesday | $1 Jerk Wings" })
+        let jerkWings = try #require(deals.first { $0.title == "| $1 Jerk Wings" })
         #expect(jerkWings.days == [.tuesday])
         #expect(jerkWings.times == [.allDay])
 
-        let seafoodBoil = try #require(deals.first { $0.title == "Wednesday | Seafood Boil" })
+        let seafoodBoil = try #require(deals.first { $0.title == "| Seafood Boil" })
         #expect(seafoodBoil.days == [.wednesday])
         #expect(seafoodBoil.times == [.allDay])
 
-        let soulFood = try #require(deals.first { $0.title == "Sunday | Soul Food Platter" })
+        let soulFood = try #require(deals.first { $0.title == "| Soul Food Platter" })
         #expect(soulFood.days == [.sunday])
         #expect(soulFood.times == [.allDay])
 
@@ -596,11 +596,11 @@ struct DealMapperTests {
 
         #expect(deals.count == 2)
 
-        let happyHour = try #require(deals.first { $0.title == "**Butter Happy Hour**" })
+        let happyHour = try #require(deals.first { $0.title == "Butter Happy Hour" })
         #expect(happyHour.days == [.monday, .tuesday, .wednesday, .thursday, .friday])
         #expect(happyHour.times == [.between(15 * 60, 18 * 60)])
 
-        let lateNight = try #require(deals.first { $0.title == "**Late Night Feast**" })
+        let lateNight = try #require(deals.first { $0.title == "Late Night Feast" })
         #expect(lateNight.times == [.from(21 * 60)])
     }
 

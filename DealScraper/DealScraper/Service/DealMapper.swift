@@ -266,14 +266,14 @@ nonisolated enum DealMapper {
             return true
         }
 
-        if !lhs.times.isEmpty && lhs.times == rhs.times {
-            return true
-        }
-
+        // Matching times alone are not enough to merge: distinct deals (e.g. a happy
+        // hour and a cocktail special) often run in the same window but describe
+        // different products. Only combine deals that share a day and where one side
+        // is missing times, so the incomplete deal can inherit the other's window.
         let sharedDays = Set(lhs.days).intersection(rhs.days)
         guard !sharedDays.isEmpty else { return false }
 
-        return lhs.times.isEmpty || rhs.times.isEmpty || lhs.times == rhs.times
+        return lhs.times.isEmpty || rhs.times.isEmpty
     }
 
     private static func dealText(_ deal: LegacyDeal) -> [String] {

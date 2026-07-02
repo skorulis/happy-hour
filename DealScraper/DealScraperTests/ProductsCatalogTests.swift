@@ -8,7 +8,7 @@ struct ProductsCatalogTests {
 
     @Test func loadsAllProductNamesFromJSON() {
         let names = ProductsCatalog.loadProductNames()
-        #expect(names.count == 60)
+        #expect(names.count == 78)
         #expect(names.contains("beer"))
         #expect(names.contains("happy hour"))
         #expect(names.contains("2 for 1"))
