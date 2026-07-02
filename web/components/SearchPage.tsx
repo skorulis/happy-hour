@@ -13,7 +13,7 @@ import {
   filtersToSearchParams,
   parseViewMode,
   searchParamsEqual,
-  searchParamsToFilters,
+  searchParamsToInitialFilters,
   timeRangeKey,
   whatTokensEqual,
   whereFilterKey,
@@ -49,13 +49,13 @@ export function SearchPage() {
   );
 
   const [filters, setFilters] = useState<SearchFilters>(() =>
-    searchParamsToFilters(searchParams),
+    searchParamsToInitialFilters(searchParams),
   );
   const [viewMode, setViewMode] = useState<SearchViewMode>(() =>
     parseViewMode(searchParams),
   );
   const [debouncedWhat, setDebouncedWhat] = useState<string[]>(
-    () => searchParamsToFilters(searchParams).what,
+    () => searchParamsToInitialFilters(searchParams).what,
   );
   const [deals, setDeals] = useState<DealSearchResult[]>([]);
   const [nearbyDeals, setNearbyDeals] = useState<DealSearchResult[]>([]);
@@ -78,7 +78,7 @@ export function SearchPage() {
       syncedParamsRef.current = current;
 
       const params = new URLSearchParams(current);
-      const fromUrl = searchParamsToFilters(params);
+      const fromUrl = searchParamsToInitialFilters(params);
       setFilters(fromUrl);
       setDebouncedWhat(fromUrl.what);
       setViewMode(parseViewMode(params));

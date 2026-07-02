@@ -1,6 +1,7 @@
 import type { SearchFilters } from "@/components/search/SearchBar";
 import type { TimeRange } from "@/components/search/DayPicker";
 import type { WhereFilter } from "@/components/search/SuburbSelect";
+import { currentCalendarWeekday } from "@/lib/search/schedule";
 
 export type SearchViewMode = "list" | "map";
 
@@ -250,6 +251,21 @@ export function searchParamsToFilters(params: URLSearchParams): SearchFilters {
     where: parseWhereFilter(params),
     what: parseWhatParam(params.get("q")),
   };
+}
+
+/**
+ * Filters for the main search page. When the URL has no explicit `days` filter,
+ * defaults to today's weekday so the page shows today's deals rather than every day.
+ */
+export function searchParamsToInitialFilters(
+  params: URLSearchParams,
+): SearchFilters {
+  const filters = searchParamsToFilters(params);
+  const daysParam = params.get("days");
+  if (daysParam === null || daysParam.trim() === "") {
+    return { ...filters, days: [currentCalendarWeekday()] };
+  }
+  return filters;
 }
 
 export function filtersToApiSearchParams(
