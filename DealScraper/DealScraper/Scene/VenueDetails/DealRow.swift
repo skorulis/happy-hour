@@ -9,6 +9,7 @@ struct DealRow: View {
     var onStatusChange: ((DealStatus) -> Void)?
     var onEdit: ((EditDealDraft) -> Void)?
     var onDuplicate: (() -> Void)?
+    var onDelete: (() -> Void)?
 
     @State private var isEditing = false
 
@@ -17,12 +18,13 @@ struct DealRow: View {
             maybeImage
             mainContent
 
-            if onEdit != nil || onDuplicate != nil || onStatusChange != nil {
+            if onEdit != nil || onDuplicate != nil || onStatusChange != nil || onDelete != nil {
                 Spacer(minLength: 8)
 
                 VStack(spacing: 8) {
                     maybeStatusButtons
                     actionButtons
+                    maybeDeleteButton
                 }
             }
         }
@@ -49,6 +51,31 @@ struct DealRow: View {
         }
     }
     
+    @ViewBuilder
+    private var maybeDeleteButton: some View {
+        if onDelete != nil {
+            Button {
+                onDelete?()
+            } label: {
+                Image(systemName: "trash")
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 32, height: 32)
+                    .background {
+                        Circle()
+                            .fill(.clear)
+                    }
+                    .overlay {
+                        Circle()
+                            .strokeBorder(Color.secondary.opacity(0.6), lineWidth: 1.5)
+                    }
+                    .contentShape(Circle())
+            }
+            .buttonStyle(.plain)
+            .help("Delete deal")
+        }
+    }
+
     @ViewBuilder
     private var actionButtons: some View {
         HStack(spacing: 8) {

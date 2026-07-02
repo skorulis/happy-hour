@@ -9,19 +9,22 @@ nonisolated struct DealExtractionPayload: Codable, Sendable {
         let conditions: [String]
         let days: [String]
         let times: [String]
+        let promotionDates: [String]?
 
         init(
             title: String,
             details: [String],
             conditions: [String] = [],
             days: [String],
-            times: [String]
+            times: [String],
+            promotionDates: [String]? = nil
         ) {
             self.title = title
             self.details = details
             self.conditions = conditions
             self.days = days
             self.times = times
+            self.promotionDates = promotionDates
         }
 
         init(from decoder: Decoder) throws {
@@ -31,6 +34,7 @@ nonisolated struct DealExtractionPayload: Codable, Sendable {
             conditions = try Self.decodeStringOrArrayIfPresent(from: container, forKey: .conditions)
             days = try Self.decodeStringOrArray(from: container, forKey: .days)
             times = try Self.decodeStringOrArray(from: container, forKey: .times)
+            promotionDates = try Self.decodeOptionalStringOrArray(from: container, forKey: .promotionDates)
         }
 
         private static func decodeStringOrArray(
@@ -57,6 +61,17 @@ nonisolated struct DealExtractionPayload: Codable, Sendable {
             return try decodeStringOrArray(from: container, forKey: key)
         }
 
+        private static func decodeOptionalStringOrArray(
+            from container: KeyedDecodingContainer<CodingKeys>,
+            forKey key: CodingKeys
+        ) throws -> [String]? {
+            guard container.contains(key) else { return nil }
+            if try container.decodeNil(forKey: key) {
+                return nil
+            }
+            return try decodeStringOrArray(from: container, forKey: key)
+        }
+
         func encode(to encoder: Encoder) throws {
             var container = encoder.container(keyedBy: CodingKeys.self)
             try container.encode(title, forKey: .title)
@@ -64,6 +79,7 @@ nonisolated struct DealExtractionPayload: Codable, Sendable {
             try container.encode(conditions, forKey: .conditions)
             try container.encode(days, forKey: .days)
             try container.encode(times, forKey: .times)
+            try container.encode(promotionDates, forKey: .promotionDates)
         }
 
         private enum CodingKeys: String, CodingKey {
@@ -72,6 +88,7 @@ nonisolated struct DealExtractionPayload: Codable, Sendable {
             case conditions
             case days
             case times
+            case promotionDates
         }
     }
 

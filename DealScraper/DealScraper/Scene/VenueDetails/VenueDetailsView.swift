@@ -532,6 +532,9 @@ struct VenueDetailsView: View {
                         },
                         onDuplicate: {
                             viewModel.duplicateDeal(item)
+                        },
+                        onDelete: {
+                            viewModel.deleteDeal(item)
                         }
                     )
                 }

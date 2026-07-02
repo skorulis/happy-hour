@@ -57,6 +57,7 @@ final class OpenRouterVenueDealExtractor: VenueDealExtractor, @unchecked Sendabl
                             material: material
                         )
                     )
+                    Self.logPromotionDates(from: payload)
                     extractions.append(SourcedDealExtraction(material: material, deals: payload.deals))
                 case .webpage:
                     let instructions = VisionVenueDealExtractorSupport.perSourceInstructions(
@@ -79,6 +80,7 @@ final class OpenRouterVenueDealExtractor: VenueDealExtractor, @unchecked Sendabl
                             instructions: instructions
                         )
                     }
+                    Self.logPromotionDates(from: payload)
                     extractions.append(SourcedDealExtraction(material: material, deals: payload.deals))
                 case .pdf:
                     let instructions = VisionVenueDealExtractorSupport.perSourceInstructions(
@@ -95,6 +97,7 @@ final class OpenRouterVenueDealExtractor: VenueDealExtractor, @unchecked Sendabl
                         model: model,
                         instructions: instructions
                     )
+                    Self.logPromotionDates(from: payload)
                     extractions.append(SourcedDealExtraction(material: material, deals: payload.deals))
                 }
             } catch {
@@ -112,5 +115,13 @@ final class OpenRouterVenueDealExtractor: VenueDealExtractor, @unchecked Sendabl
             errors: errors,
             duration: Date().timeIntervalSince(startTime)
         )
+    }
+
+    private nonisolated static func logPromotionDates(from payload: DealExtractionPayload) {
+        for deal in payload.deals {
+            if let dates = deal.promotionDates, !dates.isEmpty {
+                print("EXTRACT: promotionDates for '\(deal.title)': \(dates)")
+            }
+        }
     }
 }

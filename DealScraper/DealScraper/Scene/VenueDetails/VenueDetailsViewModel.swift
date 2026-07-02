@@ -309,6 +309,17 @@ final class VenueDetailsViewModel {
         }
     }
 
+    func deleteDeal(_ item: DealWithSchedules) {
+        guard let id = item.deal.id, canDeleteDeals else { return }
+
+        do {
+            guard try dealRepository.delete(id: id) else { return }
+            deals.removeAll { $0.deal.id == id }
+        } catch {
+            // Keep the current UI state if persistence fails.
+        }
+    }
+
     func updateDeal(_ item: DealWithSchedules, draft: EditDealDraft, status: DealStatus = .approved) {
         guard let id = item.deal.id else { return }
 

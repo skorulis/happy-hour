@@ -40,8 +40,12 @@ enum VisionDealAPI {
                             "type": "array",
                             "items": ["type": "string"],
                         ],
+                        "promotionDates": [
+                            "type": ["array", "null"],
+                            "items": ["type": "string"],
+                        ],
                     ],
-                    "required": ["title", "details", "conditions", "days", "times"],
+                    "required": ["title", "details", "conditions", "days", "times", "promotionDates"],
                     "additionalProperties": false,
                 ],
             ],
