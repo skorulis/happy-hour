@@ -15,26 +15,19 @@ nonisolated enum DealMapper {
     }
 
     nonisolated static func map(_ deal: DealExtractionPayload.RawDeal) -> LegacyDeal? {
-        var title = deal.title
-            .components(separatedBy: .newlines)
-            .joined(separator: " ")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-        var details = deal.details
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
+        var title = DealTextNormalizer.prepareTitle(deal.title)
+        var details = DealTextNormalizer.prepareDetails(deal.details)
         guard let dayResolved = resolveDayInTitle(title: title, details: details) else { return nil }
         (title, details) = dayResolved
         (title, details) = withPriceOnlyTitle(title: title, details: details)
         (title, details) = withLeadingPriceInTitle(title: title, details: details)
         title = stripTimeFromTitle(title)
-        title = titleCased(title)
+        title = DealTextNormalizer.formatTitle(title)
         if !title.isEmpty, FilterKeywords.containsExcludedKeyword(title) {
             return nil
         }
-        details = details.map(sentenceCased)
-        let conditions = deal.conditions
-            .map { normalizeCondition($0) }
-            .filter { !$0.isEmpty }
+        details = DealTextNormalizer.normalizeDetails(details)
+        let conditions = DealTextNormalizer.normalizeConditions(deal.conditions)
         guard !title.isEmpty || !details.isEmpty || !conditions.isEmpty else { return nil }
 
         let days = DealDay.parseAll(in: normalizedDayStrings(deal.days))
@@ -91,12 +84,12 @@ nonisolated enum DealMapper {
     }
 
     private static func withPriceOnlyTitle(title: String, details: [String]) -> (title: String, details: [String]) {
-        guard isPriceLine(title), let (firstLine, remainingDetails) = popFirstDetailLine(from: details) else {
+        guard DealTextNormalizer.isPriceLine(title), let (firstLine, remainingDetails) = popFirstDetailLine(from: details) else {
             return (title, details)
         }
 
         let resolvedTitle: String
-        if normalizeLine(title).contains(normalizeLine(firstLine)) {
+        if DealTextNormalizer.comparisonKey(title).contains(DealTextNormalizer.comparisonKey(firstLine)) {
             resolvedTitle = title
         } else {
             resolvedTitle = "\(title) \(firstLine)"
@@ -129,14 +122,14 @@ nonisolated enum DealMapper {
     }
 
     private static func withLeadingPriceInTitle(title: String, details: [String]) -> (title: String, details: [String]) {
-        guard let firstDetail = details.first, isPriceLine(firstDetail) else {
+        guard let firstDetail = details.first, DealTextNormalizer.isPriceLine(firstDetail) else {
             return (title, details)
         }
 
         let resolvedTitle: String
         if title.isEmpty {
             resolvedTitle = firstDetail
-        } else if normalizeLine(title).contains(normalizeLine(firstDetail)) {
+        } else if DealTextNormalizer.comparisonKey(title).contains(DealTextNormalizer.comparisonKey(firstDetail)) {
             resolvedTitle = title
         } else {
             resolvedTitle = "\(title) \(firstDetail)"
@@ -145,32 +138,15 @@ nonisolated enum DealMapper {
         return (resolvedTitle, Array(details.dropFirst()))
     }
 
-    private static func isPriceLine(_ line: String) -> Bool {
-        let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return false }
-
-        let range = NSRange(trimmed.startIndex..., in: trimmed)
-        return priceLinePatterns.contains { pattern in
-            guard let regex = try? NSRegularExpression(pattern: pattern) else { return false }
-            guard let match = regex.firstMatch(in: trimmed, range: range) else { return false }
-            return match.range.location == 0 && match.range.length == trimmed.utf16.count
-        }
-    }
-
-    private static let priceLinePatterns = [
-        #"(?i)^\$\s*\d+(?:\.\d{2})?[a-z]*$"#,
-        #"(?i)^half[\s-]?price$"#,
-    ]
-
     private static func deduplicated(_ deal: LegacyDeal) -> LegacyDeal {
-        let titleKey = normalizeLine(deal.title)
+        let titleKey = DealTextNormalizer.comparisonKey(deal.title)
         var excludeForDetails = Set<String>()
         if !titleKey.isEmpty {
             excludeForDetails.insert(titleKey)
         }
 
         let details = deduplicatedLines(deal.details, excluding: excludeForDetails)
-        let detailKeys = Set(details.map(normalizeLine).filter { !$0.isEmpty })
+        let detailKeys = Set(details.map(DealTextNormalizer.comparisonKey).filter { !$0.isEmpty })
         let excludeForConditions = excludeForDetails.union(detailKeys)
         let conditions = deduplicatedLines(deal.conditions, excluding: excludeForConditions)
 
@@ -187,7 +163,7 @@ nonisolated enum DealMapper {
         var seen: Set<String> = []
         var result: [String] = []
         for line in lines {
-            let key = normalizeLine(line)
+            let key = DealTextNormalizer.comparisonKey(line)
             guard !key.isEmpty, !excluded.contains(key), !seen.contains(key) else { continue }
             seen.insert(key)
             result.append(line)
@@ -239,53 +215,6 @@ nonisolated enum DealMapper {
 
         return String(text[..<matchRange.lowerBound])
             .trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
-    private static func titleCased(_ title: String) -> String {
-        guard !title.isEmpty, !isPriceLine(title) else { return title }
-        return title.capitalized
-    }
-
-    private static func sentenceCased(_ text: String) -> String {
-        text
-            .components(separatedBy: .newlines)
-            .map { line in
-                guard !line.isEmpty else { return line }
-                return sentenceCasedLine(line)
-            }
-            .joined(separator: "\n")
-    }
-
-    private static func sentenceCasedLine(_ line: String) -> String {
-        let lowercased = line.lowercased()
-        guard let firstLetterIndex = lowercased.firstIndex(where: { $0.isLetter }) else {
-            return lowercased
-        }
-        var result = lowercased
-        result.replaceSubrange(
-            firstLetterIndex ... firstLetterIndex,
-            with: String(lowercased[firstLetterIndex]).uppercased()
-        )
-        return result
-    }
-
-    private static func normalizeLine(_ line: String) -> String {
-        line
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .lowercased()
-            .split(whereSeparator: \.isWhitespace)
-            .joined(separator: " ")
-    }
-
-    private static func normalizeCondition(_ string: String) -> String {
-        var trimmed = string.trimmingCharacters(in: .whitespacesAndNewlines)
-        if trimmed.hasPrefix("*") {
-            trimmed = String(trimmed.dropFirst()).trimmingCharacters(in: .whitespacesAndNewlines)
-        }
-        if trimmed.hasPrefix("\\*") {
-            trimmed = String(trimmed.dropFirst().dropFirst()).trimmingCharacters(in: .whitespacesAndNewlines)
-        }
-        return trimmed
     }
 
     private nonisolated static func supplementTimes(from texts: [String], into deal: LegacyDeal) -> LegacyDeal {
