@@ -93,6 +93,64 @@ struct VenueRepositoryTests {
         #expect(found.json.contains("openNow"))
     }
 
+    @Test func upsertPlacesPrefersAddressSuburbOverCrawlSuburb() throws {
+        let store = SQLStore.inMemory()
+        let repository = VenueRepository(store: store)
+        let crawlSuburbId = try store.dbQueue.write { db -> Int64 in
+            var mortlake = Suburb(name: "Mortlake", postcode: "2137", state: "NSW")
+            try mortlake.insert(db)
+            var gladesville = Suburb(name: "Gladesville", postcode: "2111", state: "NSW")
+            try gladesville.insert(db)
+            return try #require(mortlake.id)
+        }
+
+        let place = GooglePlace(
+            id: "places/ChIJGladesville",
+            displayName: .init(text: "Victoria Rd Pub", languageCode: "en"),
+            location: .init(latitude: -33.8270, longitude: 151.1270),
+            formattedAddress: "386 Victoria Rd, Gladesville NSW 2111",
+            websiteUri: "https://victoriardpub.example.com",
+            types: ["bar"]
+        )
+
+        try repository.upsert(places: [place], suburbId: crawlSuburbId)
+
+        let found = try #require(try repository.find(googleMapId: "places/ChIJGladesville"))
+        let gladesvilleId = try store.dbQueue.read { db in
+            try Suburb
+                .filter(Column("name") == "Gladesville")
+                .filter(Column("postcode") == "2111")
+                .fetchOne(db)?
+                .id
+        }
+        #expect(found.suburbId == gladesvilleId)
+        #expect(found.suburbId != crawlSuburbId)
+    }
+
+    @Test func upsertPlacesFallsBackToCrawlSuburbWhenAddressUnparseable() throws {
+        let store = SQLStore.inMemory()
+        let repository = VenueRepository(store: store)
+        let crawlSuburbId = try store.dbQueue.write { db -> Int64 in
+            var suburb = Suburb(name: "Newtown", postcode: "2042", state: "NSW")
+            try suburb.insert(db)
+            return try #require(suburb.id)
+        }
+
+        let place = GooglePlace(
+            id: "places/ChIJNoAddress",
+            displayName: .init(text: "Mystery Pub", languageCode: "en"),
+            location: .init(latitude: -33.8700, longitude: 151.2100),
+            formattedAddress: nil,
+            websiteUri: "https://mysterypub.example.com",
+            types: ["bar"]
+        )
+
+        try repository.upsert(places: [place], suburbId: crawlSuburbId)
+
+        let found = try #require(try repository.find(googleMapId: "places/ChIJNoAddress"))
+        #expect(found.suburbId == crawlSuburbId)
+    }
+
     @Test func upsertPlacesMapsGooglePlaceToVenue() throws {
         let store = SQLStore.inMemory()
         let repository = VenueRepository(store: store)

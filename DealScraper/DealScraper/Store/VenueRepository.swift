@@ -15,10 +15,9 @@ final class VenueRepository {
     func upsert(_ venue: Venue, preferredSuburbId: Int64? = nil) throws -> Bool {
         try store.dbQueue.write { db in
             var mutableVenue = venue
-            if let preferredSuburbId {
+            try Self.linkSuburb(for: &mutableVenue, in: db)
+            if mutableVenue.suburbId == nil, let preferredSuburbId {
                 mutableVenue.suburbId = preferredSuburbId
-            } else {
-                try Self.linkSuburb(for: &mutableVenue, in: db)
             }
 
             if let existing = try Venue
