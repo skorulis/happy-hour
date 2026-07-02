@@ -27,7 +27,7 @@ final class CrawlPDFCache: @unchecked Sendable {
         return fileURL
     }
 
-    func store(data: Data, hash: String, fileExtension: String) throws -> URL {
+    func store(data: Data, hash: String, fileExtension: String = "pdf") throws -> URL {
         let fileURL = directory.appendingPathComponent(hash)
 
         if FileManager.default.fileExists(atPath: fileURL.path) {

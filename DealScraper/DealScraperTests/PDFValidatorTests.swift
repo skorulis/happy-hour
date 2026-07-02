@@ -187,11 +187,11 @@ struct PDFValidatorTests {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
         let cache = CrawlPDFCache(directory: directory)
-        let pdfData = try Self.makePDFData(text: "Weekly happy hour menu")
+        let pdfData = try Self.makePDFData(text: "Weekly happy hour menu. Cheeseburger tuesdays")
         let url2024 = URL(string: "https://example.com/menu-2024.pdf")!
         let url2026 = URL(string: "https://example.com/menu-2026.pdf")!
-        _ = try cache.store(data: pdfData, hash: URLNormalizer.hash(url2024), fileExtension: "pdf")
-        _ = try cache.store(data: pdfData, hash: URLNormalizer.hash(url2026), fileExtension: "pdf")
+        _ = try cache.store(data: pdfData, hash: URLNormalizer.hash(url2024))
+        _ = try cache.store(data: pdfData, hash: URLNormalizer.hash(url2026))
 
         let validator = PDFValidator(
             fetcher: CrawlPDFFetcher(
