@@ -53,7 +53,7 @@ nonisolated enum DealTextNormalizer {
     }
 
     private static let priceLinePatterns = [
-        #"(?i)^\$\s*\d+(?:\.\d{2})?[a-z]*$"#,
+        #"(?i)^\$\s*\d+(?:\.\d{1,2})?[a-z]*$"#,
         #"(?i)^half[\s-]?price$"#,
     ]
 
@@ -89,5 +89,14 @@ nonisolated enum DealTextNormalizer {
             trimmed = String(trimmed.dropFirst().dropFirst()).trimmingCharacters(in: .whitespacesAndNewlines)
         }
         return trimmed
+    }
+}
+
+private extension String {
+    
+    nonisolated static let characterSet = CharacterSet.whitespacesAndNewlines.union(CharacterSet(charactersIn: "\\*._|"))
+    
+    nonisolated func cleanLine() -> String {
+        trimmingCharacters(in: Self.characterSet)
     }
 }
