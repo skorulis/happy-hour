@@ -99,15 +99,20 @@ enum DealScheduleFormatting {
     }
 
     private static func formattedMinute(_ minute: Int) -> String {
-        let hours = minute / 60
-        let minutes = minute % 60
+        let normalizedMinute = minutesWithinDay(minute)
+        let hours = normalizedMinute / 60
+        let minutes = normalizedMinute % 60
         return String(format: "%d:%02d", hours, minutes)
+    }
+
+    static func minutesWithinDay(_ minute: Int) -> Int {
+        minute % 1_440
     }
 
     static func date(fromMinutes minutes: Int) -> Date {
         var components = DateComponents()
         // 24:00 is stored as 1440 minutes but DatePicker only represents midnight as 00:00.
-        let normalizedMinutes = minutes == 1_440 ? 0 : minutes
+        let normalizedMinutes = minutesWithinDay(minutes)
         components.hour = normalizedMinutes / 60
         components.minute = normalizedMinutes % 60
         return Calendar.current.date(from: components) ?? .now
@@ -122,6 +127,23 @@ enum DealScheduleFormatting {
     static func endMinutes(from date: Date) -> Int {
         let minutes = minutes(from: date)
         return minutes == 0 ? 1_440 : minutes
+    }
+
+    static func endMinutes(from date: Date, startMinute: Int) -> Int {
+        normalizedEndMinute(endMinute: endMinutes(from: date), startMinute: startMinute)
+    }
+
+    static func normalizedEndMinute(endMinute: Int, startMinute: Int) -> Int {
+        if endMinute == 1_440 {
+            return DealHours.adjustedEndMinute(start: startMinute, end: 0)
+        }
+        if endMinute > 1_440 {
+            return DealHours.adjustedEndMinute(
+                start: startMinute,
+                end: minutesWithinDay(endMinute)
+            )
+        }
+        return DealHours.adjustedEndMinute(start: startMinute, end: endMinute)
     }
 
     static func sortedSchedules(_ schedules: [DealSchedule]) -> [DealSchedule] {

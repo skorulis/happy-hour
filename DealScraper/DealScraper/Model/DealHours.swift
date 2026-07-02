@@ -10,6 +10,20 @@ nonisolated enum DealHours: Equatable, Hashable {
 
     private static let minMinutes = 420  // 7 AM
     private static let maxMinutes = 1260 // 9 PM
+    private static let morningCutoffMinute = 10 * 60
+    private static let minutesPerDay = 24 * 60
+
+    static func makeBetween(start: Int, end: Int) -> DealHours {
+        .between(start, adjustedEndMinute(start: start, end: end))
+    }
+
+    /// When end is earlier on the clock than start and falls before 10 AM, treat it as the next day.
+    static func adjustedEndMinute(start: Int, end: Int) -> Int {
+        if end < start && end < morningCutoffMinute {
+            return end + minutesPerDay
+        }
+        return end
+    }
 
     static func toMinutes(string: String) -> Int? {
         let normalized = normalizeTimeComponent(string)
@@ -133,7 +147,7 @@ nonisolated enum DealHours: Equatable, Hashable {
             if parts.count == 2,
                let start = toMinutes(string: parts[0]),
                let end = toMinutes(string: parts[1]) {
-                return .between(start, end)
+                return makeBetween(start: start, end: end)
             }
         }
 

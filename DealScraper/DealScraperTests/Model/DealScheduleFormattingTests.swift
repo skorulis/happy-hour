@@ -79,6 +79,35 @@ struct DealScheduleFormattingTests {
         #expect(DealScheduleFormatting.endMinutes(from: sixPM) == 18 * 60)
     }
 
+    @Test func endMinutesAdjustsOvernightEndRelativeToStart() {
+        let twoAM = DealScheduleFormatting.date(fromMinutes: 2 * 60)
+        #expect(
+            DealScheduleFormatting.endMinutes(from: twoAM, startMinute: 22 * 60) == 26 * 60
+        )
+    }
+
+    @Test func normalizedEndMinutePreservesStoredOvernightEndWhenStartChanges() {
+        #expect(
+            DealScheduleFormatting.normalizedEndMinute(endMinute: 26 * 60, startMinute: 16 * 60)
+                == 26 * 60
+        )
+    }
+
+    @Test func normalizedEndMinuteRepairsIncorrectlyStoredOvernightEnd() {
+        #expect(
+            DealScheduleFormatting.normalizedEndMinute(endMinute: 2 * 60, startMinute: 22 * 60)
+                == 26 * 60
+        )
+    }
+
+    @Test func formattedSummaryShowsOvernightEndTimeOnNextDay() {
+        let schedules = [
+            schedule(day: 6, start: 22 * 60, end: 26 * 60),
+        ]
+
+        #expect(DealScheduleFormatting.formattedSummary(schedules) == "Fri 22:00–2:00")
+    }
+
     @Test func dealWithSchedulesUsesFormattedSummary() {
         let item = DealWithSchedules(
             deal: Deal(

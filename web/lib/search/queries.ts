@@ -82,9 +82,14 @@ export type VenueDetailResult = VenueSearchResult & {
   deals: DealSearchResult[];
 };
 
+function previousCalendarWeekday(day: number): number {
+  return day === 1 ? 7 : day - 1;
+}
+
 function activeNowScheduleFilter(now = new Date()): SQL {
   const day = currentCalendarWeekday(now);
   const minute = currentMinuteOfDay(now);
+  const previousDay = previousCalendarWeekday(day);
 
   return exists(
     db
@@ -93,9 +98,18 @@ function activeNowScheduleFilter(now = new Date()): SQL {
       .where(
         and(
           eq(dealSchedule.dealId, deal.id),
-          eq(dealSchedule.dayOfWeek, day),
-          sql`${dealSchedule.startMinute} <= ${minute}`,
-          sql`${dealSchedule.endMinute} > ${minute}`,
+          or(
+            and(
+              eq(dealSchedule.dayOfWeek, day),
+              sql`${dealSchedule.startMinute} <= ${minute}`,
+              sql`${dealSchedule.endMinute} > ${minute}`,
+            ),
+            and(
+              eq(dealSchedule.dayOfWeek, previousDay),
+              sql`${dealSchedule.endMinute} > ${1440}`,
+              sql`${minute} < ${dealSchedule.endMinute} - ${1440}`,
+            ),
+          ),
         ),
       ),
   );

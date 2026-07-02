@@ -123,9 +123,13 @@ export function currentMinuteOfDay(date = new Date()): number {
   return date.getHours() * 60 + date.getMinutes();
 }
 
+export function minutesWithinDay(minute: number): number {
+  return minute % 1440;
+}
+
 export function formatMinute(minute: number): string {
-  const hours24 = Math.floor(minute / 60);
-  const minutes = minute % 60;
+  const hours24 = Math.floor(minutesWithinDay(minute) / 60);
+  const minutes = minutesWithinDay(minute) % 60;
   const suffix = hours24 >= 12 ? "pm" : "am";
   const hours12 = hours24 % 12 || 12;
   return `${hours12}:${minutes.toString().padStart(2, "0")}${suffix}`;
@@ -235,8 +239,9 @@ export function formatDealDayBadge(schedules: ScheduleSlice[]): string {
 }
 
 function formatCompactMinute(minute: number, includeMeridiem: boolean): string {
-  const hours24 = Math.floor(minute / 60);
-  const minutes = minute % 60;
+  const normalizedMinute = minutesWithinDay(minute);
+  const hours24 = Math.floor(normalizedMinute / 60);
+  const minutes = normalizedMinute % 60;
   const suffix = hours24 >= 12 ? "pm" : "am";
   const hours12 = hours24 % 12 || 12;
   const time =
@@ -248,10 +253,11 @@ function formatCompactMinute(minute: number, includeMeridiem: boolean): string {
 }
 
 export function formatCompactTimeRange(startMinute: number, endMinute: number): string {
+  const normalizedEnd = minutesWithinDay(endMinute);
   const startPeriod = startMinute >= 720 ? "pm" : "am";
-  const endPeriod = endMinute >= 720 ? "pm" : "am";
+  const endPeriod = normalizedEnd >= 720 ? "pm" : "am";
   const start = formatCompactMinute(startMinute, startPeriod !== endPeriod);
-  const end = formatCompactMinute(endMinute, true);
+  const end = formatCompactMinute(normalizedEnd, true);
   return `${start}-${end}`;
 }
 

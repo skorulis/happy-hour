@@ -104,7 +104,7 @@ nonisolated enum DealTimeParser {
            let endRange = Range(match.range(at: 2), in: trimmed),
            let start = DealHours.toMinutes(string: String(trimmed[startRange])),
            let end = DealHours.toMinutes(string: String(trimmed[endRange])) {
-            return .between(start, end)
+            return DealHours.makeBetween(start: start, end: end)
         }
 
         let tillRangePattern = #"(?i)(\#(time))\s+\#(till)\s+(\#(time))"#
@@ -114,7 +114,7 @@ nonisolated enum DealTimeParser {
            let endRange = Range(match.range(at: 2), in: trimmed),
            let start = DealHours.toMinutes(string: String(trimmed[startRange])),
            let end = DealHours.toMinutes(string: String(trimmed[endRange])) {
-            return .between(start, end)
+            return DealHours.makeBetween(start: start, end: end)
         }
 
         let tillOnlyPattern = #"(?i)\#(till)\s+(\#(time))"#
@@ -151,7 +151,7 @@ nonisolated enum DealTimeParser {
         }
 
         guard let start = startMinutes, let end = endMinutes else { return nil }
-        return .between(start, end)
+        return DealHours.makeBetween(start: start, end: end)
     }
 
     private static func parseMultipleTimesAsRange(in text: String) -> DealHours? {
@@ -179,7 +179,7 @@ nonisolated enum DealTimeParser {
             return nil
         }
 
-        return .between(earliest, latest)
+        return DealHours.makeBetween(start: earliest, end: latest)
     }
 
     private static func parseBetweenTime(in text: String) -> DealHours? {
@@ -198,6 +198,6 @@ nonisolated enum DealTimeParser {
             return nil
         }
 
-        return .between(start, end)
+        return DealHours.makeBetween(start: start, end: end)
     }
 }

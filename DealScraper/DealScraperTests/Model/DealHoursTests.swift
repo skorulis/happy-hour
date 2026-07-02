@@ -110,4 +110,22 @@ struct DealHoursTests {
         #expect(DealHours.fromString("from") == nil)
         #expect(DealHours.fromString("not a time") == nil)
     }
+
+    @Test func parseOvernightTimeRangeBeforeTenAM() {
+        #expect(DealHours.parse("10PM - 2AM") == .between(22 * 60, 26 * 60))
+        #expect(DealHours.parse("4pm-2am") == .between(16 * 60, 26 * 60))
+    }
+
+    @Test func parseMidnightEndOfDayIsNotTreatedAsOvernight() {
+        #expect(DealHours.parse("10PM - midnight") == .between(22 * 60, 24 * 60))
+    }
+
+    @Test func parseSameDayMorningRangeIsNotTreatedAsOvernight() {
+        #expect(DealHours.parse("1AM - 2AM") == .between(60, 120))
+    }
+
+    @Test func adjustedEndMinuteExtendsEarlyMorningEndIntoNextDay() {
+        #expect(DealHours.adjustedEndMinute(start: 22 * 60, end: 2 * 60) == 26 * 60)
+        #expect(DealHours.adjustedEndMinute(start: 16 * 60, end: 18 * 60) == 18 * 60)
+    }
 }

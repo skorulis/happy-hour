@@ -270,7 +270,13 @@ struct EditDealView: View {
                 "Start",
                 selection: Binding(
                     get: { DealScheduleFormatting.date(fromMinutes: schedule.wrappedValue.startMinute) },
-                    set: { schedule.wrappedValue.startMinute = DealScheduleFormatting.minutes(from: $0) }
+                    set: { newDate in
+                        schedule.wrappedValue.startMinute = DealScheduleFormatting.minutes(from: newDate)
+                        schedule.wrappedValue.endMinute = DealScheduleFormatting.normalizedEndMinute(
+                            endMinute: schedule.wrappedValue.endMinute,
+                            startMinute: schedule.wrappedValue.startMinute
+                        )
+                    }
                 ),
                 displayedComponents: .hourAndMinute
             )
@@ -284,7 +290,12 @@ struct EditDealView: View {
                 "End",
                 selection: Binding(
                     get: { DealScheduleFormatting.date(fromMinutes: schedule.wrappedValue.endMinute) },
-                    set: { schedule.wrappedValue.endMinute = DealScheduleFormatting.endMinutes(from: $0) }
+                    set: { newDate in
+                        schedule.wrappedValue.endMinute = DealScheduleFormatting.endMinutes(
+                            from: newDate,
+                            startMinute: schedule.wrappedValue.startMinute
+                        )
+                    }
                 ),
                 displayedComponents: .hourAndMinute
             )
