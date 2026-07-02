@@ -29,7 +29,8 @@
         "groups": [
             "negroni",
             "martini",
-            "spritz"
+            "spritz",
+            "mojito"
         ]
     },
     { "name": "aperitivo"},
@@ -38,6 +39,7 @@
     { "name": "guinness"},
     { "name": "jugs" },
     { "name": "martini" },
+    { "name": "mojito" },
     { "name": "negroni" },
     { "name": "pint" },
     { "name": "porter" },
@@ -152,6 +154,7 @@
     { "name": "dj" },
     { "name": "hospo" },
     { "name": "hospitality" },
+    { "name": "punters club" },
     { "name": "tarot" },
     { "name": "trivia" },
     { "name": "kids eat free" },

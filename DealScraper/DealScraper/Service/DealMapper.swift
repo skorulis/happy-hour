@@ -37,7 +37,7 @@ nonisolated enum DealMapper {
             .filter { !$0.isEmpty }
         guard !title.isEmpty || !details.isEmpty || !conditions.isEmpty else { return nil }
 
-        let days = DealDay.parseAll(in: deal.days)
+        let days = DealDay.parseAll(in: normalizedDayStrings(deal.days))
         let times = DealTimeParser.parse(deal.times)
 
         return deduplicated(
@@ -49,6 +49,16 @@ nonisolated enum DealMapper {
                 times: times
             )
         )
+    }
+
+    private static func normalizedDayStrings(_ days: [String]) -> [String] {
+        days.map { day in
+            day.replacingOccurrences(
+                of: #"(?i)\bthrough\b"#,
+                with: "to",
+                options: .regularExpression
+            )
+        }
     }
 
     private static func resolveDayInTitle(title: String, details: [String]) -> (title: String, details: [String])? {
