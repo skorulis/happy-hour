@@ -2,6 +2,7 @@
 
 import { useFavorites } from "@/lib/favorites/useFavorites";
 import { Heart } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -18,8 +19,16 @@ export function SiteNav() {
       <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
         <Link
           href="/"
-          className="text-lg font-semibold text-amber-700 transition-opacity hover:opacity-80 dark:text-amber-400"
+          className="inline-flex items-center gap-2 text-lg font-semibold text-amber-700 transition-opacity hover:opacity-80 dark:text-amber-400"
         >
+          <Image
+            src="/icon.png"
+            alt=""
+            width={32}
+            height={32}
+            className="h-8 w-8 rounded-full"
+            priority
+          />
           Happy Hours
         </Link>
         <Link
