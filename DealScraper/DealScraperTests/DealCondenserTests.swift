@@ -236,7 +236,7 @@ struct DealCondenserTests {
             "Pick The Joker",
             "$18 Burgers",
             "$13 Aperol Spritz & $15 Espresso Martinis",
-            "Sunday Roast $35",
+            "Roast $35",
             "Pets Welcome",
             "Members Happy Hour",
         ]
