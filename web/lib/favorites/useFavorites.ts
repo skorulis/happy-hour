@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import {
   FAVORITES_STORAGE_KEY,
   readFavoriteDealIds,
@@ -8,34 +8,69 @@ import {
   writeFavoriteDealIds,
 } from "@/lib/favorites/storage";
 
-export function useFavorites() {
-  const [favoriteIds, setFavoriteIds] = useState<number[]>([]);
+const EMPTY_FAVORITE_IDS: number[] = [];
 
-  useEffect(() => {
-    setFavoriteIds(readFavoriteDealIds());
+let favoriteIds: number[] = EMPTY_FAVORITE_IDS;
+let initialized = false;
+const listeners = new Set<() => void>();
 
-    function handleStorage(event: StorageEvent) {
-      if (event.key === null || event.key === FAVORITES_STORAGE_KEY) {
-        setFavoriteIds(readFavoriteDealIds());
-      }
+function emitChange() {
+  for (const listener of listeners) {
+    listener();
+  }
+}
+
+function setFavoriteIds(next: number[]) {
+  favoriteIds = next;
+  emitChange();
+}
+
+function subscribe(listener: () => void) {
+  if (!initialized) {
+    initialized = true;
+    favoriteIds = readFavoriteDealIds();
+  }
+
+  listeners.add(listener);
+
+  function handleStorage(event: StorageEvent) {
+    if (event.key === null || event.key === FAVORITES_STORAGE_KEY) {
+      setFavoriteIds(readFavoriteDealIds());
     }
+  }
 
-    window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
-  }, []);
+  window.addEventListener("storage", handleStorage);
 
-  const isFavorite = useCallback(
-    (dealId: number) => favoriteIds.includes(dealId),
-    [favoriteIds],
+  return () => {
+    listeners.delete(listener);
+    window.removeEventListener("storage", handleStorage);
+  };
+}
+
+function getSnapshot() {
+  return favoriteIds;
+}
+
+function getServerSnapshot() {
+  return EMPTY_FAVORITE_IDS;
+}
+
+function isFavorite(dealId: number) {
+  return favoriteIds.includes(dealId);
+}
+
+function toggleFavorite(dealId: number) {
+  const next = toggleFavoriteDealId(favoriteIds, dealId);
+  writeFavoriteDealIds(next);
+  setFavoriteIds(next);
+}
+
+export function useFavorites() {
+  const currentFavoriteIds = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot,
   );
 
-  const toggleFavorite = useCallback((dealId: number) => {
-    setFavoriteIds((current) => {
-      const next = toggleFavoriteDealId(current, dealId);
-      writeFavoriteDealIds(next);
-      return next;
-    });
-  }, []);
-
-  return { favoriteIds, isFavorite, toggleFavorite };
+  return { favoriteIds: currentFavoriteIds, isFavorite, toggleFavorite };
 }
