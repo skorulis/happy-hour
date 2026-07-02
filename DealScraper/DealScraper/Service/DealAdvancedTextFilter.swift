@@ -5,7 +5,7 @@ import FoundationModels
 
 @Generable
 struct DealTextClassification {
-    @Guide(description: "True if the text describes one or more promotional food or drink deals — discounted prices, named specials, happy hours, or recurring day-specific deals. False for standard menus at regular prices, operational policy text (service charges, surcharges, card fees, opening hours), or generic mentions that deals exist without naming a specific offering.")
+    @Guide(description: "True ONLY if the text describes one or more promotional food or drink deals — discounts, named specials, happy hours, or recurring day/time-limited offers. A plain list of dishes each shown at its own regular price (a standard menu, e.g. a DESSERT, MAINS, or CHEESE section) is NOT a deal even though it has prices. False for standard menus at regular prices, operational policy text (service charges, surcharges, card fees, opening hours), or generic mentions that deals exist without naming a specific offering.")
     var describesSpecificDeals: Bool
 }
 
@@ -92,17 +92,17 @@ struct DealAdvancedTextFilter {
         - A specials board listing day-specific deals with prices or times
 
         Return describesSpecificDeals = false when the text is:
-        - A standard menu section listing items at regular prices with no special or promo language
+        - A standard menu: a list of dishes or items each shown at its own regular price, with no discount, special, happy hour, or day/time-limited promotional language. This is still a standard menu even when it has a section heading (e.g. "DESSERT AND CHEESE", "MAINS", "COCKTAILS") and even when it ends with a service charge or surcharge footer.
         - Operational or policy text mentioning days: service charges, surcharges, public holiday loading, card fees, group booking charges, opening hours
         - Generic deal availability without naming a specific offering
         - A pointer to deals elsewhere: "See our specials page", "We have great deals"
 
-        Days of the week in service charge or surcharge footers do not make text promotional.
+        Prices alone do NOT make text a deal. Promotional intent requires an explicit signal such as a discount, a named special/happy hour, or an offer tied to a specific day or time window. Days of the week in service charge or surcharge footers do not make text promotional.
 
         Examples:
         - "Wednesday happy hour" → true (names a specific recurring deal)
         - "HAPPY HOUR MON–FRI 4–6PM\\n$8 schooners\\n10% surcharge applies Sundays" → true (named promotion with schedule and prices; ignore surcharge footer)
-        - "DESSERT AND CHEESE\\nRhubarb Soufflé $14\\nValrhona Chocolate Cake $15\\nGroups of 8 or more will incur a 10% service charge (Monday to Saturday). A surcharge of 10% will apply on Sundays" → false (standard menu; days refer to surcharges, not specials)
+        - "DESSERT AND CHEESE\\nRhubarb Soufflé $14\\nQuince Trifle $15\\nProfiterole $14\\nValrhona Chocolate Cake $15\\nScoops $5\\nCheese Selection 1 piece $12 / 3 pieces $30\\nGroups of 8 or more will incur a 10% service charge (Monday to Saturday). A surcharge of 10% will apply on Sundays and 15% on public holidays. Credit and debit cards incur a surcharge of 1.5%." → false (a standard dessert menu: each item at its own regular price with no promotional language; the days refer only to surcharges)
         - "Our Monday to Friday meal deals are only available in our public bar, beer garden and Nude with bar service" → false (describes deal availability and location, not a specific offering)
         - "Monday to Saturday: 9am - 6am" → false (opening hours)
         - "See our specials page" → false
