@@ -44,6 +44,12 @@ final class VenueDetailsViewModel {
         case failed(message: String)
     }
 
+    enum SaveBlurbState: Equatable {
+        case idle
+        case completed
+        case failed(message: String)
+    }
+
     let googleMapId: String
     private(set) var venue: Venue?
     private(set) var venueLinks: VenueLinks?
@@ -54,9 +60,17 @@ final class VenueDetailsViewModel {
     private(set) var addDealSourceState: AddDealSourceState = .idle
     private(set) var deleteVenueState: DeleteVenueState = .idle
     private(set) var generateBlurbState: GenerateBlurbState = .idle
+    private(set) var saveBlurbState: SaveBlurbState = .idle
 
     var newDealSourceURLString = ""
     var newDealSourcePageString = ""
+    var blurbText = "" {
+        didSet {
+            if saveBlurbState == .completed {
+                saveBlurbState = .idle
+            }
+        }
+    }
 
     var openRouterModel: String = LLMModelStore.defaultOpenRouterModel {
         didSet { llmModelStore.openRouterModel = openRouterModel }
@@ -177,6 +191,13 @@ final class VenueDetailsViewModel {
         venue?.id != nil && suburbName != nil && generateBlurbState != .generating
     }
 
+    var canSaveBlurb: Bool {
+        guard venue?.id != nil, generateBlurbState != .generating else { return false }
+        let draft = blurbText.trimmingCharacters(in: .whitespacesAndNewlines)
+        let saved = venue?.blurb?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return draft != saved
+    }
+
     func generateBlurb() async {
         guard let venue, let venueId = venue.id, let suburb = suburbName else { return }
 
@@ -192,6 +213,20 @@ final class VenueDetailsViewModel {
             generateBlurbState = .idle
         } catch {
             generateBlurbState = .failed(message: error.localizedDescription)
+        }
+    }
+
+    func saveBlurb() {
+        guard let venueId = venue?.id, canSaveBlurb else { return }
+
+        let trimmed = blurbText.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        do {
+            try venueRepository.updateBlurb(venueId: venueId, blurb: trimmed)
+            load()
+            saveBlurbState = .completed
+        } catch {
+            saveBlurbState = .failed(message: error.localizedDescription)
         }
     }
 
@@ -449,6 +484,8 @@ final class VenueDetailsViewModel {
             dealSources = []
             deals = []
         }
+        blurbText = venue?.blurb ?? ""
+        saveBlurbState = .idle
     }
 
     private func mapCrawlState(_ status: JobStatus) -> ProgressState<VenueCrawlResults> {

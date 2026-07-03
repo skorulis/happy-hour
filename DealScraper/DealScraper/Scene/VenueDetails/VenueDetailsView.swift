@@ -69,7 +69,7 @@ struct VenueDetailsView: View {
                     actionsSection
                     metadataSection(venue)
                 case .about:
-                    aboutSection(venue)
+                    aboutSection
                 case .dealSources:
                     dealSourcesSection
                 case .deals:
@@ -202,23 +202,39 @@ struct VenueDetailsView: View {
             )
     }
 
-    private func aboutSection(_ venue: Venue) -> some View {
+    private var aboutSection: some View {
         detailSection(title: "About") {
-            if let blurb = venue.blurb?.trimmingCharacters(in: .whitespacesAndNewlines),
-               !blurb.isEmpty
-            {
-                Text(blurb)
-            } else {
-                Text("No description available.")
-                    .foregroundStyle(.secondary)
+            TextEditor(text: $viewModel.blurbText)
+                .frame(minHeight: 100)
+                .font(.body)
+                .disabled(viewModel.generateBlurbState == .generating)
+
+            HStack {
+                Button("Save") {
+                    viewModel.saveBlurb()
+                }
+                .disabled(!viewModel.canSaveBlurb)
+
+                Button("Generate Blurb") {
+                    Task {
+                        await viewModel.generateBlurb()
+                    }
+                }
+                .disabled(!viewModel.canGenerateBlurb)
             }
 
-            Button("Generate Blurb") {
-                Task {
-                    await viewModel.generateBlurb()
-                }
+            switch viewModel.saveBlurbState {
+            case .idle:
+                EmptyView()
+            case .completed:
+                Text("Blurb saved.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            case let .failed(message):
+                Text(message)
+                    .font(.caption)
+                    .foregroundStyle(.red)
             }
-            .disabled(!viewModel.canGenerateBlurb)
 
             switch viewModel.generateBlurbState {
             case .idle:
