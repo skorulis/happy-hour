@@ -94,4 +94,18 @@ final class OpenRouterClient: HTTPService {
             )
         )
     }
+
+    func generateText(
+        prompt: String,
+        apiKey: String,
+        model: String
+    ) async throws -> String {
+        try await execute(request:
+            OpenRouterAPI.generateTextRequest(
+                model: model,
+                prompt: prompt,
+                apiKey: apiKey
+            )
+        )
+    }
 }

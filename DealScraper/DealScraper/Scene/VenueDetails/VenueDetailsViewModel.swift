@@ -38,6 +38,12 @@ final class VenueDetailsViewModel {
         case failed(message: String)
     }
 
+    enum GenerateBlurbState: Equatable {
+        case idle
+        case generating
+        case failed(message: String)
+    }
+
     let googleMapId: String
     private(set) var venue: Venue?
     private(set) var venueLinks: VenueLinks?
@@ -47,6 +53,7 @@ final class VenueDetailsViewModel {
     private(set) var deleteDealsState: DeleteDealsState = .idle
     private(set) var addDealSourceState: AddDealSourceState = .idle
     private(set) var deleteVenueState: DeleteVenueState = .idle
+    private(set) var generateBlurbState: GenerateBlurbState = .idle
 
     var newDealSourceURLString = ""
     var newDealSourcePageString = ""
@@ -56,32 +63,38 @@ final class VenueDetailsViewModel {
     }
 
     private let venueRepository: VenueRepository
+    private let suburbRepository: SuburbRepository
     private let dealSourceRepository: DealSourceRepository
     private let dealRepository: DealRepository
     private let venueLinksRepository: VenueLinksRepository
     private let heroImageStore: VenueHeroImageStore
     private let jobQueue: JobQueue
     private let llmModelStore: LLMModelStore
+    private let venueBlurbGenerator: VenueBlurbGenerator
 
     @Resolvable<Resolver>
     init(
         @Argument googleMapId: String,
         venueRepository: VenueRepository,
+        suburbRepository: SuburbRepository,
         dealSourceRepository: DealSourceRepository,
         dealRepository: DealRepository,
         venueLinksRepository: VenueLinksRepository,
         heroImageStore: VenueHeroImageStore,
         jobQueue: JobQueue,
-        llmModelStore: LLMModelStore
+        llmModelStore: LLMModelStore,
+        venueBlurbGenerator: VenueBlurbGenerator
     ) {
         self.googleMapId = googleMapId
         self.venueRepository = venueRepository
+        self.suburbRepository = suburbRepository
         self.dealSourceRepository = dealSourceRepository
         self.dealRepository = dealRepository
         self.venueLinksRepository = venueLinksRepository
         self.heroImageStore = heroImageStore
         self.jobQueue = jobQueue
         self.llmModelStore = llmModelStore
+        self.venueBlurbGenerator = venueBlurbGenerator
         openRouterModel = llmModelStore.openRouterModel
         load()
     }
@@ -144,6 +157,42 @@ final class VenueDetailsViewModel {
     var canClearHeroImage: Bool {
         guard let venue, venue.id != nil else { return false }
         return venue.heroImage?.isEmpty == false
+    }
+
+    var suburbName: String? {
+        if let suburbId = venue?.suburbId,
+           let suburb = try? suburbRepository.find(id: suburbId)
+        {
+            return suburb.name
+        }
+        if let address = formattedAddress,
+           let extracted = SuburbExtractor.extract(from: address)
+        {
+            return extracted.name
+        }
+        return nil
+    }
+
+    var canGenerateBlurb: Bool {
+        venue?.id != nil && suburbName != nil && generateBlurbState != .generating
+    }
+
+    func generateBlurb() async {
+        guard let venue, let venueId = venue.id, let suburb = suburbName else { return }
+
+        generateBlurbState = .generating
+
+        do {
+            let blurb = try await venueBlurbGenerator.generateBlurb(
+                pubName: venue.name,
+                suburb: suburb
+            )
+            try venueRepository.updateBlurb(venueId: venueId, blurb: blurb)
+            load()
+            generateBlurbState = .idle
+        } catch {
+            generateBlurbState = .failed(message: error.localizedDescription)
+        }
     }
 
     func clearHeroImage() {

@@ -313,6 +313,25 @@ struct VenueRepositoryTests {
         #expect(found.heroImage == heroURL)
     }
 
+    @Test func updateBlurbPersistsText() throws {
+        let repository = VenueRepository(store: SQLStore.inMemory())
+
+        try repository.upsert(Venue(
+            googleMapId: "places/ChIJTest123",
+            name: "The Royal Pub",
+            lat: -33.8688,
+            lng: 151.2093,
+            json: "{}"
+        ))
+
+        let venueId = try #require(try repository.find(googleMapId: "places/ChIJTest123")?.id)
+        let blurb = "A cosy neighbourhood pub with a great beer garden."
+        try repository.updateBlurb(venueId: venueId, blurb: blurb)
+
+        let found = try #require(try repository.find(id: venueId))
+        #expect(found.blurb == blurb)
+    }
+
     @Test func upsertPlacesSkipsClosedVenues() throws {
         let repository = VenueRepository(store: SQLStore.inMemory())
 

@@ -68,6 +68,8 @@ struct VenueDetailsView: View {
                     linksSection(venue)
                     actionsSection
                     metadataSection(venue)
+                case .about:
+                    aboutSection(venue)
                 case .dealSources:
                     dealSourcesSection
                 case .deals:
@@ -198,6 +200,49 @@ struct VenueDetailsView: View {
                 Color.secondary.opacity(0.4),
                 style: StrokeStyle(lineWidth: 1, dash: [6, 4])
             )
+    }
+
+    private func aboutSection(_ venue: Venue) -> some View {
+        detailSection(title: "About") {
+            if let blurb = venue.blurb?.trimmingCharacters(in: .whitespacesAndNewlines),
+               !blurb.isEmpty
+            {
+                Text(blurb)
+            } else {
+                Text("No description available.")
+                    .foregroundStyle(.secondary)
+            }
+
+            Button("Generate Blurb") {
+                Task {
+                    await viewModel.generateBlurb()
+                }
+            }
+            .disabled(!viewModel.canGenerateBlurb)
+
+            switch viewModel.generateBlurbState {
+            case .idle:
+                EmptyView()
+            case .generating:
+                HStack(spacing: 8) {
+                    ProgressView()
+                        .controlSize(.small)
+                    Text("Generating…")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            case let .failed(message):
+                Text(message)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+            }
+
+            if viewModel.suburbName == nil {
+                Text("Suburb could not be determined from the venue address.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
     }
 
     @ViewBuilder
@@ -548,6 +593,7 @@ struct VenueDetailsView: View {
 
 private enum VenueDetailsTab: String, CaseIterable {
     case details = "Details"
+    case about = "About"
     case dealSources = "Deal Sources"
     case deals = "Deals"
 }

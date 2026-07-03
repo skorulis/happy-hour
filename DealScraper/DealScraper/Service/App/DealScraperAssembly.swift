@@ -63,6 +63,14 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
             )
         }
 
+        container.register(VenueBlurbGenerator.self) { resolver in
+            VenueBlurbGenerator(
+                client: resolver.openRouterClient(),
+                apiKeyStore: resolver.apiKeyStore(),
+                llmModelStore: resolver.llmModelStore()
+            )
+        }
+
         container.register(VenueDealSourceMaterialPreparer.self) { VenueDealSourceMaterialPreparer.make(resolver: $0) }
 
         container.register(VenueDealExtractionService.self) { VenueDealExtractionService.make(resolver: $0) }

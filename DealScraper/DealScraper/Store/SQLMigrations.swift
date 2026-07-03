@@ -204,5 +204,17 @@ final class SQLMigrations {
                 t.add(column: "last_crawl_date", .datetime)
             }
         }
+
+        migrator.registerMigration("v23_venue_blurb") { db in
+            try db.alter(table: "venue") { t in
+                t.add(column: "blurb", .text)
+            }
+        }
+
+        migrator.registerMigration("v24_suburb_blurb") { db in
+            try db.alter(table: "suburb") { t in
+                t.add(column: "blurb", .text)
+            }
+        }
     }
 }
