@@ -686,3 +686,23 @@ export async function getVenueDetailBySlug(
 
   return buildVenueDetail(venueRow, suburbName);
 }
+
+export type VenueSitemapRow = {
+  name: string;
+  suburbName: string | null;
+  syncedAt: Date;
+  lastCrawlDate: Date | null;
+};
+
+export async function getAllVenuesForSitemap(): Promise<VenueSitemapRow[]> {
+  return db
+    .select({
+      name: venue.name,
+      suburbName: suburb.name,
+      syncedAt: venue.syncedAt,
+      lastCrawlDate: venue.lastCrawlDate,
+    })
+    .from(venue)
+    .leftJoin(suburb, eq(venue.suburbId, suburb.id))
+    .orderBy(venue.name);
+}

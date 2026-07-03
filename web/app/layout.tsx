@@ -1,4 +1,5 @@
 import { SiteNav } from "@/components/SiteNav";
+import { siteUrl } from "@/lib/site-url";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -14,6 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl()),
   title: "Happy Hour",
   description: "Search pub and bar deals synced from DealScraper.",
 };
