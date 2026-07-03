@@ -107,6 +107,11 @@ export function VenuePageContent({
             </VenueExternalLink>
           ) : null}
         </div>
+        {venue.blurb ? (
+          <p className="whitespace-pre-line text-base leading-relaxed text-zinc-700 dark:text-zinc-300">
+            {venue.blurb}
+          </p>
+        ) : null}
       </header>
 
       <p

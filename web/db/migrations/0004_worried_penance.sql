@@ -1,0 +1,1 @@
+ALTER TABLE "venue" ADD COLUMN "blurb" text;
