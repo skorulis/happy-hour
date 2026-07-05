@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, MapPin, X } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { SuburbSearchResult } from "@/lib/search/queries";
 
@@ -9,23 +9,48 @@ export type WhereFilter =
   | { kind: "suburb"; id: number; suburb: SuburbSearchResult }
   | { kind: "nearMe"; lat: number; lng: number };
 
-type SuburbSelectProps = {
+type SuburbSelectPanelProps = {
   where: WhereFilter;
   onChange: (where: WhereFilter) => void;
+  onClose: () => void;
+  open: boolean;
 };
 
 function formatSuburbLabel(suburb: SuburbSearchResult): string {
   return suburb.postcode ? `${suburb.name} (${suburb.postcode})` : suburb.name;
 }
 
-export function SuburbSelect({ where, onChange }: SuburbSelectProps) {
-  const [open, setOpen] = useState(false);
+export function formatWhereLabel(where: WhereFilter): string {
+  if (where.kind === "suburb") {
+    return formatSuburbLabel(where.suburb);
+  }
+  if (where.kind === "nearMe") {
+    return "Near me";
+  }
+  return "Anywhere";
+}
+
+export function SuburbSelectPanel({
+  where,
+  onChange,
+  onClose,
+  open,
+}: SuburbSelectPanelProps) {
   const [query, setQuery] = useState("");
   const [suburbs, setSuburbs] = useState<SuburbSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [locating, setLocating] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const selectedSuburbId = where.kind === "suburb" ? where.id : null;
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    inputRef.current?.focus();
+  }, [open]);
 
   useEffect(() => {
     if (!open) {
@@ -67,36 +92,9 @@ export function SuburbSelect({ where, onChange }: SuburbSelectProps) {
     };
   }, [open, query]);
 
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-
-    function handlePointerDown(event: MouseEvent) {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
-        setOpen(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handlePointerDown);
-    return () => document.removeEventListener("mousedown", handlePointerDown);
-  }, [open]);
-
-  const label =
-    where.kind === "suburb"
-      ? formatSuburbLabel(where.suburb)
-      : where.kind === "nearMe"
-        ? "Near me"
-        : "Anywhere";
-  const hasSelection = where.kind !== "anywhere";
-  const selectedSuburbId = where.kind === "suburb" ? where.id : null;
-
   function handleSelect(suburb: SuburbSearchResult) {
     onChange({ kind: "suburb", id: suburb.id, suburb });
-    setOpen(false);
+    onClose();
     setQuery("");
     setLocationError(null);
   }
@@ -118,7 +116,7 @@ export function SuburbSelect({ where, onChange }: SuburbSelectProps) {
           lat: position.coords.latitude,
           lng: position.coords.longitude,
         });
-        setOpen(false);
+        onClose();
         setQuery("");
       },
       (error) => {
@@ -133,104 +131,56 @@ export function SuburbSelect({ where, onChange }: SuburbSelectProps) {
     );
   }
 
-  function handleClear(event: React.MouseEvent) {
-    event.stopPropagation();
-    onChange({ kind: "anywhere" });
-    setQuery("");
-    setLocationError(null);
-  }
-
   return (
-    <div ref={containerRef} className="relative min-w-0 flex-1">
+    <div className="w-80 max-w-[calc(100vw-3rem)] rounded-xl border border-zinc-200 bg-white p-3 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
+      <input
+        ref={inputRef}
+        type="search"
+        value={query}
+        onChange={(event) => setQuery(event.target.value)}
+        placeholder="Search suburbs..."
+        className="mb-2 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none ring-amber-500 focus:ring-2 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-50"
+      />
       <button
         type="button"
-        onClick={() => setOpen((current) => !current)}
-        className={`inline-flex w-full items-center justify-between gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
-          hasSelection
-            ? "border-amber-600 text-amber-700 dark:border-amber-500 dark:text-amber-400"
-            : "border-zinc-300 text-zinc-700 hover:border-amber-500 dark:border-zinc-600 dark:text-zinc-300"
+        onClick={handleNearMe}
+        disabled={locating}
+        className={`mb-2 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm hover:bg-zinc-100 disabled:opacity-60 dark:hover:bg-zinc-800 ${
+          where.kind === "nearMe"
+            ? "font-medium text-amber-700 dark:text-amber-400"
+            : "text-zinc-800 dark:text-zinc-200"
         }`}
       >
-        <span className="truncate">{label}</span>
-        <span className="flex items-center gap-1">
-          {hasSelection ? (
-            <span
-              role="button"
-              tabIndex={0}
-              onClick={handleClear}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault();
-                  onChange({ kind: "anywhere" });
-                  setQuery("");
-                  setLocationError(null);
-                }
-              }}
-              className="rounded p-0.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800"
-              aria-label="Clear suburb"
-            >
-              <X className="h-3.5 w-3.5" />
-            </span>
-          ) : null}
-          <ChevronDown
-            aria-hidden
-            className={`h-4 w-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
-          />
-        </span>
+        <MapPin aria-hidden className="h-4 w-4 shrink-0" />
+        {locating ? "Getting location..." : "Near me"}
       </button>
-
-      {open ? (
-        <div className="absolute left-0 z-20 mt-2 w-full min-w-56 rounded-xl border border-zinc-200 bg-white p-3 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
-          <input
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search suburbs..."
-            autoFocus
-            className="mb-2 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none ring-amber-500 focus:ring-2 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-50"
-          />
-          <button
-            type="button"
-            onClick={handleNearMe}
-            disabled={locating}
-            className={`mb-2 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm hover:bg-zinc-100 disabled:opacity-60 dark:hover:bg-zinc-800 ${
-              where.kind === "nearMe"
-                ? "font-medium text-amber-700 dark:text-amber-400"
-                : "text-zinc-800 dark:text-zinc-200"
-            }`}
-          >
-            <MapPin aria-hidden className="h-4 w-4 shrink-0" />
-            {locating ? "Getting location..." : "Near me"}
-          </button>
-          {locationError ? (
-            <p className="mb-2 px-2 text-sm text-red-600 dark:text-red-400">
-              {locationError}
-            </p>
-          ) : null}
-          <div className="max-h-48 overflow-y-auto">
-            {loading ? (
-              <p className="px-2 py-2 text-sm text-zinc-500">Loading...</p>
-            ) : suburbs.length === 0 ? (
-              <p className="px-2 py-2 text-sm text-zinc-500">No suburbs found.</p>
-            ) : (
-              suburbs.map((suburb) => (
-                <button
-                  key={suburb.id}
-                  type="button"
-                  onClick={() => handleSelect(suburb)}
-                  className={`block w-full rounded-lg px-2 py-2 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
-                    suburb.id === selectedSuburbId
-                      ? "font-medium text-amber-700 dark:text-amber-400"
-                      : "text-zinc-800 dark:text-zinc-200"
-                  }`}
-                >
-                  {formatSuburbLabel(suburb)}
-                </button>
-              ))
-            )}
-          </div>
-        </div>
+      {locationError ? (
+        <p className="mb-2 px-2 text-sm text-red-600 dark:text-red-400">
+          {locationError}
+        </p>
       ) : null}
+      <div className="max-h-48 overflow-y-auto">
+        {loading ? (
+          <p className="px-2 py-2 text-sm text-zinc-500">Loading...</p>
+        ) : suburbs.length === 0 ? (
+          <p className="px-2 py-2 text-sm text-zinc-500">No suburbs found.</p>
+        ) : (
+          suburbs.map((suburb) => (
+            <button
+              key={suburb.id}
+              type="button"
+              onClick={() => handleSelect(suburb)}
+              className={`block w-full rounded-lg px-2 py-2 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
+                suburb.id === selectedSuburbId
+                  ? "font-medium text-amber-700 dark:text-amber-400"
+                  : "text-zinc-800 dark:text-zinc-200"
+              }`}
+            >
+              {formatSuburbLabel(suburb)}
+            </button>
+          ))
+        )}
+      </div>
     </div>
   );
 }
