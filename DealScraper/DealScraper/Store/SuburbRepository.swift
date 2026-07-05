@@ -47,7 +47,12 @@ final class SuburbRepository {
 
     static func isEligibleForCrawl(_ suburb: Suburb) -> Bool {
         guard normalized(suburb.postcode) != nil else { return false }
-        return suburb.statisticArea == greaterSydneyStatisticArea
+        guard suburb.statisticArea == greaterSydneyStatisticArea else { return false }
+        return !isExcludedFromCrawl(suburb)
+    }
+
+    static func isExcludedFromCrawl(_ suburb: Suburb) -> Bool {
+        suburb.name == "Perrys Crossing" && normalized(suburb.postcode) == "2775"
     }
 
     func updateLastCrawlDate(suburbId: Int64, date: Date) throws {

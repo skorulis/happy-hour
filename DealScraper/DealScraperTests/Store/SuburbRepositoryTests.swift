@@ -161,9 +161,17 @@ struct SuburbRepositoryTests {
             statisticArea: "Melbourne"
         )
 
+        let excluded = Suburb(
+            name: "Perrys Crossing",
+            postcode: "2775",
+            state: "NSW",
+            statisticArea: SuburbRepository.greaterSydneyStatisticArea
+        )
+
         #expect(SuburbRepository.isEligibleForCrawl(eligible))
         #expect(!SuburbRepository.isEligibleForCrawl(missingPostcode))
         #expect(!SuburbRepository.isEligibleForCrawl(wrongArea))
+        #expect(!SuburbRepository.isEligibleForCrawl(excluded))
     }
 
     @Test func allEligibleForCrawlFiltersSuburbs() throws {
