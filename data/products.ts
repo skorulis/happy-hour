@@ -66,11 +66,18 @@ function isVisible(product: Product): boolean {
   return !product.hidden;
 }
 
-function dealSearchText(deals: DealTextFields[]): string {
+function dealTitleText(deals: DealTextFields[]): string {
   return deals
-    .map((deal) =>
-      [deal.title, deal.details, deal.conditions].filter(Boolean).join(" "),
-    )
+    .map((deal) => deal.title)
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
+function dealDetailsText(deals: DealTextFields[]): string {
+  return deals
+    .map((deal) => deal.details)
+    .filter(Boolean)
     .join(" ")
     .toLowerCase();
 }
@@ -84,10 +91,7 @@ function compareProductMatches(a: Product, b: Product): number {
   return b.name.length - a.name.length;
 }
 
-export function findMatchingProductsForDeals(
-  deals: DealTextFields[],
-): Product[] {
-  const text = dealSearchText(deals);
+function findProductsMatchingText(text: string): Product[] {
   if (!text) {
     return [];
   }
@@ -97,6 +101,16 @@ export function findMatchingProductsForDeals(
   );
 
   return [...matches].sort(compareProductMatches);
+}
+
+export function findMatchingProductsForDeals(
+  deals: DealTextFields[],
+): Product[] {
+  const titleMatches = findProductsMatchingText(dealTitleText(deals));
+  if (titleMatches.length > 0) {
+    return titleMatches;
+  }
+  return findProductsMatchingText(dealDetailsText(deals));
 }
 
 export function resolveMapIconForDeals(

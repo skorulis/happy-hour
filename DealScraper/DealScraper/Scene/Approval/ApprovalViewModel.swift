@@ -128,9 +128,14 @@ final class ApprovalViewModel: CoordinatorViewModel {
         previewTask = nil
 
         do {
-            pendingSources = try dealSourceRepository.findNew()
-            pendingDeals = try dealRepository.findNew()
             let venues = try venueRepository.all()
+            let nonBrokenVenueIds = Set(
+                venues.filter { $0.status != .broken }.compactMap(\.id)
+            )
+            pendingSources = try dealSourceRepository.findNew()
+                .filter { nonBrokenVenueIds.contains($0.venueId) }
+            pendingDeals = try dealRepository.findNew()
+                .filter { nonBrokenVenueIds.contains($0.deal.venueId) }
             venueNames = Dictionary(
                 uniqueKeysWithValues: venues.compactMap { venue in
                     guard let id = venue.id else { return nil }

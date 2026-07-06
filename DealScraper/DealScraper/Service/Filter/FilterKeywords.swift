@@ -49,6 +49,7 @@ nonisolated enum FilterKeywords {
         "fifa",
         "financialyear",
         "footy",
+        "fortnightly",
         "functions",
         "goodfriday",
         "grandfinal",

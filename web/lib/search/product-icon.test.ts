@@ -28,6 +28,42 @@ describe("resolveMapIconForDeals", () => {
       ]),
     ).toBeUndefined();
   });
+
+  it("prefers title matches over higher-ranked details matches", () => {
+    expect(
+      resolveMapIconForDeals([
+        {
+          title: "$15 Pizza Night",
+          details: "happy hour on tap beer",
+          conditions: null,
+        },
+      ]),
+    ).toBe("Pizza");
+  });
+
+  it("falls back to details when title has no keyword match", () => {
+    expect(
+      resolveMapIconForDeals([
+        {
+          title: "$10 specials",
+          details: "steak night",
+          conditions: null,
+        },
+      ]),
+    ).toBe("Beef");
+  });
+
+  it("ignores conditions for icon matching", () => {
+    expect(
+      resolveMapIconForDeals([
+        {
+          title: "$10 specials",
+          details: "all week",
+          conditions: "cocktails only",
+        },
+      ]),
+    ).toBeUndefined();
+  });
 });
 
 describe("findMatchingProductsForDeals", () => {
