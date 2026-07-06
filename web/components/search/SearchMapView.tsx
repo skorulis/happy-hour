@@ -16,6 +16,7 @@ import type { VenueGroupedDeals } from "@/components/VenueSearchCard";
 import {
   formatDealDayBadge,
   formatDealTimeBadge,
+  hasAnyDealActiveNow,
 } from "@/lib/search/schedule";
 import { formatDistanceKm } from "@/lib/search/distance";
 import {
@@ -212,15 +213,28 @@ function VenuePopup({
   );
 }
 
+function useCurrentMinute(): Date {
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return now;
+}
+
 function VenueMarker({
   group,
   searchDays,
+  now,
   isSelected,
   onSelect,
   onClose,
 }: {
   group: VenueGroupedDeals;
   searchDays: number[];
+  now: Date;
   isSelected: boolean;
   onSelect: (venueId: number) => void;
   onClose: () => void;
@@ -232,6 +246,10 @@ function VenueMarker({
   );
   const showProductIcon =
     iconName !== undefined && isRegisteredProductIcon(iconName);
+  const hasActiveDeal = useMemo(
+    () => hasAnyDealActiveNow(group.deals, now),
+    [group.deals, now],
+  );
 
   const handleMarkerClick = useCallback(() => {
     onSelect(group.venue.id);
@@ -245,13 +263,19 @@ function VenueMarker({
         onClick={handleMarkerClick}
       >
         {showProductIcon ? (
-          <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-amber-700 bg-amber-500 shadow-md">
+          <div
+            className={`flex h-8 w-8 items-center justify-center rounded-full border-2 shadow-md ${
+              hasActiveDeal
+                ? "border-amber-700 bg-amber-500"
+                : "border-zinc-500 bg-zinc-400"
+            }`}
+          >
             <ProductMapIcon name={iconName} className="text-white" size={16} />
           </div>
         ) : (
           <Pin
-            background="#f59e0b"
-            borderColor="#b45309"
+            background={hasActiveDeal ? "#f59e0b" : "#a1a1aa"}
+            borderColor={hasActiveDeal ? "#b45309" : "#71717a"}
             glyphColor="#ffffff"
           />
         )}
@@ -325,6 +349,7 @@ export function SearchMapView({
   autoFitBounds = true,
 }: SearchMapViewProps) {
   const [selectedMarker, setSelectedMarker] = useState<SelectedMarker>(null);
+  const now = useCurrentMinute();
 
   const handleVenueSelect = useCallback((venueId: number) => {
     setSelectedMarker((current) => (current === venueId ? null : venueId));
@@ -380,6 +405,7 @@ export function SearchMapView({
               key={group.venue.id}
               group={group}
               searchDays={searchDays}
+              now={now}
               isSelected={selectedMarker === group.venue.id}
               onSelect={handleVenueSelect}
               onClose={handleInfoWindowClose}

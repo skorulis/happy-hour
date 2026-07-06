@@ -152,6 +152,51 @@ export function schedulesForDay(
   return schedules.filter((schedule) => schedule.dayOfWeek === dayOfWeek);
 }
 
+function previousCalendarWeekday(day: number): number {
+  return day === 1 ? 7 : day - 1;
+}
+
+/** Whether a single schedule row is active at the given moment. */
+export function isScheduleActiveNow(
+  schedule: ScheduleSlice,
+  now = new Date(),
+): boolean {
+  const day = currentCalendarWeekday(now);
+  const minute = currentMinuteOfDay(now);
+  const previousDay = previousCalendarWeekday(day);
+
+  if (
+    schedule.dayOfWeek === day &&
+    schedule.startMinute <= minute &&
+    schedule.endMinute > minute
+  ) {
+    return true;
+  }
+
+  if (
+    schedule.dayOfWeek === previousDay &&
+    schedule.endMinute > 1440 &&
+    minute < schedule.endMinute - 1440
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+export function isDealActiveNow(
+  schedules: ScheduleSlice[],
+  now = new Date(),
+): boolean {
+  return schedules.some((schedule) => isScheduleActiveNow(schedule, now));
+}
+
+export function hasAnyDealActiveNow<
+  T extends { schedules: ScheduleSlice[] },
+>(deals: T[], now = new Date()): boolean {
+  return deals.some((deal) => isDealActiveNow(deal.schedules, now));
+}
+
 export function groupDealsByDay<T extends { id: number; schedules: ScheduleSlice[] }>(
   deals: T[],
 ): Array<{ dayOfWeek: number; dayLabel: string; deals: T[] }> {
