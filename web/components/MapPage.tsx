@@ -27,7 +27,8 @@ export function MapPage() {
     isEmpty,
     handleDaysApply,
     handleWhatChange,
-  } = useSearchFilters();
+    setViewportBounds,
+  } = useSearchFilters({ mapViewport: true });
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
@@ -47,6 +48,8 @@ export function MapPage() {
         isEmpty={isEmpty}
         searchDays={filters.days}
         fullScreen
+        onViewportIdle={setViewportBounds}
+        autoFitBounds={false}
       />
     </div>
   );

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { parseBoundsParams } from "@/lib/search/bounds";
 import { parseDealIdsParam } from "@/lib/search/parse-deal-ids";
 import { getDealsByIds, searchDeals, searchDealsForSuburb } from "@/lib/search/queries";
 
@@ -55,6 +56,7 @@ export async function GET(request: Request) {
     latParam !== null && latParam !== "" ? Number(latParam) : undefined;
   const lng =
     lngParam !== null && lngParam !== "" ? Number(lngParam) : undefined;
+  const bounds = parseBoundsParams(searchParams);
   const startMinute =
     startMinuteParam !== null && startMinuteParam !== ""
       ? Number(startMinuteParam)
@@ -86,6 +88,26 @@ export async function GET(request: Request) {
 
   if (lng !== undefined && !Number.isFinite(lng)) {
     return NextResponse.json({ error: "Invalid lng" }, { status: 400 });
+  }
+
+  if (bounds === "invalid") {
+    return NextResponse.json({ error: "Invalid bounds" }, { status: 400 });
+  }
+
+  if (bounds !== null) {
+    if (suburbId !== undefined) {
+      return NextResponse.json(
+        { error: "bounds cannot be combined with suburbId" },
+        { status: 400 },
+      );
+    }
+
+    if (lat !== undefined || lng !== undefined) {
+      return NextResponse.json(
+        { error: "bounds cannot be combined with lat/lng" },
+        { status: 400 },
+      );
+    }
   }
 
   if ((lat !== undefined) !== (lng !== undefined)) {
@@ -136,6 +158,22 @@ export async function GET(request: Request) {
   }
 
   try {
+    if (bounds !== null) {
+      const deals = await searchDeals({
+        venueId,
+        day,
+        days,
+        startMinute,
+        endMinute,
+        query,
+        activeNow,
+        limit: Number.isFinite(limit) ? limit : 100,
+        bounds,
+      });
+
+      return NextResponse.json({ deals });
+    }
+
     if (suburbId !== undefined) {
       const { deals, nearbyDeals } = await searchDealsForSuburb({
         venueId,

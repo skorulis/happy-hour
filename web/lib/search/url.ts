@@ -1,6 +1,7 @@
 import type { SearchFilters } from "@/components/search/SearchBar";
 import type { TimeRange } from "@/components/search/DayPicker";
 import type { WhereFilter } from "@/components/search/SuburbSelect";
+import { boundsToApiParams, type MapBounds } from "@/lib/search/bounds";
 import { currentCalendarWeekday } from "@/lib/search/schedule";
 
 export const DEFAULT_SEARCH_FILTERS: SearchFilters = {
@@ -277,4 +278,33 @@ export function filtersToApiSearchParams(
   what: string[],
 ): URLSearchParams {
   return filtersToSearchParams(filters, what);
+}
+
+export function filtersToMapApiSearchParams(
+  filters: SearchFilters,
+  what: string[],
+  bounds: MapBounds,
+): URLSearchParams {
+  const params = new URLSearchParams();
+
+  if (filters.days.length > 0) {
+    params.set("days", filters.days.join(","));
+  }
+  if (filters.timeRange) {
+    if (filters.timeRange.startMinute !== undefined) {
+      params.set("startMinute", String(filters.timeRange.startMinute));
+    }
+    if (filters.timeRange.endMinute !== undefined) {
+      params.set("endMinute", String(filters.timeRange.endMinute));
+    }
+  }
+  if (what.length > 0) {
+    params.set("q", what.join(","));
+  }
+
+  for (const [key, value] of boundsToApiParams(bounds).entries()) {
+    params.set(key, value);
+  }
+
+  return params;
 }

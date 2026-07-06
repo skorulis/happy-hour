@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   AdvancedMarker,
   APIProvider,
@@ -17,11 +17,17 @@ import {
   formatDealTimeBadge,
 } from "@/lib/search/schedule";
 import { formatDistanceKm } from "@/lib/search/distance";
+import {
+  boundsFromGoogleMap,
+  boundsKey,
+  type MapBounds,
+} from "@/lib/search/bounds";
 import { venuePath } from "@/lib/search/slugs";
 import { appendDaysParam } from "@/lib/search/url";
 
 const DEFAULT_CENTER = { lat: -33.87, lng: 151.21 };
 const DEFAULT_ZOOM = 11;
+const VIEWPORT_IDLE_DEBOUNCE_MS = 300;
 
 const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 const googleMapsMapId = process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID;
@@ -37,6 +43,8 @@ type SearchMapViewProps = {
   isEmpty: boolean;
   searchDays?: number[];
   fullScreen?: boolean;
+  onViewportIdle?: (bounds: MapBounds) => void;
+  autoFitBounds?: boolean;
 };
 
 type SelectedMarker = number | "user" | null;
@@ -82,6 +90,59 @@ function FitBounds({
     }
     map.fitBounds(bounds, { top: 48, right: 48, bottom: 48, left: 48 });
   }, [map, venueGroups, userLocation]);
+
+  return null;
+}
+
+function ViewportIdleReporter({
+  onViewportIdle,
+}: {
+  onViewportIdle: (bounds: MapBounds) => void;
+}) {
+  const map = useMap();
+  const onViewportIdleRef = useRef(onViewportIdle);
+  const lastBoundsKeyRef = useRef<string | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    onViewportIdleRef.current = onViewportIdle;
+  }, [onViewportIdle]);
+
+  useEffect(() => {
+    if (!map) {
+      return;
+    }
+
+    function reportBounds() {
+      const bounds = boundsFromGoogleMap(map!);
+      if (!bounds) {
+        return;
+      }
+
+      const key = boundsKey(bounds);
+      if (key === lastBoundsKeyRef.current) {
+        return;
+      }
+
+      lastBoundsKeyRef.current = key;
+      onViewportIdleRef.current(bounds);
+    }
+
+    const listener = map.addListener("idle", () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+
+      debounceRef.current = setTimeout(reportBounds, VIEWPORT_IDLE_DEBOUNCE_MS);
+    });
+
+    return () => {
+      listener.remove();
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, [map]);
 
   return null;
 }
@@ -237,6 +298,8 @@ export function SearchMapView({
   isEmpty,
   searchDays = [],
   fullScreen = false,
+  onViewportIdle,
+  autoFitBounds = true,
 }: SearchMapViewProps) {
   const [selectedMarker, setSelectedMarker] = useState<SelectedMarker>(null);
 
@@ -272,7 +335,13 @@ export function SearchMapView({
           gestureHandling="greedy"
           className={fullScreen ? "h-full w-full" : "h-[60vh] w-full"}
         >
-          <FitBounds venueGroups={venueGroups} userLocation={userLocation} />
+          {autoFitBounds ? (
+            <FitBounds venueGroups={venueGroups} userLocation={userLocation} />
+          ) : null}
+
+          {onViewportIdle ? (
+            <ViewportIdleReporter onViewportIdle={onViewportIdle} />
+          ) : null}
 
           {userLocation ? (
             <UserLocationMarker

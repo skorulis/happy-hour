@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import type { SearchFilters } from "@/components/search/SearchBar";
 import type { TimeRange } from "@/components/search/DayPicker";
 import type { DealSearchResult } from "@/lib/search/queries";
+import { boundsKey, type MapBounds } from "@/lib/search/bounds";
 import {
   filtersToApiSearchParams,
+  filtersToMapApiSearchParams,
   filtersToSearchParams,
   searchParamsEqual,
   searchParamsToInitialFilters,
@@ -22,7 +24,29 @@ function currentSearchString(): string {
     : window.location.search;
 }
 
-export function useSearchFilters() {
+function mergeDeals(
+  existing: DealSearchResult[],
+  incoming: DealSearchResult[],
+): DealSearchResult[] {
+  if (incoming.length === 0) {
+    return existing;
+  }
+
+  const seenDealIds = new Set(existing.map((deal) => deal.id));
+  const merged = [...existing];
+
+  for (const deal of incoming) {
+    if (!seenDealIds.has(deal.id)) {
+      seenDealIds.add(deal.id);
+      merged.push(deal);
+    }
+  }
+
+  return merged;
+}
+
+export function useSearchFilters(options?: { mapViewport?: boolean }) {
+  const mapViewport = options?.mapViewport ?? false;
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const syncedParamsRef = useRef(
@@ -41,12 +65,25 @@ export function useSearchFilters() {
   const [nearbyDeals, setNearbyDeals] = useState<DealSearchResult[]>([]);
   const [loadingDeals, setLoadingDeals] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [viewportBounds, setViewportBoundsState] = useState<MapBounds | null>(
+    null,
+  );
+
+  const setViewportBounds = useCallback((bounds: MapBounds) => {
+    setViewportBoundsState((current) =>
+      current && boundsKey(current) === boundsKey(bounds) ? current : bounds,
+    );
+  }, []);
 
   const whatKey = filters.what.join("\0");
   const debouncedWhatKey = debouncedWhat.join("\0");
   const daysKey = filters.days.join(",");
   const whereKey = whereFilterKey(filters.where);
   const scheduleKey = timeRangeKey(filters.timeRange);
+  const viewportBoundsKey = viewportBounds ? boundsKey(viewportBounds) : "";
+  const locationKey = mapViewport ? viewportBoundsKey : whereKey;
+  const filterKey = `${daysKey}|${scheduleKey}|${debouncedWhatKey}`;
+  const filterKeyRef = useRef(filterKey);
 
   useEffect(() => {
     function syncFromBrowserUrl() {
@@ -90,14 +127,22 @@ export function useSearchFilters() {
   }, [debouncedWhatKey, daysKey, scheduleKey, whereKey, pathname]);
 
   useEffect(() => {
+    if (mapViewport && !viewportBounds) {
+      return;
+    }
+
     const controller = new AbortController();
+    const filterChanged = filterKeyRef.current !== filterKey;
+    filterKeyRef.current = filterKey;
 
     async function loadDeals() {
       setLoadingDeals(true);
       setError(null);
 
       try {
-        const params = filtersToApiSearchParams(filters, debouncedWhat);
+        const params = mapViewport
+          ? filtersToMapApiSearchParams(filters, debouncedWhat, viewportBounds!)
+          : filtersToApiSearchParams(filters, debouncedWhat);
 
         const response = await fetch(`/api/deals?${params.toString()}`, {
           signal: controller.signal,
@@ -109,8 +154,14 @@ export function useSearchFilters() {
           deals: DealSearchResult[];
           nearbyDeals?: DealSearchResult[];
         };
-        setDeals(data.deals);
-        setNearbyDeals(data.nearbyDeals ?? []);
+
+        if (mapViewport && !filterChanged) {
+          setDeals((current) => mergeDeals(current, data.deals));
+        } else {
+          setDeals(data.deals);
+        }
+
+        setNearbyDeals(mapViewport ? [] : (data.nearbyDeals ?? []));
       } catch (fetchError) {
         if ((fetchError as Error).name !== "AbortError") {
           setError("Could not load deals.");
@@ -123,7 +174,7 @@ export function useSearchFilters() {
     void loadDeals();
 
     return () => controller.abort();
-  }, [daysKey, whereKey, scheduleKey, debouncedWhatKey]);
+  }, [mapViewport, daysKey, scheduleKey, debouncedWhatKey, locationKey]);
 
   function handleDaysApply(days: number[], timeRange: TimeRange) {
     setFilters((current) => ({
@@ -175,5 +226,6 @@ export function useSearchFilters() {
     handleDaysApply,
     handleWhereChange,
     handleWhatChange,
+    setViewportBounds,
   };
 }

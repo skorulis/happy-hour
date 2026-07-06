@@ -2,15 +2,18 @@ import {
   and,
   eq,
   exists,
+  gte,
   ilike,
   inArray,
   isNull,
+  lte,
   ne,
   or,
   sql,
   type SQL,
 } from "drizzle-orm";
 import { db } from "@/lib/db";
+import type { MapBounds } from "@/lib/search/bounds";
 import {
   currentCalendarWeekday,
   currentMinuteOfDay,
@@ -224,6 +227,15 @@ function nearLocationFilter(lat: number, lng: number, radiusKm: number): SQL {
   return sql`${distanceKmExpression(lat, lng)} <= ${radiusKm}`;
 }
 
+function boundsFilter(bounds: MapBounds): SQL {
+  return and(
+    gte(venue.lat, bounds.south),
+    lte(venue.lat, bounds.north),
+    gte(venue.lng, bounds.west),
+    lte(venue.lng, bounds.east),
+  )!;
+}
+
 export async function searchSuburbs(
   query: string,
   limit = 20,
@@ -311,6 +323,7 @@ export type SearchDealsOptions = {
   lat?: number;
   lng?: number;
   radiusKm?: number;
+  bounds?: MapBounds;
   startMinute?: number;
   endMinute?: number;
   query?: string;
@@ -322,14 +335,19 @@ export async function searchDeals(
   options: SearchDealsOptions,
 ): Promise<DealSearchResult[]> {
   const filters: SQL[] = [];
+  const hasBounds = options.bounds !== undefined;
   const hasNearLocation =
-    options.lat !== undefined && options.lng !== undefined;
+    !hasBounds &&
+    options.lat !== undefined &&
+    options.lng !== undefined;
 
   if (options.venueId !== undefined) {
     filters.push(eq(deal.venueId, options.venueId));
   }
 
-  if (options.suburbId !== undefined) {
+  if (hasBounds) {
+    filters.push(boundsFilter(options.bounds!));
+  } else if (options.suburbId !== undefined) {
     filters.push(eq(venue.suburbId, options.suburbId));
   }
 
