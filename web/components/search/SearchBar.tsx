@@ -23,14 +23,20 @@ export type SearchFilters = {
   what: string[];
 };
 
+export type SearchBarSegment = "when" | "where" | "what";
+
+const DEFAULT_SEGMENTS: SearchBarSegment[] = ["when", "where", "what"];
+
 type SearchBarProps = {
   filters: SearchFilters;
   onDaysApply: (days: number[], timeRange: TimeRange) => void;
-  onWhereChange: (where: WhereFilter) => void;
   onWhatChange: (what: string[]) => void;
+  onWhereChange?: (where: WhereFilter) => void;
+  segments?: SearchBarSegment[];
+  className?: string;
 };
 
-type ActiveSegment = "when" | "where" | "what" | null;
+type ActiveSegment = SearchBarSegment | null;
 
 function formatWhenValue(days: number[], timeRange: TimeRange): string {
   let label = formatDaySelectionLabel(days);
@@ -165,31 +171,104 @@ function ActivePanel({
   );
 }
 
+type SegmentConfig = {
+  id: SearchBarSegment;
+  label: string;
+  value: string;
+  isPlaceholder: boolean;
+};
+
+function buildSegmentConfigs(filters: SearchFilters): SegmentConfig[] {
+  return [
+    {
+      id: "when",
+      label: "When",
+      value: formatWhenValue(filters.days, filters.timeRange),
+      isPlaceholder: isWhenPlaceholder(filters.days, filters.timeRange),
+    },
+    {
+      id: "where",
+      label: "Where",
+      value: formatWhereLabel(filters.where),
+      isPlaceholder: isWherePlaceholder(filters.where),
+    },
+    {
+      id: "what",
+      label: "What",
+      value: filters.what.length > 0 ? filters.what.join(", ") : "Any deals",
+      isPlaceholder: isWhatPlaceholder(filters.what),
+    },
+  ];
+}
+
+function desktopPopoverAlign(
+  segment: SearchBarSegment,
+  visibleSegments: SearchBarSegment[],
+): string {
+  if (visibleSegments.length === 1) {
+    return "left-0";
+  }
+  if (visibleSegments.length === 2) {
+    return segment === "what" ? "right-0" : "left-0";
+  }
+  if (segment === "when") {
+    return "left-0";
+  }
+  if (segment === "where") {
+    return "left-1/2 -translate-x-1/2";
+  }
+  return "right-0";
+}
+
+function desktopSegmentClassName(
+  segment: SearchBarSegment,
+  visibleSegments: SearchBarSegment[],
+): string {
+  const index = visibleSegments.indexOf(segment);
+  const isFirst = index === 0;
+  const isLast = index === visibleSegments.length - 1;
+
+  if (isFirst && isLast) {
+    return "rounded-full px-6";
+  }
+  if (isFirst) {
+    return "rounded-l-full pl-6";
+  }
+  if (isLast) {
+    return "rounded-r-full pr-6";
+  }
+  return "";
+}
+
 export function SearchBar({
   filters,
   onDaysApply,
   onWhereChange,
   onWhatChange,
+  segments = DEFAULT_SEGMENTS,
+  className = "",
 }: SearchBarProps) {
   const [activeSegment, setActiveSegment] = useState<ActiveSegment>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const whenValue = formatWhenValue(filters.days, filters.timeRange);
-  const whereValue = formatWhereLabel(filters.where);
-  const whatValue =
-    filters.what.length > 0 ? filters.what.join(", ") : "Any deals";
+  const visibleSegments = buildSegmentConfigs(filters).filter((segment) =>
+    segments.includes(segment.id),
+  );
 
-  const whenPlaceholder = isWhenPlaceholder(filters.days, filters.timeRange);
-  const wherePlaceholder = isWherePlaceholder(filters.where);
-  const whatPlaceholder = isWhatPlaceholder(filters.what);
-
-  function toggleSegment(segment: Exclude<ActiveSegment, null>) {
+  function toggleSegment(segment: SearchBarSegment) {
     setActiveSegment((current) => (current === segment ? null : segment));
   }
 
   function closePanel() {
     setActiveSegment(null);
   }
+
+  useEffect(() => {
+    if (!activeSegment || segments.includes(activeSegment)) {
+      return;
+    }
+    setActiveSegment(null);
+  }, [activeSegment, segments]);
 
   useEffect(() => {
     if (!activeSegment) {
@@ -220,15 +299,13 @@ export function SearchBar({
   }, [activeSegment]);
 
   const hasOpenSegment = activeSegment !== null;
-
-  const desktopPopoverAlign: Record<Exclude<ActiveSegment, null>, string> = {
-    when: "left-0",
-    where: "left-1/2 -translate-x-1/2",
-    what: "right-0",
-  };
+  const handleWhereChange = onWhereChange ?? (() => {});
 
   return (
-    <section ref={containerRef} className="mx-auto w-full max-w-3xl">
+    <section
+      ref={containerRef}
+      className={`mx-auto w-full max-w-3xl ${className}`}
+    >
       <div
         className={`relative rounded-2xl border border-zinc-300 shadow-md transition-colors md:rounded-full dark:border-zinc-600 ${
           hasOpenSegment
@@ -238,141 +315,77 @@ export function SearchBar({
       >
         {/* Desktop: horizontal pill */}
         <div className="hidden items-center md:flex">
-          <SegmentButton
-            label="When"
-            value={whenValue}
-            isPlaceholder={whenPlaceholder}
-            isActive={activeSegment === "when"}
-            hasOpenSegment={hasOpenSegment}
-            onClick={() => toggleSegment("when")}
-            className="rounded-l-full pl-6"
-          />
-
-          <div
-            aria-hidden
-            className="h-8 w-px shrink-0 bg-zinc-300 dark:bg-zinc-600"
-          />
-
-          <SegmentButton
-            label="Where"
-            value={whereValue}
-            isPlaceholder={wherePlaceholder}
-            isActive={activeSegment === "where"}
-            hasOpenSegment={hasOpenSegment}
-            onClick={() => toggleSegment("where")}
-          />
-
-          <div
-            aria-hidden
-            className="h-8 w-px shrink-0 bg-zinc-300 dark:bg-zinc-600"
-          />
-
-          <SegmentButton
-            label="What"
-            value={whatValue}
-            isPlaceholder={whatPlaceholder}
-            isActive={activeSegment === "what"}
-            hasOpenSegment={hasOpenSegment}
-            onClick={() => toggleSegment("what")}
-            className="rounded-r-full pr-6"
-          />
+          {visibleSegments.map((segment, index) => (
+            <div key={segment.id} className="contents">
+              {index > 0 ? (
+                <div
+                  aria-hidden
+                  className="h-8 w-px shrink-0 bg-zinc-300 dark:bg-zinc-600"
+                />
+              ) : null}
+              <SegmentButton
+                label={segment.label}
+                value={segment.value}
+                isPlaceholder={segment.isPlaceholder}
+                isActive={activeSegment === segment.id}
+                hasOpenSegment={hasOpenSegment}
+                onClick={() => toggleSegment(segment.id)}
+                className={desktopSegmentClassName(
+                  segment.id,
+                  segments,
+                )}
+              />
+            </div>
+          ))}
         </div>
 
         {/* Mobile: stacked segments */}
         <div className="flex flex-col md:hidden">
-          <div className="relative">
-            <SegmentButton
-              label="When"
-              value={whenValue}
-              isPlaceholder={whenPlaceholder}
-              isActive={activeSegment === "when"}
-              hasOpenSegment={hasOpenSegment}
-              onClick={() => toggleSegment("when")}
-              className="w-full px-6"
-            />
-            {activeSegment === "when" ? (
-              <div className="border-t border-zinc-200 px-4 py-3 dark:border-zinc-700">
-                <ActivePanel
-                  segment="when"
-                  filters={filters}
-                  onDaysApply={onDaysApply}
-                  onWhereChange={onWhereChange}
-                  onWhatChange={onWhatChange}
-                  onClose={closePanel}
+          {visibleSegments.map((segment, index) => (
+            <div key={segment.id}>
+              {index > 0 ? (
+                <div
+                  aria-hidden
+                  className="h-px bg-zinc-300 dark:bg-zinc-600"
                 />
-              </div>
-            ) : null}
-          </div>
-
-          <div
-            aria-hidden
-            className="h-px bg-zinc-300 dark:bg-zinc-600"
-          />
-
-          <div className="relative">
-            <SegmentButton
-              label="Where"
-              value={whereValue}
-              isPlaceholder={wherePlaceholder}
-              isActive={activeSegment === "where"}
-              hasOpenSegment={hasOpenSegment}
-              onClick={() => toggleSegment("where")}
-              className="w-full px-6"
-            />
-            {activeSegment === "where" ? (
-              <div className="border-t border-zinc-200 px-4 py-3 dark:border-zinc-700">
-                <ActivePanel
-                  segment="where"
-                  filters={filters}
-                  onDaysApply={onDaysApply}
-                  onWhereChange={onWhereChange}
-                  onWhatChange={onWhatChange}
-                  onClose={closePanel}
+              ) : null}
+              <div className="relative">
+                <SegmentButton
+                  label={segment.label}
+                  value={segment.value}
+                  isPlaceholder={segment.isPlaceholder}
+                  isActive={activeSegment === segment.id}
+                  hasOpenSegment={hasOpenSegment}
+                  onClick={() => toggleSegment(segment.id)}
+                  className="w-full px-6"
                 />
+                {activeSegment === segment.id ? (
+                  <div className="border-t border-zinc-200 px-4 py-3 dark:border-zinc-700">
+                    <ActivePanel
+                      segment={segment.id}
+                      filters={filters}
+                      onDaysApply={onDaysApply}
+                      onWhereChange={handleWhereChange}
+                      onWhatChange={onWhatChange}
+                      onClose={closePanel}
+                    />
+                  </div>
+                ) : null}
               </div>
-            ) : null}
-          </div>
-
-          <div
-            aria-hidden
-            className="h-px bg-zinc-300 dark:bg-zinc-600"
-          />
-
-          <div className="relative">
-            <SegmentButton
-              label="What"
-              value={whatValue}
-              isPlaceholder={whatPlaceholder}
-              isActive={activeSegment === "what"}
-              hasOpenSegment={hasOpenSegment}
-              onClick={() => toggleSegment("what")}
-              className="w-full px-6"
-            />
-            {activeSegment === "what" ? (
-              <div className="border-t border-zinc-200 px-4 py-3 dark:border-zinc-700">
-                <ActivePanel
-                  segment="what"
-                  filters={filters}
-                  onDaysApply={onDaysApply}
-                  onWhereChange={onWhereChange}
-                  onWhatChange={onWhatChange}
-                  onClose={closePanel}
-                />
-              </div>
-            ) : null}
-          </div>
+            </div>
+          ))}
         </div>
 
         {/* Desktop: shared popover */}
-        {activeSegment ? (
+        {activeSegment && segments.includes(activeSegment) ? (
           <div
-            className={`absolute top-full z-20 mt-3 hidden md:block ${desktopPopoverAlign[activeSegment]}`}
+            className={`absolute top-full z-20 mt-3 hidden md:block ${desktopPopoverAlign(activeSegment, segments)}`}
           >
             <ActivePanel
               segment={activeSegment}
               filters={filters}
               onDaysApply={onDaysApply}
-              onWhereChange={onWhereChange}
+              onWhereChange={handleWhereChange}
               onWhatChange={onWhatChange}
               onClose={closePanel}
             />

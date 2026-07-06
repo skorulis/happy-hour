@@ -36,6 +36,7 @@ type SearchMapViewProps = {
   userLocation: UserLocation | null;
   isEmpty: boolean;
   searchDays?: number[];
+  fullScreen?: boolean;
 };
 
 type SelectedMarker = number | "user" | null;
@@ -215,9 +216,15 @@ function UserLocationMarker({
   );
 }
 
-function MapUnavailablePlaceholder() {
+function MapUnavailablePlaceholder({ fullScreen }: { fullScreen: boolean }) {
   return (
-    <div className="flex h-[60vh] items-center justify-center rounded-xl border border-dashed border-zinc-300 bg-zinc-50 p-6 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
+    <div
+      className={`flex items-center justify-center bg-zinc-50 p-6 text-center text-sm text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400 ${
+        fullScreen
+          ? "absolute inset-0"
+          : "h-[60vh] rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700"
+      }`}
+    >
       Map unavailable — check NEXT_PUBLIC_GOOGLE_MAPS_API_KEY and
       NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID in your environment.
     </div>
@@ -229,6 +236,7 @@ export function SearchMapView({
   userLocation,
   isEmpty,
   searchDays = [],
+  fullScreen = false,
 }: SearchMapViewProps) {
   const [selectedMarker, setSelectedMarker] = useState<SelectedMarker>(null);
 
@@ -245,18 +253,24 @@ export function SearchMapView({
   }, []);
 
   if (!googleMapsApiKey || !googleMapsMapId) {
-    return <MapUnavailablePlaceholder />;
+    return <MapUnavailablePlaceholder fullScreen={fullScreen} />;
   }
 
   return (
-    <div className="relative min-h-[60vh] overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800">
+    <div
+      className={
+        fullScreen
+          ? "absolute inset-0"
+          : "relative min-h-[60vh] overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800"
+      }
+    >
       <APIProvider apiKey={googleMapsApiKey}>
         <Map
           mapId={googleMapsMapId}
           defaultCenter={DEFAULT_CENTER}
           defaultZoom={DEFAULT_ZOOM}
           gestureHandling="greedy"
-          className="h-[60vh] w-full"
+          className={fullScreen ? "h-full w-full" : "h-[60vh] w-full"}
         >
           <FitBounds venueGroups={venueGroups} userLocation={userLocation} />
 

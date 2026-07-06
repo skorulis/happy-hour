@@ -3,8 +3,6 @@ import type { TimeRange } from "@/components/search/DayPicker";
 import type { WhereFilter } from "@/components/search/SuburbSelect";
 import { currentCalendarWeekday } from "@/lib/search/schedule";
 
-export type SearchViewMode = "list" | "map";
-
 export const DEFAULT_SEARCH_FILTERS: SearchFilters = {
   days: [],
   timeRange: null,
@@ -12,10 +10,20 @@ export const DEFAULT_SEARCH_FILTERS: SearchFilters = {
   what: [],
 };
 
-export const DEFAULT_VIEW_MODE: SearchViewMode = "list";
+function filterSearchParams(params: URLSearchParams): URLSearchParams {
+  const filtered = new URLSearchParams(params.toString());
+  filtered.delete("view");
+  return filtered;
+}
 
-export function parseViewMode(params: URLSearchParams): SearchViewMode {
-  return params.get("view") === "map" ? "map" : "list";
+export function searchParamsToMapHref(params: URLSearchParams): string {
+  const qs = filterSearchParams(params).toString();
+  return qs ? `/map?${qs}` : "/map";
+}
+
+export function searchParamsToListHref(params: URLSearchParams): string {
+  const qs = filterSearchParams(params).toString();
+  return qs ? `/?${qs}` : "/";
 }
 
 function parseWhatParam(value: string | null): string[] {
@@ -206,7 +214,6 @@ export function searchParamsEqual(a: string, b: string): boolean {
 export function filtersToSearchParams(
   filters: SearchFilters,
   what: string[],
-  viewMode: SearchViewMode = DEFAULT_VIEW_MODE,
 ): URLSearchParams {
   const params = new URLSearchParams();
 
@@ -233,9 +240,6 @@ export function filtersToSearchParams(
   }
   if (what.length > 0) {
     params.set("q", what.join(","));
-  }
-  if (viewMode === "map") {
-    params.set("view", "map");
   }
 
   return params;
