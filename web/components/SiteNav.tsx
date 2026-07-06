@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense } from "react";
+import { AuthNavLinks } from "@/components/AuthNavLinks";
 import { HomeNavLink } from "@/components/HomeNavLink";
 import { MapNavLink } from "@/components/MapNavLink";
 import { useFavorites } from "@/lib/favorites/useFavorites";
@@ -50,6 +51,7 @@ export function SiteNav() {
             />
             {favouritesLabel}
           </Link>
+          <AuthNavLinks />
         </div>
       </div>
     </header>

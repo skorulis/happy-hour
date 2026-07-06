@@ -1,6 +1,9 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
+import * as authSchema from "@/db/auth-schema";
 import * as schema from "@/db/schema";
+
+const fullSchema = { ...schema, ...authSchema };
 
 function createDb() {
   const connectionString = process.env.DATABASE_URL;
@@ -9,7 +12,7 @@ function createDb() {
   }
 
   const client = postgres(connectionString, { max: 10 });
-  return drizzle(client, { schema });
+  return drizzle(client, { schema: fullSchema });
 }
 
 declare global {

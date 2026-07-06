@@ -36,6 +36,14 @@
             "mojito"
         ]
     },
+    { 
+        "name": "music",
+        "icon": "Music4",
+        "groups": [
+            "live music",
+            "jazz"
+        ]
+    },
     { "name": "aperitivo", "icon": "Wine" },
     { "name": "champagne", "icon": "BottleWine" },
     { "name": "craft beer", "icon": "Beer" },
@@ -75,6 +83,7 @@
             "gyros",
             "meal",
             "muscles",
+            "nachos",
             "pasta",
             "pizza",
             "porterhouse",
@@ -95,7 +104,7 @@
     { "name": "2-4-1", "hidden": true },
     { "name": "2 for 1", "icon": "Percent", "groups": [ "2-4-1" ] },
     { "name": "bao" },
-    { "name": "burger", "icon": "Sandwich" },
+    { "name": "burger", "icon": "Burger" },
     { "name": "calamari", "icon": "Fish" },
     { "name": "cheese" },
     { "name": "chicken", "icon": "Drumstick" },
@@ -104,6 +113,7 @@
     { "name": "gyros", "icon": "Sandwich" },
     { "name": "meal", "icon": "UtensilsCrossed" },
     { "name": "muscles", "icon": "Fish" },
+    { "name": "nachos" },
     { "name": "oysters", "icon": "Fish" },
     { "name": "pasta", "icon": "CookingPot" },
     { "name": "pizza", "icon": "Pizza" },
