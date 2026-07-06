@@ -5,6 +5,13 @@ export type Product = {
   rank?: number;
   groups?: string[];
   hidden?: boolean;
+  icon?: string;
+};
+
+export type DealTextFields = {
+  title: string | null;
+  details: string | null;
+  conditions: string | null;
 };
 
 function mergeProducts(raw: Product[]): Product[] {
@@ -20,6 +27,7 @@ function mergeProducts(raw: Product[]): Product[] {
         rank: product.rank,
         groups: product.groups ? [...new Set(product.groups)] : undefined,
         hidden: product.hidden,
+        icon: product.icon,
       });
       continue;
     }
@@ -33,6 +41,7 @@ function mergeProducts(raw: Product[]): Product[] {
       rank: existing.rank ?? product.rank,
       groups: groups.length > 0 ? groups : undefined,
       hidden: existing.hidden || product.hidden,
+      icon: existing.icon ?? product.icon,
     });
   }
 
@@ -45,12 +54,55 @@ const productsByName = new Map(
   products.map((product) => [product.name.toLowerCase(), product]),
 );
 
+const productsWithIcons = products.filter(
+  (product): product is Product & { icon: string } => !!product.icon,
+);
+
 function isExcluded(name: string, exclude: Set<string>): boolean {
   return exclude.has(name.toLowerCase());
 }
 
 function isVisible(product: Product): boolean {
   return !product.hidden;
+}
+
+function dealSearchText(deals: DealTextFields[]): string {
+  return deals
+    .map((deal) =>
+      [deal.title, deal.details, deal.conditions].filter(Boolean).join(" "),
+    )
+    .join(" ")
+    .toLowerCase();
+}
+
+function compareProductMatches(a: Product, b: Product): number {
+  const aRank = a.rank ?? Number.MAX_SAFE_INTEGER;
+  const bRank = b.rank ?? Number.MAX_SAFE_INTEGER;
+  if (aRank !== bRank) {
+    return aRank - bRank;
+  }
+  return b.name.length - a.name.length;
+}
+
+export function findMatchingProductsForDeals(
+  deals: DealTextFields[],
+): Product[] {
+  const text = dealSearchText(deals);
+  if (!text) {
+    return [];
+  }
+
+  const matches = productsWithIcons.filter((product) =>
+    text.includes(product.name.toLowerCase()),
+  );
+
+  return [...matches].sort(compareProductMatches);
+}
+
+export function resolveMapIconForDeals(
+  deals: DealTextFields[],
+): string | undefined {
+  return findMatchingProductsForDeals(deals)[0]?.icon;
 }
 
 export function getInitialSuggestions(exclude: Set<string> = new Set()): Product[] {

@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { resolveMapIconForDeals } from "@data/products";
 import {
   AdvancedMarker,
   APIProvider,
@@ -24,6 +25,10 @@ import {
 } from "@/lib/search/bounds";
 import { venuePath } from "@/lib/search/slugs";
 import { appendDaysParam } from "@/lib/search/url";
+import {
+  isRegisteredProductIcon,
+  ProductMapIcon,
+} from "@/lib/search/ProductMapIcon";
 
 const DEFAULT_CENTER = { lat: -33.87, lng: 151.21 };
 const DEFAULT_ZOOM = 11;
@@ -221,6 +226,12 @@ function VenueMarker({
   onClose: () => void;
 }) {
   const [markerRef, marker] = useAdvancedMarkerRef();
+  const iconName = useMemo(
+    () => resolveMapIconForDeals(group.deals),
+    [group.deals],
+  );
+  const showProductIcon =
+    iconName !== undefined && isRegisteredProductIcon(iconName);
 
   const handleMarkerClick = useCallback(() => {
     onSelect(group.venue.id);
@@ -232,7 +243,19 @@ function VenueMarker({
         ref={markerRef}
         position={{ lat: group.venue.lat, lng: group.venue.lng }}
         onClick={handleMarkerClick}
-      />
+      >
+        {showProductIcon ? (
+          <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-amber-700 bg-amber-500 shadow-md">
+            <ProductMapIcon name={iconName} className="text-white" size={16} />
+          </div>
+        ) : (
+          <Pin
+            background="#f59e0b"
+            borderColor="#b45309"
+            glyphColor="#ffffff"
+          />
+        )}
+      </AdvancedMarker>
       {isSelected ? (
         <InfoWindow anchor={marker} onClose={onClose}>
           <VenuePopup group={group} searchDays={searchDays} />
