@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  formatCompactTimeRange,
+  formatDealTimeBadge,
   hasAnyDealActiveNow,
   isDealActiveNow,
   isScheduleActiveNow,
@@ -15,6 +17,38 @@ function atLocalTime(
 ): Date {
   return new Date(year, month - 1, day, hours, minutes);
 }
+
+describe("formatCompactTimeRange", () => {
+  it("shows Until end time when starting at midnight", () => {
+    expect(formatCompactTimeRange(0, 18 * 60)).toBe("Until 6pm");
+  });
+
+  it("shows a normal range when not starting at midnight", () => {
+    expect(formatCompactTimeRange(16 * 60, 19 * 60)).toBe("4-7pm");
+  });
+
+  it("shows From start time when ending at midnight", () => {
+    expect(formatCompactTimeRange(19 * 60 + 30, 1440)).toBe("From 7:30pm");
+  });
+});
+
+describe("formatDealTimeBadge", () => {
+  it("uses Until format for start-of-day deals", () => {
+    expect(
+      formatDealTimeBadge([
+        { dayOfWeek: 2, startMinute: 0, endMinute: 18 * 60 },
+      ]),
+    ).toBe("Until 6pm");
+  });
+
+  it("uses From format for end-of-day deals", () => {
+    expect(
+      formatDealTimeBadge([
+        { dayOfWeek: 5, startMinute: 19 * 60 + 30, endMinute: 1440 },
+      ]),
+    ).toBe("From 7:30pm");
+  });
+});
 
 describe("isScheduleActiveNow", () => {
   const weekdayDeal: ScheduleSlice = {

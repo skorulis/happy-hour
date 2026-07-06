@@ -298,7 +298,17 @@ function formatCompactMinute(minute: number, includeMeridiem: boolean): string {
 }
 
 export function formatCompactTimeRange(startMinute: number, endMinute: number): string {
+  const normalizedStart = minutesWithinDay(startMinute);
   const normalizedEnd = minutesWithinDay(endMinute);
+
+  if (normalizedStart === 0) {
+    return `Until ${formatCompactMinute(normalizedEnd, true)}`;
+  }
+
+  if (normalizedEnd === 0) {
+    return `From ${formatCompactMinute(startMinute, true)}`;
+  }
+
   const startPeriod = startMinute >= 720 ? "pm" : "am";
   const endPeriod = normalizedEnd >= 720 ? "pm" : "am";
   const start = formatCompactMinute(startMinute, startPeriod !== endPeriod);
