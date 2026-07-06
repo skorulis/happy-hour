@@ -429,6 +429,7 @@ final class VenueDetailsViewModel {
                 updatedDeal.sourceURL = draft.sourceURL.isEmpty ? nil : draft.sourceURL
                 updatedDeal.creativeURL = draft.creativeURL.isEmpty ? nil : draft.creativeURL
                 updatedDeal.status = status
+                updatedDeal.updateDate = .now
                 deals[index] = DealWithSchedules(
                     deal: updatedDeal,
                     schedules: draft.schedules.map { $0.toDealSchedule() }

@@ -216,5 +216,11 @@ final class SQLMigrations {
                 t.add(column: "blurb", .text)
             }
         }
+
+        migrator.registerMigration("v25_deal_update_date") { db in
+            try db.alter(table: "deal") { t in
+                t.add(column: "update_date", .datetime)
+            }
+        }
     }
 }

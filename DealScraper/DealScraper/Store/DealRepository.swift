@@ -149,7 +149,8 @@ final class DealRepository {
                 sourceURL: original.sourceURL,
                 details: original.details,
                 conditions: original.conditions,
-                status: original.status
+                status: original.status,
+                updateDate: .now
             )
             try newDeal.insert(db)
             guard let newDealId = newDeal.id else {
@@ -198,6 +199,7 @@ final class DealRepository {
             deal.sourceURL = sourceURL
             deal.creativeURL = creativeURL
             deal.status = status
+            deal.updateDate = .now
             try deal.update(db)
 
             if let schedules {

@@ -226,6 +226,70 @@ struct DealRepositoryTests {
         #expect(found[0].deal.sourceURL == "https://example.com/page")
         #expect(found[0].deal.creativeURL == "https://example.com/image.png")
         #expect(found[0].deal.status == .approved)
+        #expect(found[0].deal.updateDate != nil)
+    }
+
+    @Test func updateStatusDoesNotSetUpdateDate() throws {
+        let store = SQLStore.inMemory()
+        let venueRepository = VenueRepository(store: store)
+        let dealRepository = DealRepository(store: store)
+
+        try venueRepository.upsert(Venue(
+            googleMapId: "places/test",
+            name: "Test Pub",
+            lat: 0,
+            lng: 0,
+            json: "{}"
+        ))
+
+        let venueId = try #require(try venueRepository.find(googleMapId: "places/test")?.id)
+
+        _ = try dealRepository.replaceAll(
+            venueId: venueId,
+            deals: [
+                DealWithSchedules(
+                    deal: Deal(venueId: venueId, title: "Happy Hour"),
+                    schedules: []
+                ),
+            ]
+        )
+
+        let dealId = try #require(try dealRepository.find(venueId: venueId).first?.deal.id)
+        try dealRepository.updateStatus(id: dealId, status: .approved)
+
+        let found = try dealRepository.find(venueId: venueId)
+        #expect(found[0].deal.updateDate == nil)
+    }
+
+    @Test func duplicateSetsUpdateDate() throws {
+        let store = SQLStore.inMemory()
+        let venueRepository = VenueRepository(store: store)
+        let dealRepository = DealRepository(store: store)
+
+        try venueRepository.upsert(Venue(
+            googleMapId: "places/test",
+            name: "Test Pub",
+            lat: 0,
+            lng: 0,
+            json: "{}"
+        ))
+
+        let venueId = try #require(try venueRepository.find(googleMapId: "places/test")?.id)
+
+        _ = try dealRepository.replaceAll(
+            venueId: venueId,
+            deals: [
+                DealWithSchedules(
+                    deal: Deal(venueId: venueId, title: "Happy Hour"),
+                    schedules: []
+                ),
+            ]
+        )
+
+        let dealId = try #require(try dealRepository.find(venueId: venueId).first?.deal.id)
+        let duplicated = try #require(try dealRepository.duplicate(id: dealId))
+
+        #expect(duplicated.deal.updateDate != nil)
     }
 
     @Test func updateStatusPersistsDealStatus() throws {
