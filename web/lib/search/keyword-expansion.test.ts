@@ -6,9 +6,16 @@ describe("expandKeywords", () => {
   it("includes grouped keywords for a single selection", () => {
     const expanded = expandKeywords(["beer"]);
     expect(expanded).toEqual(
-      expect.arrayContaining(["beer", "schooner", "pint", "jugs"]),
+      expect.arrayContaining([
+        "beer",
+        "schooner",
+        "pint",
+        "jugs",
+        "guinness",
+        "craft beer",
+      ]),
     );
-    expect(expanded).toHaveLength(4);
+    expect(expanded).toHaveLength(6);
   });
 
   it("expands groups recursively", () => {
@@ -19,23 +26,36 @@ describe("expandKeywords", () => {
         "beer",
         "cocktails",
         "wine",
+        "whiskey",
+        "champagne",
+        "saki",
         "schooner",
         "pint",
         "jugs",
+        "guinness",
+        "craft beer",
         "negroni",
         "martini",
         "spritz",
+        "mojito",
       ]),
     );
-    expect(expanded).toHaveLength(10);
+    expect(expanded).toHaveLength(16);
   });
 
   it("deduplicates shared descendants", () => {
     const expanded = expandKeywords(["beer", "jugs"]);
     expect(expanded).toEqual(
-      expect.arrayContaining(["beer", "schooner", "pint", "jugs"]),
+      expect.arrayContaining([
+        "beer",
+        "jugs",
+        "schooner",
+        "pint",
+        "guinness",
+        "craft beer",
+      ]),
     );
-    expect(expanded).toHaveLength(4);
+    expect(expanded).toHaveLength(6);
   });
 
   it("merges expansions from multiple selected tags for OR search", () => {
@@ -43,23 +63,25 @@ describe("expandKeywords", () => {
     expect(expanded).toEqual(
       expect.arrayContaining([
         "beer",
+        "steak",
         "schooner",
         "pint",
         "jugs",
-        "steak",
+        "guinness",
+        "craft beer",
         "porterhouse",
         "rump",
         "sirloin",
       ]),
     );
-    expect(expanded).toHaveLength(8);
+    expect(expanded).toHaveLength(10);
   });
 });
 
 describe("expandKeywordGroups", () => {
   it("keeps each selected token in its own group", () => {
     expect(expandKeywordGroups(["beer", "burger"])).toEqual([
-      ["beer", "schooner", "pint", "jugs"],
+      ["beer", "schooner", "pint", "jugs", "guinness", "craft beer"],
       ["burger"],
     ]);
   });
