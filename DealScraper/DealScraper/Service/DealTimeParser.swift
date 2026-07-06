@@ -186,7 +186,7 @@ nonisolated enum DealTimeParser {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
 
-        let time = #"\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)"#
+        let time = #"\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?"#
         let betweenPattern = #"(?i)between\s+(\#(time))\s*(?:-|–|to)\s*(\#(time))"#
         guard let regex = try? NSRegularExpression(pattern: betweenPattern),
               let match = regex.firstMatch(in: trimmed, range: NSRange(trimmed.startIndex..., in: trimmed)),
