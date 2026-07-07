@@ -6,6 +6,7 @@ import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
 import { FavoriteDealButton } from "@/components/FavoriteDealButton";
 import { FlagDealButton } from "@/components/FlagDealButton";
+import { MarkdownText } from "@/components/MarkdownText";
 import { isCreativeImageUrl } from "@/lib/search/creative-url";
 import type { DealSearchResult } from "@/lib/search/queries";
 import {
@@ -110,14 +111,14 @@ export function DealCard({
             </p>
           ) : null}
           {deal.details ? (
-            <p className="whitespace-pre-wrap text-sm text-zinc-700 dark:text-zinc-300">
+            <MarkdownText className="text-sm text-zinc-700 dark:text-zinc-300">
               {deal.details}
-            </p>
+            </MarkdownText>
           ) : null}
           {deal.conditions ? (
-            <p className="whitespace-pre-wrap text-sm text-zinc-500 dark:text-zinc-400">
+            <MarkdownText className="text-sm text-zinc-500 dark:text-zinc-400">
               {deal.conditions}
-            </p>
+            </MarkdownText>
           ) : null}
         </div>
       </div>
