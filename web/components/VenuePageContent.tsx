@@ -124,6 +124,7 @@ export function VenuePageContent({
       <WeeklyDealsSection
         deals={venue.deals}
         initialSelectedDay={initialSelectedDay}
+        showReportButton
       />
     </div>
   );

@@ -1,3 +1,4 @@
+import { user } from "@/db/auth-schema";
 import { relations, sql } from "drizzle-orm";
 import {
   doublePrecision,
@@ -78,6 +79,33 @@ export const deal = pgTable(
   (table) => [index("deal_venue_id_idx").on(table.venueId)],
 );
 
+export const dealReportCategory = [
+  "unavailable",
+  "incorrect_schedule",
+  "incorrect_description",
+] as const;
+export type DealReportCategory = (typeof dealReportCategory)[number];
+
+export const dealReport = pgTable(
+  "deal_report",
+  {
+    id: serial("id").primaryKey(),
+    dealId: integer("deal_id")
+      .notNull()
+      .references(() => deal.id, { onDelete: "cascade" }),
+    userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+    category: text("category").notNull(),
+    details: text("details"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("deal_report_deal_id_idx").on(table.dealId),
+    index("deal_report_user_id_idx").on(table.userId),
+  ],
+);
+
 export const dealSchedule = pgTable(
   "deal_schedule",
   {
@@ -128,6 +156,18 @@ export const dealRelations = relations(deal, ({ one, many }) => ({
     references: [venue.id],
   }),
   schedules: many(dealSchedule),
+  reports: many(dealReport),
+}));
+
+export const dealReportRelations = relations(dealReport, ({ one }) => ({
+  deal: one(deal, {
+    fields: [dealReport.dealId],
+    references: [deal.id],
+  }),
+  user: one(user, {
+    fields: [dealReport.userId],
+    references: [user.id],
+  }),
 }));
 
 export const dealScheduleRelations = relations(dealSchedule, ({ one }) => ({
@@ -142,6 +182,7 @@ export type Venue = typeof venue.$inferSelect;
 export type VenueLinks = typeof venueLinks.$inferSelect;
 export type Deal = typeof deal.$inferSelect;
 export type DealSchedule = typeof dealSchedule.$inferSelect;
+export type DealReport = typeof dealReport.$inferSelect;
 
 /** Full-text search vector for deals (used in raw SQL queries). */
 export const dealSearchVector = sql`to_tsvector('english', coalesce(${deal.title}, '') || ' ' || coalesce(${deal.details}, '') || ' ' || coalesce(${deal.conditions}, ''))`;

@@ -5,6 +5,7 @@ import { useState } from "react";
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
 import { FavoriteDealButton } from "@/components/FavoriteDealButton";
+import { FlagDealButton } from "@/components/FlagDealButton";
 import { isCreativeImageUrl } from "@/lib/search/creative-url";
 import type { DealSearchResult } from "@/lib/search/queries";
 import {
@@ -21,6 +22,7 @@ type DealCardProps = {
   id?: string;
   isFavorited?: boolean;
   onToggleFavorite?: () => void;
+  showReportButton?: boolean;
 };
 
 export function DealCard({
@@ -30,6 +32,7 @@ export function DealCard({
   id,
   isFavorited,
   onToggleFavorite,
+  showReportButton = false,
 }: DealCardProps) {
   const daySchedules =
     dayOfWeek !== undefined
@@ -118,15 +121,22 @@ export function DealCard({
           ) : null}
         </div>
       </div>
-      {deal.sourceUrl ? (
-        <a
-          href={deal.sourceUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="mt-4 inline-block text-sm text-amber-700 hover:underline dark:text-amber-400"
+      {deal.sourceUrl || showReportButton ? (
+        <div
+          className={`mt-4 flex items-center gap-2 ${deal.sourceUrl ? "justify-between" : "justify-end"}`}
         >
-          View source
-        </a>
+          {deal.sourceUrl ? (
+            <a
+              href={deal.sourceUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="text-sm text-amber-700 hover:underline dark:text-amber-400"
+            >
+              View source
+            </a>
+          ) : null}
+          {showReportButton ? <FlagDealButton dealId={deal.id} /> : null}
+        </div>
       ) : null}
     </article>
   );

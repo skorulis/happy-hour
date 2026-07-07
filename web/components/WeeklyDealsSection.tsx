@@ -17,6 +17,7 @@ type WeeklyDealsSectionProps = {
   emptyDayMessage?: (dayLabel: string) => string;
   isFavorite?: (dealId: number) => boolean;
   onToggleFavorite?: (dealId: number) => void;
+  showReportButton?: boolean;
 };
 
 const defaultHeading = (count: number, selectedDay: number | null) => {
@@ -39,6 +40,7 @@ export function WeeklyDealsSection({
   emptyDayMessage = defaultEmptyDayMessage,
   isFavorite: isFavoriteProp,
   onToggleFavorite: onToggleFavoriteProp,
+  showReportButton = false,
 }: WeeklyDealsSectionProps) {
   const [selectedDay, setSelectedDay] = useState<number | null>(
     initialSelectedDay ?? null,
@@ -105,6 +107,7 @@ export function WeeklyDealsSection({
                           dayOfWeek={dayOfWeek}
                           isFavorited={isFavorite(deal.id)}
                           onToggleFavorite={() => toggleFavorite(deal.id)}
+                          showReportButton={showReportButton}
                         />
                       );
                     })}
@@ -123,6 +126,7 @@ export function WeeklyDealsSection({
                   dayOfWeek={selectedDay}
                   isFavorited={isFavorite(deal.id)}
                   onToggleFavorite={() => toggleFavorite(deal.id)}
+                  showReportButton={showReportButton}
                 />
               ))}
             </div>
