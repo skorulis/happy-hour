@@ -1,5 +1,6 @@
 import Link from "next/link";
 import {
+  formatDealDateRange,
   formatDealDayBadge,
   formatDealTimeBadge,
 } from "@/lib/search/schedule";
@@ -58,6 +59,7 @@ export function VenueSearchCard({ group, searchDays = [] }: VenueSearchCardProps
           <ul className="space-y-0.5">
             {group.deals.map((deal) => {
               const timeBadge = formatDealTimeBadge(deal.schedules);
+              const dateBadge = formatDealDateRange(deal.startDate, deal.endDate);
 
               return (
                 <li key={deal.id}>
@@ -68,9 +70,16 @@ export function VenueSearchCard({ group, searchDays = [] }: VenueSearchCardProps
                     <span className="font-semibold text-zinc-900 hover:underline dark:text-zinc-50">
                       {deal.title || "Untitled deal"}
                     </span>
-                    <span className="inline-flex items-center rounded-md bg-zinc-900 px-2 py-0.5 text-xs font-medium text-white dark:bg-zinc-100 dark:text-zinc-900">
-                      {formatDealDayBadge(deal.schedules)}
-                    </span>
+                    {deal.schedules.length > 0 || !dateBadge ? (
+                      <span className="inline-flex items-center rounded-md bg-zinc-900 px-2 py-0.5 text-xs font-medium text-white dark:bg-zinc-100 dark:text-zinc-900">
+                        {formatDealDayBadge(deal.schedules)}
+                      </span>
+                    ) : null}
+                    {dateBadge ? (
+                      <span className="inline-flex items-center rounded-md bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900 dark:bg-amber-950 dark:text-amber-300">
+                        {dateBadge}
+                      </span>
+                    ) : null}
                     {timeBadge && timeBadge !== "—" ? (
                       <span className="inline-flex items-center rounded-md border border-zinc-300 px-2 py-0.5 text-xs font-medium text-zinc-500 dark:border-zinc-600 dark:text-zinc-400">
                         {timeBadge}

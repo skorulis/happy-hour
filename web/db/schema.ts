@@ -1,6 +1,7 @@
 import { user } from "@/db/auth-schema";
 import { relations, sql } from "drizzle-orm";
 import {
+  date,
   doublePrecision,
   index,
   integer,
@@ -72,6 +73,8 @@ export const deal = pgTable(
     sourceUrl: text("source_url"),
     details: text("details"),
     conditions: text("conditions"),
+    startDate: date("start_date"),
+    endDate: date("end_date"),
     syncedAt: timestamp("synced_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

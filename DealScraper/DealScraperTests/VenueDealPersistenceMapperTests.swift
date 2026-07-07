@@ -187,4 +187,38 @@ struct VenueDealPersistenceMapperTests {
         #expect(schedule.startMinute == 0)
         #expect(schedule.endMinute == 1_440)
     }
+
+    @Test func mapsCalendarOnlyDealFromPromotionDates() throws {
+        let material = VenueDealSourceMaterial.fixture()
+        let payload = DealExtractionPayload(deals: [
+            DealExtractionPayload.RawDeal(
+                title: "Gift Card Sale – 25% Off",
+                details: ["25% off all gift cards"],
+                conditions: ["Enter code BLKFDAY at checkout to receive 25% off."],
+                days: [],
+                times: ["all day"],
+                promotionDates: ["Friday, 14 November – Monday, 1 December 2025"]
+            ),
+        ])
+
+        let mapped = VenueDealPersistenceMapper.map(
+            payload: payload,
+            venueId: 1,
+            material: material
+        )
+
+        #expect(mapped.count == 1)
+
+        let result = try #require(mapped.first)
+        #expect(result.schedules.isEmpty)
+        let start = try #require(result.deal.startDate)
+        let end = try #require(result.deal.endDate)
+        let calendar = Calendar.current
+        #expect(calendar.component(.year, from: start) == 2025)
+        #expect(calendar.component(.month, from: start) == 11)
+        #expect(calendar.component(.day, from: start) == 14)
+        #expect(calendar.component(.year, from: end) == 2025)
+        #expect(calendar.component(.month, from: end) == 12)
+        #expect(calendar.component(.day, from: end) == 1)
+    }
 }

@@ -366,3 +366,35 @@ export function formatScheduleSummary(
     })
     .join(" · ");
 }
+
+function formatDisplayDate(isoDate: string): string {
+  const [year, month, day] = isoDate.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+  return date.toLocaleDateString("en-AU", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+export function formatDealDateRange(
+  startDate?: string | null,
+  endDate?: string | null,
+): string | null {
+  if (!startDate && !endDate) {
+    return null;
+  }
+
+  if (startDate && endDate) {
+    if (startDate === endDate) {
+      return formatDisplayDate(startDate);
+    }
+    return `${formatDisplayDate(startDate)} – ${formatDisplayDate(endDate)}`;
+  }
+
+  if (startDate) {
+    return `From ${formatDisplayDate(startDate)}`;
+  }
+
+  return `Until ${formatDisplayDate(endDate!)}`;
+}

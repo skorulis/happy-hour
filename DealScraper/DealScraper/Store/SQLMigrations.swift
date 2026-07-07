@@ -222,5 +222,12 @@ final class SQLMigrations {
                 t.add(column: "update_date", .datetime)
             }
         }
+
+        migrator.registerMigration("v26_deal_start_end_date") { db in
+            try db.alter(table: "deal") { t in
+                t.add(column: "start_date", .date)
+                t.add(column: "end_date", .date)
+            }
+        }
     }
 }

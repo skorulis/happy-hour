@@ -19,6 +19,8 @@ nonisolated struct Deal: Codable, Sendable {
     var conditions: String?
     var status: DealStatus
     var updateDate: Date?
+    var startDate: Date?
+    var endDate: Date?
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -30,6 +32,8 @@ nonisolated struct Deal: Codable, Sendable {
         case conditions
         case status
         case updateDate = "update_date"
+        case startDate = "start_date"
+        case endDate = "end_date"
     }
 
     init(
@@ -41,7 +45,9 @@ nonisolated struct Deal: Codable, Sendable {
         details: String? = nil,
         conditions: String? = nil,
         status: DealStatus = .new,
-        updateDate: Date? = nil
+        updateDate: Date? = nil,
+        startDate: Date? = nil,
+        endDate: Date? = nil
     ) {
         self.id = id
         self.venueId = venueId
@@ -52,6 +58,8 @@ nonisolated struct Deal: Codable, Sendable {
         self.conditions = conditions
         self.status = status
         self.updateDate = updateDate
+        self.startDate = startDate
+        self.endDate = endDate
     }
 }
 

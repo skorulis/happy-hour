@@ -50,6 +50,13 @@
       "when": 1783381722990,
       "tag": "0006_sour_next_avengers",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1783388800168,
+      "tag": "0007_condemned_moon_knight",
+      "breakpoints": true
     }
   ]
 }

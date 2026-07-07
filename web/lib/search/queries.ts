@@ -46,6 +46,8 @@ export type DealSearchResult = {
   conditions: string | null;
   imageUrl: string | null;
   sourceUrl: string | null;
+  startDate: string | null;
+  endDate: string | null;
   venue: {
     id: number;
     name: string;
@@ -419,6 +421,8 @@ export async function searchDeals(
     conditions: deal.conditions,
     imageUrl: deal.imageUrl,
     sourceUrl: deal.sourceUrl,
+    startDate: deal.startDate,
+    endDate: deal.endDate,
     venueId: venue.id,
     venueName: venue.name,
     venueSuburbName: suburb.name,
@@ -478,6 +482,8 @@ export async function searchDeals(
     conditions: row.conditions,
     imageUrl: row.imageUrl,
     sourceUrl: row.sourceUrl,
+    startDate: row.startDate,
+    endDate: row.endDate,
     venue: {
       id: row.venueId,
       name: row.venueName,
@@ -510,6 +516,8 @@ export async function getDealsByIds(
       conditions: deal.conditions,
       imageUrl: deal.imageUrl,
       sourceUrl: deal.sourceUrl,
+      startDate: deal.startDate,
+      endDate: deal.endDate,
       venueId: venue.id,
       venueName: venue.name,
       venueSuburbName: suburb.name,
@@ -554,6 +562,8 @@ export async function getDealsByIds(
     conditions: row.conditions,
     imageUrl: row.imageUrl,
     sourceUrl: row.sourceUrl,
+    startDate: row.startDate,
+    endDate: row.endDate,
     venue: {
       id: row.venueId,
       name: row.venueName,

@@ -48,17 +48,21 @@ enum VenueDealPersistenceMapper {
 
         guard !title.isEmpty || details != nil || conditions != nil else { return nil }
 
+        let promotionDates = PromotionDateParser.parse(rawDeal.promotionDates)
+
         let deal = Deal(
             venueId: venueId,
             title: title.isEmpty ? nil : title,
             creativeURL: creativeURL,
             sourceURL: sourceURL,
             details: details,
-            conditions: conditions
+            conditions: conditions,
+            startDate: promotionDates.start,
+            endDate: promotionDates.end
         )
 
         let schedules = schedules(for: legacyDeal)
-        guard !schedules.isEmpty else {
+        guard !schedules.isEmpty || deal.startDate != nil || deal.endDate != nil else {
             return nil
         }
         return DealWithSchedules(deal: deal, schedules: schedules)

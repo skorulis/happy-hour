@@ -10,6 +10,7 @@ import { MarkdownText } from "@/components/MarkdownText";
 import { isCreativeImageUrl } from "@/lib/search/creative-url";
 import type { DealSearchResult } from "@/lib/search/queries";
 import {
+  formatDealDateRange,
   formatDealTimeBadge,
   formatScheduleSummary,
   schedulesForDay,
@@ -41,6 +42,7 @@ export function DealCard({
       : deal.schedules;
   const timeBadge =
     dayOfWeek !== undefined ? formatDealTimeBadge(daySchedules) : null;
+  const dateBadge = formatDealDateRange(deal.startDate, deal.endDate);
   const creativeImageUrl = isCreativeImageUrl(deal.imageUrl)
     ? deal.imageUrl
     : null;
@@ -85,6 +87,11 @@ export function DealCard({
               {timeBadge && timeBadge !== "—" ? (
                 <span className="inline-flex items-center rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
                   {timeBadge}
+                </span>
+              ) : null}
+              {dateBadge ? (
+                <span className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                  {dateBadge}
                 </span>
               ) : null}
             </div>

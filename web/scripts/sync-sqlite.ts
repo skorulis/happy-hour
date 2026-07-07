@@ -51,6 +51,8 @@ type SqliteDeal = {
   source_url: string | null;
   details: string | null;
   conditions: string | null;
+  start_date: string | null;
+  end_date: string | null;
 };
 
 type SqliteDealSchedule = {
@@ -106,6 +108,25 @@ function parseTimestamp(raw: string | null): Date | null {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
+function sydneyToday(): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Australia/Sydney",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
+function shouldSkipDeal(dealRow: SqliteDeal, today: string): boolean {
+  if (dealRow.start_date && dealRow.start_date > today) {
+    return true;
+  }
+  if (dealRow.end_date && dealRow.end_date < today) {
+    return true;
+  }
+  return false;
+}
+
 async function main() {
   const { sqlitePath: rawPath } = parseArgs(process.argv.slice(2));
   const sqlitePath = resolveSqlitePath(rawPath);
@@ -134,6 +155,7 @@ async function main() {
   let venuesSynced = 0;
   let dealsInserted = 0;
   const syncedSuburbKeys = new Set<string>();
+  const today = sydneyToday();
 
   function suburbKey(name: string, postcode: string | null): string {
     return `${name}\u0000${postcode ?? ""}`;
@@ -263,6 +285,10 @@ async function main() {
         .all(venueRow.id) as SqliteDeal[];
 
       for (const dealRow of approvedDeals) {
+        if (shouldSkipDeal(dealRow, today)) {
+          continue;
+        }
+
         const [insertedDeal] = await tx
           .insert(schema.deal)
           .values({
@@ -272,6 +298,8 @@ async function main() {
             sourceUrl: dealRow.source_url,
             details: dealRow.details,
             conditions: dealRow.conditions,
+            startDate: dealRow.start_date,
+            endDate: dealRow.end_date,
             syncedAt: new Date(),
           })
           .returning({ id: schema.deal.id });

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   formatCompactTimeRange,
+  formatDealDateRange,
   formatDealTimeBadge,
   hasAnyDealActiveNow,
   isDealActiveNow,
@@ -132,5 +133,31 @@ describe("hasAnyDealActiveNow", () => {
       },
     ];
     expect(hasAnyDealActiveNow(deals, now)).toBe(false);
+  });
+});
+
+describe("formatDealDateRange", () => {
+  it("returns null when no dates are set", () => {
+    expect(formatDealDateRange(null, null)).toBeNull();
+  });
+
+  it("formats a date range", () => {
+    expect(formatDealDateRange("2025-11-14", "2025-12-01")).toBe(
+      "14 Nov 2025 – 1 Dec 2025",
+    );
+  });
+
+  it("formats a single date when start and end match", () => {
+    expect(formatDealDateRange("2025-12-25", "2025-12-25")).toBe(
+      "25 Dec 2025",
+    );
+  });
+
+  it("formats until-only ranges", () => {
+    expect(formatDealDateRange(null, "2025-12-31")).toBe("Until 31 Dec 2025");
+  });
+
+  it("formats from-only ranges", () => {
+    expect(formatDealDateRange("2025-11-14", null)).toBe("From 14 Nov 2025");
   });
 });

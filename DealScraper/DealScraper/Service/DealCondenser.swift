@@ -73,7 +73,9 @@ struct TextMatchDealCondenser: DealCondenser {
             sourceURL: sourceURL,
             details: details,
             conditions: conditions,
-            status: mergedStatus(lhsDeal.status, rhsDeal.status)
+            status: mergedStatus(lhsDeal.status, rhsDeal.status),
+            startDate: mergedStartDate(lhsDeal.startDate, rhsDeal.startDate),
+            endDate: mergedEndDate(lhsDeal.endDate, rhsDeal.endDate)
         )
 
         let schedules = mergedSchedules(lhs.schedules, rhs.schedules)
@@ -349,6 +351,32 @@ struct TextMatchDealCondenser: DealCondenser {
         if lhs == .approved || rhs == .approved { return .approved }
         if lhs == .rejected && rhs == .rejected { return .rejected }
         return .new
+    }
+
+    private func mergedStartDate(_ lhs: Date?, _ rhs: Date?) -> Date? {
+        switch (lhs, rhs) {
+        case let (left?, right?):
+            return min(left, right)
+        case (nil, let right?):
+            return right
+        case (let left?, nil):
+            return left
+        case (nil, nil):
+            return nil
+        }
+    }
+
+    private func mergedEndDate(_ lhs: Date?, _ rhs: Date?) -> Date? {
+        switch (lhs, rhs) {
+        case let (left?, right?):
+            return max(left, right)
+        case (nil, let right?):
+            return right
+        case (let left?, nil):
+            return left
+        case (nil, nil):
+            return nil
+        }
     }
 }
 
