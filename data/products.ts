@@ -119,6 +119,10 @@ export function resolveMapIconForDeals(
   return findMatchingProductsForDeals(deals)[0]?.icon;
 }
 
+export function findProductByName(name: string): Product | undefined {
+  return productsByName.get(name.toLowerCase());
+}
+
 export function getInitialSuggestions(exclude: Set<string> = new Set()): Product[] {
   return products
     .filter(

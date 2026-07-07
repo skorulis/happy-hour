@@ -2,11 +2,16 @@
 
 import {
   filterSuggestions,
+  findProductByName,
   getInitialSuggestions,
   type Product,
 } from "@data/products";
 import { X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  isRegisteredProductIcon,
+  ProductMapIcon,
+} from "@/lib/search/ProductMapIcon";
 
 type WhatSelectPanelProps = {
   tokens: string[];
@@ -22,6 +27,38 @@ function tokenSet(tokens: string[]): Set<string> {
 function hasToken(tokens: string[], value: string): boolean {
   const lower = value.toLowerCase();
   return tokens.some((token) => token.toLowerCase() === lower);
+}
+
+function SuggestionIcon({ product }: { product: Product }) {
+  if (!product.icon || !isRegisteredProductIcon(product.icon)) {
+    return (
+      <span
+        aria-hidden
+        className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800"
+      />
+    );
+  }
+
+  return (
+    <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
+      <ProductMapIcon name={product.icon} size={14} />
+    </span>
+  );
+}
+
+function TokenIcon({ token }: { token: string }) {
+  const icon = findProductByName(token)?.icon;
+  if (!icon || !isRegisteredProductIcon(icon)) {
+    return null;
+  }
+
+  return (
+    <ProductMapIcon
+      name={icon}
+      size={12}
+      className="shrink-0 text-amber-700 dark:text-amber-400"
+    />
+  );
 }
 
 export function WhatSelectPanel({
@@ -136,6 +173,7 @@ export function WhatSelectPanel({
             key={`${token}-${index}`}
             className="inline-flex max-w-full items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-950/50 dark:text-amber-300"
           >
+            <TokenIcon token={token} />
             <span className="truncate">{token}</span>
             <button
               type="button"
@@ -189,13 +227,14 @@ export function WhatSelectPanel({
               aria-selected={index === activeHighlightIndex}
               onMouseEnter={() => setHighlightIndex(index)}
               onClick={() => selectSuggestion(product)}
-              className={`block w-full rounded-lg px-2 py-2 text-left text-sm ${
+              className={`flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left text-sm ${
                 index === activeHighlightIndex
                   ? "bg-amber-50 font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-400"
                   : "text-zinc-800 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
               }`}
             >
-              {product.name}
+              <SuggestionIcon product={product} />
+              <span className="min-w-0 flex-1">{product.name}</span>
             </button>
           ))
         )}
