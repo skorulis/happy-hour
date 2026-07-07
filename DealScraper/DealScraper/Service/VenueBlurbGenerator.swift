@@ -37,8 +37,11 @@ final class VenueBlurbGenerator: @unchecked Sendable {
 
         let model = await llmModelStore.openRouterModel
         let prompt = """
-            Give me a light hearted short description of \(pubName) in \(suburb). 
-            Do not refer to the item by name; write as if the reader already knows what is being described. 
+            Give me a 2-3 line light hearted description of \(pubName) in \(suburb). 
+            Focus on the unique aspects of the venue rather than generic descriptions.
+            Don't embelish or add features that don't exist.
+            Do not refer to the item by name; write as if the reader already knows what is being described.
+            Do not ask any questions.
             Avoid em dashes.
             """
         return try await client.generateText(

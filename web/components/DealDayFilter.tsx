@@ -11,7 +11,7 @@ type DealDayFilterProps = {
   onSelectedDayChange: (day: number | null) => void;
 };
 
-function DayFilterPill({
+function DayFilterSegment({
   label,
   ariaLabel,
   isActive,
@@ -28,10 +28,10 @@ function DayFilterPill({
       onClick={onClick}
       aria-pressed={isActive}
       aria-label={ariaLabel}
-      className={`rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+      className={`min-w-0 flex-1 rounded-lg px-2 py-2 text-sm transition-colors ${
         isActive
-          ? "border-amber-600 bg-amber-600 text-white dark:border-amber-500 dark:bg-amber-500"
-          : "border-zinc-300 text-zinc-700 hover:border-amber-500 hover:bg-amber-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:border-amber-500 dark:hover:bg-amber-950/30"
+          ? "bg-white font-medium text-zinc-900 shadow-sm dark:bg-zinc-900 dark:text-zinc-50"
+          : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
       }`}
     >
       {label}
@@ -45,24 +45,26 @@ export function DealDayFilter({
 }: DealDayFilterProps) {
   return (
     <div
-      className="flex flex-wrap gap-2"
+      className="overflow-x-auto rounded-xl border border-zinc-200 bg-zinc-100 p-1 dark:border-zinc-700 dark:bg-zinc-900"
       role="group"
       aria-label="Filter deals by day"
     >
-      <DayFilterPill
-        label="Any"
-        isActive={selectedDay === null}
-        onClick={() => onSelectedDayChange(null)}
-      />
-      {WEEKDAY_UI_ORDER.map((day) => (
-        <DayFilterPill
-          key={day}
-          label={DAY_ABBREVIATIONS[day] ?? `Day ${day}`}
-          ariaLabel={DAY_LABELS[day]}
-          isActive={selectedDay === day}
-          onClick={() => onSelectedDayChange(day)}
+      <div className="flex min-w-max gap-0.5">
+        <DayFilterSegment
+          label="Any"
+          isActive={selectedDay === null}
+          onClick={() => onSelectedDayChange(null)}
         />
-      ))}
+        {WEEKDAY_UI_ORDER.map((day) => (
+          <DayFilterSegment
+            key={day}
+            label={DAY_ABBREVIATIONS[day] ?? `Day ${day}`}
+            ariaLabel={DAY_LABELS[day]}
+            isActive={selectedDay === day}
+            onClick={() => onSelectedDayChange(day)}
+          />
+        ))}
+      </div>
     </div>
   );
 }

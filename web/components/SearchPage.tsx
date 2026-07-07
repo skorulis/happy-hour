@@ -36,7 +36,7 @@ export function SearchPage() {
       />
 
       <section className="space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="space-y-1">
           <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
             {resultsTitle}
           </h2>
@@ -61,7 +61,7 @@ export function SearchPage() {
         ) : (
           <div className="space-y-8">
             {venueGroups.length > 0 ? (
-              <div className="grid gap-2">
+              <div className="grid gap-4">
                 {venueGroups.map((group) => (
                   <VenueSearchCard
                     key={group.venue.id}
@@ -73,11 +73,11 @@ export function SearchPage() {
             ) : null}
 
             {nearbyVenueGroups.length > 0 ? (
-              <div className="space-y-4">
+              <div className="space-y-4 border-t border-zinc-200 pt-8 dark:border-zinc-800">
                 <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
                   Nearby
                 </h2>
-                <div className="grid gap-2">
+                <div className="grid gap-4">
                   {nearbyVenueGroups.map((group) => (
                     <VenueSearchCard
                       key={group.venue.id}

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   formatCompactTimeRange,
   formatDealDateRange,
+  formatDealScheduleLine,
   formatDealTimeBadge,
   hasAnyDealActiveNow,
   isDealActiveNow,
@@ -159,5 +160,35 @@ describe("formatDealDateRange", () => {
 
   it("formats from-only ranges", () => {
     expect(formatDealDateRange("2025-11-14", null)).toBe("From 14 Nov 2025");
+  });
+});
+
+describe("formatDealScheduleLine", () => {
+  it("combines day and time into one line", () => {
+    expect(
+      formatDealScheduleLine([
+        { dayOfWeek: 4, startMinute: 16 * 60, endMinute: 19 * 60 },
+      ]),
+    ).toBe("Wed · 4-7pm");
+  });
+
+  it("includes date ranges before schedule details", () => {
+    expect(
+      formatDealScheduleLine(
+        [{ dayOfWeek: 4, startMinute: 16 * 60, endMinute: 19 * 60 }],
+        null,
+        "2025-12-31",
+      ),
+    ).toBe("Until 31 Dec 2025 · Wed · 4-7pm");
+  });
+
+  it("returns schedule not listed when empty", () => {
+    expect(formatDealScheduleLine([])).toBe("Schedule not listed");
+  });
+
+  it("shows date-only promotions without recurring schedules", () => {
+    expect(formatDealScheduleLine([], "2025-12-25", "2025-12-25")).toBe(
+      "25 Dec 2025",
+    );
   });
 });

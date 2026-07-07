@@ -398,3 +398,34 @@ export function formatDealDateRange(
 
   return `Until ${formatDisplayDate(endDate!)}`;
 }
+
+export function formatDealScheduleLine(
+  schedules: ScheduleSlice[],
+  startDate?: string | null,
+  endDate?: string | null,
+): string {
+  const parts: string[] = [];
+  const datePart = formatDealDateRange(startDate, endDate);
+
+  if (datePart) {
+    parts.push(datePart);
+  }
+
+  if (schedules.length > 0) {
+    const dayPart = formatDealDayBadge(schedules);
+    if (dayPart !== "—") {
+      parts.push(dayPart);
+    }
+
+    const timePart = formatDealTimeBadge(schedules);
+    if (timePart && timePart !== "—") {
+      parts.push(timePart);
+    }
+  }
+
+  if (parts.length === 0) {
+    return "Schedule not listed";
+  }
+
+  return parts.join(" · ");
+}

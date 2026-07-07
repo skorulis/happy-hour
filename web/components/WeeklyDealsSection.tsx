@@ -86,10 +86,10 @@ export function WeeklyDealsSection({
             <div className="space-y-8">
               {dealsByDay.map(({ dayOfWeek, dayLabel, deals: dayDeals }) => (
                 <div key={dayOfWeek} className="space-y-4">
-                  <h3 className="text-2xl font-bold text-zinc-700 dark:text-zinc-300">
+                  <h3 className="border-l-4 border-amber-500 pl-3 text-2xl font-bold text-zinc-700 dark:text-zinc-300">
                     {dayLabel}
                   </h3>
-                  <div className="grid gap-4">
+                  <div className="grid gap-5">
                     {dayDeals.map((deal) => {
                       const anchorId = anchoredDealIds.has(deal.id)
                         ? undefined
@@ -116,7 +116,7 @@ export function WeeklyDealsSection({
               ))}
             </div>
           ) : (
-            <div className="grid gap-4">
+            <div className="grid gap-5">
               {filteredDeals!.map((deal) => (
                 <DealCard
                   key={deal.id}
