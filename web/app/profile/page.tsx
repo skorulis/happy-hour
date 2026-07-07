@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { ProfilePageContent } from "@/components/ProfilePageContent";
+import { isAdmin } from "@/lib/admin";
 import { auth } from "@/lib/auth";
 
 export const metadata: Metadata = {
@@ -22,6 +23,7 @@ export default async function ProfilePage() {
     <ProfilePageContent
       name={session.user.name}
       email={session.user.email}
+      isAdmin={isAdmin(session.user.email)}
     />
   );
 }

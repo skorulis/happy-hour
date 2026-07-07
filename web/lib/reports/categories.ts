@@ -27,3 +27,12 @@ export function isDealReportCategory(
 ): value is DealReportCategory {
   return categorySet.has(value);
 }
+
+export function getDealReportCategoryLabel(
+  category: DealReportCategory,
+): string {
+  return (
+    dealReportCategories.find((entry) => entry.value === category)?.label ??
+    category
+  );
+}
