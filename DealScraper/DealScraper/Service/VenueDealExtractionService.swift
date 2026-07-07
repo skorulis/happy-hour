@@ -104,7 +104,7 @@ final class VenueDealExtractionService {
         )
 
         let mapped = VenueDealPersistenceMapper.map(sourced: result.extractions, venueId: 0)
-        let deals = TextMatchDealCondenser().condense(mapped)
+        let deals = dealCondenser.condense(mapped)
         await progress.completed(results: deals)
         return deals
     }
@@ -135,7 +135,7 @@ final class VenueDealExtractionService {
         )
 
         let mapped = VenueDealPersistenceMapper.map(sourced: result.extractions, venueId: 0)
-        let deals = TextMatchDealCondenser().condense(mapped)
+        let deals = dealCondenser.condense(mapped)
         await progress.completed(results: deals)
         return deals
     }

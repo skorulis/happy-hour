@@ -48,16 +48,78 @@ struct KeywordDealCondenserTests {
     @Test func doesNotMergeDealsWithSameKeywordOnDifferentDays() {
         let wednesday = makeDeal(
             details: "$8 wines",
+            conditions: "Wednesday only",
             schedules: [schedule(day: 3, start: 960, end: 1_080)]
         )
         let friday = makeDeal(
             details: "$8 wines",
+            conditions: "Friday only",
             schedules: [schedule(day: 5, start: 960, end: 1_080)]
         )
 
         let result = condenser.condense([wednesday, friday])
 
         #expect(result.count == 2)
+    }
+
+    @Test func mergesIdenticalDealsOnDifferentDays() {
+        let tuesday = makeDeal(
+            title: "Happy Hour",
+            details: "$8 wines",
+            conditions: "Bar only",
+            schedules: [schedule(day: 3, start: 960, end: 1_080)]
+        )
+        let thursday = makeDeal(
+            title: "Happy Hour",
+            details: "$8 wines",
+            conditions: "Bar only",
+            schedules: [schedule(day: 5, start: 960, end: 1_080)]
+        )
+
+        let result = condenser.condense([tuesday, thursday])
+
+        #expect(result.count == 1)
+        #expect(result[0].schedules.count == 2)
+        #expect(Set(result[0].schedules.map(\.dayOfWeek)) == Set([3, 5]))
+    }
+
+    @Test func mergesIdenticalDealsWithDifferentTimesOnSameDay() {
+        let early = makeDeal(
+            title: "Happy Hour",
+            details: "$8 wines",
+            conditions: "Bar only",
+            schedules: [schedule(day: 3, start: 960, end: 1_080)]
+        )
+        let late = makeDeal(
+            title: "Happy Hour",
+            details: "$8 wines",
+            conditions: "Bar only",
+            schedules: [schedule(day: 3, start: 1_200, end: 1_320)]
+        )
+
+        let result = condenser.condense([early, late])
+
+        #expect(result.count == 1)
+        #expect(result[0].schedules.count == 2)
+        #expect(Set(result[0].schedules.map(\.startMinute)) == Set([960, 1_200]))
+    }
+
+    @Test func doesNotMergeIdenticalTextOnDifferentDaysWhenConditionsDiffer() {
+        let tuesday = makeDeal(
+            title: "Happy Hour",
+            details: "$8 wines",
+            conditions: "Bar only",
+            schedules: [schedule(day: 3, start: 960, end: 1_080)]
+        )
+        let thursday = makeDeal(
+            title: "Happy Hour",
+            details: "$8 wines",
+            conditions: "Dine-in only",
+            schedules: [schedule(day: 5, start: 960, end: 1_080)]
+        )
+
+        #expect(!condenser.shouldMerge(tuesday, thursday))
+        #expect(condenser.condense([tuesday, thursday]).count == 2)
     }
 
     @Test func doesNotMergeDealsWithNoProductKeywords() {

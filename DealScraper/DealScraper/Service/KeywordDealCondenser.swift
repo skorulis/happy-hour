@@ -19,6 +19,10 @@ struct KeywordDealCondenser: DealCondenser {
     }
 
     func shouldMerge(_ lhs: DealWithSchedules, _ rhs: DealWithSchedules) -> Bool {
+        if hasIdenticalDealContent(lhs, rhs) {
+            return true
+        }
+
         guard hasSameDays(lhs, rhs) else { return false }
 
         let lhsKeywords = productKeywords(in: lhs)
@@ -84,6 +88,36 @@ struct KeywordDealCondenser: DealCondenser {
 
     private func hasSameDays(_ lhs: DealWithSchedules, _ rhs: DealWithSchedules) -> Bool {
         Set(lhs.schedules.map(\.dayOfWeek)) == Set(rhs.schedules.map(\.dayOfWeek))
+    }
+
+    private func hasIdenticalDealContent(_ lhs: DealWithSchedules, _ rhs: DealWithSchedules) -> Bool {
+        normalizedTitle(lhs) == normalizedTitle(rhs)
+            && normalizedMultilineField(lhs.deal.details) == normalizedMultilineField(rhs.deal.details)
+            && normalizedMultilineField(lhs.deal.conditions) == normalizedMultilineField(rhs.deal.conditions)
+    }
+
+    private func normalizedTitle(_ item: DealWithSchedules) -> String {
+        normalizeLine(item.deal.title ?? "")
+    }
+
+    private func normalizedMultilineField(_ text: String?) -> Set<String> {
+        Set(splitLines(text).map(normalizeLine).filter { !$0.isEmpty })
+    }
+
+    private func splitLines(_ text: String?) -> [String] {
+        guard let text else { return [] }
+        return text
+            .split(separator: "\n", omittingEmptySubsequences: false)
+            .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+    }
+
+    private func normalizeLine(_ line: String) -> String {
+        line
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+            .split(whereSeparator: \.isWhitespace)
+            .joined(separator: " ")
     }
 
     private func mergedSchedules(_ lhs: [DealSchedule], _ rhs: [DealSchedule]) -> [DealSchedule] {
