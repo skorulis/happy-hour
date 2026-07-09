@@ -418,6 +418,8 @@ final class VenueDetailsViewModel {
                 conditions: draft.conditions.isEmpty ? nil : draft.conditions,
                 sourceURL: draft.sourceURL.isEmpty ? nil : draft.sourceURL,
                 creativeURL: draft.creativeURL.isEmpty ? nil : draft.creativeURL,
+                startDate: draft.startDate,
+                endDate: draft.endDate,
                 schedules: draft.schedules.map { $0.toDealSchedule() },
                 status: status
             )
@@ -428,6 +430,8 @@ final class VenueDetailsViewModel {
                 updatedDeal.conditions = draft.conditions.isEmpty ? nil : draft.conditions
                 updatedDeal.sourceURL = draft.sourceURL.isEmpty ? nil : draft.sourceURL
                 updatedDeal.creativeURL = draft.creativeURL.isEmpty ? nil : draft.creativeURL
+                updatedDeal.startDate = draft.startDate
+                updatedDeal.endDate = draft.endDate
                 updatedDeal.status = status
                 updatedDeal.updateDate = .now
                 deals[index] = DealWithSchedules(

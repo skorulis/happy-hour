@@ -187,6 +187,8 @@ final class ApprovalViewModel: CoordinatorViewModel {
                     conditions: draft.conditions.isEmpty ? nil : draft.conditions,
                     sourceURL: draft.sourceURL.isEmpty ? nil : draft.sourceURL,
                     creativeURL: draft.creativeURL.isEmpty ? nil : draft.creativeURL,
+                    startDate: draft.startDate,
+                    endDate: draft.endDate,
                     schedules: draft.schedules.map { $0.toDealSchedule() },
                     status: status
                 )

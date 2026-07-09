@@ -188,6 +188,8 @@ final class DealRepository {
         conditions: String?,
         sourceURL: String?,
         creativeURL: String?,
+        startDate: Date? = nil,
+        endDate: Date? = nil,
         schedules: [DealSchedule]? = nil,
         status: DealStatus
     ) throws {
@@ -198,6 +200,8 @@ final class DealRepository {
             deal.conditions = conditions
             deal.sourceURL = sourceURL
             deal.creativeURL = creativeURL
+            deal.startDate = startDate
+            deal.endDate = endDate
             deal.status = status
             deal.updateDate = .now
             try deal.update(db)

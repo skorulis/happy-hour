@@ -48,6 +48,8 @@ struct EditDealDraft: Sendable {
     var conditions: String
     var sourceURL: String
     var creativeURL: String
+    var startDate: Date?
+    var endDate: Date?
     var schedules: [EditableDealSchedule]
 }
 
@@ -71,6 +73,8 @@ struct EditDealView: View {
     @State private var conditions = ""
     @State private var sourceURL = ""
     @State private var creativeURL = ""
+    @State private var startDate: Date?
+    @State private var endDate: Date?
     @State private var schedules: [EditableDealSchedule] = []
 
     var body: some View {
@@ -151,6 +155,13 @@ struct EditDealView: View {
                             }
                     }
 
+                    editableField(label: "Promotion dates") {
+                        VStack(alignment: .leading, spacing: 8) {
+                            optionalDateRow(label: "Start", date: $startDate)
+                            optionalDateRow(label: "End", date: $endDate)
+                        }
+                    }
+
                     editableField(label: "Schedule") {
                         VStack(alignment: .leading, spacing: 8) {
                             if !schedules.isEmpty {
@@ -227,6 +238,8 @@ struct EditDealView: View {
             conditions: conditions,
             sourceURL: sourceURL,
             creativeURL: creativeURL,
+            startDate: startDate,
+            endDate: endDate,
             schedules: schedules
         )
     }
@@ -241,6 +254,8 @@ struct EditDealView: View {
         conditions = item.deal.conditions ?? ""
         sourceURL = item.deal.sourceURL ?? ""
         creativeURL = item.deal.creativeURL ?? ""
+        startDate = item.deal.startDate
+        endDate = item.deal.endDate
         schedules = DealScheduleFormatting
             .sortedSchedules(item.schedules)
             .enumerated()
@@ -310,6 +325,46 @@ struct EditDealView: View {
             }
             .buttonStyle(.plain)
             .help("Remove schedule")
+        }
+        .font(.caption)
+    }
+
+    private func optionalDateRow(label: String, date: Binding<Date?>) -> some View {
+        HStack(spacing: 8) {
+            Text(label)
+                .frame(width: 40, alignment: .leading)
+                .foregroundStyle(.secondary)
+
+            if date.wrappedValue != nil {
+                DatePicker(
+                    label,
+                    selection: Binding(
+                        get: { date.wrappedValue ?? Date() },
+                        set: { date.wrappedValue = Calendar.current.startOfDay(for: $0) }
+                    ),
+                    displayedComponents: .date
+                )
+                .labelsHidden()
+
+                Button {
+                    date.wrappedValue = nil
+                } label: {
+                    Image(systemName: "minus.circle")
+                        .foregroundStyle(.red)
+                }
+                .buttonStyle(.plain)
+                .help("Clear \(label.lowercased()) date")
+            } else {
+                Text("Not set")
+                    .foregroundStyle(.secondary)
+
+                Button {
+                    date.wrappedValue = Calendar.current.startOfDay(for: Date())
+                } label: {
+                    Label("Set date", systemImage: "plus.circle")
+                }
+                .buttonStyle(.plain)
+            }
         }
         .font(.caption)
     }
