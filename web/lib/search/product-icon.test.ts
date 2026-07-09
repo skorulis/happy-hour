@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
+import { products } from "@data/products";
 import {
   findMatchingProductsForDeals,
   resolveMapIconForDeals,
 } from "@data/products";
+import { isRegisteredProductIcon } from "@/lib/search/ProductMapIcon";
 
 describe("resolveMapIconForDeals", () => {
   it("returns Martini for cocktail deals", () => {
@@ -96,5 +98,17 @@ describe("findMatchingProductsForDeals", () => {
         conditions: null,
       },
     ])).toBe("Clock");
+  });
+});
+
+describe("product icon registry", () => {
+  it("every icon in products.json is registered", () => {
+    const iconNames = [
+      ...new Set(products.filter((product) => product.icon).map((product) => product.icon!)),
+    ];
+
+    for (const name of iconNames) {
+      expect(isRegisteredProductIcon(name)).toBe(true);
+    }
   });
 });

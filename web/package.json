@@ -18,6 +18,7 @@
     "import-suburbs": "tsx scripts/import-suburbs.ts"
   },
   "dependencies": {
+    "@lucide/lab": "^0.1.2",
     "@vis.gl/react-google-maps": "^1.8.3",
     "better-auth": "^1.6.23",
     "dotenv": "^17.4.2",

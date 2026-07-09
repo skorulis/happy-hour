@@ -36,6 +36,7 @@ nonisolated enum DealTimeParser {
     }
 
     static func timesInText(_ text: String) -> [DealHours] {
+        let text = sanitizeTimeString(text)
         if let time = parseTillOrUntilTime(in: text) {
             return [time]
         }
@@ -61,11 +62,22 @@ nonisolated enum DealTimeParser {
         }
     }
 
+    private static func stripTimeLabelPrefix(_ string: String) -> String {
+        let pattern = #"(?i)^times?\s*[-:]\s*"#
+        guard let regex = try? NSRegularExpression(pattern: pattern),
+              let match = regex.firstMatch(in: string, range: NSRange(string.startIndex..., in: string)),
+              let range = Range(match.range, in: string)
+        else { return string }
+        return String(string[range.upperBound...])
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
     private static func sanitizeTimeString(_ string: String) -> String {
         var result = string
             .replacingOccurrences(of: "\u{2019}", with: "'")
             .replacingOccurrences(of: "\u{2018}", with: "'")
             .trimmingCharacters(in: .whitespacesAndNewlines)
+        result = stripTimeLabelPrefix(result)
         let wrappers: [(Character, Character)] = [("(", ")"), ("[", "]"), ("*", "*"), ("_", "_")]
         var changed = true
         while changed {
