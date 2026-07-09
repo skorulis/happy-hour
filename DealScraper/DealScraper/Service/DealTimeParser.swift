@@ -20,7 +20,9 @@ nonisolated enum DealTimeParser {
 
         var times: [DealHours] = []
         for string in trimmed {
-            if let time = parseTillOrUntilTime(in: string) {
+            if let time = parseHoursFromRange(in: string) {
+                times.append(time)
+            } else if let time = parseTillOrUntilTime(in: string) {
                 times.append(time)
             } else if let time = parseBetweenTime(in: string) {
                 times.append(time)
@@ -37,6 +39,9 @@ nonisolated enum DealTimeParser {
 
     static func timesInText(_ text: String) -> [DealHours] {
         let text = sanitizeTimeString(text)
+        if let time = parseHoursFromRange(in: text) {
+            return [time]
+        }
         if let time = parseTillOrUntilTime(in: text) {
             return [time]
         }
@@ -199,6 +204,21 @@ nonisolated enum DealTimeParser {
         }
 
         return DealHours.makeBetween(start: earliest, end: latest)
+    }
+
+    private static func parseHoursFromRange(in text: String) -> DealHours? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+
+        let pattern = #"(?i)^\d+\s*(?:hrs?|hours?)\s+from\s+(.+)$"#
+        guard let regex = try? NSRegularExpression(pattern: pattern),
+              let match = regex.firstMatch(in: trimmed, range: NSRange(trimmed.startIndex..., in: trimmed)),
+              let rangeRange = Range(match.range(at: 1), in: trimmed)
+        else {
+            return nil
+        }
+
+        return DealHours.parse(String(trimmed[rangeRange]))
     }
 
     private static func parseBetweenTime(in text: String) -> DealHours? {
