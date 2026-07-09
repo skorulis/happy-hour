@@ -37,6 +37,44 @@ struct DealSourceRepositoryTests {
         #expect(found[0].status == .new)
     }
 
+    @Test func upsertPromotesNewToApprovedWhenRediscoveredAsApproved() throws {
+        let store = SQLStore.inMemory()
+        let venueRepository = VenueRepository(store: store)
+        let dealSourceRepository = DealSourceRepository(store: store)
+
+        try venueRepository.upsert(Venue(
+            googleMapId: "places/test",
+            name: "Test Pub",
+            lat: 0,
+            lng: 0,
+            websiteUri: "https://example.com",
+            json: "{}"
+        ))
+
+        let venueId = try #require(try venueRepository.find(googleMapId: "places/test")?.id)
+
+        _ = try dealSourceRepository.upsert(sources: [
+            DealSource(
+                venueId: venueId,
+                url: "https://example.com/specials",
+                type: .webpage,
+                status: .new
+            ),
+        ], forVenueId: venueId)
+
+        _ = try dealSourceRepository.upsert(sources: [
+            DealSource(
+                venueId: venueId,
+                url: "https://example.com/specials",
+                type: .webpage,
+                status: .approved
+            ),
+        ], forVenueId: venueId)
+
+        let found = try #require(try dealSourceRepository.find(venueId: venueId).first)
+        #expect(found.status == .approved)
+    }
+
     @Test func upsertDedupesByURLAndPreservesApprovedStatus() throws {
         let store = SQLStore.inMemory()
         let venueRepository = VenueRepository(store: store)

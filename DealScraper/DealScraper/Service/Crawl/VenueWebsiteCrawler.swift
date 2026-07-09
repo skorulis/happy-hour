@@ -259,13 +259,14 @@ final class VenueWebsiteCrawler {
         await progress("Saving deal sources…")
         
         let now = Date()
+        let sourceStatus = CrawlPolicy.dealSourceStatus(discoveredCount: discoveredByURL.count)
         let dealSources = discoveredByURL.values.map { discovered in
             DealSource(
                 venueId: venueId,
                 url: discovered.url.absoluteString,
                 sourceURL: discovered.sourceURL.absoluteString,
                 type: discovered.type,
-                status: .new,
+                status: sourceStatus,
                 date: now,
                 textPieces: discovered.textPieces,
                 contentHash: discovered.contentHash

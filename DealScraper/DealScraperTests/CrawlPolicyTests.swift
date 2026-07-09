@@ -35,4 +35,13 @@ struct CrawlPolicyTests {
         let venueURL = try #require(URLNormalizer.normalize(URL(string: "https://pub.example.com/specials")!))
         #expect(CrawlPolicy.shouldUseSitemap(for: venueURL) == true)
     }
+
+    @Test func singleDiscoveredSourceIsAutoApproved() {
+        #expect(CrawlPolicy.dealSourceStatus(discoveredCount: 1) == .approved)
+    }
+
+    @Test func multipleDiscoveredSourcesStayNew() {
+        #expect(CrawlPolicy.dealSourceStatus(discoveredCount: 0) == .new)
+        #expect(CrawlPolicy.dealSourceStatus(discoveredCount: 2) == .new)
+    }
 }

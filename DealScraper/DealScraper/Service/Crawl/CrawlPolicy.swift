@@ -42,4 +42,9 @@ enum CrawlPolicy {
     static func shouldUseSitemap(for baseURL: URL) -> Bool {
         !isSharedSite(baseURL)
     }
+
+    /// A lone discovered source is unambiguous enough to skip manual review.
+    static func dealSourceStatus(discoveredCount: Int) -> DealStatus {
+        discoveredCount == 1 ? .approved : .new
+    }
 }

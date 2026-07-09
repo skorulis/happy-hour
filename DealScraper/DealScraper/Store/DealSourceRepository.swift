@@ -96,7 +96,8 @@ final class DealSourceRepository {
         }
     }
 
-    /// Inserts new sources and refreshes `date` for existing rows. Preserves `.approved` status.
+    /// Inserts new sources and refreshes `date` for existing rows.
+    /// Preserves `.approved` and `.rejected` status; promotes `.new` to `.approved` when rediscovered as approved.
     @discardableResult
     func upsert(sources: [DealSource], forVenueId venueId: Int64) throws -> Int {
         guard !sources.isEmpty else { return 0 }
@@ -115,6 +116,9 @@ final class DealSourceRepository {
                     updated.date = source.date
                     updated.textPieces = source.textPieces
                     updated.sourceURL = source.sourceURL
+                    if source.status == .approved, existing.status == .new {
+                        updated.status = .approved
+                    }
                     if let contentHash = source.contentHash {
                         updated.contentHash = contentHash
                     }
