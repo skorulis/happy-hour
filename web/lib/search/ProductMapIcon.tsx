@@ -48,15 +48,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { ComponentType } from "react";
-import {
-  bowls,
-  chips,
-  nachos,
-  pool,
-  saki,
-  taco,
-  wings,
-} from "./customProductIcons";
+import { chips, nachos, pool, saki, taco, whisky } from "./customProductIcons";
 
 type ProductIconProps = {
   size?: number;
@@ -96,7 +88,7 @@ const PRODUCT_ICON_REGISTRY: Record<string, ProductIcon> = {
   Beer: wrapLucideIcon(Beer),
   BottleWine: wrapLucideIcon(BottleWine),
   BowlChopsticks: labIcon(bowlChopsticks),
-  Bowls: labIcon(bowls),
+  Bowls: wrapLucideIcon(Salad),
   Bowling: labIcon(bowling),
   Burger: labIcon(burger),
   CalendarDays: wrapLucideIcon(CalendarDays),
@@ -139,7 +131,8 @@ const PRODUCT_ICON_REGISTRY: Record<string, ProductIcon> = {
   Users: wrapLucideIcon(Users),
   UtensilsCrossed: wrapLucideIcon(UtensilsCrossed),
   Wine: wrapLucideIcon(Wine),
-  Wings: labIcon(wings),
+  Wings: wrapLucideIcon(Drumstick),
+  Whisky: labIcon(whisky),
 };
 
 type ProductMapIconProps = {
