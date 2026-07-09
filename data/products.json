@@ -173,6 +173,8 @@
     { "name": "bingo", "icon": "Grid3x3" },
     { "name": "comedy", "icon": "Mic" },
     { "name": "bowls" },
+    { "name": "bowling" },
+    { "name": "byo", "icon": "BottleWine" },
     { "name": "dj", "icon": "Music" },
     { "name": "hospo", "icon": "UserStar" },
     { "name": "hospitality", "icon": "UserStar" },

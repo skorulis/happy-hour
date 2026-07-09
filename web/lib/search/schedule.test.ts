@@ -7,6 +7,7 @@ import {
   hasAnyDealActiveNow,
   isDealActiveNow,
   isScheduleActiveNow,
+  sortDealsActiveFirst,
   type ScheduleSlice,
 } from "./schedule";
 
@@ -134,6 +135,66 @@ describe("hasAnyDealActiveNow", () => {
       },
     ];
     expect(hasAnyDealActiveNow(deals, now)).toBe(false);
+  });
+});
+
+describe("sortDealsActiveFirst", () => {
+  const mondayActiveSchedule: ScheduleSlice[] = [
+    { dayOfWeek: 2, startMinute: 16 * 60, endMinute: 19 * 60 },
+  ];
+  const mondayInactiveSchedule: ScheduleSlice[] = [
+    { dayOfWeek: 2, startMinute: 20 * 60, endMinute: 22 * 60 },
+  ];
+
+  it("places active deals before inactive deals", () => {
+    const now = atLocalTime(2026, 7, 6, 17, 0);
+    const deals = [
+      { id: 1, schedules: mondayInactiveSchedule },
+      { id: 2, schedules: mondayActiveSchedule },
+      { id: 3, schedules: mondayInactiveSchedule },
+    ];
+
+    expect(sortDealsActiveFirst(deals, now).map((deal) => deal.id)).toEqual([
+      2, 1, 3,
+    ]);
+  });
+
+  it("preserves relative order within active and inactive groups", () => {
+    const now = atLocalTime(2026, 7, 6, 17, 0);
+    const deals = [
+      { id: 1, schedules: mondayInactiveSchedule },
+      { id: 2, schedules: mondayActiveSchedule },
+      { id: 3, schedules: mondayActiveSchedule },
+      { id: 4, schedules: mondayInactiveSchedule },
+    ];
+
+    expect(sortDealsActiveFirst(deals, now).map((deal) => deal.id)).toEqual([
+      2, 3, 1, 4,
+    ]);
+  });
+
+  it("returns the same order when all deals are active", () => {
+    const now = atLocalTime(2026, 7, 6, 17, 0);
+    const deals = [
+      { id: 1, schedules: mondayActiveSchedule },
+      { id: 2, schedules: mondayActiveSchedule },
+    ];
+
+    expect(sortDealsActiveFirst(deals, now).map((deal) => deal.id)).toEqual([
+      1, 2,
+    ]);
+  });
+
+  it("returns the same order when no deals are active", () => {
+    const now = atLocalTime(2026, 7, 6, 12, 0);
+    const deals = [
+      { id: 1, schedules: mondayActiveSchedule },
+      { id: 2, schedules: mondayInactiveSchedule },
+    ];
+
+    expect(sortDealsActiveFirst(deals, now).map((deal) => deal.id)).toEqual([
+      1, 2,
+    ]);
   });
 });
 

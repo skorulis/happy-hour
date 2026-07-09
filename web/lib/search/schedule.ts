@@ -197,6 +197,23 @@ export function hasAnyDealActiveNow<
   return deals.some((deal) => isDealActiveNow(deal.schedules, now));
 }
 
+export function sortDealsActiveFirst<
+  T extends { schedules: ScheduleSlice[] },
+>(deals: T[], now = new Date()): T[] {
+  const active: T[] = [];
+  const inactive: T[] = [];
+
+  for (const deal of deals) {
+    if (isDealActiveNow(deal.schedules, now)) {
+      active.push(deal);
+    } else {
+      inactive.push(deal);
+    }
+  }
+
+  return [...active, ...inactive];
+}
+
 export function groupDealsByDay<T extends { id: number; schedules: ScheduleSlice[] }>(
   deals: T[],
 ): Array<{ dayOfWeek: number; dayLabel: string; deals: T[] }> {

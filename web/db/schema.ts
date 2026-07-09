@@ -68,6 +68,7 @@ export const deal = pgTable(
     venueId: integer("venue_id")
       .notNull()
       .references(() => venue.id, { onDelete: "cascade" }),
+    sourceDealId: integer("source_deal_id"),
     title: text("title"),
     imageUrl: text("image_url"),
     sourceUrl: text("source_url"),
@@ -79,7 +80,13 @@ export const deal = pgTable(
       .notNull()
       .defaultNow(),
   },
-  (table) => [index("deal_venue_id_idx").on(table.venueId)],
+  (table) => [
+    index("deal_venue_id_idx").on(table.venueId),
+    uniqueIndex("deal_venue_source_deal_id_idx").on(
+      table.venueId,
+      table.sourceDealId,
+    ),
+  ],
 );
 
 export const dealReportCategory = [

@@ -2,12 +2,16 @@ import { loadScriptEnv } from "../load-script-env";
 
 loadScriptEnv();
 import Database from "better-sqlite3";
-import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { homedir } from "node:os";
 import path from "node:path";
 import postgres from "postgres";
 import * as schema from "../db/schema";
+import {
+  type SqliteDeal,
+  type SqliteDealSchedule,
+  syncVenueDeals,
+} from "./sync-deals";
 
 type SqliteSuburb = {
   id: number;
@@ -41,26 +45,6 @@ type SqliteVenueLinks = {
   whats_on: string | null;
   instagram: string | null;
   facebook: string | null;
-};
-
-type SqliteDeal = {
-  id: number;
-  venue_id: number;
-  title: string | null;
-  creative_url: string | null;
-  source_url: string | null;
-  details: string | null;
-  conditions: string | null;
-  start_date: string | null;
-  end_date: string | null;
-};
-
-type SqliteDealSchedule = {
-  id: number;
-  deal_id: number;
-  day_of_week: number;
-  start_minute: number;
-  end_minute: number;
 };
 
 function parseArgs(argv: string[]): { sqlitePath: string | undefined } {
@@ -117,16 +101,6 @@ function sydneyToday(): string {
   }).format(new Date());
 }
 
-function shouldSkipDeal(dealRow: SqliteDeal, today: string): boolean {
-  if (dealRow.start_date && dealRow.start_date > today) {
-    return true;
-  }
-  if (dealRow.end_date && dealRow.end_date < today) {
-    return true;
-  }
-  return false;
-}
-
 async function main() {
   const { sqlitePath: rawPath } = parseArgs(process.argv.slice(2));
   const sqlitePath = resolveSqlitePath(rawPath);
@@ -153,7 +127,7 @@ async function main() {
     .all() as SqliteVenue[];
 
   let venuesSynced = 0;
-  let dealsInserted = 0;
+  let dealsSynced = 0;
   const syncedSuburbKeys = new Set<string>();
   const today = sydneyToday();
 
@@ -276,51 +250,29 @@ async function main() {
           });
       }
 
-      await tx.delete(schema.deal).where(eq(schema.deal.venueId, venueId));
-
       const approvedDeals = sqlite
         .prepare(
           "SELECT * FROM deal WHERE venue_id = ? AND status = 'approved' ORDER BY id",
         )
         .all(venueRow.id) as SqliteDeal[];
 
+      const schedulesByDealId = new Map<number, SqliteDealSchedule[]>();
       for (const dealRow of approvedDeals) {
-        if (shouldSkipDeal(dealRow, today)) {
-          continue;
-        }
-
-        const [insertedDeal] = await tx
-          .insert(schema.deal)
-          .values({
-            venueId,
-            title: dealRow.title,
-            imageUrl: dealRow.creative_url,
-            sourceUrl: dealRow.source_url,
-            details: dealRow.details,
-            conditions: dealRow.conditions,
-            startDate: dealRow.start_date,
-            endDate: dealRow.end_date,
-            syncedAt: new Date(),
-          })
-          .returning({ id: schema.deal.id });
-
         const schedules = sqlite
           .prepare("SELECT * FROM deal_schedule WHERE deal_id = ? ORDER BY id")
           .all(dealRow.id) as SqliteDealSchedule[];
-
-        if (schedules.length > 0) {
-          await tx.insert(schema.dealSchedule).values(
-            schedules.map((schedule) => ({
-              dealId: insertedDeal.id,
-              dayOfWeek: schedule.day_of_week,
-              startMinute: schedule.start_minute,
-              endMinute: schedule.end_minute,
-            })),
-          );
-        }
-
-        dealsInserted += 1;
+        schedulesByDealId.set(dealRow.id, schedules);
       }
+
+      // Deals are upserted by SQLite deal.id -> Postgres source_deal_id so
+      // Postgres deal.id (and browser favourites) survive subsequent syncs.
+      dealsSynced += await syncVenueDeals(
+        tx,
+        venueId,
+        approvedDeals,
+        schedulesByDealId,
+        today,
+      );
 
       venuesSynced += 1;
     });
@@ -333,7 +285,7 @@ async function main() {
   console.log(`  SQLite: ${sqlitePath}`);
   console.log(`  Suburbs synced: ${syncedSuburbKeys.size}`);
   console.log(`  Venues synced: ${venuesSynced}`);
-  console.log(`  Deals inserted: ${dealsInserted}`);
+  console.log(`  Deals synced: ${dealsSynced}`);
 }
 
 main().catch((error) => {

@@ -110,7 +110,18 @@ Open [http://localhost:3000](http://localhost:3000).
 3. Run `npm run sync` in `web/` to copy venues with approved deals into PostgreSQL.
 4. The website serves search results from PostgreSQL only.
 
-The sync script upserts venues by `google_map_id`, replaces deals per venue, and does not copy `deal_source` workflow data.
+The sync script upserts suburbs by `(name, postcode)`, venues by `google_map_id`, and deals by `(venue_id, source_deal_id)`. It does not copy `deal_source` workflow data.
+
+#### SQLite to PostgreSQL ID linkage
+
+| SQLite (DealScraper) | PostgreSQL (website) | Notes |
+|----------------------|----------------------|-------|
+| `suburb.name` + `suburb.postcode` | `suburb.name` + `suburb.postcode` | Upserted; Postgres `suburb.id` is stable after first sync |
+| `venue.google_map_id` | `venue.google_map_id` | Upserted; Postgres `venue.id` is stable after first sync |
+| `deal.id` | `deal.source_deal_id` | Upserted per venue; Postgres `deal.id` is stable across syncs |
+| — | `localStorage` favourites | Store Postgres `deal.id`; stable once deal sync is non-destructive |
+
+Deals that are unapproved, expired, or removed in DealScraper are deleted from PostgreSQL on the next sync. Schedules are replaced per deal without changing the parent `deal.id`.
 
 ### API endpoints
 

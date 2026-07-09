@@ -9,6 +9,7 @@ enum CrawlPolicy {
     private static let sharedSites: [String] = [
         "https://goodgoodcompany.com/",
         "https://hotelpalisade.com.au/",
+        "https://holmanbarnesgroup.com.au/",
         "https://hunterstreethospitality.com.au/",
         "https://merivale.com/",
         "https://paisanoanddaughters.com.au/",

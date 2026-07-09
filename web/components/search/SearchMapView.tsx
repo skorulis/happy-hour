@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { resolveMapIconForDeals } from "@data/products";
+import { resolveVenueMapIcon } from "@/lib/search/map-icon";
 import {
   AdvancedMarker,
   APIProvider,
@@ -17,6 +17,7 @@ import {
   formatDealDayBadge,
   formatDealTimeBadge,
   hasAnyDealActiveNow,
+  sortDealsActiveFirst,
 } from "@/lib/search/schedule";
 import { formatDistanceKm } from "@/lib/search/distance";
 import {
@@ -156,11 +157,13 @@ function ViewportIdleReporter({
 function VenuePopup({
   group,
   searchDays = [],
+  now,
 }: {
   group: VenueGroupedDeals;
   searchDays?: number[];
+  now: Date;
 }) {
-  const previewDeals = group.deals.slice(0, 2);
+  const previewDeals = sortDealsActiveFirst(group.deals, now).slice(0, 2);
   const dealLabel =
     group.deals.length === 1 ? "1 deal" : `${group.deals.length} deals`;
   const venueHref = appendDaysParam(
@@ -241,8 +244,8 @@ function VenueMarker({
 }) {
   const [markerRef, marker] = useAdvancedMarkerRef();
   const iconName = useMemo(
-    () => resolveMapIconForDeals(group.deals),
-    [group.deals],
+    () => resolveVenueMapIcon(group.deals, now),
+    [group.deals, now],
   );
   const showProductIcon =
     iconName !== undefined && isRegisteredProductIcon(iconName);
@@ -282,7 +285,7 @@ function VenueMarker({
       </AdvancedMarker>
       {isSelected ? (
         <InfoWindow anchor={marker} onClose={onClose}>
-          <VenuePopup group={group} searchDays={searchDays} />
+          <VenuePopup group={group} searchDays={searchDays} now={now} />
         </InfoWindow>
       ) : null}
     </>
