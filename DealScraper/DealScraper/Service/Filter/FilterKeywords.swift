@@ -32,6 +32,7 @@ nonisolated enum FilterKeywords {
     ]
 
     static let excludedKeywords = [
+        "404",
         "anzac",
         "birthday",
         "blackfriday",

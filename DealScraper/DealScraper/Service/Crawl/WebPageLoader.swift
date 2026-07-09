@@ -24,6 +24,10 @@ struct LoadedPage: Sendable {
             filter.isValidDeal($0.fullText)
         }
     }
+    
+    var contentHash: String {
+        dealContentBlocks.map { $0.fullText }.joined(separator: "\n")
+    }
 }
 
 enum WebPageLoaderError: LocalizedError {

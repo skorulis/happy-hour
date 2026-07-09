@@ -36,6 +36,7 @@ final class VenueWebsiteCrawler {
     private let imageValidator: CrawlImageValidator
     private let pdfValidator: PDFValidator
     private let imageDeduper: ImageDeduper
+    private let webpageDeduper: WebpageDeduper
     private let dealAdvancedTextFilter: DealAdvancedTextFilter
     private let heroImageSelector: VenueHeroImageSelector
     private let heroImageStore: VenueHeroImageStore
@@ -52,6 +53,7 @@ final class VenueWebsiteCrawler {
         imageValidator: CrawlImageValidator,
         pdfValidator: PDFValidator,
         imageDeduper: ImageDeduper,
+        webpageDeduper: WebpageDeduper,
         dealAdvancedTextFilter: DealAdvancedTextFilter,
         heroImageSelector: VenueHeroImageSelector,
         heroImageStore: VenueHeroImageStore,
@@ -66,6 +68,7 @@ final class VenueWebsiteCrawler {
         self.imageValidator = imageValidator
         self.pdfValidator = pdfValidator
         self.imageDeduper = imageDeduper
+        self.webpageDeduper = webpageDeduper
         self.dealAdvancedTextFilter = dealAdvancedTextFilter
         self.heroImageSelector = heroImageSelector
         self.heroImageStore = heroImageStore
@@ -154,7 +157,8 @@ final class VenueWebsiteCrawler {
                     url: loadedPage.normalizedURL,
                     sourceURL: loadedPage.normalizedURL,
                     type: .webpage,
-                    textPieces: .contentBlocks(loadedPage.dealContentBlocks)
+                    textPieces: .contentBlocks(loadedPage.dealContentBlocks),
+                    contentHash: loadedPage.contentHash,
                 )
                 discoveredByURL[loadedPage.normalizedURL] = source
             }
@@ -245,6 +249,11 @@ final class VenueWebsiteCrawler {
         let imageCount = discoveredByURL.values.filter { $0.type == .image}.count
         await progress("Deduping \(imageCount) images")
         discoveredByURL = imageDeduper.dedupe(validatedSources: discoveredByURL)
+
+        let webpageCount = discoveredByURL.values.filter { $0.type == .webpage }.count
+        await progress("Deduping \(webpageCount) webpages")
+        discoveredByURL = webpageDeduper.dedupe(validatedSources: discoveredByURL)
+
         discoveredByURL = await dealAdvancedTextFilter.filter(sources: discoveredByURL)
         
         await progress("Saving deal sources…")

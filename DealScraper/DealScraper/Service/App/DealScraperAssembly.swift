@@ -113,6 +113,8 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
 
         container.register(ImageDeduper.self) { _ in ImageDeduper() }
 
+        container.register(WebpageDeduper.self) { _ in WebpageDeduper() }
+
         container.register(ImageClassifier.self) { _ in ImageClassifier() }
 
         container.register(VenueHeroImageSelector.self) { resolver in

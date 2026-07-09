@@ -72,11 +72,18 @@ nonisolated enum DealTimeParser {
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    private static func normalizeDottedMeridiem(_ string: String) -> String {
+        string
+            .replacingOccurrences(of: #"(?i)a\.m\.?"#, with: "am", options: .regularExpression)
+            .replacingOccurrences(of: #"(?i)p\.m\.?"#, with: "pm", options: .regularExpression)
+    }
+
     private static func sanitizeTimeString(_ string: String) -> String {
         var result = string
             .replacingOccurrences(of: "\u{2019}", with: "'")
             .replacingOccurrences(of: "\u{2018}", with: "'")
             .trimmingCharacters(in: .whitespacesAndNewlines)
+        result = normalizeDottedMeridiem(result)
         result = stripTimeLabelPrefix(result)
         let wrappers: [(Character, Character)] = [("(", ")"), ("[", "]"), ("*", "*"), ("_", "_")]
         var changed = true
