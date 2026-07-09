@@ -90,6 +90,7 @@ nonisolated enum DealTimeParser {
             .trimmingCharacters(in: .whitespacesAndNewlines)
         result = normalizeDottedMeridiem(result)
         result = stripTimeLabelPrefix(result)
+        result = stripListMarkers(result)
         let wrappers: [(Character, Character)] = [("(", ")"), ("[", "]"), ("*", "*"), ("_", "_")]
         var changed = true
         while changed {
@@ -98,6 +99,27 @@ nonisolated enum DealTimeParser {
             for (open, close) in wrappers {
                 if result.first == open, result.last == close, result.count > 1 {
                     result = String(result.dropFirst().dropLast())
+                    changed = true
+                }
+            }
+        }
+        return result
+    }
+
+    private static func stripListMarkers(_ string: String) -> String {
+        let markers: [Character] = ["\u{2022}", "\u{2023}", "\u{00B7}", "\u{25E6}", "\u{2219}"]
+        var result = string
+        var changed = true
+        while changed {
+            changed = false
+            result = result.trimmingCharacters(in: .whitespacesAndNewlines)
+            for marker in markers {
+                if result.first == marker {
+                    result = String(result.dropFirst())
+                    changed = true
+                }
+                if result.last == marker {
+                    result = String(result.dropLast())
                     changed = true
                 }
             }

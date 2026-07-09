@@ -127,4 +127,8 @@ struct DealTimeParserTests {
     @Test func parsesHoursFromPrefixedTimeRange() {
         #expect(DealTimeParser.parse(["2 HRS FROM 12-5PM"]) == [.between(12 * 60, 17 * 60)])
     }
+
+    @Test func parsesBulletWrappedToTimeRange() {
+        #expect(DealTimeParser.parse(["• 5PM TO 10PM •"]) == [.between(17 * 60, 22 * 60)])
+    }
 }
