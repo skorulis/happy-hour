@@ -194,7 +194,7 @@ nonisolated enum DealTimeParser {
         guard !trimmed.isEmpty else { return nil }
 
         let time = #"\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?"#
-        let pattern = #"(?i)from\s+(\#(time)).*drawn(?:\s+at)?\s+(\#(time))"#
+        let pattern = #"(?i)from\s+(\#(time)).*draw(?:n|s)?(?:\s+(?:from|at))?\s+(\#(time))"#
         guard let regex = try? NSRegularExpression(pattern: pattern),
               let match = regex.firstMatch(in: trimmed, range: NSRange(trimmed.startIndex..., in: trimmed)),
               let startRange = Range(match.range(at: 1), in: trimmed),
@@ -210,28 +210,35 @@ nonisolated enum DealTimeParser {
 
     private static func parseFromDrawnAtRange(in strings: [String]) -> DealHours? {
         let time = #"\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?"#
-        let fromOnlyPattern = #"(?i)^from\s+(\#(time))$"#
-        let drawnAtPattern = #"(?i)^drawn(?:\s+at)?\s+(\#(time))$"#
+        // Match end phrases first so "DRAWS FROM 6:30PM" is not treated as a start.
+        let drawsFromPattern = #"(?i)^(?:.*\s)?draw(?:n|s)?\s+from\s+(\#(time))$"#
+        let drawnAtPattern = #"(?i)^(?:.*\s)?drawn(?:\s+at)?\s+(\#(time))$"#
+        let fromOnlyPattern = #"(?i)^(?:.*\s)?from\s+(\#(time))$"#
 
         var startMinutes: Int?
         var endMinutes: Int?
 
         for string in strings {
-            if let regex = try? NSRegularExpression(pattern: fromOnlyPattern),
-               let match = regex.firstMatch(in: string, range: NSRange(string.startIndex..., in: string)),
-               let timeRange = Range(match.range(at: 1), in: string),
-               let minutes = DealHours.toMinutes(string: String(string[timeRange])) {
-                startMinutes = minutes
-            } else if let regex = try? NSRegularExpression(pattern: drawnAtPattern),
-                      let match = regex.firstMatch(in: string, range: NSRange(string.startIndex..., in: string)),
-                      let timeRange = Range(match.range(at: 1), in: string),
-                      let minutes = DealHours.toMinutes(string: String(string[timeRange])) {
+            if let minutes = firstCaptureMinutes(in: string, pattern: drawsFromPattern)
+                ?? firstCaptureMinutes(in: string, pattern: drawnAtPattern) {
                 endMinutes = minutes
+            } else if let minutes = firstCaptureMinutes(in: string, pattern: fromOnlyPattern) {
+                startMinutes = minutes
             }
         }
 
         guard let start = startMinutes, let end = endMinutes else { return nil }
         return DealHours.makeBetween(start: start, end: end)
+    }
+
+    private static func firstCaptureMinutes(in string: String, pattern: String) -> Int? {
+        guard let regex = try? NSRegularExpression(pattern: pattern),
+              let match = regex.firstMatch(in: string, range: NSRange(string.startIndex..., in: string)),
+              let timeRange = Range(match.range(at: 1), in: string)
+        else {
+            return nil
+        }
+        return DealHours.toMinutes(string: String(string[timeRange]))
     }
 
     private static func parseMultipleTimesAsRange(in text: String) -> DealHours? {
