@@ -103,6 +103,18 @@ struct DealTimeParserTests {
         #expect(DealTimeParser.parse(["5pm-7:30pm"]) == expected)
     }
 
+    @Test func parsesFromDrawnInlineTimeRange() {
+        let expected = [DealHours.between(16 * 60, 18 * 60)]
+        #expect(DealTimeParser.parse(["20 TICKETS SOLD FROM 4PM DRAWN 6PM"]) == expected)
+        #expect(DealTimeParser.parse(["FROM 4PM DRAWN 6PM"]) == expected)
+        #expect(DealTimeParser.timesInText("20 TICKETS SOLD FROM 4PM DRAWN 6PM") == expected)
+    }
+
+    @Test func parsesFromAndDrawnSplitTimeRangeWithoutAt() {
+        let expected = [DealHours.between(17 * 60, 19 * 60 + 30)]
+        #expect(DealTimeParser.parse(["FROM 5PM", "DRAWN 7:30PM"]) == expected)
+    }
+
     @Test func parsesMultipleListedTimesAsRange() {
         #expect(
             DealTimeParser.parse(["3pm, 3:30pm & 4pm"])

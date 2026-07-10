@@ -40,6 +40,29 @@ struct VenueDealPersistenceMapperTests {
         #expect(mapped[0].schedules.contains { $0.dayOfWeek == 6 })
     }
 
+    @Test func autoRejectsDealWithSameDayStartAndEndDates() {
+        let material = VenueDealSourceMaterial.fixture()
+        let payload = DealExtractionPayload(deals: [
+            DealExtractionPayload.RawDeal(
+                title: "Gift Card Sale",
+                details: ["25% off all gift cards"],
+                conditions: [],
+                days: [],
+                times: ["all day"],
+                promotionDates: ["14 November 2025"]
+            ),
+        ])
+
+        let mapped = VenueDealPersistenceMapper.map(
+            payload: payload,
+            venueId: 1,
+            material: material
+        )
+
+        #expect(mapped.count == 1)
+        #expect(mapped[0].deal.status == .rejected)
+    }
+
     @Test func autoRejectsNthWeekdayOfMonthDeal() {
         let material = VenueDealSourceMaterial.fixture()
         let payload = DealExtractionPayload(deals: [
@@ -242,5 +265,6 @@ struct VenueDealPersistenceMapperTests {
         #expect(calendar.component(.year, from: end) == 2025)
         #expect(calendar.component(.month, from: end) == 12)
         #expect(calendar.component(.day, from: end) == 1)
+        #expect(result.deal.status == .new)
     }
 }

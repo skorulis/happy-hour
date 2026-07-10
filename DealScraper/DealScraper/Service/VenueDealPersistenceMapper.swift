@@ -50,12 +50,17 @@ enum VenueDealPersistenceMapper {
 
         let promotionDates = PromotionDateParser.parse(rawDeal.promotionDates)
 
-        let autoReject = NthWeekdayOfMonthDetector.isMatch(
-            title: rawDeal.title,
-            details: rawDeal.details + legacyDeal.details,
-            conditions: rawDeal.conditions + legacyDeal.conditions,
-            days: rawDeal.days
-        )
+        let autoReject =
+            NthWeekdayOfMonthDetector.isMatch(
+                title: rawDeal.title,
+                details: rawDeal.details + legacyDeal.details,
+                conditions: rawDeal.conditions + legacyDeal.conditions,
+                days: rawDeal.days
+            )
+            || hasSameDayPromotionDates(
+                start: promotionDates.start,
+                end: promotionDates.end
+            )
 
         let deal = Deal(
             venueId: venueId,
@@ -74,6 +79,11 @@ enum VenueDealPersistenceMapper {
             return nil
         }
         return DealWithSchedules(deal: deal, schedules: schedules)
+    }
+
+    nonisolated private static func hasSameDayPromotionDates(start: Date?, end: Date?) -> Bool {
+        guard let start, let end else { return false }
+        return Calendar.current.isDate(start, inSameDayAs: end)
     }
 
     nonisolated private static func joinedNonEmpty(_ strings: [String]) -> String? {
