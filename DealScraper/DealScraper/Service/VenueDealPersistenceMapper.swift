@@ -128,7 +128,8 @@ enum VenueDealPersistenceMapper {
             combined = combined.isEmpty ? details : "\(combined) \(details)"
         }
         let lowercased = combined.lowercased()
-        return lowercased.contains("dinner") && !lowercased.contains("lunch")
+        return (lowercased.contains("dinner") || lowercased.contains("evening"))
+            && !lowercased.contains("lunch")
     }
 
     nonisolated private static func scheduleRange(

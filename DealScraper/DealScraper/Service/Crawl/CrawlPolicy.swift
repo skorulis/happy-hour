@@ -24,6 +24,7 @@ enum CrawlPolicy {
         "https://www.lovetillygroup.com/",
         "https://www.muchogroup.com.au/",
         "https://www.oddculture.group/",
+        "https://www.rydges.com/",
         "https://www.star.com.au/",
     ]
     

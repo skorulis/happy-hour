@@ -256,6 +256,28 @@ struct VenueDealPersistenceMapperTests {
         #expect(mapped[0].schedules[0].endMinute == 22 * 60)
     }
 
+    @Test func adjustsEveningDealStartFromMidnightTo5PM() {
+        let material = VenueDealSourceMaterial.fixture()
+        let payload = DealExtractionPayload(deals: [
+            DealExtractionPayload.RawDeal(
+                title: "Evening Special",
+                details: ["$25 mains"],
+                days: ["Friday"],
+                times: ["till 10pm"]
+            ),
+        ])
+
+        let mapped = VenueDealPersistenceMapper.map(
+            payload: payload,
+            venueId: 1,
+            material: material
+        )
+
+        #expect(mapped.count == 1)
+        #expect(mapped[0].schedules[0].startMinute == 17 * 60)
+        #expect(mapped[0].schedules[0].endMinute == 22 * 60)
+    }
+
     @Test func doesNotAdjustDinnerStartWhenLunchIsMentioned() {
         let material = VenueDealSourceMaterial.fixture()
         let payload = DealExtractionPayload(deals: [
