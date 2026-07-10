@@ -40,6 +40,28 @@ struct VenueDealPersistenceMapperTests {
         #expect(mapped[0].schedules.contains { $0.dayOfWeek == 6 })
     }
 
+    @Test func autoRejectsNthWeekdayOfMonthDeal() {
+        let material = VenueDealSourceMaterial.fixture()
+        let payload = DealExtractionPayload(deals: [
+            DealExtractionPayload.RawDeal(
+                title: "Steak Night",
+                details: ["$22 steaks", "First Tuesday of each Month"],
+                conditions: [],
+                days: ["First Tuesday of each Month"],
+                times: ["all day"]
+            ),
+        ])
+
+        let mapped = VenueDealPersistenceMapper.map(
+            payload: payload,
+            venueId: 1,
+            material: material
+        )
+
+        #expect(mapped.count == 1)
+        #expect(mapped[0].deal.status == .rejected)
+    }
+
     @Test func expandsEveryDayAcrossWeek() {
         let material = VenueDealSourceMaterial.fixture()
         let payload = DealExtractionPayload(deals: [

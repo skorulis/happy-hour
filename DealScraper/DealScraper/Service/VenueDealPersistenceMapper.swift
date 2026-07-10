@@ -50,6 +50,13 @@ enum VenueDealPersistenceMapper {
 
         let promotionDates = PromotionDateParser.parse(rawDeal.promotionDates)
 
+        let autoReject = NthWeekdayOfMonthDetector.isMatch(
+            title: rawDeal.title,
+            details: rawDeal.details + legacyDeal.details,
+            conditions: rawDeal.conditions + legacyDeal.conditions,
+            days: rawDeal.days
+        )
+
         let deal = Deal(
             venueId: venueId,
             title: title.isEmpty ? nil : title,
@@ -57,6 +64,7 @@ enum VenueDealPersistenceMapper {
             sourceURL: sourceURL,
             details: details,
             conditions: conditions,
+            status: autoReject ? .rejected : .new,
             startDate: promotionDates.start,
             endDate: promotionDates.end
         )

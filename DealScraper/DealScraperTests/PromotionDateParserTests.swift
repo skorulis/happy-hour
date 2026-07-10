@@ -50,6 +50,18 @@ struct PromotionDateParserTests {
         #expect(calendar.component(.day, from: start) == 14)
     }
 
+    @Test func parsesFromThroughEndOfMonthRange() throws {
+        let result = PromotionDateParser.parse(["from Monday 18 May through to the end of June."])
+
+        let start = try #require(result.start)
+        let end = try #require(result.end)
+        #expect(calendar.component(.month, from: start) == 5)
+        #expect(calendar.component(.day, from: start) == 18)
+        #expect(calendar.component(.month, from: end) == 6)
+        #expect(calendar.component(.day, from: end) == 30)
+        #expect(calendar.component(.year, from: start) == calendar.component(.year, from: end))
+    }
+
     @Test func returnsNilForUnparseableText() {
         let result = PromotionDateParser.parse(["Black Friday only"])
         #expect(result.start == nil)

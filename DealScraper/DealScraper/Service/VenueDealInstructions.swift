@@ -20,7 +20,7 @@ nonisolated enum VenueDealInstructions {
         - conditions: exclusions, footnotes, terms, or qualifiers such as "dine-in only" or "members only". One source line per entry.
         - days: text that mentions which days apply, copied as written, e.g. 'EVERY TUES' or 'MON - FRI'.
         - times: text that mentions when the deal applies, copied as written, e.g. '4PM - 6PM'. If no time is mentioned, set times to exactly ['all day'].
-        - promotionDates: calendar dates or date ranges when the promotion is valid (e.g. 'Friday, 14 November – Monday, 1 December 2025', 'until 31 December', 'Black Friday only'). Copy as written, one source line per entry. Set to null when the source only describes a recurring weekly schedule with no calendar date limit. Do not put day-of-week schedules here — use days instead.
+        - promotionDates: If the promotion includes a date range for validity (e.g. 'Friday, 14 November – Monday, 1 December 2025', 'until 31 December', 'Black Friday only'). Copy as written, one source line per entry. Set to null when the source only describes a recurring weekly schedule with no calendar date limit. Do not put day-of-week schedules here — use days instead.
         - Do not split a single promotion into multiple deals.
         - Ignore venue names, URLs, social media handles, and addresses — leave them out of all fields.
         - Large text is typically the deal title; smaller text is typically supporting details, times, or footers.

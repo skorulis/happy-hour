@@ -13,10 +13,12 @@ nonisolated enum PromotionDateParser {
         var latestEnd: Date?
 
         for raw in promotionDates {
-            let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+            let set = CharacterSet.whitespacesAndNewlines.union(CharacterSet(charactersIn: "."))
+            let trimmed = raw.trimmingCharacters(in: set)
             guard !trimmed.isEmpty else { continue }
 
             let parsed = parseLine(trimmed)
+            print("EXTRACT: promotionDates: '\(trimmed)' = \(parsed)")
             if let start = parsed.start {
                 earliestStart = minDate(earliestStart, start)
             }
@@ -30,6 +32,10 @@ nonisolated enum PromotionDateParser {
 
     private static func parseLine(_ text: String) -> (start: Date?, end: Date?) {
         let lower = text.lowercased()
+
+        if let fromThroughRange = parseFromThroughEndOfMonth(text) {
+            return fromThroughRange
+        }
 
         if lower.hasPrefix("until ") {
             let remainder = String(text.dropFirst(6)).trimmingCharacters(in: .whitespacesAndNewlines)
@@ -56,6 +62,38 @@ nonisolated enum PromotionDateParser {
         }
 
         return (nil, nil)
+    }
+
+    private static func parseFromThroughEndOfMonth(_ text: String) -> (start: Date?, end: Date?)? {
+        let pattern = #"(?i)^from\s+(.+?)\s+through\s+to\s+the\s+end\s+of\s+([a-z]+)(?:\s+(\d{4}))?$"#
+        guard let regex = try? NSRegularExpression(pattern: pattern) else { return nil }
+        let range = NSRange(text.startIndex..., in: text)
+        guard let match = regex.firstMatch(in: text, range: range),
+              let startRange = Range(match.range(at: 1), in: text),
+              let monthRange = Range(match.range(at: 2), in: text)
+        else {
+            return nil
+        }
+
+        let startText = String(text[startRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+        let monthText = String(text[monthRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+        let explicitYear: Int? = {
+            guard match.range(at: 3).location != NSNotFound,
+                  let yearRange = Range(match.range(at: 3), in: text)
+            else {
+                return nil
+            }
+            return Int(text[yearRange])
+        }()
+
+        let start = parseDate(startText, referenceYear: explicitYear)
+        let inferredYear = explicitYear
+            ?? start.map { Calendar.current.component(.year, from: $0) }
+            ?? Calendar.current.component(.year, from: Date())
+        let end = endOfMonth(monthText, year: inferredYear)
+
+        guard start != nil || end != nil else { return nil }
+        return (start, end)
     }
 
     private static func splitRange(_ text: String) -> (start: String, end: String)? {
@@ -137,6 +175,29 @@ nonisolated enum PromotionDateParser {
         formatter.calendar = Calendar.current
         formatter.dateFormat = format
         return formatter.date(from: text)
+    }
+
+    private static func endOfMonth(_ monthText: String, year: Int) -> Date? {
+        let formatter = DateFormatter()
+        formatter.locale = .autoupdatingCurrent
+        formatter.calendar = Calendar.current
+        formatter.dateFormat = "LLLL"
+        guard let monthDate = formatter.date(from: monthText.capitalized) else { return nil }
+
+        let month = Calendar.current.component(.month, from: monthDate)
+        var components = DateComponents()
+        components.year = year
+        components.month = month
+        components.day = 1
+        guard let firstOfMonth = Calendar.current.date(from: components),
+              let endOfMonth = Calendar.current.date(
+                  byAdding: DateComponents(month: 1, day: -1),
+                  to: firstOfMonth
+              )
+        else {
+            return nil
+        }
+        return startOfDay(endOfMonth)
     }
 
     private static func dateComponents(
