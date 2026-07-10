@@ -658,4 +658,30 @@ struct DealMapperTests {
         #expect(deal.days == [.monday, .tuesday, .wednesday, .thursday, .friday])
         #expect(deal.times == [.between(16 * 60, 18 * 60)])
     }
+
+    @Test func lowercasesMeasurementUnitsAfterNumbersInTitle() throws {
+        let raw = DealExtractionPayload.RawDeal(
+            title: "1KG WINGSDAY",
+            details: ["All-you-can-eat wings"],
+            days: ["WEDNESDAY"],
+            times: ["all day"]
+        )
+
+        let deal = try #require(DealMapper.map([raw]).first)
+
+        #expect(deal.title == "1kg Wingsday")
+    }
+
+    @Test func lowercasesMeasurementUnitsWithSpaceAfterNumbersInTitle() throws {
+        let raw = DealExtractionPayload.RawDeal(
+            title: "500 ML PINT SPECIAL",
+            details: [],
+            days: ["FRIDAY"],
+            times: ["all day"]
+        )
+
+        let deal = try #require(DealMapper.map([raw]).first)
+
+        #expect(deal.title == "500ml Pint Special")
+    }
 }

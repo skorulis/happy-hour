@@ -18,7 +18,7 @@ nonisolated enum DealTextNormalizer {
 
     static func formatTitle(_ title: String) -> String {
         guard !title.isEmpty, !isPriceLine(title) else { return title }
-        return title.capitalized
+        return lowercaseUnitsAfterNumbers(title.capitalized)
     }
 
     static func normalizeDetails(_ details: [String]) -> [String] {
@@ -55,6 +55,29 @@ nonisolated enum DealTextNormalizer {
         #"(?i)^\$\s*\d+(?:\.\d{1,2})?[a-z]*$"#,
         #"(?i)^half[\s-]?price$"#,
     ]
+
+    private static let unitsAfterNumberPattern = #"(?i)(\d+(?:\.\d+)?)(\s*)(kg|ml|mg|lbs|lb|oz|cl|g|l)\b"#
+
+    private static func lowercaseUnitsAfterNumbers(_ title: String) -> String {
+        guard let regex = try? NSRegularExpression(pattern: unitsAfterNumberPattern) else { return title }
+
+        var result = title
+        let matches = regex.matches(in: result, range: NSRange(result.startIndex..., in: result)).reversed()
+        for match in matches {
+            guard let range = Range(match.range, in: result),
+                  let numberRange = Range(match.range(at: 1), in: result),
+                  let spaceRange = Range(match.range(at: 2), in: result),
+                  let unitRange = Range(match.range(at: 3), in: result)
+            else { continue }
+
+            let replacement =
+                String(result[numberRange])
+                + String(result[spaceRange])
+                + String(result[unitRange]).lowercased()
+            result.replaceSubrange(range, with: replacement)
+        }
+        return result
+    }
 
     private static func sentenceCased(_ text: String) -> String {
         text
