@@ -46,6 +46,7 @@ struct DealTimeParserTests {
     @Test func parsesPmTillPmTimeRange() {
         #expect(DealTimeParser.parse(["4pm 'til 6pm"]) == [.between(16 * 60, 18 * 60)])
         #expect(DealTimeParser.parse(["4pm \u{2019}til 6pm"]) == [.between(16 * 60, 18 * 60)])
+        #expect(DealTimeParser.parse(["6pm til' 10pm"]) == [.between(18 * 60, 22 * 60)])
     }
 
     @Test func parsesBareHourTillPmTimeRange() {

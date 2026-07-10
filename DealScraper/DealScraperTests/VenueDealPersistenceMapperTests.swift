@@ -233,6 +233,73 @@ struct VenueDealPersistenceMapperTests {
         #expect(schedule.endMinute == 1_440)
     }
 
+    @Test func adjustsDinnerDealStartFromMidnightTo5PM() {
+        let material = VenueDealSourceMaterial.fixture()
+        let payload = DealExtractionPayload(deals: [
+            DealExtractionPayload.RawDeal(
+                title: "Dinner Special",
+                details: ["$25 mains"],
+                days: ["Friday"],
+                times: ["till 10pm"]
+            ),
+        ])
+
+        let mapped = VenueDealPersistenceMapper.map(
+            payload: payload,
+            venueId: 1,
+            material: material
+        )
+
+        #expect(mapped.count == 1)
+        #expect(mapped[0].schedules.count == 1)
+        #expect(mapped[0].schedules[0].startMinute == 17 * 60)
+        #expect(mapped[0].schedules[0].endMinute == 22 * 60)
+    }
+
+    @Test func doesNotAdjustDinnerStartWhenLunchIsMentioned() {
+        let material = VenueDealSourceMaterial.fixture()
+        let payload = DealExtractionPayload(deals: [
+            DealExtractionPayload.RawDeal(
+                title: "Lunch and Dinner",
+                details: ["Available all evening"],
+                days: ["Friday"],
+                times: ["till 10pm"]
+            ),
+        ])
+
+        let mapped = VenueDealPersistenceMapper.map(
+            payload: payload,
+            venueId: 1,
+            material: material
+        )
+
+        #expect(mapped.count == 1)
+        #expect(mapped[0].schedules[0].startMinute == 0)
+        #expect(mapped[0].schedules[0].endMinute == 22 * 60)
+    }
+
+    @Test func doesNotAdjustNonDinnerDealStartFromMidnight() {
+        let material = VenueDealSourceMaterial.fixture()
+        let payload = DealExtractionPayload(deals: [
+            DealExtractionPayload.RawDeal(
+                title: "Happy Hour",
+                details: ["$8 wines"],
+                days: ["Friday"],
+                times: ["till 10pm"]
+            ),
+        ])
+
+        let mapped = VenueDealPersistenceMapper.map(
+            payload: payload,
+            venueId: 1,
+            material: material
+        )
+
+        #expect(mapped.count == 1)
+        #expect(mapped[0].schedules[0].startMinute == 0)
+        #expect(mapped[0].schedules[0].endMinute == 22 * 60)
+    }
+
     @Test func mapsCalendarOnlyDealFromPromotionDates() throws {
         let material = VenueDealSourceMaterial.fixture()
         let payload = DealExtractionPayload(deals: [

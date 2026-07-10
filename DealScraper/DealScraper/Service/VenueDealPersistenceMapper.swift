@@ -74,7 +74,7 @@ enum VenueDealPersistenceMapper {
             endDate: promotionDates.end
         )
 
-        let schedules = schedules(for: legacyDeal)
+        let schedules = schedules(for: legacyDeal, title: title, details: details)
         guard !schedules.isEmpty || deal.startDate != nil || deal.endDate != nil else {
             return nil
         }
@@ -94,15 +94,21 @@ enum VenueDealPersistenceMapper {
         return joined.isEmpty ? nil : joined
     }
 
-    nonisolated private static func schedules(for legacyDeal: LegacyDeal) -> [DealSchedule] {
+    nonisolated private static func schedules(
+        for legacyDeal: LegacyDeal,
+        title: String,
+        details: String?
+    ) -> [DealSchedule] {
         let days = legacyDeal.days.flatMap(\.scheduleDays)
         let times = legacyDeal.times.isEmpty ? [DealHours.allDay] : legacyDeal.times
         guard !days.isEmpty else { return [] }
 
+        let adjustDinnerStart = shouldAdjustDinnerStart(title: title, details: details)
+
         var schedules: [DealSchedule] = []
         for day in days {
             for time in times {
-                let range = scheduleRange(for: time)
+                let range = scheduleRange(for: time, adjustDinnerStart: adjustDinnerStart)
                 schedules.append(
                     DealSchedule(
                         dealId: 0,
@@ -116,14 +122,32 @@ enum VenueDealPersistenceMapper {
         return schedules
     }
 
-    nonisolated private static func scheduleRange(for hours: DealHours) -> (start: Int, end: Int) {
+    nonisolated private static func shouldAdjustDinnerStart(title: String, details: String?) -> Bool {
+        var combined = title
+        if let details, !details.isEmpty {
+            combined = combined.isEmpty ? details : "\(combined) \(details)"
+        }
+        let lowercased = combined.lowercased()
+        return lowercased.contains("dinner") && !lowercased.contains("lunch")
+    }
+
+    nonisolated private static func scheduleRange(
+        for hours: DealHours,
+        adjustDinnerStart: Bool
+    ) -> (start: Int, end: Int) {
+        var range: (start: Int, end: Int)
         switch hours {
         case .allDay:
-            return (0, 1_440)
+            range = (0, 1_440)
         case let .from(minutes):
-            return (minutes, 1_440)
+            range = (minutes, 1_440)
         case let .between(start, end):
-            return (start, end)
+            range = (start, end)
         }
+
+        if adjustDinnerStart, range.start == 0 {
+            range.start = 17 * 60
+        }
+        return range
     }
 }

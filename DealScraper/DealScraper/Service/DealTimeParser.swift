@@ -156,7 +156,7 @@ nonisolated enum DealTimeParser {
         guard !trimmed.isEmpty else { return nil }
 
         let time = #"\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?"#
-        let till = #"(?:'?(?:till|til)|until)"#
+        let till = #"(?:'?(?:till|til)'?|until)"#
 
         let fromTillPattern = #"(?i)from\s+(\#(time))\s+\#(till)\s+(\#(time))"#
         if let regex = try? NSRegularExpression(pattern: fromTillPattern),
