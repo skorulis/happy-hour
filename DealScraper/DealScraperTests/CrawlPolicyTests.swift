@@ -44,4 +44,37 @@ struct CrawlPolicyTests {
         #expect(CrawlPolicy.dealSourceStatus(discoveredCount: 0) == .new)
         #expect(CrawlPolicy.dealSourceStatus(discoveredCount: 2) == .new)
     }
+
+    @Test func rejectsNthWeekdayOfMonthImage() {
+        let source = DiscoveredSource(
+            url: URL(string: "https://example.com/poster.jpg")!,
+            sourceURL: URL(string: "https://example.com/specials")!,
+            type: .image,
+            textPieces: .textLines(["Steak Night", "First Tuesday of each Month", "$22 steaks"])
+        )
+
+        #expect(CrawlPolicy.dealSourceStatus(for: source, discoveredCount: 1) == .rejected)
+    }
+
+    @Test func doesNotRejectNormalImage() {
+        let source = DiscoveredSource(
+            url: URL(string: "https://example.com/poster.jpg")!,
+            sourceURL: URL(string: "https://example.com/specials")!,
+            type: .image,
+            textPieces: .textLines(["Happy Hour", "Every Tuesday 4PM - 6PM", "$8 wines"])
+        )
+
+        #expect(CrawlPolicy.dealSourceStatus(for: source, discoveredCount: 1) == .approved)
+    }
+
+    @Test func doesNotRejectNthWeekdayTextOnWebpage() {
+        let source = DiscoveredSource(
+            url: URL(string: "https://example.com/specials")!,
+            sourceURL: URL(string: "https://example.com/specials")!,
+            type: .webpage,
+            textPieces: .textLines(["First Tuesday of each Month"])
+        )
+
+        #expect(CrawlPolicy.dealSourceStatus(for: source, discoveredCount: 1) == .approved)
+    }
 }

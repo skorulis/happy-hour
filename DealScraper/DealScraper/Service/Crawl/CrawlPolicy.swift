@@ -48,4 +48,23 @@ enum CrawlPolicy {
     static func dealSourceStatus(discoveredCount: Int) -> DealStatus {
         discoveredCount == 1 ? .approved : .new
     }
+
+    static func dealSourceStatus(for source: DiscoveredSource, discoveredCount: Int) -> DealStatus {
+        if source.type == .image,
+           NthWeekdayOfMonthDetector.isMatch(in: textLines(from: source)) {
+            return .rejected
+        }
+        return dealSourceStatus(discoveredCount: discoveredCount)
+    }
+
+    private static func textLines(from source: DiscoveredSource) -> [String] {
+        switch source.textPieces {
+        case let .textLines(lines):
+            return lines
+        case let .contentBlocks(blocks):
+            return blocks.map(\.text)
+        case nil:
+            return []
+        }
+    }
 }

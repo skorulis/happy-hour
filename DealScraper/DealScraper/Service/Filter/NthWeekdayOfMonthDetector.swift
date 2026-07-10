@@ -30,8 +30,11 @@ nonisolated enum NthWeekdayOfMonthDetector {
     }()
 
     static func isMatch(title: String?, details: [String], conditions: [String], days: [String]) -> Bool {
-        let texts = [title].compactMap { $0 } + details + conditions + days
-        return texts.contains { containsPattern($0) }
+        isMatch(in: [title].compactMap { $0 } + details + conditions + days)
+    }
+
+    static func isMatch(in texts: [String]) -> Bool {
+        texts.contains { containsPattern($0) }
     }
 
     private static func containsPattern(_ text: String) -> Bool {

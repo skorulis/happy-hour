@@ -49,6 +49,16 @@ struct NthWeekdayOfMonthDetectorTests {
         )
     }
 
+    @Test func matchesTextLines() {
+        #expect(
+            NthWeekdayOfMonthDetector.isMatch(in: [
+                "Steak Night",
+                "First Tuesday of each Month",
+                "$22 steaks",
+            ])
+        )
+    }
+
     @Test func rejectsEveryWeekdaySchedule() {
         #expect(
             !NthWeekdayOfMonthDetector.isMatch(
