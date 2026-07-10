@@ -59,6 +59,17 @@ struct NthWeekdayOfMonthDetectorTests {
         )
     }
 
+    @Test func matchesEveryOrdinalWeekdayOfMonthPhrase() {
+        #expect(
+            NthWeekdayOfMonthDetector.isMatch(
+                title: "AZUCAR latin nights",
+                details: [],
+                conditions: [],
+                days: ["EVERY SECOND FRIDAY OF THE MONTH"]
+            )
+        )
+    }
+
     @Test func rejectsEveryWeekdaySchedule() {
         #expect(
             !NthWeekdayOfMonthDetector.isMatch(

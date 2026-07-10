@@ -102,7 +102,7 @@ export function WhatSelectPanel({
     onChange([...tokens, trimmed]);
     setInput("");
     setHighlightIndex(0);
-    inputRef.current?.focus();
+    onClose();
   }
 
   function removeToken(index: number) {

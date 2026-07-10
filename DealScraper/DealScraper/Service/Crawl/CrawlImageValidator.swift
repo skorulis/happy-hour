@@ -51,7 +51,15 @@ final class CrawlImageValidator {
         guard let lines = try? await imageExtractor.extractTexts(from: localURL) else {
             return nil
         }
-        
+
+        if NthWeekdayOfMonthDetector.isMatch(in: lines.map(\.text)) {
+            return nil
+        }
+
+        if SingleDateDetector.isMatch(in: lines.map(\.text)) {
+            return nil
+        }
+
         let combinedText = lines.map(\.text).joined(separator: "\n")
         guard DealTextFilter().isValidDeal(combinedText) else {
             return nil

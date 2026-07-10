@@ -51,9 +51,12 @@ enum CrawlPolicy {
     }
 
     static func dealSourceStatus(for source: DiscoveredSource, discoveredCount: Int) -> DealStatus {
-        if source.type == .image,
-           NthWeekdayOfMonthDetector.isMatch(in: textLines(from: source)) {
-            return .rejected
+        if source.type == .image {
+            let lines = textLines(from: source)
+            if NthWeekdayOfMonthDetector.isMatch(in: lines)
+                || SingleDateDetector.isMatch(in: lines) {
+                return .rejected
+            }
         }
         return dealSourceStatus(discoveredCount: discoveredCount)
     }

@@ -56,6 +56,21 @@ struct CrawlPolicyTests {
         #expect(CrawlPolicy.dealSourceStatus(for: source, discoveredCount: 1) == .rejected)
     }
 
+    @Test func rejectsSingleDateImage() {
+        let source = DiscoveredSource(
+            url: URL(string: "https://mumbojumbos.com.au/wp-content/uploads/2025/11/TNT_DEC16_FB-1-2048x866.jpg")!,
+            sourceURL: URL(string: "https://mumbojumbos.com.au/")!,
+            type: .image,
+            textPieces: .textLines([
+                "PIXAR",
+                "TUES DEC I6TH",
+                "$3.50 TACOS FROM 5PM",
+            ])
+        )
+
+        #expect(CrawlPolicy.dealSourceStatus(for: source, discoveredCount: 1) == .rejected)
+    }
+
     @Test func doesNotRejectNormalImage() {
         let source = DiscoveredSource(
             url: URL(string: "https://example.com/poster.jpg")!,

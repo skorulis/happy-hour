@@ -171,6 +171,62 @@ struct CrawlImageValidatorTests {
         #expect(!isRelevant)
     }
 
+    @Test func rejectsSingleDateImage() async throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let cache = CrawlImageCache(directory: directory)
+        let fixtureURL = try fixtureImageURL(named: "mumbo_jumbos_tnt_dec16", extension: "jpeg")
+        let url = URL(string: "https://mumbojumbos.com.au/wp-content/uploads/2025/11/TNT_DEC16_FB-1-2048x866.jpg")!
+        _ = try cache.store(
+            data: Data(contentsOf: fixtureURL),
+            hash: URLNormalizer.hash(url),
+            fileExtension: "jpeg"
+        )
+
+        let validator = CrawlImageValidator(
+            fetcher: CrawlImageFetcher(
+                cache: cache,
+                urlSession: FakeURLSession { _ in
+                    throw CrawlImageFetcherError.invalidResponse
+                }
+            ),
+            imageExtractor: DealImageExtractor(),
+            featurePrintGenerator: ImageFeaturePrintGenerator()
+        )
+
+        let isRelevant = await validator.validateImage(url: url) != nil
+
+        #expect(!isRelevant)
+    }
+
+    @Test func rejectsNthWeekdayOfMonthImage() async throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let cache = CrawlImageCache(directory: directory)
+        let fixtureURL = try fixtureImageURL(named: "azucar_latin_nights", extension: "webp")
+        let url = URL(string: "https://cabravale.com.au/wp-content/uploads/2025/09/azucar-latin-nights.webp")!
+        _ = try cache.store(
+            data: Data(contentsOf: fixtureURL),
+            hash: URLNormalizer.hash(url),
+            fileExtension: "webp"
+        )
+
+        let validator = CrawlImageValidator(
+            fetcher: CrawlImageFetcher(
+                cache: cache,
+                urlSession: FakeURLSession { _ in
+                    throw CrawlImageFetcherError.invalidResponse
+                }
+            ),
+            imageExtractor: DealImageExtractor(),
+            featurePrintGenerator: ImageFeaturePrintGenerator()
+        )
+
+        let isRelevant = await validator.validateImage(url: url) != nil
+
+        #expect(!isRelevant)
+    }
+
     private static let largeBlankPNGData: Data = pngData(width: 600, height: 600)
 
     private static let smallPNGData: Data = pngData(width: 400, height: 400)
@@ -196,11 +252,14 @@ struct CrawlImageValidatorTests {
         return mutableData as Data
     }
 
-    private func fixtureImageURL(named name: String) throws -> URL {
+    private func fixtureImageURL(named name: String, extension ext: String = "jpeg") throws -> URL {
         let bundle = Bundle(for: BundleToken.self)
-        let extensions = ["jpeg", "jpg", "png"]
-        for ext in extensions {
-            if let url = bundle.url(forResource: name, withExtension: ext) {
+        if let url = bundle.url(forResource: name, withExtension: ext) {
+            return url
+        }
+        let fallbackExtensions = ["jpeg", "jpg", "png", "webp"]
+        for fallback in fallbackExtensions where fallback != ext {
+            if let url = bundle.url(forResource: name, withExtension: fallback) {
                 return url
             }
         }
