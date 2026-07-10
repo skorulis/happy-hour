@@ -83,12 +83,22 @@ nonisolated enum DealTimeParser {
             .replacingOccurrences(of: #"(?i)p\.m\.?"#, with: "pm", options: .regularExpression)
     }
 
+    /// OCR and font substitutions sometimes render "to" as "tº" or "t°".
+    private static func normalizeOCRToToken(_ string: String) -> String {
+        string.replacingOccurrences(
+            of: #"(?i)t[º°0]"#,
+            with: "to",
+            options: .regularExpression
+        )
+    }
+
     private static func sanitizeTimeString(_ string: String) -> String {
         var result = string
             .replacingOccurrences(of: "\u{2019}", with: "'")
             .replacingOccurrences(of: "\u{2018}", with: "'")
             .trimmingCharacters(in: .whitespacesAndNewlines)
         result = normalizeDottedMeridiem(result)
+        result = normalizeOCRToToken(result)
         result = stripTimeLabelPrefix(result)
         result = stripListMarkers(result)
         let wrappers: [(Character, Character)] = [("(", ")"), ("[", "]"), ("*", "*"), ("_", "_")]

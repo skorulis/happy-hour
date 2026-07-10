@@ -131,4 +131,8 @@ struct DealTimeParserTests {
     @Test func parsesBulletWrappedToTimeRange() {
         #expect(DealTimeParser.parse(["• 5PM TO 10PM •"]) == [.between(17 * 60, 22 * 60)])
     }
+
+    @Test func parsesOCRToTokenTimeRange() {
+        #expect(DealTimeParser.parse(["5 Tº 6PM"]) == [.between(17 * 60, 18 * 60)])
+    }
 }

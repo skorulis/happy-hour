@@ -536,6 +536,45 @@ struct DealMapperTests {
         #expect(deal.title == "Lunch")
     }
 
+    @Test func stripsTrailingTimeRangeFromTitle() throws {
+        let raw = DealExtractionPayload.RawDeal(
+            title: "$19 CHICKEN PARMI 4PM - 6PM",
+            details: [],
+            days: ["MONDAY"],
+            times: ["4PM - 6PM"]
+        )
+
+        let deal = try #require(DealMapper.map([raw]).first)
+
+        #expect(deal.title == "$19 Chicken Parmi")
+    }
+
+    @Test func stripsDanglingTimeRangeSeparatorFromTitle() throws {
+        let raw = DealExtractionPayload.RawDeal(
+            title: "$19 CHICKEN PARMI 4PM -",
+            details: [],
+            days: ["MONDAY"],
+            times: ["4PM - 6PM"]
+        )
+
+        let deal = try #require(DealMapper.map([raw]).first)
+
+        #expect(deal.title == "$19 Chicken Parmi")
+    }
+
+    @Test func stripsDayAfterTrailingTimeRemoved() throws {
+        let raw = DealExtractionPayload.RawDeal(
+            title: "NIGHT TRIVIA TUESDAY 6:30PM",
+            details: [],
+            days: ["TUESDAY"],
+            times: ["6:30PM"]
+        )
+
+        let deal = try #require(DealMapper.map([raw]).first)
+
+        #expect(deal.title == "Night Trivia")
+    }
+
     @Test func mountbattenHappyHourAndCocktailsShouldStaySeparateWhenMappedTogether() throws {
         let happyHourJSON = """
         {"deals":[{"title":"Happy Hour","details":["LET'S DRINK TO THAT!"],"days":["EVERY DAY"],"times":["5PM - 8PM"],"conditions":["Conditions apply.","Available to LDA Rewards members only.","Selected beers and wines only.","This promotion is at management's discretion and may not be available on public holidays or some special events.","Mountbatten Hotel practices the Responsible Service of Alcohol.","Please drink responsibly."]}]}
@@ -570,15 +609,15 @@ struct DealMapperTests {
         #expect(bottomless.days == [.friday, .saturday, .sunday])
         #expect(bottomless.times == [.between(12 * 60, 15 * 60 + 15)])
 
-        let jerkWings = try #require(deals.first { $0.title == "| $1 Jerk Wings" })
+        let jerkWings = try #require(deals.first { $0.title == "$1 Jerk Wings" })
         #expect(jerkWings.days == [.tuesday])
         #expect(jerkWings.times == [.allDay])
 
-        let seafoodBoil = try #require(deals.first { $0.title == "| Seafood Boil" })
+        let seafoodBoil = try #require(deals.first { $0.title == "Seafood Boil" })
         #expect(seafoodBoil.days == [.wednesday])
         #expect(seafoodBoil.times == [.allDay])
 
-        let soulFood = try #require(deals.first { $0.title == "| Soul Food Platter" })
+        let soulFood = try #require(deals.first { $0.title == "Soul Food Platter" })
         #expect(soulFood.days == [.sunday])
         #expect(soulFood.times == [.allDay])
 

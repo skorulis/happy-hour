@@ -8,7 +8,6 @@ nonisolated enum DealTextNormalizer {
         title
             .components(separatedBy: .newlines)
             .joined(separator: " ")
-            .cleanLine()
     }
 
     static func prepareDetails(_ details: [String]) -> [String] {
@@ -92,7 +91,7 @@ nonisolated enum DealTextNormalizer {
     }
 }
 
-private extension String {
+extension String {
     
     nonisolated static let characterSet = CharacterSet.whitespacesAndNewlines.union(CharacterSet(charactersIn: "\\*._|"))
     

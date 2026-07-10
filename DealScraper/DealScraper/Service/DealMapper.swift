@@ -21,7 +21,7 @@ nonisolated enum DealMapper {
         (title, details) = dayResolved
         (title, details) = withPriceOnlyTitle(title: title, details: details)
         (title, details) = withLeadingPriceInTitle(title: title, details: details)
-        title = stripTimeFromTitle(title)
+        title = DealTitleTrimmer.trimUntilStable(title)
         title = DealTextNormalizer.formatTitle(title)
         if !title.isEmpty, FilterKeywords.containsExcludedKeyword(title) {
             return nil
@@ -64,23 +64,7 @@ nonisolated enum DealMapper {
             return (firstLine, remainingDetails)
         }
 
-        var resolvedTitle = stripDayWord(from: trimmedTitle, atStart: true)
-        resolvedTitle = stripDayWord(from: resolvedTitle, atStart: false)
-        resolvedTitle = resolvedTitle.trimmingCharacters(in: .whitespacesAndNewlines)
-        return (resolvedTitle, details)
-    }
-
-    private static func stripDayWord(from title: String, atStart: Bool) -> String {
-        let parts = title.split(separator: " ", omittingEmptySubsequences: true).map(String.init)
-        guard !parts.isEmpty else { return title }
-
-        if atStart {
-            guard DealDay.parse(parts[0]) != nil else { return title }
-            return parts.dropFirst().joined(separator: " ")
-        }
-
-        guard parts.count > 1, DealDay.parse(parts[parts.count - 1]) != nil else { return title }
-        return parts.dropLast().joined(separator: " ")
+        return (trimmedTitle, details)
     }
 
     private static func withPriceOnlyTitle(title: String, details: [String]) -> (title: String, details: [String]) {
@@ -169,52 +153,6 @@ nonisolated enum DealMapper {
             result.append(line)
         }
         return result
-    }
-
-    private static func stripTimeFromTitle(_ title: String) -> String {
-        var result = title.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !result.isEmpty else { return result }
-
-        let time = #"(?:\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?|\d{3,4}\s*(?:am|pm))"#
-        let availableFromPattern = #"(?i)\s+available\s+from\s+(\#(time))\s*$"#
-        if let stripped = stripSuffix(matching: availableFromPattern, in: result, timeCaptureGroup: 1) {
-            result = stripped
-        }
-
-        let trailingTimePattern = #"(?i)\s+(\#(time))\s*$"#
-        if let stripped = stripSuffix(matching: trailingTimePattern, in: result, timeCaptureGroup: 1) {
-            result = stripped
-        }
-
-        return stripTrailingFromWord(from: result)
-    }
-
-    private static func stripTrailingFromWord(from title: String) -> String {
-        let parts = title.split(separator: " ", omittingEmptySubsequences: true).map(String.init)
-        guard parts.count > 1, parts.last?.caseInsensitiveCompare("from") == .orderedSame else {
-            return title
-        }
-        return parts.dropLast().joined(separator: " ")
-    }
-
-    private static func stripSuffix(
-        matching pattern: String,
-        in text: String,
-        timeCaptureGroup: Int
-    ) -> String? {
-        guard let regex = try? NSRegularExpression(pattern: pattern),
-              let match = regex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)),
-              let matchRange = Range(match.range, in: text),
-              let timeRange = Range(match.range(at: timeCaptureGroup), in: text)
-        else {
-            return nil
-        }
-
-        let timeText = String(text[timeRange])
-        guard DealHours.toMinutes(string: timeText) != nil else { return nil }
-
-        return String(text[..<matchRange.lowerBound])
-            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private nonisolated static func supplementTimes(from texts: [String], into deal: LegacyDeal) -> LegacyDeal {
