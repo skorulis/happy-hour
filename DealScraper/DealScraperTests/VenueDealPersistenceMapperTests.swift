@@ -278,6 +278,50 @@ struct VenueDealPersistenceMapperTests {
         #expect(mapped[0].schedules[0].endMinute == 22 * 60)
     }
 
+    @Test func adjustsLunchDealFromMidnightToMidnightTo12PM2PM() {
+        let material = VenueDealSourceMaterial.fixture()
+        let payload = DealExtractionPayload(deals: [
+            DealExtractionPayload.RawDeal(
+                title: "Lunch Special",
+                details: ["$15 burgers"],
+                days: ["Monday"],
+                times: ["all day"]
+            ),
+        ])
+
+        let mapped = VenueDealPersistenceMapper.map(
+            payload: payload,
+            venueId: 1,
+            material: material
+        )
+
+        #expect(mapped.count == 1)
+        #expect(mapped[0].schedules[0].startMinute == 12 * 60)
+        #expect(mapped[0].schedules[0].endMinute == 14 * 60)
+    }
+
+    @Test func doesNotAdjustLunchDealWithExplicitTimes() {
+        let material = VenueDealSourceMaterial.fixture()
+        let payload = DealExtractionPayload(deals: [
+            DealExtractionPayload.RawDeal(
+                title: "Lunch Special",
+                details: ["$15 burgers"],
+                days: ["Monday"],
+                times: ["till 10pm"]
+            ),
+        ])
+
+        let mapped = VenueDealPersistenceMapper.map(
+            payload: payload,
+            venueId: 1,
+            material: material
+        )
+
+        #expect(mapped.count == 1)
+        #expect(mapped[0].schedules[0].startMinute == 0)
+        #expect(mapped[0].schedules[0].endMinute == 22 * 60)
+    }
+
     @Test func doesNotAdjustDinnerStartWhenLunchIsMentioned() {
         let material = VenueDealSourceMaterial.fixture()
         let payload = DealExtractionPayload(deals: [

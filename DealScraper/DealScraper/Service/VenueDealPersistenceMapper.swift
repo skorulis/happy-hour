@@ -103,12 +103,12 @@ enum VenueDealPersistenceMapper {
         let times = legacyDeal.times.isEmpty ? [DealHours.allDay] : legacyDeal.times
         guard !days.isEmpty else { return [] }
 
-        let adjustDinnerStart = shouldAdjustDinnerStart(title: title, details: details)
+        let mealTimeAdjustment = mealTimeAdjustment(title: title, details: details)
 
         var schedules: [DealSchedule] = []
         for day in days {
             for time in times {
-                let range = scheduleRange(for: time, adjustDinnerStart: adjustDinnerStart)
+                let range = scheduleRange(for: time, mealTimeAdjustment: mealTimeAdjustment)
                 schedules.append(
                     DealSchedule(
                         dealId: 0,
@@ -122,19 +122,36 @@ enum VenueDealPersistenceMapper {
         return schedules
     }
 
-    nonisolated private static func shouldAdjustDinnerStart(title: String, details: String?) -> Bool {
+    private enum MealTimeAdjustment {
+        case dinnerStart
+        case lunchRange
+    }
+
+    nonisolated private static func mealTimeAdjustment(title: String, details: String?) -> MealTimeAdjustment? {
         var combined = title
         if let details, !details.isEmpty {
             combined = combined.isEmpty ? details : "\(combined) \(details)"
         }
         let lowercased = combined.lowercased()
-        return (lowercased.contains("dinner") || lowercased.contains("evening"))
-            && !lowercased.contains("lunch")
+        let hasLunch = lowercased.contains("lunch")
+        let hasDinnerOrEvening = lowercased.contains("dinner") || lowercased.contains("evening")
+
+        if hasDinnerOrEvening, !hasLunch {
+            return .dinnerStart
+        }
+        if hasLunch, !hasDinnerOrEvening {
+            return .lunchRange
+        }
+        return nil
+    }
+
+    nonisolated private static func isMidnightToMidnight(start: Int, end: Int) -> Bool {
+        start == 0 && (end == 0 || end == 1_440)
     }
 
     nonisolated private static func scheduleRange(
         for hours: DealHours,
-        adjustDinnerStart: Bool
+        mealTimeAdjustment: MealTimeAdjustment?
     ) -> (start: Int, end: Int) {
         var range: (start: Int, end: Int)
         switch hours {
@@ -146,8 +163,13 @@ enum VenueDealPersistenceMapper {
             range = (start, end)
         }
 
-        if adjustDinnerStart, range.start == 0 {
+        switch mealTimeAdjustment {
+        case .dinnerStart where range.start == 0:
             range.start = 17 * 60
+        case .lunchRange where isMidnightToMidnight(start: range.start, end: range.end):
+            range = (12 * 60, 14 * 60)
+        default:
+            break
         }
         return range
     }
