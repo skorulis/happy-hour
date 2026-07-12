@@ -50,6 +50,7 @@
     { "name": "guinness", "icon": "Beer" },
     { "name": "jugs", "icon": "Beer" },
     { "name": "martini", "icon": "Martini" },
+    { "name": "mulled wine", "icon": "Coffee" },
     { "name": "mojito", "icon": "Martini" },
     { "name": "negroni", "icon": "Martini" },
     { "name": "pint", "icon": "Beer" },

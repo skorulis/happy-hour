@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { resolveVenueMapIcon } from "@/lib/search/map-icon";
 import {
@@ -13,20 +12,13 @@ import {
   useMap,
 } from "@vis.gl/react-google-maps";
 import type { VenueGroupedDeals } from "@/components/VenueSearchCard";
-import {
-  formatDealDayBadge,
-  formatDealTimeBadge,
-  hasAnyDealActiveNow,
-  sortDealsActiveFirst,
-} from "@/lib/search/schedule";
-import { formatDistanceKm } from "@/lib/search/distance";
+import { VenueMapPopup } from "@/components/search/VenueMapPopup";
+import { hasAnyDealActiveNow } from "@/lib/search/schedule";
 import {
   boundsFromGoogleMap,
   boundsKey,
   type MapBounds,
 } from "@/lib/search/bounds";
-import { venuePath } from "@/lib/search/slugs";
-import { appendDaysParam } from "@/lib/search/url";
 import {
   isRegisteredProductIcon,
   ProductMapIcon,
@@ -154,68 +146,6 @@ function ViewportIdleReporter({
   return null;
 }
 
-function VenuePopup({
-  group,
-  searchDays = [],
-  now,
-}: {
-  group: VenueGroupedDeals;
-  searchDays?: number[];
-  now: Date;
-}) {
-  const previewDeals = sortDealsActiveFirst(group.deals, now).slice(0, 2);
-  const dealLabel =
-    group.deals.length === 1 ? "1 deal" : `${group.deals.length} deals`;
-  const venueHref = appendDaysParam(
-    venuePath(group.venue.suburbName, group.venue.name),
-    searchDays,
-  );
-
-  return (
-    <div className="min-w-[10rem] space-y-2 text-sm">
-      <div>
-        <Link
-          href={venueHref}
-          className="font-semibold text-amber-700 hover:underline dark:text-amber-400"
-        >
-          {group.venue.name}
-        </Link>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">
-          {group.venue.distanceKm !== undefined
-            ? `${formatDistanceKm(group.venue.distanceKm)} away · `
-            : ""}
-          {dealLabel}
-        </p>
-      </div>
-
-      {previewDeals.length > 0 ? (
-        <ul className="space-y-1 border-t border-zinc-200 pt-2 dark:border-zinc-700">
-          {previewDeals.map((deal) => {
-            const timeBadge = formatDealTimeBadge(deal.schedules);
-
-            return (
-              <li key={deal.id} className="text-xs text-zinc-700 dark:text-zinc-300">
-                <span className="font-medium">
-                  {deal.title || "Untitled deal"}
-                </span>
-                <span className="ml-1 text-zinc-500 dark:text-zinc-400">
-                  · {formatDealDayBadge(deal.schedules)}
-                  {timeBadge && timeBadge !== "—" ? ` · ${timeBadge}` : ""}
-                </span>
-              </li>
-            );
-          })}
-          {group.deals.length > previewDeals.length ? (
-            <li className="text-xs text-zinc-500 dark:text-zinc-400">
-              +{group.deals.length - previewDeals.length} more
-            </li>
-          ) : null}
-        </ul>
-      ) : null}
-    </div>
-  );
-}
-
 function useCurrentMinute(): Date {
   const [now, setNow] = useState(() => new Date());
 
@@ -284,8 +214,18 @@ function VenueMarker({
         )}
       </AdvancedMarker>
       {isSelected ? (
-        <InfoWindow anchor={marker} onClose={onClose}>
-          <VenuePopup group={group} searchDays={searchDays} now={now} />
+        <InfoWindow
+          anchor={marker}
+          onClose={onClose}
+          headerDisabled
+          maxWidth={480}
+        >
+          <VenueMapPopup
+            group={group}
+            searchDays={searchDays}
+            now={now}
+            onClose={onClose}
+          />
         </InfoWindow>
       ) : null}
     </>

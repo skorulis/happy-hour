@@ -32,3 +32,9 @@ body {
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
+
+/* Google Maps InfoWindow content should not scroll horizontally */
+.gm-style .gm-style-iw-d {
+  overflow-x: hidden !important;
+  box-sizing: border-box !important;
+}
