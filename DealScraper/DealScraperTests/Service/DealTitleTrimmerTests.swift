@@ -30,6 +30,8 @@ struct DealTitleTrimmerTests {
     @Test func trimOnce_stripsLeadingDayWord() {
         #expect(DealTitleTrimmer.trimOnce("TUESDAY Steak Night") == "Steak Night")
         #expect(DealTitleTrimmer.trimOnce("Friday Happy Hour") == "Happy Hour")
+        #expect(DealTitleTrimmer.trimOnce("Monday: Burger Night") == "Burger Night")
+        #expect(DealTitleTrimmer.trimOnce("Monday : Burger Night") == "Burger Night")
     }
 
     @Test func trimOnce_stripsTrailingDayWord() {

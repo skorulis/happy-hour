@@ -55,7 +55,19 @@ nonisolated enum DealTitleTrimmer {
     guard !parts.isEmpty else { return title }
 
     if atStart {
-      guard DealDay.parse(parts[0]) != nil else { return title }
+      if parts.count > 1,
+        DealDay.parse(parts[0]) != nil,
+        parts[1] == ":"
+      {
+        return parts.dropFirst(2).joined(separator: " ")
+      }
+
+      let first = parts[0]
+      if first.hasSuffix(":"), DealDay.parse(String(first.dropLast())) != nil {
+        return parts.dropFirst().joined(separator: " ")
+      }
+
+      guard DealDay.parse(first) != nil else { return title }
       return parts.dropFirst().joined(separator: " ")
     }
 

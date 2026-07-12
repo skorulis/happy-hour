@@ -1,5 +1,10 @@
+"use client";
+
 import Link from "next/link";
 import { Building2, MapPin, X } from "lucide-react";
+import { useState } from "react";
+import Lightbox from "yet-another-react-lightbox";
+import "yet-another-react-lightbox/styles.css";
 import { DealProductIcon } from "@/components/DealProductIcon";
 import type { VenueGroupedDeals } from "@/components/VenueSearchCard";
 import { isCreativeImageUrl } from "@/lib/search/creative-url";
@@ -28,15 +33,34 @@ function DealThumbnail({
   deal: VenueGroupedDeals["deals"][number];
 }) {
   const imageUrl = isCreativeImageUrl(deal.imageUrl) ? deal.imageUrl : null;
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   if (imageUrl) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={imageUrl}
-        alt=""
-        className="h-14 w-14 shrink-0 rounded-lg object-cover"
-      />
+      <>
+        <button
+          type="button"
+          onClick={() => setLightboxOpen(true)}
+          className="h-14 w-14 shrink-0 cursor-zoom-in"
+          aria-label="View full-size deal image"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={imageUrl}
+            alt={deal.title || "Deal image"}
+            className="h-14 w-14 rounded-lg object-cover"
+          />
+        </button>
+        <Lightbox
+          open={lightboxOpen}
+          close={() => setLightboxOpen(false)}
+          slides={[
+            { src: imageUrl, alt: deal.title || "Deal image" },
+          ]}
+          carousel={{ finite: true }}
+          render={{ buttonPrev: () => null, buttonNext: () => null }}
+        />
+      </>
     );
   }
 
