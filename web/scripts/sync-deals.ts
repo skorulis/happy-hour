@@ -1,5 +1,9 @@
 import { and, eq, isNull, notInArray, or } from "drizzle-orm";
 import * as schema from "../db/schema";
+import {
+  clampSchedulesToOpeningHours,
+  parseVenueOpeningHours,
+} from "./venue-opening-hours";
 
 export type SqliteDeal = {
   id: number;
@@ -210,8 +214,10 @@ export async function syncVenueDealsWithStore(
   approvedDeals: SqliteDeal[],
   schedulesByDealId: Map<number, SqliteDealSchedule[]>,
   today: string,
+  venueJson?: unknown,
 ): Promise<number> {
   const activeSourceDealIds = collectActiveSourceDealIds(approvedDeals, today);
+  const openingHours = parseVenueOpeningHours(venueJson);
   let dealsSynced = 0;
   const syncedAt = new Date();
 
@@ -225,7 +231,10 @@ export async function syncVenueDealsWithStore(
     );
     await store.replaceSchedules(
       upsertedDeal.id,
-      toDealScheduleInputs(schedulesByDealId.get(dealRow.id) ?? []),
+      clampSchedulesToOpeningHours(
+        toDealScheduleInputs(schedulesByDealId.get(dealRow.id) ?? []),
+        openingHours,
+      ),
     );
 
     dealsSynced += 1;
@@ -242,6 +251,7 @@ export async function syncVenueDeals(
   approvedDeals: SqliteDeal[],
   schedulesByDealId: Map<number, SqliteDealSchedule[]>,
   today: string,
+  venueJson?: unknown,
 ): Promise<number> {
   return syncVenueDealsWithStore(
     createDrizzleDealSyncStore(tx),
@@ -249,5 +259,6 @@ export async function syncVenueDeals(
     approvedDeals,
     schedulesByDealId,
     today,
+    venueJson,
   );
 }

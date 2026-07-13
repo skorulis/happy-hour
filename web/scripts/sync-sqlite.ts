@@ -193,6 +193,8 @@ async function main() {
         }
       }
 
+      const venueJson = parseJsonColumn(venueRow.json);
+
       const [upsertedVenue] = await tx
         .insert(schema.venue)
         .values({
@@ -205,7 +207,7 @@ async function main() {
           heroImage: venueRow.hero_image,
           blurb: venueRow.blurb,
           lastCrawlDate: parseTimestamp(venueRow.last_crawl_date),
-          json: parseJsonColumn(venueRow.json),
+          json: venueJson,
           syncedAt: new Date(),
         })
         .onConflictDoUpdate({
@@ -219,7 +221,7 @@ async function main() {
             heroImage: venueRow.hero_image,
             blurb: venueRow.blurb,
             lastCrawlDate: parseTimestamp(venueRow.last_crawl_date),
-            json: parseJsonColumn(venueRow.json),
+            json: venueJson,
             syncedAt: new Date(),
           },
         })
@@ -272,6 +274,7 @@ async function main() {
         approvedDeals,
         schedulesByDealId,
         today,
+        venueJson,
       );
 
       venuesSynced += 1;

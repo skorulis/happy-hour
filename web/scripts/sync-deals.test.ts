@@ -223,4 +223,41 @@ describe("syncVenueDealsWithStore", () => {
 
     expect([...store.deals.keys()]).toEqual([]);
   });
+
+  it("clamps synced schedules to venue opening hours", async () => {
+    const store = createMemoryDealSyncStore();
+    const approvedDeals = [makeDeal({ id: 7 })];
+    const schedules: SqliteDealSchedule[] = [
+      {
+        id: 1,
+        deal_id: 7,
+        day_of_week: 2,
+        start_minute: 0,
+        end_minute: 1440,
+      },
+    ];
+    const venueJson = {
+      regularOpeningHours: {
+        periods: [
+          {
+            open: { day: 1, hour: 8, minute: 0 },
+            close: { day: 1, hour: 18, minute: 0 },
+          },
+        ],
+      },
+    };
+
+    await syncVenueDealsWithStore(
+      store,
+      3,
+      approvedDeals,
+      new Map([[7, schedules]]),
+      "2026-07-07",
+      venueJson,
+    );
+
+    expect(store.schedules.get(1)).toEqual([
+      { dayOfWeek: 2, startMinute: 480, endMinute: 1080 },
+    ]);
+  });
 });
