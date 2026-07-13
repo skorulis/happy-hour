@@ -42,6 +42,7 @@ struct DealTextFilterTests {
         #expect(DealTextFilter.containsDate(in: "21st of March 2026"))
         #expect(DealTextFilter.containsDate(in: "2026-06-17"))
         #expect(DealTextFilter.containsDate(in: "2026-06-17"))
+        #expect(DealTextFilter.containsDate(in: "THURSDAY 30\u{0422}\u{041D} JULY"))
 
         #expect(!filter.isValidDeal("Live music June 21"))
         #expect(!filter.isValidDeal("Comedy night 17/06/2026"))

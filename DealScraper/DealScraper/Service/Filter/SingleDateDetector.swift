@@ -33,7 +33,8 @@ nonisolated enum SingleDateDetector {
     }
 
     private static func containsPattern(_ text: String) -> Bool {
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmed = OCRTextNormalizer.normalize(text)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return false }
 
         let range = NSRange(trimmed.startIndex..., in: trimmed)
@@ -42,3 +43,4 @@ nonisolated enum SingleDateDetector {
         }
     }
 }
+

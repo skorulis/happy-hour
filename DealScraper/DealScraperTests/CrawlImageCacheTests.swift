@@ -199,6 +199,34 @@ struct CrawlImageValidatorTests {
         #expect(!isRelevant)
     }
 
+    @Test func rejectsBerryHotelDragBingoSingleDateImage() async throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let cache = CrawlImageCache(directory: directory)
+        let fixtureURL = try fixtureImageURL(named: "berry_hotel_drag_bingo", extension: "jpeg")
+        let url = URL(string: "https://theberryhotel.com.au/wp-content/uploads/2026/06/Drag-Bingo-30th-July-Social-Tile-1-The-Berry-Hotel.jpg")!
+        _ = try cache.store(
+            data: Data(contentsOf: fixtureURL),
+            hash: URLNormalizer.hash(url),
+            fileExtension: "jpeg"
+        )
+
+        let validator = CrawlImageValidator(
+            fetcher: CrawlImageFetcher(
+                cache: cache,
+                urlSession: FakeURLSession { _ in
+                    throw CrawlImageFetcherError.invalidResponse
+                }
+            ),
+            imageExtractor: DealImageExtractor(),
+            featurePrintGenerator: ImageFeaturePrintGenerator()
+        )
+
+        let isRelevant = await validator.validateImage(url: url) != nil
+
+        #expect(!isRelevant)
+    }
+
     @Test func rejectsNthWeekdayOfMonthImage() async throws {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)

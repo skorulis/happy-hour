@@ -32,6 +32,13 @@ struct SingleDateDetectorTests {
         )
     }
 
+    @Test func matchesBerryHotelDragBingoOCRLine() {
+        // Vision often reads Latin "TH" in "30TH" as Cyrillic Т (U+0422) and Н (U+041D).
+        #expect(SingleDateDetector.isMatch(in: ["THURSDAY 30\u{0422}\u{041D} JULY"]))
+        #expect(SingleDateDetector.isMatch(in: ["THURSDAY 30TH JULY"]))
+    }
+
+
     @Test func rejectsRecurringWeekdaySchedules() {
         #expect(!SingleDateDetector.isMatch(in: ["EVERY TUES"]))
         #expect(!SingleDateDetector.isMatch(in: ["TUES - THURS 4PM - 6PM"]))

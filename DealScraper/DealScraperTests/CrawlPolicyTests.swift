@@ -71,6 +71,23 @@ struct CrawlPolicyTests {
         #expect(CrawlPolicy.dealSourceStatus(for: source, discoveredCount: 1) == .rejected)
     }
 
+    @Test func rejectsSingleDateImageWithCyrillicOCROrdinal() {
+        let source = DiscoveredSource(
+            url: URL(string: "https://theberryhotel.com.au/wp-content/uploads/2026/06/Drag-Bingo-30th-July-Social-Tile-1-The-Berry-Hotel.jpg")!,
+            sourceURL: URL(string: "https://theberryhotel.com.au/")!,
+            type: .image,
+            textPieces: .textLines([
+                "Monthly",
+                "DRAG BINGO",
+                "THURSDAY 30\u{0422}\u{041D} JULY",
+                "BALLS DROP AT 7PM",
+                "$10 ENTRY | 18+ ONLY",
+            ])
+        )
+
+        #expect(CrawlPolicy.dealSourceStatus(for: source, discoveredCount: 1) == .rejected)
+    }
+
     @Test func doesNotRejectNormalImage() {
         let source = DiscoveredSource(
             url: URL(string: "https://example.com/poster.jpg")!,
