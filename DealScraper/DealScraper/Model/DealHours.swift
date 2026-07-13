@@ -129,6 +129,9 @@ nonisolated enum DealHours: Equatable, Hashable {
         if lowercased.hasPrefix("available from ") {
             normalized = String(normalized.dropFirst("available from ".count))
                 .trimmingCharacters(in: .whitespacesAndNewlines)
+        } else if lowercased.hasPrefix("available ") {
+            normalized = String(normalized.dropFirst("available ".count))
+                .trimmingCharacters(in: .whitespacesAndNewlines)
         } else if lowercased.hasPrefix("from ") {
             normalized = String(normalized.dropFirst(5))
                 .trimmingCharacters(in: .whitespacesAndNewlines)

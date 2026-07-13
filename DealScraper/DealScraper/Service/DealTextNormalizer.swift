@@ -56,7 +56,7 @@ nonisolated enum DealTextNormalizer {
         #"(?i)^half[\s-]?price$"#,
     ]
 
-    private static let unitsAfterNumberPattern = #"(?i)(\d+(?:\.\d+)?)(\s*)(kg|ml|mg|lbs|lb|oz|cl|g|l)\b"#
+    private static let unitsAfterNumberPattern = #"(?i)(\d+(?:\.\d+)?)(\s*)(kg|ml|mg|lbs|lb|oz|cl|g|l|am|pm|pp)\b"#
 
     private static func lowercaseUnitsAfterNumbers(_ title: String) -> String {
         guard let regex = try? NSRegularExpression(pattern: unitsAfterNumberPattern) else { return title }
@@ -84,7 +84,7 @@ nonisolated enum DealTextNormalizer {
             .components(separatedBy: .newlines)
             .map { line in
                 guard !line.isEmpty else { return line }
-                return sentenceCasedLine(line)
+                return lowercaseUnitsAfterNumbers(sentenceCasedLine(line))
             }
             .joined(separator: "\n")
     }

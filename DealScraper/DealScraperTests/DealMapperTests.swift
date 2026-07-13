@@ -621,7 +621,7 @@ struct DealMapperTests {
         #expect(soulFood.days == [.sunday])
         #expect(soulFood.times == [.allDay])
 
-        let happyHour = try #require(deals.first { $0.title == "Weekdays 4-6Pm | Happy Hour" })
+        let happyHour = try #require(deals.first { $0.title == "Weekdays 4-6pm | Happy Hour" })
         #expect(happyHour.days == [.monday, .tuesday, .wednesday, .thursday, .friday])
         #expect(happyHour.times == [.between(16 * 60, 18 * 60)])
     }
@@ -683,5 +683,45 @@ struct DealMapperTests {
         let deal = try #require(DealMapper.map([raw]).first)
 
         #expect(deal.title == "500ml Pint Special")
+    }
+
+    @Test func lowercasesAmPmAfterNumbersInDetails() throws {
+        let raw = DealExtractionPayload.RawDeal(
+            title: "Happy Hour",
+            details: ["Drinks special from 4PM until 6PM"],
+            days: ["WEEKDAYS"],
+            times: ["4PM-6PM"]
+        )
+
+        let deal = try #require(DealMapper.map([raw]).first)
+
+        #expect(deal.details == ["Drinks special from 4pm until 6pm"])
+    }
+
+    @Test func lowercasesAmPmLeftInTitleWhenNotTrimmed() throws {
+        let raw = DealExtractionPayload.RawDeal(
+            title: "WEEKDAYS 4-6PM | HAPPY HOUR",
+            details: [],
+            days: ["WEEKDAYS"],
+            times: ["4-6PM"]
+        )
+
+        let deal = try #require(DealMapper.map([raw]).first)
+
+        #expect(deal.title == "Weekdays 4-6pm | Happy Hour")
+    }
+
+    @Test func lowercasesPpAfterNumbersInTitleAndDetails() throws {
+        let raw = DealExtractionPayload.RawDeal(
+            title: "BOTTOMLESS LUNCH $99PP",
+            details: ["Island banquet for $99PP per person"],
+            days: ["FRIDAY"],
+            times: ["all day"]
+        )
+
+        let deal = try #require(DealMapper.map([raw]).first)
+
+        #expect(deal.title == "Bottomless Lunch $99pp")
+        #expect(deal.details == ["Island banquet for $99pp per person"])
     }
 }
