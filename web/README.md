@@ -102,7 +102,7 @@ export MIGRATE_IMAGE_REPO=ghcr.io/skorulis/happy-hour-migrate
 | `PROD_NEXT_PUBLIC_SITE_URL` | `https://duskroute.com` (baked into the image) |
 | `PROD_NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Maps JS key |
 | `PROD_NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID` | Map ID |
-| `PROD_SERVER_HOST` | `209.38.94.138` |
+| `PROD_SERVER_HOST` | `134.199.156.128` |
 | `PROD_SERVER_USER` | `root` (or a deploy user in the `docker` group) |
 | `PROD_SERVER_SSH_KEY` | Private key PEM that can SSH to the droplet |
 | `PROD_GHCR_USERNAME` | GitHub username (for private package pulls on the server) |
@@ -110,22 +110,27 @@ export MIGRATE_IMAGE_REPO=ghcr.io/skorulis/happy-hour-migrate
 
 Server-side secrets (DB password, auth, OAuth) stay in `/opt/happy-hour/deploy/.env.production` — not in GitHub.
 
-### One-time droplet layout
+### One-time droplet bootstrap
 
-1. Create an Ubuntu LTS droplet in **Sydney (`syd1`)**; open firewall ports **22**, **80**, **443**; install Docker + Compose.
-2. Cloudflare DNS for `duskroute.com` / `www` → droplet IP, **DNS only** (grey cloud) until Caddy has a cert; then orange-cloud + **Full (strict)** is fine.
-3. Create deploy env (migrate from the old `web/.env.production` if you already have one):
+On a fresh Ubuntu droplet (Sydney / `syd1`):
 
 ```bash
-mkdir -p /opt/happy-hour/deploy
-# If you previously used web/.env.production:
-#   cp /opt/happy-hour/web/.env.production /opt/happy-hour/deploy/.env.production
-# Else copy from the repo example once CI has SCPed it, or:
-scp deploy/.env.production.example root@DROPLET_IP:/opt/happy-hour/deploy/.env.production
-# Edit passwords / secrets on the server
+git clone git@github.com:skorulis/happy-hour.git /opt/happy-hour
+# or: git clone https://github.com/skorulis/happy-hour.git /opt/happy-hour
+cd /opt/happy-hour
+sudo ./deploy/scripts/bootstrap-vps.sh
 ```
 
-If you already ran `web/docker-compose.prod.yml` and have data in volume `web_pgdata`, copy it before the first CI deploy:
+That installs Docker + Compose, opens UFW for 22/80/443, copies deploy files to `/opt/happy-hour/deploy`, and creates `.env.production` with generated `POSTGRES_PASSWORD` / `BETTER_AUTH_SECRET`.
+
+Then:
+
+1. Edit `/opt/happy-hour/deploy/.env.production` for OAuth / Maps keys if needed.
+2. Cloudflare DNS: `duskroute.com` + `www` A records → droplet IP (`134.199.156.128`), **DNS only** until Caddy has a cert; then orange-cloud + **Full (strict)** is fine.
+3. Set GitHub Actions secrets (`PROD_SERVER_HOST=134.199.156.128`, SSH key, image repos, Maps, GHCR pull token — see table above).
+4. From your laptop: `git tag release/0.1.0 && git push origin release/0.1.0`
+
+If you already ran `web/docker-compose.prod.yml` on an *old* droplet and have data in volume `web_pgdata`, copy it before the first CI deploy:
 
 ```bash
 docker volume create duskroute_pgdata
@@ -133,8 +138,7 @@ docker run --rm -v web_pgdata:/from -v duskroute_pgdata:/to alpine \
   sh -c 'cd /from && cp -a . /to'
 ```
 
-4. Ensure the GitHub SSH key can log in as `PROD_SERVER_USER`.
-5. Push a `release/*` tag to run the first CI deploy. If `.env.production` is missing, the workflow creates it from the example and exits — fill values and re-tag or re-run.
+(Skip that on a brand-new empty droplet.)
 
 ### Google OAuth
 
