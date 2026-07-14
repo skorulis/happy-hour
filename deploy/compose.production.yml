@@ -1,0 +1,82 @@
+# Production stack pulled from GHCR (built by GitHub Actions).
+# On the droplet under /opt/happy-hour/deploy:
+#   IMAGE_TAG=... WEB_IMAGE_REPO=... MIGRATE_IMAGE_REPO=... \
+#     ./scripts/deploy-release.sh
+#
+# Fixed project name so volumes stay stable across deploys. If you previously
+# used web/docker-compose.prod.yml, your DB volume is likely `web_pgdata` —
+# either rename it or set the pgdata name below to match.
+
+name: duskroute
+
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-happyhour}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.production}
+      POSTGRES_DB: ${POSTGRES_DB:-happyhour}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # Localhost only — enables SSH tunnel sync without public exposure.
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-happyhour} -d ${POSTGRES_DB:-happyhour}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    image: ${WEB_IMAGE_REPO}:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-happyhour}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-happyhour}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Set BETTER_AUTH_SECRET in .env.production}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-https://duskroute.com}
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://duskroute.com}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ${NEXT_PUBLIC_GOOGLE_MAPS_API_KEY:-}
+      NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID: ${NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    expose:
+      - "3000"
+
+  migrate:
+    image: ${MIGRATE_IMAGE_REPO}:${IMAGE_TAG:-latest}
+    restart: "no"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-happyhour}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-happyhour}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+
+volumes:
+  pgdata:
+    name: duskroute_pgdata
+  caddy_data:
+    name: duskroute_caddy_data
+  caddy_config:
+    name: duskroute_caddy_config:

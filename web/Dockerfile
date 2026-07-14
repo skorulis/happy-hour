@@ -7,12 +7,10 @@ ARG NODE_VERSION=20
 # --- Dependencies ---
 FROM node:${NODE_VERSION}-bookworm-slim AS deps
 WORKDIR /app
-# better-sqlite3 (devDependency for laptop sync scripts) needs a native compile during npm ci
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends python3 make g++ \
-  && rm -rf /var/lib/apt/lists/*
 COPY web/package.json web/package-lock.json ./
-RUN npm ci
+# Skip lifecycle scripts: better-sqlite3 (laptop-only sync) would otherwise compile
+# native code. Next build + drizzle-kit migrate do not need it.
+RUN npm ci --ignore-scripts
 
 # --- Build ---
 FROM node:${NODE_VERSION}-bookworm-slim AS builder
