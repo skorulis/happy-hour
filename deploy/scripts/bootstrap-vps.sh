@@ -67,16 +67,18 @@ ufw --force enable
 echo "==> Preparing ${DEPLOY_DIR}…"
 mkdir -p "${DEPLOY_DIR}/scripts"
 
-# Prefer running the stack from a dedicated deploy dir (CI SCPs here).
-# Keep a symlink/copy of compose assets from the git checkout when present.
-cp -f "${REPO_ROOT}/deploy/compose.production.yml" "${DEPLOY_DIR}/compose.production.yml"
-cp -f "${REPO_ROOT}/deploy/Caddyfile" "${DEPLOY_DIR}/Caddyfile"
-cp -f "${REPO_ROOT}/deploy/.env.production.example" "${DEPLOY_DIR}/.env.production.example"
-cp -f "${REPO_ROOT}/deploy/scripts/"*.sh "${DEPLOY_DIR}/scripts/"
+REPO_DEPLOY="${REPO_ROOT}/deploy"
+# When the repo is cloned to /opt/happy-hour, DEPLOY_DIR is the same path — skip copy.
+if [[ "$(cd "${REPO_DEPLOY}" && pwd -P)" != "$(cd "${DEPLOY_DIR}" && pwd -P)" ]]; then
+  cp -f "${REPO_DEPLOY}/compose.production.yml" "${DEPLOY_DIR}/compose.production.yml"
+  cp -f "${REPO_DEPLOY}/Caddyfile" "${DEPLOY_DIR}/Caddyfile"
+  cp -f "${REPO_DEPLOY}/.env.production.example" "${DEPLOY_DIR}/.env.production.example"
+  cp -f "${REPO_DEPLOY}/scripts/"*.sh "${DEPLOY_DIR}/scripts/"
+fi
 chmod +x "${DEPLOY_DIR}/scripts/"*.sh
 
 if [[ ! -f "${DEPLOY_DIR}/.env.production" ]]; then
-  cp "${DEPLOY_DIR}/.env.production.example" "${DEPLOY_DIR}/.env.production"
+  cp "${REPO_DEPLOY}/.env.production.example" "${DEPLOY_DIR}/.env.production"
   echo "Created ${DEPLOY_DIR}/.env.production from example."
 fi
 
