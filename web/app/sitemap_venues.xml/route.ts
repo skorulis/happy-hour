@@ -2,7 +2,9 @@ import { getAllVenuesForSitemap } from "@/lib/search/queries";
 import { slugify, UNKNOWN_SUBURB_SLUG, venuePath } from "@/lib/search/slugs";
 import { siteUrl } from "@/lib/site-url";
 
-export const dynamic = "force-static";
+// Dynamic: venue list comes from Postgres and changes on sync; CI/Docker
+// builds have no database, so this cannot be force-static at image build time.
+export const dynamic = "force-dynamic";
 
 function venueSlugKey(suburbName: string | null, venueName: string): string {
   const suburbSlug = suburbName ? slugify(suburbName) : UNKNOWN_SUBURB_SLUG;

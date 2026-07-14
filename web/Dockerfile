@@ -29,6 +29,11 @@ ENV NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}
 ENV NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=${NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}
 ENV NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID=${NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID}
 ENV NEXT_TELEMETRY_DISABLED=1
+# Placeholder only — satisfies modules that read env at import/build time.
+# Runtime DATABASE_URL / auth secrets come from compose on the droplet.
+ENV DATABASE_URL=postgresql://build:build@127.0.0.1:5432/build
+ENV BETTER_AUTH_SECRET=build-time-placeholder
+ENV BETTER_AUTH_URL=${NEXT_PUBLIC_SITE_URL}
 
 RUN npm run build
 
