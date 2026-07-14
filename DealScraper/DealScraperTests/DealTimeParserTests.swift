@@ -148,6 +148,11 @@ struct DealTimeParserTests {
         #expect(DealTimeParser.parse(["Time: 2pm-5pm"]) == [.between(14 * 60, 17 * 60)])
     }
 
+    @Test func parsesHappyHourPrefixedTimeRange() {
+        #expect(DealTimeParser.parse(["HAPPY HOUR 4-6PM"]) == [.between(16 * 60, 18 * 60)])
+        #expect(DealTimeParser.timesInText("HAPPY HOUR 4-6PM") == [.between(16 * 60, 18 * 60)])
+    }
+
     @Test func parsesDottedMeridiemTimeRange() {
         #expect(DealTimeParser.parse(["3 p.m. – 6 p.m."]) == [.between(15 * 60, 18 * 60)])
     }

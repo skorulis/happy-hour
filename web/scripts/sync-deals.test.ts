@@ -60,12 +60,14 @@ describe("collectActiveSourceDealIds", () => {
 });
 
 describe("collectOrphanDealIds", () => {
-  it("marks deals without a source id or outside the active set as orphans", () => {
+  it("marks scraper deals without a source id or outside the active set as orphans", () => {
     const orphanIds = collectOrphanDealIds(
       [
-        { id: 100, sourceDealId: 1 },
-        { id: 101, sourceDealId: 2 },
-        { id: 102, sourceDealId: null },
+        { id: 100, sourceDealId: 1, creationSource: "scraper" },
+        { id: 101, sourceDealId: 2, creationSource: "scraper" },
+        { id: 102, sourceDealId: null, creationSource: "scraper" },
+        { id: 103, sourceDealId: null, creationSource: "user" },
+        { id: 104, sourceDealId: 99, creationSource: "venue" },
       ],
       new Set([1]),
     );
@@ -103,22 +105,18 @@ function createMemoryDealSyncStore(): DealSyncStore & {
       schedules.set(dealId, nextSchedules);
     },
     async deleteOrphanDeals(venueId, activeSourceDealIds) {
-      if (activeSourceDealIds.size === 0) {
-        for (const [key, deal] of deals.entries()) {
-          if (deal.input.venueId === venueId) {
-            deals.delete(key);
-            schedules.delete(deal.id);
-          }
-        }
-        return;
-      }
-
       for (const [key, deal] of deals.entries()) {
         if (deal.input.venueId !== venueId) {
           continue;
         }
+        if (deal.input.creationSource !== "scraper") {
+          continue;
+        }
 
-        if (!activeSourceDealIds.has(deal.input.sourceDealId)) {
+        if (
+          activeSourceDealIds.size === 0 ||
+          !activeSourceDealIds.has(deal.input.sourceDealId)
+        ) {
           deals.delete(key);
           schedules.delete(deal.id);
         }
@@ -151,6 +149,39 @@ describe("syncVenueDealsWithStore", () => {
     expect(secondCount).toBe(1);
     expect(store.deals.get("5:42")?.id).toBe(1);
     expect(store.deals.get("5:42")?.input.title).toBe("Updated title");
+    expect(store.deals.get("5:42")?.input.creationSource).toBe("scraper");
+  });
+
+  it("does not orphan user or venue deals during scraper sync", async () => {
+    const store = createMemoryDealSyncStore();
+    store.deals.set("9:user-1", {
+      id: 50,
+      input: {
+        venueId: 9,
+        sourceDealId: -1,
+        creationSource: "user",
+        title: "User deal",
+        imageUrl: null,
+        sourceUrl: null,
+        details: null,
+        conditions: null,
+        startDate: null,
+        endDate: null,
+        syncedAt: new Date(),
+      },
+    });
+
+    await syncVenueDealsWithStore(
+      store,
+      9,
+      [makeDeal({ id: 1 })],
+      new Map(),
+      "2026-07-07",
+    );
+    await syncVenueDealsWithStore(store, 9, [], new Map(), "2026-07-07");
+
+    expect(store.deals.has("9:1")).toBe(false);
+    expect(store.deals.get("9:user-1")?.input.creationSource).toBe("user");
   });
 
   it("replaces schedules without changing the parent deal id", async () => {

@@ -1,0 +1,1 @@
+ALTER TABLE "deal" ADD COLUMN "creation_source" text DEFAULT 'scraper' NOT NULL;

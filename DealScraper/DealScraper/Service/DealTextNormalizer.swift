@@ -116,7 +116,7 @@ nonisolated enum DealTextNormalizer {
 
 extension String {
     
-    nonisolated static let characterSet = CharacterSet.whitespacesAndNewlines.union(CharacterSet(charactersIn: "\\*._|"))
+    nonisolated static let characterSet = CharacterSet.whitespacesAndNewlines.union(CharacterSet(charactersIn: "\\*._|’-"))
     
     nonisolated func cleanLine() -> String {
         trimmingCharacters(in: Self.characterSet)

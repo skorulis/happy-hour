@@ -45,6 +45,7 @@ nonisolated enum DealTitleTrimmer {
     }
 
     result = stripTrailingFromWord(from: result)
+    result = stripTrailingEveryWord(from: result)
     result = stripTrailingOrphanSeparator(from: result)
 
     return result
@@ -78,6 +79,14 @@ nonisolated enum DealTitleTrimmer {
   private static func stripTrailingFromWord(from title: String) -> String {
     let parts = title.split(separator: " ", omittingEmptySubsequences: true).map(String.init)
     guard parts.count > 1, parts.last?.caseInsensitiveCompare("from") == .orderedSame else {
+      return title
+    }
+    return parts.dropLast().joined(separator: " ")
+  }
+
+  private static func stripTrailingEveryWord(from title: String) -> String {
+    let parts = title.split(separator: " ", omittingEmptySubsequences: true).map(String.init)
+    guard parts.count > 1, parts.last?.caseInsensitiveCompare("every") == .orderedSame else {
       return title
     }
     return parts.dropLast().joined(separator: " ")

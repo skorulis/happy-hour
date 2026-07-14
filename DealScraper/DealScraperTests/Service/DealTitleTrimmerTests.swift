@@ -25,6 +25,10 @@ struct DealTitleTrimmerTests {
         #expect(DealTitleTrimmer.trimOnce("*Happy Hour*") == "Happy Hour")
         #expect(DealTitleTrimmer.trimOnce("_Steak Night_") == "Steak Night")
         #expect(DealTitleTrimmer.trimOnce("|Pizza Night|") == "Pizza Night")
+        #expect(DealTitleTrimmer.trimOnce("’Happy Hour’") == "Happy Hour")
+        #expect(DealTitleTrimmer.trimOnce("Happy Hour’") == "Happy Hour")
+        #expect(DealTitleTrimmer.trimOnce("-Happy Hour-") == "Happy Hour")
+        #expect(DealTitleTrimmer.trimOnce("Happy Hour-") == "Happy Hour")
     }
 
     @Test func trimOnce_stripsLeadingDayWord() {
@@ -78,6 +82,12 @@ struct DealTitleTrimmerTests {
     @Test func trimOnce_stripsTrailingFromWordAfterTimeRemoved() {
         #expect(DealTitleTrimmer.trimOnce("Bottle Shop Wines From $20") == "Bottle Shop Wines From $20")
         #expect(DealTitleTrimmer.trimOnce("Lunch From") == "Lunch")
+    }
+
+    @Test func trimOnce_stripsTrailingEveryWord() {
+        #expect(DealTitleTrimmer.trimOnce("Happy Hour Every") == "Happy Hour")
+        #expect(DealTitleTrimmer.trimOnce("Steak Night every") == "Steak Night")
+        #expect(DealTitleTrimmer.trimOnce("Every") == "Every")
     }
 
     @Test func trimOnce_stripsTrailingOrphanSeparator() {

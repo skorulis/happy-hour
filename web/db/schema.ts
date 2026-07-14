@@ -61,6 +61,9 @@ export const venueLinks = pgTable("venue_links", {
   facebook: text("facebook"),
 });
 
+export const dealCreationSource = ["scraper", "user", "venue"] as const;
+export type DealCreationSource = (typeof dealCreationSource)[number];
+
 export const deal = pgTable(
   "deal",
   {
@@ -69,6 +72,7 @@ export const deal = pgTable(
       .notNull()
       .references(() => venue.id, { onDelete: "cascade" }),
     sourceDealId: integer("source_deal_id"),
+    creationSource: text("creation_source").notNull().default("scraper"),
     title: text("title"),
     imageUrl: text("image_url"),
     sourceUrl: text("source_url"),

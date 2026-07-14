@@ -73,7 +73,7 @@ nonisolated enum DealTimeParser {
     }
 
     private static func stripTimeLabelPrefix(_ string: String) -> String {
-        let pattern = #"(?i)^times?\s*[-:]\s*"#
+        let pattern = #"(?i)^(?:times?\s*[-:]|happy\s*hours?)\s*"#
         guard let regex = try? NSRegularExpression(pattern: pattern),
               let match = regex.firstMatch(in: string, range: NSRange(string.startIndex..., in: string)),
               let range = Range(match.range, in: string)

@@ -1,9 +1,12 @@
 import { and, eq, isNull, notInArray, or } from "drizzle-orm";
 import * as schema from "../db/schema";
+import type { DealCreationSource } from "../db/schema";
 import {
   clampSchedulesToOpeningHours,
   parseVenueOpeningHours,
 } from "./venue-opening-hours";
+
+export const SCRAPER_CREATION_SOURCE: DealCreationSource = "scraper";
 
 export type SqliteDeal = {
   id: number;
@@ -28,6 +31,7 @@ export type SqliteDealSchedule = {
 export type DealUpsertInput = {
   venueId: number;
   sourceDealId: number;
+  creationSource: DealCreationSource;
   title: string | null;
   imageUrl: string | null;
   sourceUrl: string | null;
@@ -88,14 +92,19 @@ export function collectActiveSourceDealIds(
 }
 
 export function collectOrphanDealIds(
-  existingDeals: Array<{ id: number; sourceDealId: number | null }>,
+  existingDeals: Array<{
+    id: number;
+    sourceDealId: number | null;
+    creationSource: DealCreationSource;
+  }>,
   activeSourceDealIds: Set<number>,
 ): number[] {
   return existingDeals
     .filter(
       (deal) =>
-        deal.sourceDealId === null ||
-        !activeSourceDealIds.has(deal.sourceDealId),
+        deal.creationSource === SCRAPER_CREATION_SOURCE &&
+        (deal.sourceDealId === null ||
+          !activeSourceDealIds.has(deal.sourceDealId)),
     )
     .map((deal) => deal.id);
 }
@@ -108,6 +117,7 @@ export function toDealUpsertInput(
   return {
     venueId,
     sourceDealId: dealRow.id,
+    creationSource: SCRAPER_CREATION_SOURCE,
     title: dealRow.title,
     imageUrl: dealRow.creative_url,
     sourceUrl: dealRow.source_url,
@@ -134,14 +144,19 @@ export async function deleteOrphanDealsForVenue(
   venueId: number,
   activeSourceDealIds: Set<number>,
 ): Promise<void> {
+  const scraperDealsForVenue = and(
+    eq(schema.deal.venueId, venueId),
+    eq(schema.deal.creationSource, SCRAPER_CREATION_SOURCE),
+  );
+
   if (activeSourceDealIds.size === 0) {
-    await tx.delete(schema.deal).where(eq(schema.deal.venueId, venueId));
+    await tx.delete(schema.deal).where(scraperDealsForVenue);
     return;
   }
 
   await tx.delete(schema.deal).where(
     and(
-      eq(schema.deal.venueId, venueId),
+      scraperDealsForVenue,
       or(
         isNull(schema.deal.sourceDealId),
         notInArray(schema.deal.sourceDealId, [...activeSourceDealIds]),
@@ -158,6 +173,7 @@ export function createDrizzleDealSyncStore(tx: SyncTransaction): DealSyncStore {
         .values({
           venueId: input.venueId,
           sourceDealId: input.sourceDealId,
+          creationSource: input.creationSource,
           title: input.title,
           imageUrl: input.imageUrl,
           sourceUrl: input.sourceUrl,
@@ -170,6 +186,7 @@ export function createDrizzleDealSyncStore(tx: SyncTransaction): DealSyncStore {
         .onConflictDoUpdate({
           target: [schema.deal.venueId, schema.deal.sourceDealId],
           set: {
+            creationSource: input.creationSource,
             title: input.title,
             imageUrl: input.imageUrl,
             sourceUrl: input.sourceUrl,
