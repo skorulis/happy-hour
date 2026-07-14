@@ -26,9 +26,13 @@ nonisolated enum DealTimeParser {
                 times.append(time)
             } else if let time = parseTillOrUntilTime(in: string) {
                 times.append(time)
+            } else if let time = parseArriveAtTime(in: string) {
+                times.append(time)
             } else if let time = parseBetweenTime(in: string) {
                 times.append(time)
             } else if let time = DealHours.parse(string) {
+                times.append(time)
+            } else if let time = parseEmbeddedTimeRange(in: string) {
                 times.append(time)
             } else if let time = parseMultipleTimesAsRange(in: string) {
                 times.append(time)
@@ -50,10 +54,16 @@ nonisolated enum DealTimeParser {
         if let time = parseTillOrUntilTime(in: text) {
             return [time]
         }
+        if let time = parseArriveAtTime(in: text) {
+            return [time]
+        }
         if let time = parseBetweenTime(in: text) {
             return [time]
         }
         if let time = DealHours.parse(text) {
+            return [time]
+        }
+        if let time = parseEmbeddedTimeRange(in: text) {
             return [time]
         }
         if let time = parseMultipleTimesAsRange(in: text) {
@@ -301,5 +311,43 @@ nonisolated enum DealTimeParser {
         }
 
         return DealHours.makeBetween(start: start, end: end)
+    }
+
+    /// Extracts a time range embedded in surrounding label text, e.g. "BISTRO OPEN 5PM-8:30PM".
+    private static func parseEmbeddedTimeRange(in text: String) -> DealHours? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+
+        let time = #"\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?"#
+        let pattern = #"(?i)(?<!\d)(\#(time))\s*(?:-|–|to)\s*(\#(time))(?!\d)"#
+        guard let regex = try? NSRegularExpression(pattern: pattern),
+              let match = regex.firstMatch(in: trimmed, range: NSRange(trimmed.startIndex..., in: trimmed)),
+              let startRange = Range(match.range(at: 1), in: trimmed),
+              let endRange = Range(match.range(at: 2), in: trimmed),
+              let start = DealHours.toMinutes(string: String(trimmed[startRange])),
+              let end = DealHours.toMinutes(string: String(trimmed[endRange]))
+        else {
+            return nil
+        }
+
+        return DealHours.makeBetween(start: start, end: end)
+    }
+
+    /// "Arrive at 6:00PM for 6:30PM start" → from arrival through midnight.
+    private static func parseArriveAtTime(in text: String) -> DealHours? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+
+        let time = #"\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?"#
+        let pattern = #"(?i)arrive\s+at\s+(\#(time))(?:\s+for\s+\#(time)\s+start)?"#
+        guard let regex = try? NSRegularExpression(pattern: pattern),
+              let match = regex.firstMatch(in: trimmed, range: NSRange(trimmed.startIndex..., in: trimmed)),
+              let startRange = Range(match.range(at: 1), in: trimmed),
+              let start = DealHours.toMinutes(string: String(trimmed[startRange]))
+        else {
+            return nil
+        }
+
+        return DealHours.makeBetween(start: start, end: 0)
     }
 }

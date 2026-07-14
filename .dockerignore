@@ -1,0 +1,15 @@
+**/node_modules
+**/.next
+.git
+**/coverage
+**/.vercel
+**/.DS_Store
+**/*.pem
+**/*.tsbuildinfo
+DealScraper/
+web/.env
+web/.env.*
+!web/.env.example
+!web/.env.production.example
+*.md
+!web/README.md

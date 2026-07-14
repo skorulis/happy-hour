@@ -134,12 +134,12 @@ enum VenueDealPersistenceMapper {
         }
         let lowercased = combined.lowercased()
         let hasLunch = lowercased.contains("lunch")
-        let hasDinnerOrEvening = lowercased.contains("dinner") || lowercased.contains("evening")
+        let hasNightString = lowercased.contains("dinner") || lowercased.contains("evening") || lowercased.contains("night")
 
-        if hasDinnerOrEvening, !hasLunch {
+        if hasNightString, !hasLunch {
             return .dinnerStart
         }
-        if hasLunch, !hasDinnerOrEvening {
+        if hasLunch, !hasNightString {
             return .lunchRange
         }
         return nil

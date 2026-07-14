@@ -1,0 +1,4 @@
+duskroute.com, www.duskroute.com {
+	encode gzip
+	reverse_proxy web:3000
+}

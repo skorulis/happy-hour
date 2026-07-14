@@ -48,6 +48,8 @@ xcodebuild test -project DealScraper/DealScraper.xcodeproj -scheme DealScraper
 
 The `web/` directory is a Next.js app that reads from PostgreSQL. DealScraper remains the import and approval tool; approved deals are copied from its local SQLite database into Postgres for public search.
 
+**Production** runs on a DigitalOcean Sydney droplet at [https://duskroute.com](https://duskroute.com) (Docker Compose: Next.js + Postgres + Caddy). Deploy and sync instructions are in [`web/README.md`](web/README.md).
+
 ### Prerequisites
 
 - Node.js 20+
@@ -83,7 +85,7 @@ npm install
 npm run db:migrate
 ```
 
-4. Sync approved deals from SQLite:
+4. Sync approved deals from SQLite (local Postgres):
 
 ```bash
 npm run sync
@@ -94,6 +96,8 @@ You can also pass a path explicitly:
 ```bash
 npm run sync -- --sqlite-path ~/Library/Containers/com.skorulis.DealScraper/Data/Documents/db.sqlite
 ```
+
+To sync to **production** (duskroute.com), open an SSH tunnel to the droplet and use `npm run sync:prod` — see [web/README.md](web/README.md#sync-production).
 
 5. Start the website:
 

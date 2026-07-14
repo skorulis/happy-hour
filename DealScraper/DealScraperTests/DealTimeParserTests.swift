@@ -153,6 +153,17 @@ struct DealTimeParserTests {
         #expect(DealTimeParser.timesInText("HAPPY HOUR 4-6PM") == [.between(16 * 60, 18 * 60)])
     }
 
+    @Test func parsesEmbeddedTimeRangeWithLeadingLabel() {
+        #expect(
+            DealTimeParser.parse(["BISTRO OPEN 5PM-8:30PM"])
+                == [.between(17 * 60, 20 * 60 + 30)]
+        )
+        #expect(
+            DealTimeParser.timesInText("BISTRO OPEN 5PM-8:30PM")
+                == [.between(17 * 60, 20 * 60 + 30)]
+        )
+    }
+
     @Test func parsesDottedMeridiemTimeRange() {
         #expect(DealTimeParser.parse(["3 p.m. – 6 p.m."]) == [.between(15 * 60, 18 * 60)])
     }
@@ -167,5 +178,12 @@ struct DealTimeParserTests {
 
     @Test func parsesOCRToTokenTimeRange() {
         #expect(DealTimeParser.parse(["5 Tº 6PM"]) == [.between(17 * 60, 18 * 60)])
+    }
+
+    @Test func parsesArriveAtForStartTimeAsEveningThroughMidnight() {
+        #expect(
+            DealTimeParser.parse(["TIME: ARRIVE AT 6:00PM for 6:30PM START"])
+                == [.between(18 * 60, 24 * 60)]
+        )
     }
 }

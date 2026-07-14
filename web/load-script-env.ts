@@ -14,9 +14,10 @@ export function loadScriptEnv(): void {
     config({ path: ".env.production.local" });
     if (!process.env.DATABASE_URL?.trim()) {
       throw new Error(
-        "DATABASE_URL is not set. Create web/.env.production.local with your Neon pooled connection string.\n" +
-          "  cp .env.example .env.production.local\n" +
-          "Or run: npx vercel env pull .env.production.local",
+        "DATABASE_URL is not set. Create web/.env.production.local pointing at production Postgres via an SSH tunnel.\n" +
+          "  ssh -L 5433:127.0.0.1:5432 user@DROPLET_IP\n" +
+          "  # DATABASE_URL=postgresql://happyhour:PASSWORD@localhost:5433/happyhour\n" +
+          "See web/README.md (Deploy / sync production).",
       );
     }
     config({ path: ".env.local" });

@@ -1,0 +1,88 @@
+# Production stack for DigitalOcean (Sydney).
+# Run from web/: docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
+#
+# Requires web/.env.production (see .env.production.example).
+
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-happyhour}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.production}
+      POSTGRES_DB: ${POSTGRES_DB:-happyhour}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # Localhost only — enables SSH tunnel sync without public exposure.
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-happyhour} -d ${POSTGRES_DB:-happyhour}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build:
+      context: ..
+      dockerfile: web/Dockerfile
+      target: runner
+      args:
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://duskroute.com}
+        NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ${NEXT_PUBLIC_GOOGLE_MAPS_API_KEY:-}
+        NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID: ${NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID:-}
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-happyhour}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-happyhour}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Set BETTER_AUTH_SECRET in .env.production}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-https://duskroute.com}
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://duskroute.com}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ${NEXT_PUBLIC_GOOGLE_MAPS_API_KEY:-}
+      NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID: ${NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    expose:
+      - "3000"
+
+  migrate:
+    build:
+      context: ..
+      dockerfile: web/Dockerfile
+      target: migrate
+      args:
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://duskroute.com}
+        NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ${NEXT_PUBLIC_GOOGLE_MAPS_API_KEY:-}
+        NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID: ${NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID:-}
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-happyhour}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-happyhour}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles:
+      - migrate
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

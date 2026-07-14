@@ -8,10 +8,5 @@ export function siteUrl(): string {
     return explicit.replace(/\/+$/, "");
   }
 
-  const vercelHost = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
-  if (vercelHost) {
-    return `https://${vercelHost.replace(/\/+$/, "")}`;
-  }
-
   return "http://localhost:3000";
 }
