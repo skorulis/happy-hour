@@ -12,6 +12,7 @@ export function HomeNavLink() {
   return (
     <Link
       href={href}
+      aria-label="Happy Hours"
       className="inline-flex items-center gap-2 text-lg font-semibold text-amber-700 transition-opacity hover:opacity-80 dark:text-amber-400"
     >
       <Image
@@ -22,7 +23,9 @@ export function HomeNavLink() {
         className="h-8 w-8 rounded-full"
         priority
       />
-      Happy Hours
+      <span className="hidden md:inline" aria-hidden>
+        Happy Hours
+      </span>
     </Link>
   );
 }
