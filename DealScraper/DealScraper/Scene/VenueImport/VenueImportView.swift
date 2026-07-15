@@ -10,6 +10,7 @@ struct VenueImportView: View {
     @State var viewModel: VenueImportViewModel
     @State private var showGoogleImport = false
     @State private var showVenueHeros = false
+    @State private var venueHerosViewModel: VenueHerosViewModel?
 
     var body: some View {
         NavigationSplitView {
@@ -26,8 +27,10 @@ struct VenueImportView: View {
         }) {
             GoogleImportView(viewModel: resolver!.googleImportViewModel())
         }
-        .sheet(isPresented: $showVenueHeros) {
-            VenueHerosView(viewModel: resolver!.venueHerosViewModel())
+        .onChange(of: viewModel.selectedGoogleMapId) { _, newValue in
+            if newValue != nil {
+                showVenueHeros = false
+            }
         }
     }
 
@@ -85,7 +88,14 @@ struct VenueImportView: View {
 
     @ViewBuilder
     private var detail: some View {
-        if let googleMapId = viewModel.selectedGoogleMapId {
+        if showVenueHeros, let venueHerosViewModel {
+            VenueHerosView(
+                viewModel: venueHerosViewModel,
+                onVenueSelected: { googleMapId in
+                    viewModel.selectedGoogleMapId = googleMapId
+                }
+            )
+        } else if let googleMapId = viewModel.selectedGoogleMapId {
             VenueDetailsView(
                 viewModel: resolver!.venueDetailsViewModel(googleID: googleMapId),
                 onVenueDeleted: { viewModel.loadSavedVenues() }
@@ -108,6 +118,10 @@ struct VenueImportView: View {
 
     private var heroImagesButton: some View {
         Button("Hero Images") {
+            viewModel.selectedGoogleMapId = nil
+            if venueHerosViewModel == nil {
+                venueHerosViewModel = resolver!.venueHerosViewModel()
+            }
             showVenueHeros = true
         }
     }

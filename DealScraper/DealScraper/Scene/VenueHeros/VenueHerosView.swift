@@ -1,38 +1,25 @@
 //Created by Alex Skorulis on 15/7/2026.
 
-import ASKCore
 import AppKit
 import Knit
 import SwiftUI
 
 struct VenueHerosView: View {
 
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.resolver) private var resolver
     @State var viewModel: VenueHerosViewModel
+    var onVenueSelected: (String) -> Void
 
     private let columns = [
         GridItem(.adaptive(minimum: 160, maximum: 220), spacing: 16)
     ]
 
     var body: some View {
-        NavigationStack {
-            VStack(alignment: .leading, spacing: 0) {
-                controls
-                Divider()
-                content
-            }
-            .navigationTitle("Hero Images")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                    .disabled(viewModel.isProcessing)
-                }
-            }
+        VStack(alignment: .leading, spacing: 0) {
+            controls
+            Divider()
+            content
         }
-        .frame(minWidth: 720, minHeight: 480)
+        .navigationTitle("Hero Images")
         .onAppear {
             viewModel.load()
         }
@@ -97,13 +84,8 @@ struct VenueHerosView: View {
             ScrollView {
                 LazyVGrid(columns: columns, spacing: 16) {
                     ForEach(viewModel.venues, id: \.googleMapId) { venue in
-                        NavigationLink {
-                            VenueDetailsView(
-                                viewModel: resolver!.venueDetailsViewModel(googleID: venue.googleMapId),
-                                onVenueDeleted: {
-                                    viewModel.load()
-                                }
-                            )
+                        Button {
+                            onVenueSelected(venue.googleMapId)
                         } label: {
                             heroCell(venue)
                         }
@@ -152,6 +134,7 @@ struct VenueHerosView: View {
             .font(.caption2)
             .foregroundStyle(hasR2(venue) ? AnyShapeStyle(.secondary) : AnyShapeStyle(Color.orange))
         }
+        .contentShape(Rectangle())
     }
 
     @ViewBuilder
@@ -206,5 +189,8 @@ struct VenueHerosView: View {
 
 #Preview {
     let assembler = DealScraperAssembly.testing()
-    VenueHerosView(viewModel: assembler.resolver.venueHerosViewModel())
+    VenueHerosView(
+        viewModel: assembler.resolver.venueHerosViewModel(),
+        onVenueSelected: { _ in }
+    )
 }
