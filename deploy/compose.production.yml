@@ -79,4 +79,4 @@ volumes:
   caddy_data:
     name: duskroute_caddy_data
   caddy_config:
-    name: duskroute_caddy_config:
+    name: duskroute_caddy_config
