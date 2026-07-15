@@ -18,6 +18,10 @@ nonisolated enum DealTimeParser {
             return [range]
         }
 
+        if let range = parseHyphenContinuedRange(in: trimmed) {
+            return [range]
+        }
+
         var times: [DealHours] = []
         for string in trimmed {
             if let time = parseFromDrawnRange(in: string) {
@@ -239,6 +243,23 @@ nonisolated enum DealTimeParser {
 
         guard let start = startMinutes, let end = endMinutes else { return nil }
         return DealHours.makeBetween(start: start, end: end)
+    }
+
+    /// "7.30 pm" on one line and "-10.30 pm" on the next → 7:30 PM–10:30 PM.
+    private static func parseHyphenContinuedRange(in strings: [String]) -> DealHours? {
+        let time = #"\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?"#
+        let timeOnlyPattern = #"(?i)^\#(time)$"#
+        let hyphenEndPattern = #"(?i)^[-–]\s*(\#(time))$"#
+
+        for index in strings.indices where index > 0 {
+            guard let end = firstCaptureMinutes(in: strings[index], pattern: hyphenEndPattern),
+                  let start = firstCaptureMinutes(in: strings[index - 1], pattern: timeOnlyPattern)
+            else {
+                continue
+            }
+            return DealHours.makeBetween(start: start, end: end)
+        }
+        return nil
     }
 
     private static func firstCaptureMinutes(in string: String, pattern: String) -> Int? {

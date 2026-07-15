@@ -186,4 +186,11 @@ struct DealTimeParserTests {
                 == [.between(18 * 60, 24 * 60)]
         )
     }
+
+    @Test func parsesHyphenContinuedSplitTimeRange() {
+        #expect(
+            DealTimeParser.parse(["7.30 pm", "-10.30 pm"])
+                == [.between(19 * 60 + 30, 22 * 60 + 30)]
+        )
+    }
 }
