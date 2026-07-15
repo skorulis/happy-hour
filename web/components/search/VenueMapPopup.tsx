@@ -15,6 +15,7 @@ import {
 } from "@/lib/search/schedule";
 import { venuePath } from "@/lib/search/slugs";
 import { appendDaysParam } from "@/lib/search/url";
+import { venueHeroThumbUrl } from "@/lib/search/venue-hero-url";
 
 type VenueMapPopupProps = {
   group: VenueGroupedDeals;
@@ -83,7 +84,7 @@ export function VenueMapPopup({
     searchDays,
   );
   const imageUrl =
-    group.venue.heroImage ??
+    venueHeroThumbUrl(group.venue.heroImage) ??
     group.deals.find((deal) => isCreativeImageUrl(deal.imageUrl))?.imageUrl ??
     null;
 

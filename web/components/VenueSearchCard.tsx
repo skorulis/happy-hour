@@ -7,6 +7,7 @@ import type { DealSearchResult } from "@/lib/search/queries";
 import { formatDealScheduleLine } from "@/lib/search/schedule";
 import { venuePath } from "@/lib/search/slugs";
 import { appendDaysParam } from "@/lib/search/url";
+import { venueHeroThumbUrl } from "@/lib/search/venue-hero-url";
 
 export type VenueGroupedDeals = {
   venue: DealSearchResult["venue"];
@@ -42,7 +43,7 @@ export function VenueSearchCard({ group, searchDays = [] }: VenueSearchCardProps
     searchDays,
   );
   const imageUrl =
-    group.venue.heroImage ??
+    venueHeroThumbUrl(group.venue.heroImage) ??
     group.deals.find((deal) => deal.imageUrl)?.imageUrl ??
     null;
 

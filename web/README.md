@@ -187,7 +187,7 @@ npm run sync:prod
 
 ### Venue hero images (Cloudflare R2)
 
-DealScraper downloads venue heroes, uploads them to Cloudflare R2, and stores the public HTTPS URL in SQLite `venue.hero_image`. Sync copies that URL into Postgres as-is (no upload during sync).
+DealScraper downloads venue heroes, uploads them to Cloudflare R2, and stores the public HTTPS URL in SQLite `venue.hero_r2_url` (source URL stays in `venue.hero_image`). Sync copies `hero_r2_url` into Postgres `venue.hero_image` as-is (no upload during sync).
 
 One-time Cloudflare setup:
 

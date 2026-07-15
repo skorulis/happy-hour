@@ -133,6 +133,11 @@ enum VenueDealPersistenceMapper {
             combined = combined.isEmpty ? details : "\(combined) \(details)"
         }
         let lowercased = combined.lowercased()
+        let hasAllDay = lowercased.contains("all day")
+        if hasAllDay {
+            return nil
+        }
+        
         let hasLunch = lowercased.contains("lunch")
         let hasNightString = lowercased.contains("dinner") || lowercased.contains("evening") || lowercased.contains("night")
 

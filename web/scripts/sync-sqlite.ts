@@ -35,10 +35,21 @@ type SqliteVenue = {
   lng: number;
   website_uri: string | null;
   hero_image: string | null;
+  hero_r2_url: string | null;
   blurb: string | null;
   last_crawl_date: string | null;
   json: string;
 };
+
+/** Public CDN URL for the website; falls back to source URL if R2 upload is missing. */
+function venueHeroImageForPostgres(venueRow: SqliteVenue): string | null {
+  const r2 = venueRow.hero_r2_url?.trim();
+  if (r2) {
+    return r2;
+  }
+  const source = venueRow.hero_image?.trim();
+  return source || null;
+}
 
 type SqliteVenueLinks = {
   venue_id: number;
@@ -194,6 +205,7 @@ async function main() {
       }
 
       const venueJson = parseJsonColumn(venueRow.json);
+      const heroImage = venueHeroImageForPostgres(venueRow);
 
       const [upsertedVenue] = await tx
         .insert(schema.venue)
@@ -204,7 +216,7 @@ async function main() {
           lat: venueRow.lat,
           lng: venueRow.lng,
           websiteUri: venueRow.website_uri,
-          heroImage: venueRow.hero_image,
+          heroImage,
           blurb: venueRow.blurb,
           lastCrawlDate: parseTimestamp(venueRow.last_crawl_date),
           json: venueJson,
@@ -218,7 +230,7 @@ async function main() {
             lat: venueRow.lat,
             lng: venueRow.lng,
             websiteUri: venueRow.website_uri,
-            heroImage: venueRow.hero_image,
+            heroImage,
             blurb: venueRow.blurb,
             lastCrawlDate: parseTimestamp(venueRow.last_crawl_date),
             json: venueJson,
