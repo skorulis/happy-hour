@@ -82,25 +82,53 @@ if [[ ! -f "${DEPLOY_DIR}/.env.production" ]]; then
   echo "Created ${DEPLOY_DIR}/.env.production from example."
 fi
 
+# Read KEY=value from .env.production (empty if missing).
+env_get() {
+  local key="$1"
+  grep -E "^${key}=" "${DEPLOY_DIR}/.env.production" | head -1 | cut -d= -f2- || true
+}
+
+# Set or replace KEY=value in .env.production.
+env_set() {
+  local key="$1"
+  local value="$2"
+  if grep -qE "^${key}=" "${DEPLOY_DIR}/.env.production"; then
+    sed -i "s|^${key}=.*|${key}=${value}|" "${DEPLOY_DIR}/.env.production"
+  else
+    printf '%s=%s\n' "${key}" "${value}" >>"${DEPLOY_DIR}/.env.production"
+  fi
+}
+
 # Fill empty / placeholder secrets so first CI deploy can migrate/start.
+# Postgres password must be URL-safe (no / + =) — it is embedded in DATABASE_URL.
 fill_secret() {
   local key="$1"
+  local mode="${2:-base64}" # base64 | hex
   local current
-  current="$(grep -E "^${key}=" "${DEPLOY_DIR}/.env.production" | head -1 | cut -d= -f2- || true)"
+  current="$(env_get "${key}")"
   if [[ -z "${current}" || "${current}" == "change-me-to-a-long-random-string" ]]; then
     local value
-    value="$(openssl rand -base64 32 | tr -d '\n')"
-    if grep -qE "^${key}=" "${DEPLOY_DIR}/.env.production"; then
-      sed -i "s|^${key}=.*|${key}=${value}|" "${DEPLOY_DIR}/.env.production"
+    if [[ "${mode}" == "hex" ]]; then
+      value="$(openssl rand -hex 24)"
     else
-      printf '%s=%s\n' "${key}" "${value}" >>"${DEPLOY_DIR}/.env.production"
+      value="$(openssl rand -base64 32 | tr -d '\n')"
     fi
+    env_set "${key}" "${value}"
     echo "Generated ${key}."
   fi
 }
 
-fill_secret POSTGRES_PASSWORD
-fill_secret BETTER_AUTH_SECRET
+fill_secret POSTGRES_PASSWORD hex
+fill_secret BETTER_AUTH_SECRET base64
+
+# Keep DATABASE_URL in sync with POSTGRES_* (compose embeds this in web/migrate).
+PG_USER="$(env_get POSTGRES_USER)"
+PG_USER="${PG_USER:-happyhour}"
+PG_DB="$(env_get POSTGRES_DB)"
+PG_DB="${PG_DB:-happyhour}"
+PG_PASS="$(env_get POSTGRES_PASSWORD)"
+env_set DATABASE_URL "postgresql://${PG_USER}:${PG_PASS}@postgres:5432/${PG_DB}"
+echo "Synced DATABASE_URL."
 
 if [[ "${APP_USER}" != "root" ]]; then
   chown -R "${APP_USER}:${APP_USER}" /opt/happy-hour

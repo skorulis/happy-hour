@@ -37,7 +37,7 @@ services:
         NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID: ${NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID:-}
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-happyhour}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-happyhour}
+      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in .env.production}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Set BETTER_AUTH_SECRET in .env.production}
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:-https://duskroute.com}
       NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://duskroute.com}
@@ -61,7 +61,7 @@ services:
         NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ${NEXT_PUBLIC_GOOGLE_MAPS_API_KEY:-}
         NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID: ${NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID:-}
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-happyhour}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-happyhour}
+      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in .env.production}
     depends_on:
       postgres:
         condition: service_healthy
