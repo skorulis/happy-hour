@@ -7,6 +7,7 @@ import {
 import { isAdmin } from "@/lib/admin";
 import { auth } from "@/lib/auth";
 import { getAllDealReports } from "@/lib/reports/queries";
+import { getRecentSyncRuns } from "@/lib/sync/queries";
 
 export const metadata: Metadata = {
   title: "Admin",
@@ -22,7 +23,10 @@ export default async function AdminPage() {
     return <RestrictedMessage />;
   }
 
-  const reports = await getAllDealReports();
+  const [reports, syncRuns] = await Promise.all([
+    getAllDealReports(),
+    getRecentSyncRuns(5),
+  ]);
 
-  return <AdminPageContent reports={reports} />;
+  return <AdminPageContent reports={reports} syncRuns={syncRuns} />;
 }

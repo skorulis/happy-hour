@@ -1,13 +1,22 @@
 import Link from "next/link";
 import type { AdminDealReport } from "@/lib/reports/queries";
 import { getDealReportCategoryLabel } from "@/lib/reports/categories";
+import type { AdminSyncRun } from "@/lib/sync/queries";
 import { venuePath } from "@/lib/search/slugs";
 
 type AdminPageContentProps = {
   reports: AdminDealReport[];
+  syncRuns: AdminSyncRun[];
 };
 
-export function AdminPageContent({ reports }: AdminPageContentProps) {
+function formatSyncMode(mode: string): string {
+  return mode === "all" ? "Full" : mode === "incremental" ? "Incremental" : mode;
+}
+
+export function AdminPageContent({
+  reports,
+  syncRuns,
+}: AdminPageContentProps) {
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-10">
       <header className="space-y-2">
@@ -57,6 +66,42 @@ export function AdminPageContent({ reports }: AdminPageContentProps) {
                     {report.createdAt.toLocaleString()}
                   </p>
                 </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
+          Recent syncs
+        </h2>
+
+        {syncRuns.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-zinc-300 px-4 py-8 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+            No syncs yet
+          </p>
+        ) : (
+          <ul className="divide-y divide-zinc-200 rounded-xl border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
+            {syncRuns.map((run) => (
+              <li key={run.id} className="px-4 py-4">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
+                    {formatSyncMode(run.mode)}
+                    {run.finishedAt == null ? (
+                      <span className="ml-2 text-xs font-normal text-amber-700 dark:text-amber-400">
+                        Incomplete
+                      </span>
+                    ) : null}
+                  </p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                    {run.startedAt.toLocaleString()}
+                  </p>
+                </div>
+                <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                  {run.venuesSynced} venues · {run.dealsSynced} deals ·{" "}
+                  {run.suburbsSynced} suburbs
+                </p>
               </li>
             ))}
           </ul>
