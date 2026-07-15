@@ -294,6 +294,32 @@ struct VenueRepositoryTests {
         #expect(found.lastExtractionDate == extractionDate)
     }
 
+    @Test func upsertPreservesHeroR2Url() throws {
+        let repository = VenueRepository(store: SQLStore.inMemory())
+        let heroURL = "https://example.com/hero.jpg"
+        let r2URL = "https://images.duskroute.com/venues/1.jpg"
+
+        let place = GooglePlace(
+            id: "places/ChIJHeroR2",
+            displayName: .init(text: "CDN Pub", languageCode: "en"),
+            location: .init(latitude: -33.8600, longitude: 151.2100),
+            formattedAddress: "1 Circular Quay, Sydney",
+            websiteUri: "https://cdnpub.example.com",
+            types: ["bar"]
+        )
+
+        try repository.upsert(places: [place])
+        let venueId = try #require(try repository.find(googleMapId: "places/ChIJHeroR2")?.id)
+        try repository.updateHeroImage(venueId: venueId, url: heroURL)
+        try repository.updateHeroR2Url(venueId: venueId, url: r2URL)
+
+        try repository.upsert(places: [place])
+
+        let found = try #require(try repository.find(id: venueId))
+        #expect(found.heroImage == heroURL)
+        #expect(found.heroR2Url == r2URL)
+    }
+
     @Test func updateHeroImagePersistsURL() throws {
         let repository = VenueRepository(store: SQLStore.inMemory())
 

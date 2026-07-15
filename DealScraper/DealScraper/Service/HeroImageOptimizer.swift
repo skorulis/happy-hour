@@ -8,7 +8,13 @@ import UniformTypeIdentifiers
 enum HeroImageOptimizer {
 
     static let maxWidth = 1600
+    static let thumbWidth = 200
     static let jpegQuality: CGFloat = 0.82
+
+    struct Output: Equatable {
+        let full: Data
+        let thumb: Data
+    }
 
     enum Error: LocalizedError {
         case invalidImage
@@ -24,41 +30,48 @@ enum HeroImageOptimizer {
         }
     }
 
-    /// Resize (max width 1600) and re-encode as JPEG for CDN upload.
-    static func optimize(_ data: Data) throws -> Data {
+    /// Resize to full (~1600px) and thumb (200px) JPEGs for CDN upload.
+    static func optimize(_ data: Data) throws -> Output {
         guard let nsImage = NSImage(data: data),
               let original = cgImage(from: nsImage)
         else {
             throw Error.invalidImage
         }
 
-        let width = original.width
-        let height = original.height
-        guard width > 0, height > 0 else {
+        guard original.width > 0, original.height > 0 else {
             throw Error.invalidImage
         }
 
-        let cgImage: CGImage
-        if width > maxWidth {
-            let scale = CGFloat(maxWidth) / CGFloat(width)
-            let targetSize = CGSize(
-                width: CGFloat(maxWidth),
-                height: max(1, floor(CGFloat(height) * scale))
-            )
-            guard let resized = resize(original, to: targetSize) else {
-                throw Error.invalidImage
-            }
-            cgImage = resized
-        } else {
-            cgImage = original
-        }
+        let fullImage = try resized(original, maxWidth: maxWidth)
+        let thumbImage = try resized(original, maxWidth: thumbWidth)
 
-        return try encodeJPEG(cgImage)
+        return Output(
+            full: try encodeJPEG(fullImage),
+            thumb: try encodeJPEG(thumbImage)
+        )
     }
 
     private static func cgImage(from image: NSImage) -> CGImage? {
         var rect = NSRect(origin: .zero, size: image.size)
         return image.cgImage(forProposedRect: &rect, context: nil, hints: nil)
+    }
+
+    private static func resized(_ image: CGImage, maxWidth: Int) throws -> CGImage {
+        let width = image.width
+        let height = image.height
+        if width <= maxWidth {
+            return image
+        }
+
+        let scale = CGFloat(maxWidth) / CGFloat(width)
+        let targetSize = CGSize(
+            width: CGFloat(maxWidth),
+            height: max(1, floor(CGFloat(height) * scale))
+        )
+        guard let resized = resize(image, to: targetSize) else {
+            throw Error.invalidImage
+        }
+        return resized
     }
 
     private static func resize(_ image: CGImage, to size: CGSize) -> CGImage? {

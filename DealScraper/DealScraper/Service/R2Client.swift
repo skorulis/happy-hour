@@ -23,7 +23,9 @@ enum R2ClientError: LocalizedError {
 @MainActor
 protocol VenueHeroImageUploading {
     var isConfigured: Bool { get }
-    func uploadHero(venueId: Int64, jpegData: Data) async throws -> URL
+    var publicBaseURL: String { get }
+    /// Uploads full + thumb; returns the public URL of the full-size image.
+    func uploadHero(venueId: Int64, jpegData: Data, thumbJpegData: Data) async throws -> URL
 }
 
 @MainActor
@@ -48,8 +50,16 @@ final class R2Client: HTTPService, VenueHeroImageUploading {
         configStore.isConfigured
     }
 
+    var publicBaseURL: String {
+        configStore.publicBaseURL
+    }
+
     func objectKey(venueId: Int64) -> String {
         "venues/\(venueId).jpg"
+    }
+
+    func thumbObjectKey(venueId: Int64) -> String {
+        "venues/\(venueId)-thumb.jpg"
     }
 
     func publicURL(for objectKey: String) throws -> URL {
@@ -68,16 +78,22 @@ final class R2Client: HTTPService, VenueHeroImageUploading {
         return url
     }
 
-    func uploadHero(venueId: Int64, jpegData: Data) async throws -> URL {
+    func uploadHero(venueId: Int64, jpegData: Data, thumbJpegData: Data) async throws -> URL {
         guard isConfigured else {
             throw R2ClientError.notConfigured
         }
 
-        let key = objectKey(venueId: venueId)
+        let fullKey = objectKey(venueId: venueId)
+        try await putObject(key: fullKey, data: jpegData)
+        try await putObject(key: thumbObjectKey(venueId: venueId), data: thumbJpegData)
+        return try publicURL(for: fullKey)
+    }
+
+    private func putObject(key: String, data: Data) async throws {
         let putURL = try putObjectURL(objectKey: key)
         let signed = try AWSS3SigV4.signPUT(
             url: putURL,
-            body: jpegData,
+            body: data,
             contentType: Self.contentType,
             cacheControl: Self.cacheControl,
             accessKeyId: configStore.accessKeyId,
@@ -90,7 +106,6 @@ final class R2Client: HTTPService, VenueHeroImageUploading {
             headers: signed.headers
         )
         _ = try await execute(request: request)
-        return try publicURL(for: key)
     }
 
     private func putObjectURL(objectKey: String) throws -> URL {

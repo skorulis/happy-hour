@@ -34,6 +34,7 @@ final class VenueRepository {
                     lng: mutableVenue.lng,
                     websiteUri: mutableVenue.websiteUri,
                     heroImage: existing.heroImage,
+                    heroR2Url: existing.heroR2Url,
                     blurb: existing.blurb,
                     lastCrawlDate: existing.lastCrawlDate,
                     lastCrawlUrl: existing.lastCrawlUrl,
@@ -130,6 +131,24 @@ final class VenueRepository {
             try db.execute(
                 sql: "UPDATE venue SET hero_image = ? WHERE id = ?",
                 arguments: [url, venueId]
+            )
+        }
+    }
+
+    func updateHeroR2Url(venueId: Int64, url: String?) throws {
+        try store.dbQueue.write { db in
+            try db.execute(
+                sql: "UPDATE venue SET hero_r2_url = ? WHERE id = ?",
+                arguments: [url, venueId]
+            )
+        }
+    }
+
+    func clearHeroImageFields(venueId: Int64) throws {
+        try store.dbQueue.write { db in
+            try db.execute(
+                sql: "UPDATE venue SET hero_image = NULL, hero_r2_url = NULL WHERE id = ?",
+                arguments: [venueId]
             )
         }
     }

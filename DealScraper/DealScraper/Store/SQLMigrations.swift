@@ -229,5 +229,11 @@ final class SQLMigrations {
                 t.add(column: "end_date", .date)
             }
         }
+
+        migrator.registerMigration("v27_venue_hero_r2_url") { db in
+            try db.alter(table: "venue") { t in
+                t.add(column: "hero_r2_url", .text)
+            }
+        }
     }
 }

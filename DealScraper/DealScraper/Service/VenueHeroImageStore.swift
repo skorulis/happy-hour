@@ -2,13 +2,19 @@
 
 import Foundation
 
-enum VenueHeroImageStoreError: LocalizedError {
+enum VenueHeroImageStoreError: LocalizedError, Equatable {
     case r2NotConfigured
+    case missingHeroSource
+    case invalidHeroSourceURL(String)
 
     var errorDescription: String? {
         switch self {
         case .r2NotConfigured:
             return "Cloudflare R2 is not configured. Add credentials in Settings before setting hero images."
+        case .missingHeroSource:
+            return "Venue has no hero image source to upload."
+        case .invalidHeroSourceURL(let value):
+            return "Hero image source URL is invalid: \(value)"
         }
     }
 }
@@ -54,27 +60,72 @@ final class VenueHeroImageStore {
         let optimized = try HeroImageOptimizer.optimize(sourceData)
 
         let destination = directory.appendingPathComponent("\(venueId).jpg")
-        try optimized.write(to: destination, options: .atomic)
+        let thumbDestination = directory.appendingPathComponent("\(venueId)-thumb.jpg")
+        try optimized.full.write(to: destination, options: .atomic)
+        try optimized.thumb.write(to: thumbDestination, options: .atomic)
 
         let publicURL = try await uploader.uploadHero(
             venueId: venueId,
-            jpegData: optimized
+            jpegData: optimized.full,
+            thumbJpegData: optimized.thumb
         )
-        try venueRepository.updateHeroImage(venueId: venueId, url: publicURL.absoluteString)
+        try venueRepository.updateHeroImage(venueId: venueId, url: remoteURL.absoluteString)
+        try venueRepository.updateHeroR2Url(venueId: venueId, url: publicURL.absoluteString)
+    }
+
+    /// Uploads to R2 when `hero_r2_url` is missing. Leaves `hero_image` unchanged.
+    @discardableResult
+    func uploadMissingR2IfNeeded(venue: Venue) async throws -> Bool {
+        guard let venueId = venue.id else {
+            return false
+        }
+        if let existing = venue.heroR2Url, !existing.isEmpty {
+            return false
+        }
+        guard let source = venue.heroImage?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !source.isEmpty
+        else {
+            throw VenueHeroImageStoreError.missingHeroSource
+        }
+
+        if isPublicCDNURL(source) {
+            try venueRepository.updateHeroR2Url(venueId: venueId, url: source)
+            return true
+        }
+
+        guard uploader.isConfigured else {
+            throw VenueHeroImageStoreError.r2NotConfigured
+        }
+
+        let sourceData = try await loadSourceData(from: source)
+        let optimized = try HeroImageOptimizer.optimize(sourceData)
+
+        let destination = directory.appendingPathComponent("\(venueId).jpg")
+        let thumbDestination = directory.appendingPathComponent("\(venueId)-thumb.jpg")
+        try optimized.full.write(to: destination, options: .atomic)
+        try optimized.thumb.write(to: thumbDestination, options: .atomic)
+
+        let publicURL = try await uploader.uploadHero(
+            venueId: venueId,
+            jpegData: optimized.full,
+            thumbJpegData: optimized.thumb
+        )
+        try venueRepository.updateHeroR2Url(venueId: venueId, url: publicURL.absoluteString)
+        return true
     }
 
     func clearHeroImage(venueId: Int64) throws {
         try deleteStoredImage(for: venueId)
-        try venueRepository.updateHeroImage(venueId: venueId, url: nil)
+        try venueRepository.clearHeroImageFields(venueId: venueId)
     }
 
     func deleteStoredImage(for venueId: Int64) throws {
-        let prefix = "\(venueId)."
+        let names = Set(["\(venueId).jpg", "\(venueId)-thumb.jpg"])
         let contents = try FileManager.default.contentsOfDirectory(
             at: directory,
             includingPropertiesForKeys: nil
         )
-        for fileURL in contents where fileURL.lastPathComponent.hasPrefix(prefix) {
+        for fileURL in contents where names.contains(fileURL.lastPathComponent) {
             try FileManager.default.removeItem(at: fileURL)
         }
     }
@@ -84,5 +135,32 @@ final class VenueHeroImageStore {
             return false
         }
         return url.standardizedFileURL.path.hasPrefix(directory.standardizedFileURL.path)
+    }
+
+    private func isPublicCDNURL(_ string: String) -> Bool {
+        guard let url = URL(string: string),
+              let host = url.host?.lowercased()
+        else {
+            return false
+        }
+        let base = uploader.publicBaseURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let baseURL = URL(string: base),
+              let baseHost = baseURL.host?.lowercased()
+        else {
+            return false
+        }
+        return host == baseHost
+    }
+
+    private func loadSourceData(from source: String) async throws -> Data {
+        guard let url = URL(string: source) else {
+            throw VenueHeroImageStoreError.invalidHeroSourceURL(source)
+        }
+        if url.isFileURL {
+            return try Data(contentsOf: url)
+        }
+        let hash = URLNormalizer.hash(url)
+        let downloadedURL = try await imageFetcher.localFileURL(for: url, hash: hash)
+        return try Data(contentsOf: downloadedURL)
     }
 }

@@ -9,6 +9,7 @@ struct VenueImportView: View {
     @Environment(\.resolver) private var resolver
     @State var viewModel: VenueImportViewModel
     @State private var showGoogleImport = false
+    @State private var showVenueHeros = false
 
     var body: some View {
         NavigationSplitView {
@@ -25,12 +26,18 @@ struct VenueImportView: View {
         }) {
             GoogleImportView(viewModel: resolver!.googleImportViewModel())
         }
+        .sheet(isPresented: $showVenueHeros) {
+            VenueHerosView(viewModel: resolver!.venueHerosViewModel())
+        }
     }
 
     private var sidebar: some View {
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: 16) {
-                findVenuesButton
+                HStack(spacing: 8) {
+                    findVenuesButton
+                    heroImagesButton
+                }
                 loadErrorContent
             }
             .padding(16)
@@ -96,6 +103,12 @@ struct VenueImportView: View {
     private var findVenuesButton: some View {
         Button("Find Venues") {
             showGoogleImport = true
+        }
+    }
+
+    private var heroImagesButton: some View {
+        Button("Hero Images") {
+            showVenueHeros = true
         }
     }
 
