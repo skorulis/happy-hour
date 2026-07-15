@@ -128,9 +128,15 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
         container.register(VenueHeroImageStore.self) { resolver in
             VenueHeroImageStore(
                 venueRepository: resolver.venueRepository(),
-                imageFetcher: resolver.crawlImageFetcher()
+                imageFetcher: resolver.crawlImageFetcher(),
+                uploader: resolver.r2Client()
             )
         }
+
+        container.register(R2Client.self) { resolver in
+            R2Client(configStore: resolver.r2ConfigStore())
+        }
+        .inObjectScope(.container)
 
         container.register(VenueWebsiteCrawler.self) { VenueWebsiteCrawler.make(resolver: $0) }
 
@@ -183,6 +189,14 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
 
         container.register(APIKeyStore.self) { resolver in
             APIKeyStore(secureStore: resolver.secureKeyValueStore())
+        }
+        .inObjectScope(.container)
+
+        container.register(R2ConfigStore.self) { resolver in
+            R2ConfigStore(
+                secureStore: resolver.secureKeyValueStore(),
+                keyValueStore: resolver.pKeyValueStore()
+            )
         }
         .inObjectScope(.container)
 

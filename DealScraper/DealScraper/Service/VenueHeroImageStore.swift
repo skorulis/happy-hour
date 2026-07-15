@@ -2,6 +2,17 @@
 
 import Foundation
 
+enum VenueHeroImageStoreError: LocalizedError {
+    case r2NotConfigured
+
+    var errorDescription: String? {
+        switch self {
+        case .r2NotConfigured:
+            return "Cloudflare R2 is not configured. Add credentials in Settings before setting hero images."
+        }
+    }
+}
+
 @MainActor
 final class VenueHeroImageStore {
 
@@ -9,11 +20,13 @@ final class VenueHeroImageStore {
 
     private let venueRepository: VenueRepository
     private let imageFetcher: CrawlImageFetcher
+    private let uploader: VenueHeroImageUploading
 
     init(
         directory: URL? = nil,
         venueRepository: VenueRepository,
-        imageFetcher: CrawlImageFetcher
+        imageFetcher: CrawlImageFetcher,
+        uploader: VenueHeroImageUploading
     ) {
         if let directory {
             self.directory = directory
@@ -23,21 +36,31 @@ final class VenueHeroImageStore {
         }
         self.venueRepository = venueRepository
         self.imageFetcher = imageFetcher
+        self.uploader = uploader
 
         try? FileManager.default.createDirectory(at: self.directory, withIntermediateDirectories: true)
     }
 
     func setHeroImage(venueId: Int64, remoteURL: URL) async throws {
+        guard uploader.isConfigured else {
+            throw VenueHeroImageStoreError.r2NotConfigured
+        }
+
         try deleteStoredImage(for: venueId)
 
         let hash = URLNormalizer.hash(remoteURL)
         let downloadedURL = try await imageFetcher.localFileURL(for: remoteURL, hash: hash)
-        let data = try Data(contentsOf: downloadedURL)
-        let fileExtension = Self.fileExtension(for: remoteURL)
-        let destination = directory.appendingPathComponent("\(venueId).\(fileExtension)")
+        let sourceData = try Data(contentsOf: downloadedURL)
+        let optimized = try HeroImageOptimizer.optimize(sourceData)
 
-        try data.write(to: destination, options: .atomic)
-        try venueRepository.updateHeroImage(venueId: venueId, url: destination.absoluteString)
+        let destination = directory.appendingPathComponent("\(venueId).jpg")
+        try optimized.write(to: destination, options: .atomic)
+
+        let publicURL = try await uploader.uploadHero(
+            venueId: venueId,
+            jpegData: optimized
+        )
+        try venueRepository.updateHeroImage(venueId: venueId, url: publicURL.absoluteString)
     }
 
     func clearHeroImage(venueId: Int64) throws {
@@ -61,13 +84,5 @@ final class VenueHeroImageStore {
             return false
         }
         return url.standardizedFileURL.path.hasPrefix(directory.standardizedFileURL.path)
-    }
-
-    private static func fileExtension(for url: URL) -> String {
-        let pathExtension = url.pathExtension.lowercased()
-        if !pathExtension.isEmpty {
-            return pathExtension
-        }
-        return "img"
     }
 }

@@ -185,6 +185,20 @@ npm run sync:prod
 
 `--migrate` runs `drizzle-kit migrate` against the tunneled production URL, then syncs approved DealScraper deals. Omit `--migrate` when the schema is already up to date.
 
+### Venue hero images (Cloudflare R2)
+
+DealScraper downloads venue heroes, uploads them to Cloudflare R2, and stores the public HTTPS URL in SQLite `venue.hero_image`. Sync copies that URL into Postgres as-is (no upload during sync).
+
+One-time Cloudflare setup:
+
+1. Create an R2 bucket (e.g. `duskroute-heroes`).
+2. Attach a custom domain to the bucket: `images.duskroute.com` (zone already on Cloudflare).
+3. Create an R2 API token with **Object Read & Write** on that bucket.
+
+Enter credentials in DealScraper **Settings → Cloudflare R2** (account ID, bucket, public base URL, access key ID, secret). Keys are stored in the Mac keychain.
+
+Objects are stored as `venues/{sqliteId}.jpg` (~1600px JPEG; replace overwrites the same key). Re-set a venue hero in DealScraper if an older `file://` path is still in the database.
+
 ## Delete the local database
 
 **Stop the container** (data is kept in the Docker volume and will be there when you start again):
