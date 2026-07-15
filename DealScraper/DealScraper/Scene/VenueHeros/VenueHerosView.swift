@@ -8,6 +8,7 @@ import SwiftUI
 struct VenueHerosView: View {
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.resolver) private var resolver
     @State var viewModel: VenueHerosViewModel
 
     private let columns = [
@@ -96,10 +97,23 @@ struct VenueHerosView: View {
             ScrollView {
                 LazyVGrid(columns: columns, spacing: 16) {
                     ForEach(viewModel.venues, id: \.googleMapId) { venue in
-                        heroCell(venue)
+                        NavigationLink {
+                            VenueDetailsView(
+                                viewModel: resolver!.venueDetailsViewModel(googleID: venue.googleMapId),
+                                onVenueDeleted: {
+                                    viewModel.load()
+                                }
+                            )
+                        } label: {
+                            heroCell(venue)
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
                 .padding(16)
+                .onAppear {
+                    viewModel.load()
+                }
 
                 if !viewModel.processFailures.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
