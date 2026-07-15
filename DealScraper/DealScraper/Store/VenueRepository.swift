@@ -39,13 +39,31 @@ final class VenueRepository {
                     lastCrawlDate: existing.lastCrawlDate,
                     lastCrawlUrl: existing.lastCrawlUrl,
                     lastExtractionDate: existing.lastExtractionDate,
+                    lastUpdate: .now,
                     status: importedStatus == .broken ? .broken : existing.status,
                     json: mutableVenue.json
                 )
                 try mutableVenue.update(db)
                 return false
             } else {
-                mutableVenue.id = nil
+                mutableVenue = Venue(
+                    id: nil,
+                    suburbId: mutableVenue.suburbId,
+                    googleMapId: mutableVenue.googleMapId,
+                    name: mutableVenue.name,
+                    lat: mutableVenue.lat,
+                    lng: mutableVenue.lng,
+                    websiteUri: mutableVenue.websiteUri,
+                    heroImage: mutableVenue.heroImage,
+                    heroR2Url: mutableVenue.heroR2Url,
+                    blurb: mutableVenue.blurb,
+                    lastCrawlDate: mutableVenue.lastCrawlDate,
+                    lastCrawlUrl: mutableVenue.lastCrawlUrl,
+                    lastExtractionDate: mutableVenue.lastExtractionDate,
+                    lastUpdate: .now,
+                    status: mutableVenue.status,
+                    json: mutableVenue.json
+                )
                 try mutableVenue.insert(db)
                 return true
             }
@@ -102,8 +120,8 @@ final class VenueRepository {
     func updateLastCrawlDate(venueId: Int64, date: Date, url: String?) throws {
         try store.dbQueue.write { db in
             try db.execute(
-                sql: "UPDATE venue SET last_crawl_date = ?, last_crawl_url = ? WHERE id = ?",
-                arguments: [date, url, venueId]
+                sql: "UPDATE venue SET last_crawl_date = ?, last_crawl_url = ?, last_update = ? WHERE id = ?",
+                arguments: [date, url, Date(), venueId]
             )
         }
     }
@@ -111,8 +129,8 @@ final class VenueRepository {
     func updateLastExtractionDate(venueId: Int64, date: Date) throws {
         try store.dbQueue.write { db in
             try db.execute(
-                sql: "UPDATE venue SET last_extraction_date = ? WHERE id = ?",
-                arguments: [date, venueId]
+                sql: "UPDATE venue SET last_extraction_date = ?, last_update = ? WHERE id = ?",
+                arguments: [date, Date(), venueId]
             )
         }
     }
@@ -120,8 +138,8 @@ final class VenueRepository {
     func updateStatus(venueId: Int64, status: VenueStatus) throws {
         try store.dbQueue.write { db in
             try db.execute(
-                sql: "UPDATE venue SET status = ? WHERE id = ?",
-                arguments: [status.rawValue, venueId]
+                sql: "UPDATE venue SET status = ?, last_update = ? WHERE id = ?",
+                arguments: [status.rawValue, Date(), venueId]
             )
         }
     }
@@ -129,8 +147,8 @@ final class VenueRepository {
     func updateHeroImage(venueId: Int64, url: String?) throws {
         try store.dbQueue.write { db in
             try db.execute(
-                sql: "UPDATE venue SET hero_image = ? WHERE id = ?",
-                arguments: [url, venueId]
+                sql: "UPDATE venue SET hero_image = ?, last_update = ? WHERE id = ?",
+                arguments: [url, Date(), venueId]
             )
         }
     }
@@ -138,8 +156,8 @@ final class VenueRepository {
     func updateHeroR2Url(venueId: Int64, url: String?) throws {
         try store.dbQueue.write { db in
             try db.execute(
-                sql: "UPDATE venue SET hero_r2_url = ? WHERE id = ?",
-                arguments: [url, venueId]
+                sql: "UPDATE venue SET hero_r2_url = ?, last_update = ? WHERE id = ?",
+                arguments: [url, Date(), venueId]
             )
         }
     }
@@ -147,8 +165,8 @@ final class VenueRepository {
     func clearHeroImageFields(venueId: Int64) throws {
         try store.dbQueue.write { db in
             try db.execute(
-                sql: "UPDATE venue SET hero_image = NULL, hero_r2_url = NULL WHERE id = ?",
-                arguments: [venueId]
+                sql: "UPDATE venue SET hero_image = NULL, hero_r2_url = NULL, last_update = ? WHERE id = ?",
+                arguments: [Date(), venueId]
             )
         }
     }
@@ -156,8 +174,8 @@ final class VenueRepository {
     func updateBlurb(venueId: Int64, blurb: String) throws {
         try store.dbQueue.write { db in
             try db.execute(
-                sql: "UPDATE venue SET blurb = ? WHERE id = ?",
-                arguments: [blurb, venueId]
+                sql: "UPDATE venue SET blurb = ?, last_update = ? WHERE id = ?",
+                arguments: [blurb, Date(), venueId]
             )
         }
     }

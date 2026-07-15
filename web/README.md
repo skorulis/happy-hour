@@ -61,6 +61,12 @@ Sync approved deals from DealScraper (set `SQLITE_PATH` in `.env.local` first):
 npm run sync
 ```
 
+By default, only venues with `last_update` after the last successful `sync_run` are synced. Use `--all` to sync every approved venue:
+
+```bash
+npm run sync -- --all
+```
+
 Start the dev server:
 
 ```bash
@@ -179,11 +185,13 @@ DATABASE_URL=postgresql://happyhour:YOUR_PASSWORD@localhost:5433/happyhour
 ```bash
 cd web
 npm run sync:prod -- --migrate
-# Later syncs:
+# Later syncs (incremental by default):
 npm run sync:prod
+# Force a full venue sync:
+npm run sync:prod -- --all
 ```
 
-`--migrate` runs `drizzle-kit migrate` against the tunneled production URL, then syncs approved DealScraper deals. Omit `--migrate` when the schema is already up to date.
+`--migrate` runs `drizzle-kit migrate` against the tunneled production URL, then syncs approved DealScraper deals. Omit `--migrate` when the schema is already up to date. Default sync is incremental (venues updated since the last successful `sync_run`); pass `--all` to sync every approved venue.
 
 ### Venue hero images (Cloudflare R2)
 

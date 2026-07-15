@@ -22,6 +22,7 @@ nonisolated struct Venue: Codable, Sendable {
     let lastCrawlDate: Date?
     let lastCrawlUrl: String?
     let lastExtractionDate: Date?
+    let lastUpdate: Date?
     var status: VenueStatus
     let json: String
 
@@ -39,6 +40,7 @@ nonisolated struct Venue: Codable, Sendable {
         case lastCrawlDate = "last_crawl_date"
         case lastCrawlUrl = "last_crawl_url"
         case lastExtractionDate = "last_extraction_date"
+        case lastUpdate = "last_update"
         case status
         case json
     }
@@ -57,6 +59,7 @@ nonisolated struct Venue: Codable, Sendable {
         lastCrawlDate: Date? = nil,
         lastCrawlUrl: String? = nil,
         lastExtractionDate: Date? = nil,
+        lastUpdate: Date? = nil,
         status: VenueStatus = .normal,
         json: String
     ) {
@@ -73,6 +76,7 @@ nonisolated struct Venue: Codable, Sendable {
         self.lastCrawlDate = lastCrawlDate
         self.lastCrawlUrl = lastCrawlUrl
         self.lastExtractionDate = lastExtractionDate
+        self.lastUpdate = lastUpdate
         self.status = status
         self.json = json
     }
@@ -94,6 +98,7 @@ nonisolated struct Venue: Codable, Sendable {
             lat: place.location.latitude,
             lng: place.location.longitude,
             websiteUri: place.websiteUri,
+            lastUpdate: .now,
             status: Self.statusWhenImported(from: place.websiteUri),
             json: jsonString
         )
@@ -106,6 +111,13 @@ nonisolated struct Venue: Codable, Sendable {
             return .broken
         }
         return .normal
+    }
+
+    static func touchLastUpdate(_ db: Database, venueId: Int64) throws {
+        try db.execute(
+            sql: "UPDATE venue SET last_update = ? WHERE id = ?",
+            arguments: [Date(), venueId]
+        )
     }
 }
 

@@ -2,6 +2,7 @@ import { loadScriptEnv } from "../load-script-env";
 
 loadScriptEnv();
 import Database from "better-sqlite3";
+import { desc, eq, isNotNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { homedir } from "node:os";
 import path from "node:path";
@@ -38,6 +39,7 @@ type SqliteVenue = {
   hero_r2_url: string | null;
   blurb: string | null;
   last_crawl_date: string | null;
+  last_update: string | null;
   json: string;
 };
 
@@ -58,18 +60,26 @@ type SqliteVenueLinks = {
   facebook: string | null;
 };
 
-function parseArgs(argv: string[]): { sqlitePath: string | undefined } {
+type SyncMode = "all" | "incremental";
+
+function parseArgs(argv: string[]): {
+  sqlitePath: string | undefined;
+  syncAll: boolean;
+} {
   let sqlitePath = process.env.SQLITE_PATH || undefined;
+  let syncAll = false;
 
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === "--sqlite-path" && argv[i + 1]) {
       sqlitePath = argv[i + 1];
       i += 1;
+    } else if (arg === "--all") {
+      syncAll = true;
     }
   }
 
-  return { sqlitePath };
+  return { sqlitePath, syncAll };
 }
 
 function resolveSqlitePath(rawPath: string | undefined): string {
@@ -113,7 +123,7 @@ function sydneyToday(): string {
 }
 
 async function main() {
-  const { sqlitePath: rawPath } = parseArgs(process.argv.slice(2));
+  const { sqlitePath: rawPath, syncAll } = parseArgs(process.argv.slice(2));
   const sqlitePath = resolveSqlitePath(rawPath);
   const databaseUrl = process.env.DATABASE_URL;
 
@@ -125,107 +135,131 @@ async function main() {
   const pgClient = postgres(databaseUrl, { max: 1 });
   const db = drizzle(pgClient, { schema });
 
-  const venueRows = sqlite
-    .prepare(
-      `
-      SELECT DISTINCT v.*
-      FROM venue v
-      INNER JOIN deal d ON d.venue_id = v.id
-      WHERE d.status = 'approved'
-      ORDER BY v.id
-      `,
-    )
-    .all() as SqliteVenue[];
+  const lastSuccessful = await db
+    .select({ finishedAt: schema.syncRun.finishedAt })
+    .from(schema.syncRun)
+    .where(isNotNull(schema.syncRun.finishedAt))
+    .orderBy(desc(schema.syncRun.finishedAt))
+    .limit(1);
+
+  const watermark = lastSuccessful[0]?.finishedAt ?? null;
+  const useIncremental = !syncAll && watermark != null;
+  const mode: SyncMode = useIncremental ? "incremental" : "all";
+
+  const [syncRunRow] = await db
+    .insert(schema.syncRun)
+    .values({
+      startedAt: new Date(),
+      mode,
+      venuesSynced: 0,
+      dealsSynced: 0,
+      suburbsSynced: 0,
+    })
+    .returning({ id: schema.syncRun.id });
 
   let venuesSynced = 0;
   let dealsSynced = 0;
   const syncedSuburbKeys = new Set<string>();
   const today = sydneyToday();
 
-  function suburbKey(name: string, postcode: string | null): string {
-    return `${name}\u0000${postcode ?? ""}`;
-  }
+  try {
+    const venueRows = (
+      useIncremental
+        ? sqlite
+            .prepare(
+              `
+              SELECT DISTINCT v.*
+              FROM venue v
+              INNER JOIN deal d ON d.venue_id = v.id
+              WHERE d.status = 'approved'
+                AND datetime(v.last_update) > datetime(?)
+              ORDER BY v.id
+              `,
+            )
+            .all(watermark!.toISOString())
+        : sqlite
+            .prepare(
+              `
+              SELECT DISTINCT v.*
+              FROM venue v
+              INNER JOIN deal d ON d.venue_id = v.id
+              WHERE d.status = 'approved'
+              ORDER BY v.id
+              `,
+            )
+            .all()
+    ) as SqliteVenue[];
 
-  async function upsertSuburb(
-    tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
-    suburbRow: SqliteSuburb,
-  ): Promise<number> {
-    const [upsertedSuburb] = await tx
-      .insert(schema.suburb)
-      .values({
-        name: suburbRow.name,
-        postcode: suburbRow.postcode,
-        state: suburbRow.state,
-        lat: suburbRow.lat,
-        lng: suburbRow.lng,
-        sqkm: suburbRow.sqkm,
-      })
-      .onConflictDoUpdate({
-        target: [schema.suburb.name, schema.suburb.postcode],
-        set: {
+    function suburbKey(name: string, postcode: string | null): string {
+      return `${name}\u0000${postcode ?? ""}`;
+    }
+
+    async function upsertSuburb(
+      tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+      suburbRow: SqliteSuburb,
+    ): Promise<number> {
+      const [upsertedSuburb] = await tx
+        .insert(schema.suburb)
+        .values({
           name: suburbRow.name,
           postcode: suburbRow.postcode,
           state: suburbRow.state,
           lat: suburbRow.lat,
           lng: suburbRow.lng,
           sqkm: suburbRow.sqkm,
-        },
-      })
-      .returning({ id: schema.suburb.id });
-
-    return upsertedSuburb.id;
-  }
-
-  const greaterSydneySuburbs = sqlite
-    .prepare(
-      "SELECT * FROM suburb WHERE statistic_area = ? ORDER BY id",
-    )
-    .all(GREATER_SYDNEY_STATISTIC_AREA) as SqliteSuburb[];
-
-  for (const suburbRow of greaterSydneySuburbs) {
-    await db.transaction(async (tx) => {
-      await upsertSuburb(tx, suburbRow);
-    });
-    syncedSuburbKeys.add(suburbKey(suburbRow.name, suburbRow.postcode));
-  }
-
-  for (const venueRow of venueRows) {
-    await db.transaction(async (tx) => {
-      let suburbId: number | null = null;
-
-      if (venueRow.suburb_id != null) {
-        const suburbRow = sqlite
-          .prepare("SELECT * FROM suburb WHERE id = ?")
-          .get(venueRow.suburb_id) as SqliteSuburb | undefined;
-
-        if (suburbRow) {
-          suburbId = await upsertSuburb(tx, suburbRow);
-          syncedSuburbKeys.add(suburbKey(suburbRow.name, suburbRow.postcode));
-        }
-      }
-
-      const venueJson = parseJsonColumn(venueRow.json);
-      const heroImage = venueHeroImageForPostgres(venueRow);
-
-      const [upsertedVenue] = await tx
-        .insert(schema.venue)
-        .values({
-          suburbId,
-          googleMapId: venueRow.google_map_id,
-          name: venueRow.name,
-          lat: venueRow.lat,
-          lng: venueRow.lng,
-          websiteUri: venueRow.website_uri,
-          heroImage,
-          blurb: venueRow.blurb,
-          lastCrawlDate: parseTimestamp(venueRow.last_crawl_date),
-          json: venueJson,
-          syncedAt: new Date(),
         })
         .onConflictDoUpdate({
-          target: schema.venue.googleMapId,
+          target: [schema.suburb.name, schema.suburb.postcode],
           set: {
+            name: suburbRow.name,
+            postcode: suburbRow.postcode,
+            state: suburbRow.state,
+            lat: suburbRow.lat,
+            lng: suburbRow.lng,
+            sqkm: suburbRow.sqkm,
+          },
+        })
+        .returning({ id: schema.suburb.id });
+
+      return upsertedSuburb.id;
+    }
+
+    const greaterSydneySuburbs = sqlite
+      .prepare(
+        "SELECT * FROM suburb WHERE statistic_area = ? ORDER BY id",
+      )
+      .all(GREATER_SYDNEY_STATISTIC_AREA) as SqliteSuburb[];
+
+    for (const suburbRow of greaterSydneySuburbs) {
+      await db.transaction(async (tx) => {
+        await upsertSuburb(tx, suburbRow);
+      });
+      syncedSuburbKeys.add(suburbKey(suburbRow.name, suburbRow.postcode));
+    }
+
+    for (const venueRow of venueRows) {
+      await db.transaction(async (tx) => {
+        let suburbId: number | null = null;
+
+        if (venueRow.suburb_id != null) {
+          const suburbRow = sqlite
+            .prepare("SELECT * FROM suburb WHERE id = ?")
+            .get(venueRow.suburb_id) as SqliteSuburb | undefined;
+
+          if (suburbRow) {
+            suburbId = await upsertSuburb(tx, suburbRow);
+            syncedSuburbKeys.add(suburbKey(suburbRow.name, suburbRow.postcode));
+          }
+        }
+
+        const venueJson = parseJsonColumn(venueRow.json);
+        const heroImage = venueHeroImageForPostgres(venueRow);
+
+        const [upsertedVenue] = await tx
+          .insert(schema.venue)
+          .values({
             suburbId,
+            googleMapId: venueRow.google_map_id,
             name: venueRow.name,
             lat: venueRow.lat,
             lng: venueRow.lng,
@@ -235,69 +269,100 @@ async function main() {
             lastCrawlDate: parseTimestamp(venueRow.last_crawl_date),
             json: venueJson,
             syncedAt: new Date(),
-          },
-        })
-        .returning({ id: schema.venue.id });
-
-      const venueId = upsertedVenue.id;
-
-      const linksRow = sqlite
-        .prepare("SELECT * FROM venue_links WHERE venue_id = ?")
-        .get(venueRow.id) as SqliteVenueLinks | undefined;
-
-      if (linksRow) {
-        await tx
-          .insert(schema.venueLinks)
-          .values({
-            venueId,
-            whatsOn: linksRow.whats_on,
-            instagram: linksRow.instagram,
-            facebook: linksRow.facebook,
           })
           .onConflictDoUpdate({
-            target: schema.venueLinks.venueId,
+            target: schema.venue.googleMapId,
             set: {
+              suburbId,
+              name: venueRow.name,
+              lat: venueRow.lat,
+              lng: venueRow.lng,
+              websiteUri: venueRow.website_uri,
+              heroImage,
+              blurb: venueRow.blurb,
+              lastCrawlDate: parseTimestamp(venueRow.last_crawl_date),
+              json: venueJson,
+              syncedAt: new Date(),
+            },
+          })
+          .returning({ id: schema.venue.id });
+
+        const venueId = upsertedVenue.id;
+
+        const linksRow = sqlite
+          .prepare("SELECT * FROM venue_links WHERE venue_id = ?")
+          .get(venueRow.id) as SqliteVenueLinks | undefined;
+
+        if (linksRow) {
+          await tx
+            .insert(schema.venueLinks)
+            .values({
+              venueId,
               whatsOn: linksRow.whats_on,
               instagram: linksRow.instagram,
               facebook: linksRow.facebook,
-            },
-          });
-      }
+            })
+            .onConflictDoUpdate({
+              target: schema.venueLinks.venueId,
+              set: {
+                whatsOn: linksRow.whats_on,
+                instagram: linksRow.instagram,
+                facebook: linksRow.facebook,
+              },
+            });
+        }
 
-      const approvedDeals = sqlite
-        .prepare(
-          "SELECT * FROM deal WHERE venue_id = ? AND status = 'approved' ORDER BY id",
-        )
-        .all(venueRow.id) as SqliteDeal[];
+        const approvedDeals = sqlite
+          .prepare(
+            "SELECT * FROM deal WHERE venue_id = ? AND status = 'approved' ORDER BY id",
+          )
+          .all(venueRow.id) as SqliteDeal[];
 
-      const schedulesByDealId = new Map<number, SqliteDealSchedule[]>();
-      for (const dealRow of approvedDeals) {
-        const schedules = sqlite
-          .prepare("SELECT * FROM deal_schedule WHERE deal_id = ? ORDER BY id")
-          .all(dealRow.id) as SqliteDealSchedule[];
-        schedulesByDealId.set(dealRow.id, schedules);
-      }
+        const schedulesByDealId = new Map<number, SqliteDealSchedule[]>();
+        for (const dealRow of approvedDeals) {
+          const schedules = sqlite
+            .prepare("SELECT * FROM deal_schedule WHERE deal_id = ? ORDER BY id")
+            .all(dealRow.id) as SqliteDealSchedule[];
+          schedulesByDealId.set(dealRow.id, schedules);
+        }
 
-      // Deals are upserted by SQLite deal.id -> Postgres source_deal_id so
-      // Postgres deal.id (and browser favourites) survive subsequent syncs.
-      dealsSynced += await syncVenueDeals(
-        tx,
-        venueId,
-        approvedDeals,
-        schedulesByDealId,
-        today,
-        venueJson,
-      );
+        // Deals are upserted by SQLite deal.id -> Postgres source_deal_id so
+        // Postgres deal.id (and browser favourites) survive subsequent syncs.
+        dealsSynced += await syncVenueDeals(
+          tx,
+          venueId,
+          approvedDeals,
+          schedulesByDealId,
+          today,
+          venueJson,
+        );
 
-      venuesSynced += 1;
-    });
+        venuesSynced += 1;
+      });
+    }
+
+    await db
+      .update(schema.syncRun)
+      .set({
+        finishedAt: new Date(),
+        venuesSynced,
+        dealsSynced,
+        suburbsSynced: syncedSuburbKeys.size,
+      })
+      .where(eq(schema.syncRun.id, syncRunRow.id));
+  } finally {
+    sqlite.close();
+    await pgClient.end();
   }
-
-  sqlite.close();
-  await pgClient.end();
 
   console.log("Sync complete");
   console.log(`  SQLite: ${sqlitePath}`);
+  console.log(`  Mode: ${mode}`);
+  if (useIncremental) {
+    console.log(`  Watermark: ${watermark!.toISOString()}`);
+  } else if (!syncAll && watermark == null) {
+    console.log("  Watermark: none (first sync — synced all venues)");
+  }
   console.log(`  Suburbs synced: ${syncedSuburbKeys.size}`);
   console.log(`  Venues synced: ${venuesSynced}`);
   console.log(`  Deals synced: ${dealsSynced}`);

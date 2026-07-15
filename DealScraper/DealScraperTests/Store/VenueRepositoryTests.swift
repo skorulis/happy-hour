@@ -358,6 +358,29 @@ struct VenueRepositoryTests {
         #expect(found.blurb == blurb)
     }
 
+    @Test func upsertAndFieldUpdatesSetLastUpdate() throws {
+        let repository = VenueRepository(store: SQLStore.inMemory())
+
+        try repository.upsert(Venue(
+            googleMapId: "places/ChIJLastUpdate",
+            name: "Update Pub",
+            lat: -33.8688,
+            lng: 151.2093,
+            json: "{}"
+        ))
+
+        let afterInsert = try #require(try repository.find(googleMapId: "places/ChIJLastUpdate"))
+        let venueId = try #require(afterInsert.id)
+        let insertUpdate = try #require(afterInsert.lastUpdate)
+
+        Thread.sleep(forTimeInterval: 0.01)
+        try repository.updateBlurb(venueId: venueId, blurb: "Updated blurb")
+
+        let afterBlurb = try #require(try repository.find(id: venueId))
+        let blurbUpdate = try #require(afterBlurb.lastUpdate)
+        #expect(blurbUpdate > insertUpdate)
+    }
+
     @Test func upsertPlacesSkipsClosedVenues() throws {
         let repository = VenueRepository(store: SQLStore.inMemory())
 

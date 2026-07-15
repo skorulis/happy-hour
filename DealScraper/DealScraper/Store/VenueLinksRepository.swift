@@ -59,6 +59,7 @@ final class VenueLinksRepository {
 
                 if changed {
                     try updated.update(db)
+                    try Venue.touchLastUpdate(db, venueId: venueId)
                 }
             } else {
                 var links = VenueLinks(
@@ -68,6 +69,7 @@ final class VenueLinksRepository {
                     facebook: discoveredFacebook
                 )
                 try links.insert(db)
+                try Venue.touchLastUpdate(db, venueId: venueId)
             }
         }
     }

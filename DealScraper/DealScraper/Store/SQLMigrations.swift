@@ -235,5 +235,12 @@ final class SQLMigrations {
                 t.add(column: "hero_r2_url", .text)
             }
         }
+
+        migrator.registerMigration("v28_venue_last_update") { db in
+            try db.alter(table: "venue") { t in
+                t.add(column: "last_update", .datetime)
+            }
+            try db.execute(sql: "UPDATE venue SET last_update = CURRENT_TIMESTAMP")
+        }
     }
 }

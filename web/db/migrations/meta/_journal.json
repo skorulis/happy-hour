@@ -71,6 +71,13 @@
       "when": 1783903341914,
       "tag": "0009_harsh_eddie_brock",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1784098098825,
+      "tag": "0010_wealthy_carlie_cooper",
+      "breakpoints": true
     }
   ]
 }

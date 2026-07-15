@@ -45,6 +45,38 @@ struct DealRepositoryTests {
         #expect(found[0].schedules[0].dayOfWeek == 6)
     }
 
+    @Test func replaceAllBumpsVenueLastUpdate() throws {
+        let store = SQLStore.inMemory()
+        let venueRepository = VenueRepository(store: store)
+        let dealRepository = DealRepository(store: store)
+
+        try venueRepository.upsert(Venue(
+            googleMapId: "places/test",
+            name: "Test Pub",
+            lat: 0,
+            lng: 0,
+            json: "{}"
+        ))
+
+        let venueId = try #require(try venueRepository.find(googleMapId: "places/test")?.id)
+        let before = try #require(try venueRepository.find(id: venueId)?.lastUpdate)
+
+        Thread.sleep(forTimeInterval: 0.01)
+
+        let deal = Deal(
+            venueId: venueId,
+            title: "Happy Hour",
+            details: "$8 wines"
+        )
+        _ = try dealRepository.replaceAll(
+            venueId: venueId,
+            deals: [DealWithSchedules(deal: deal, schedules: [])]
+        )
+
+        let after = try #require(try venueRepository.find(id: venueId)?.lastUpdate)
+        #expect(after > before)
+    }
+
     @Test func replaceAllReplacesExistingDeals() throws {
         let store = SQLStore.inMemory()
         let venueRepository = VenueRepository(store: store)

@@ -141,6 +141,16 @@ export const dealSchedule = pgTable(
   ],
 );
 
+export const syncRun = pgTable("sync_run", {
+  id: serial("id").primaryKey(),
+  startedAt: timestamp("started_at", { withTimezone: true }).notNull(),
+  finishedAt: timestamp("finished_at", { withTimezone: true }),
+  mode: text("mode").notNull(),
+  venuesSynced: integer("venues_synced").notNull().default(0),
+  dealsSynced: integer("deals_synced").notNull().default(0),
+  suburbsSynced: integer("suburbs_synced").notNull().default(0),
+});
+
 export const venueRelations = relations(venue, ({ one, many }) => ({
   suburb: one(suburb, {
     fields: [venue.suburbId],
@@ -197,6 +207,7 @@ export type VenueLinks = typeof venueLinks.$inferSelect;
 export type Deal = typeof deal.$inferSelect;
 export type DealSchedule = typeof dealSchedule.$inferSelect;
 export type DealReport = typeof dealReport.$inferSelect;
+export type SyncRun = typeof syncRun.$inferSelect;
 
 /** Full-text search vector for deals (used in raw SQL queries). */
 export const dealSearchVector = sql`to_tsvector('english', coalesce(${deal.title}, '') || ' ' || coalesce(${deal.details}, '') || ' ' || coalesce(${deal.conditions}, ''))`;

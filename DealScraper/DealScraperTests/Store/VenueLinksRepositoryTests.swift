@@ -35,6 +35,9 @@ struct VenueLinksRepositoryTests {
         #expect(found.whatsOn == "https://pub.example.com/whats-on")
         #expect(found.instagram == "https://instagram.com/pub")
         #expect(found.facebook == nil)
+
+        let venue = try #require(try VenueRepository(store: store).find(id: venueId))
+        #expect(venue.lastUpdate != nil)
     }
 
     @Test func setMissingFillsOnlyEmptyFieldsOnExistingRow() throws {

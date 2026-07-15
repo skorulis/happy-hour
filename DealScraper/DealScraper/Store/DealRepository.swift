@@ -84,7 +84,12 @@ final class DealRepository {
     @discardableResult
     func delete(id: Int64) throws -> Bool {
         try store.dbQueue.write { db in
-            try Deal.deleteOne(db, key: id)
+            guard let deal = try Deal.fetchOne(db, key: id) else { return false }
+            let deleted = try Deal.deleteOne(db, key: id)
+            if deleted {
+                try Venue.touchLastUpdate(db, venueId: deal.venueId)
+            }
+            return deleted
         }
     }
 
@@ -98,8 +103,8 @@ final class DealRepository {
                 .filter(Column("venue_id") == venueId)
                 .deleteAll(db)
             try db.execute(
-                sql: "UPDATE venue SET last_extraction_date = NULL WHERE id = ?",
-                arguments: [venueId]
+                sql: "UPDATE venue SET last_extraction_date = NULL, last_update = ? WHERE id = ?",
+                arguments: [Date(), venueId]
             )
             return count
         }
@@ -131,6 +136,7 @@ final class DealRepository {
                 }
             }
 
+            try Venue.touchLastUpdate(db, venueId: venueId)
             return deals.count
         }
     }
@@ -169,6 +175,7 @@ final class DealRepository {
                 newSchedules.append(newSchedule)
             }
 
+            try Venue.touchLastUpdate(db, venueId: original.venueId)
             return DealWithSchedules(deal: newDeal, schedules: newSchedules)
         }
     }
@@ -178,6 +185,7 @@ final class DealRepository {
             guard var deal = try Deal.fetchOne(db, key: id) else { return }
             deal.status = status
             try deal.update(db)
+            try Venue.touchLastUpdate(db, venueId: deal.venueId)
         }
     }
 
@@ -221,6 +229,8 @@ final class DealRepository {
                     try newSchedule.insert(db)
                 }
             }
+
+            try Venue.touchLastUpdate(db, venueId: deal.venueId)
         }
     }
 }
