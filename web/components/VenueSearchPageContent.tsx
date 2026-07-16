@@ -11,14 +11,11 @@ export function VenueSearchPageContent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
+  const trimmedQuery = query.trim();
+  const hasQuery = trimmedQuery.length > 0;
 
   useEffect(() => {
-    const trimmed = query.trim();
-    if (!trimmed) {
-      setVenues([]);
-      setLoading(false);
-      setError(null);
-      setHasSearched(false);
+    if (!hasQuery) {
       return;
     }
 
@@ -29,7 +26,7 @@ export function VenueSearchPageContent() {
 
       try {
         const params = new URLSearchParams();
-        params.set("q", trimmed);
+        params.set("q", trimmedQuery);
         params.set("limit", "20");
 
         const response = await fetch(`/api/venues?${params.toString()}`, {
@@ -59,7 +56,7 @@ export function VenueSearchPageContent() {
       controller.abort();
       clearTimeout(timeout);
     };
-  }, [query]);
+  }, [hasQuery, trimmedQuery]);
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-10">
@@ -78,14 +75,14 @@ export function VenueSearchPageContent() {
         className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none ring-amber-500 focus:ring-2 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-50"
       />
 
-      {loading ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">Searching...</p>
-      ) : error ? (
-        <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-      ) : !hasSearched ? (
+      {!hasQuery ? (
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
           Start typing to search venues.
         </p>
+      ) : loading || !hasSearched ? (
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">Searching...</p>
+      ) : error ? (
+        <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
       ) : venues.length === 0 ? (
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
           No venues found.

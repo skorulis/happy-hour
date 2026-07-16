@@ -66,11 +66,11 @@ describe("parseWherePath", () => {
 describe("where paths", () => {
   it("builds list paths from where and always uses /map for map", () => {
     expect(whereToListPath(suburbWhere)).toBe("/abbotsbury-2176");
-    expect(whereToMapPath(suburbWhere)).toBe("/map");
+    expect(whereToMapPath()).toBe("/map");
     expect(whereToListPath(nearMeWhere)).toBe("/nearby");
-    expect(whereToMapPath(nearMeWhere)).toBe("/map");
+    expect(whereToMapPath()).toBe("/map");
     expect(whereToListPath({ kind: "anywhere" })).toBe("/");
-    expect(whereToMapPath({ kind: "anywhere" })).toBe("/map");
+    expect(whereToMapPath()).toBe("/map");
   });
 });
 

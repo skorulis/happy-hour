@@ -263,15 +263,11 @@ export function SearchBar({
     setActiveSegment(null);
   }
 
-  useEffect(() => {
-    if (!activeSegment || segments.includes(activeSegment)) {
-      return;
-    }
-    setActiveSegment(null);
-  }, [activeSegment, segments]);
+  const openSegment =
+    activeSegment && segments.includes(activeSegment) ? activeSegment : null;
 
   useEffect(() => {
-    if (!activeSegment) {
+    if (!openSegment) {
       return;
     }
 
@@ -296,9 +292,9 @@ export function SearchBar({
       document.removeEventListener("mousedown", handlePointerDown);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [activeSegment]);
+  }, [openSegment]);
 
-  const hasOpenSegment = activeSegment !== null;
+  const hasOpenSegment = openSegment !== null;
   const handleWhereChange = onWhereChange ?? (() => {});
 
   return (
@@ -327,7 +323,7 @@ export function SearchBar({
                 label={segment.label}
                 value={segment.value}
                 isPlaceholder={segment.isPlaceholder}
-                isActive={activeSegment === segment.id}
+                isActive={openSegment === segment.id}
                 hasOpenSegment={hasOpenSegment}
                 onClick={() => toggleSegment(segment.id)}
                 className={desktopSegmentClassName(
@@ -354,12 +350,12 @@ export function SearchBar({
                   label={segment.label}
                   value={segment.value}
                   isPlaceholder={segment.isPlaceholder}
-                  isActive={activeSegment === segment.id}
+                  isActive={openSegment === segment.id}
                   hasOpenSegment={hasOpenSegment}
                   onClick={() => toggleSegment(segment.id)}
                   className="w-full px-6"
                 />
-                {activeSegment === segment.id ? (
+                {openSegment === segment.id ? (
                   <div className="border-t border-zinc-200 px-4 py-3 dark:border-zinc-700">
                     <ActivePanel
                       segment={segment.id}
@@ -377,12 +373,12 @@ export function SearchBar({
         </div>
 
         {/* Desktop: shared popover */}
-        {activeSegment && segments.includes(activeSegment) ? (
+        {openSegment ? (
           <div
-            className={`absolute top-full z-20 mt-3 hidden md:block ${desktopPopoverAlign(activeSegment, segments)}`}
+            className={`absolute top-full z-20 mt-3 hidden md:block ${desktopPopoverAlign(openSegment, segments)}`}
           >
             <ActivePanel
-              segment={activeSegment}
+              segment={openSegment}
               filters={filters}
               onDaysApply={onDaysApply}
               onWhereChange={handleWhereChange}

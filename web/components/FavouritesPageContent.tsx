@@ -15,12 +15,10 @@ export function FavouritesPageContent() {
   const [error, setError] = useState<string | null>(null);
 
   const favoriteIdsKey = favoriteIds.join(",");
+  const hasFavorites = favoriteIds.length > 0;
 
   useEffect(() => {
-    if (favoriteIds.length === 0) {
-      setFetchedDeals([]);
-      setLoading(false);
-      setError(null);
+    if (!hasFavorites) {
       return;
     }
 
@@ -60,11 +58,14 @@ export function FavouritesPageContent() {
     void loadFavouriteDeals();
 
     return () => controller.abort();
-  }, [favoriteIds.length, favoriteIdsKey]);
+  }, [favoriteIdsKey, hasFavorites]);
 
   const deals = useMemo(
-    () => fetchedDeals.filter((deal) => isFavorite(deal.id)),
-    [fetchedDeals, favoriteIds, isFavorite],
+    () =>
+      hasFavorites
+        ? fetchedDeals.filter((deal) => isFavorite(deal.id))
+        : [],
+    [fetchedDeals, hasFavorites, isFavorite],
   );
 
   return (
@@ -75,19 +76,19 @@ export function FavouritesPageContent() {
         </h1>
       </header>
 
-      {loading ? (
+      {hasFavorites && loading ? (
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
           Loading your favourite deals...
         </p>
       ) : null}
 
-      {error ? (
+      {hasFavorites && error ? (
         <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">
           {error}
         </p>
       ) : null}
 
-      {!loading && !error ? (
+      {(!hasFavorites || (!loading && !error)) ? (
         <WeeklyDealsSection
           deals={deals}
           showVenue

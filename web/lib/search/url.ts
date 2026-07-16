@@ -72,7 +72,7 @@ export function whereToListPath(where: WhereFilter): string {
 }
 
 /** Map is always `/map` — it uses viewport bounds, not the where filter. */
-export function whereToMapPath(_where?: WhereFilter): string {
+export function whereToMapPath(): string {
   return "/map";
 }
 
@@ -81,7 +81,7 @@ export function filtersToBrowserPath(
   pathname: string,
 ): string {
   const parsed = parseWherePath(pathname);
-  return parsed.map ? whereToMapPath(filters.where) : whereToListPath(filters.where);
+  return parsed.map ? whereToMapPath() : whereToListPath(filters.where);
 }
 
 export function pathnameToMapHref(

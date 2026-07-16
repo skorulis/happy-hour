@@ -109,7 +109,6 @@ export function useSearchFilters(options?: {
   const [deals, setDeals] = useState<DealSearchResult[]>([]);
   const [nearbyDeals, setNearbyDeals] = useState<DealSearchResult[]>([]);
   const [loadingDeals, setLoadingDeals] = useState(false);
-  const [locating, setLocating] = useState(() => isNearMePending(initialWhere));
   const [error, setError] = useState<string | null>(null);
   const [viewportBounds, setViewportBoundsState] = useState<MapBounds | null>(
     null,
@@ -125,6 +124,11 @@ export function useSearchFilters(options?: {
   const debouncedWhatKey = debouncedWhat.join("\0");
   const daysKey = filters.days.join(",");
   const whereKey = whereFilterKey(filters.where);
+  const nearMePending = isNearMePending(filters.where);
+  const geolocationUnavailable =
+    typeof navigator !== "undefined" && !navigator.geolocation;
+  const locating =
+    nearMePending && !geolocationUnavailable && error === null;
   const scheduleKey = timeRangeKey(filters.timeRange);
   const viewportBoundsKey = viewportBounds ? boundsKey(viewportBounds) : "";
   const locationKey = mapViewport ? viewportBoundsKey : whereKey;
@@ -205,30 +209,24 @@ export function useSearchFilters(options?: {
     }, 250);
 
     return () => clearTimeout(timeout);
-  }, [whatKey]);
+  }, [whatKey, filters.what]);
 
   useEffect(() => {
-    if (!isNearMePending(filters.where)) {
-      setLocating(false);
+    if (!nearMePending) {
       return;
     }
 
-    if (!navigator.geolocation) {
-      setLocating(false);
-      setError("Location is not supported by your browser.");
+    if (geolocationUnavailable) {
       return;
     }
 
     let cancelled = false;
-    setLocating(true);
-    setError(null);
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
         if (cancelled) {
           return;
         }
-        setLocating(false);
         setFilters((current) => {
           if (current.where.kind !== "nearMe") {
             return current;
@@ -247,7 +245,6 @@ export function useSearchFilters(options?: {
         if (cancelled) {
           return;
         }
-        setLocating(false);
         setError(
           geoError.code === geoError.PERMISSION_DENIED
             ? "Location permission denied."
@@ -260,7 +257,7 @@ export function useSearchFilters(options?: {
     return () => {
       cancelled = true;
     };
-  }, [whereKey]);
+  }, [whereKey, nearMePending, geolocationUnavailable]);
 
   useEffect(() => {
     const nextPath = filtersToBrowserPath(filters, pathname);
@@ -285,6 +282,7 @@ export function useSearchFilters(options?: {
     }
   }, [
     debouncedWhatKey,
+    debouncedWhat,
     daysKey,
     scheduleKey,
     whereKey,
@@ -347,7 +345,17 @@ export function useSearchFilters(options?: {
     void loadDeals();
 
     return () => controller.abort();
-  }, [mapViewport, daysKey, scheduleKey, debouncedWhatKey, locationKey]);
+  }, [
+    mapViewport,
+    daysKey,
+    scheduleKey,
+    debouncedWhatKey,
+    debouncedWhat,
+    filterKey,
+    filters,
+    locationKey,
+    viewportBounds,
+  ]);
 
   function handleDaysApply(days: number[], timeRange: TimeRange) {
     setFilters((current) => ({
@@ -362,6 +370,9 @@ export function useSearchFilters(options?: {
       ...current,
       where,
     }));
+    if (where.kind === "nearMe" && !isNearMeReady(where)) {
+      setError(null);
+    }
   }
 
   function handleWhatChange(what: string[]) {
@@ -382,6 +393,11 @@ export function useSearchFilters(options?: {
       ? { lat: filters.where.lat, lng: filters.where.lng }
       : null;
   const isEmpty = !loadingDeals && !locating && totalDeals === 0;
+  const geolocationError =
+    nearMePending && geolocationUnavailable
+      ? "Location is not supported by your browser."
+      : null;
+  const displayError = error ?? geolocationError;
   const resultsTitle =
     filters.where.kind === "suburb"
       ? `Deals in ${filters.where.suburb.name}`
@@ -399,7 +415,7 @@ export function useSearchFilters(options?: {
     isEmpty,
     loadingDeals,
     locating,
-    error,
+    error: displayError,
     resultsTitle,
     handleDaysApply,
     handleWhereChange,

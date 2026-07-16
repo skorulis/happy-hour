@@ -5,22 +5,26 @@ type DealScheduleLineProps = {
   className?: string;
 };
 
-function scheduleIconForText(text: string) {
-  return /^(From|Until|\d)/.test(text) ? CalendarDays : Clock;
+function usesCalendarIcon(text: string) {
+  return /^(From|Until|\d)/.test(text);
 }
 
 export function DealScheduleLine({ text, className = "" }: DealScheduleLineProps) {
-  const Icon = scheduleIconForText(text);
+  const iconProps = {
+    "aria-hidden": true as const,
+    className: "h-3.5 w-3.5 shrink-0",
+    strokeWidth: 1.75,
+  };
 
   return (
     <span
       className={`inline-flex min-w-0 items-center gap-1.5 text-sm text-zinc-500 dark:text-zinc-400 ${className}`}
     >
-      <Icon
-        aria-hidden
-        className="h-3.5 w-3.5 shrink-0"
-        strokeWidth={1.75}
-      />
+      {usesCalendarIcon(text) ? (
+        <CalendarDays {...iconProps} />
+      ) : (
+        <Clock {...iconProps} />
+      )}
       <span className="min-w-0">{text}</span>
     </span>
   );
