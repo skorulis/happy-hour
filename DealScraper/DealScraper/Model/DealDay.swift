@@ -38,7 +38,7 @@ nonisolated enum DealDay: String, CaseIterable {
         let tokenPattern = dayTokens
             .map { NSRegularExpression.escapedPattern(for: $0) }
             .joined(separator: "|")
-        let pattern = #"\b(\#(tokenPattern))\s*(?:-|–|to)\s*(\#(tokenPattern))\b"#
+        let pattern = #"\b(\#(tokenPattern))\s*(?:-|–|—|to|til|till|'til|until|through|thru)\s*(\#(tokenPattern))\b"#
         return try? NSRegularExpression(pattern: pattern, options: .caseInsensitive)
     }()
 

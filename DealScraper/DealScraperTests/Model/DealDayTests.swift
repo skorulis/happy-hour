@@ -46,6 +46,7 @@ struct DealDayTests {
     @Test func parseAllExpandsDayRanges() {
         #expect(DealDay.parseAll(in: "MONDAY - FRIDAY") == [.monday, .tuesday, .wednesday, .thursday, .friday])
         #expect(DealDay.parseAll(in: "MONDAY to FRIDAY") == [.monday, .tuesday, .wednesday, .thursday, .friday])
+        #expect(DealDay.parseAll(in: "MONDAY TILL FRIDAY*") == [.monday, .tuesday, .wednesday, .thursday, .friday])
         #expect(DealDay.parseAll(in: "MON - FRI") == [.monday, .tuesday, .wednesday, .thursday, .friday])
         #expect(DealDay.parseAll(in: "MON-FRI") == [.monday, .tuesday, .wednesday, .thursday, .friday])
         #expect(DealDay.parseAll(in: "FRI - MON") == [.monday, .friday, .saturday, .sunday])
