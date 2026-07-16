@@ -6,7 +6,21 @@ import type { SearchFilters } from "@/components/search/SearchBar";
 import type { TimeRange } from "@/components/search/DayPicker";
 import type { WhereFilter } from "@/components/search/SuburbSelect";
 import type { DealSearchResult, SuburbSearchResult } from "@/lib/search/queries";
-import { boundsKey, type MapBounds } from "@/lib/search/bounds";
+import {
+  boundsFromCenterRadiusKm,
+  boundsKey,
+  type MapBounds,
+} from "@/lib/search/bounds";
+import {
+  markMapEntryCameraApplied,
+  readPendingMapEntryCamera,
+  readSeededMapBounds,
+  rememberSeededMapBounds,
+} from "@/lib/search/map-entry";
+import {
+  NEAR_ME_MAP_RADIUS_KM,
+  nearbySuburbRadiusKm,
+} from "@/lib/search/nearby-radius";
 import {
   filtersToApiSearchParams,
   filtersToBrowserPath,
@@ -52,7 +66,9 @@ function mergeDeals(
   return merged;
 }
 
-function isNearMeReady(where: WhereFilter): boolean {
+function isNearMeReady(
+  where: WhereFilter,
+): where is { kind: "nearMe"; lat: number; lng: number } {
   return (
     where.kind === "nearMe" &&
     where.lat !== undefined &&
@@ -111,13 +127,28 @@ export function useSearchFilters(options?: {
   const [loadingDeals, setLoadingDeals] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [viewportBounds, setViewportBoundsState] = useState<MapBounds | null>(
-    null,
+    () => (mapViewport ? readSeededMapBounds() : null),
   );
+  const [initialMapBounds, setInitialMapBounds] = useState<MapBounds | null>(
+    () => (mapViewport ? readSeededMapBounds() : null),
+  );
+  const nearbyCameraPendingRef = useRef(false);
 
   const setViewportBounds = useCallback((bounds: MapBounds) => {
     setViewportBoundsState((current) =>
       current && boundsKey(current) === boundsKey(bounds) ? current : bounds,
     );
+  }, []);
+
+  const applyInitialMapBounds = useCallback((bounds: MapBounds) => {
+    rememberSeededMapBounds(bounds);
+    setViewportBoundsState((current) =>
+      current && boundsKey(current) === boundsKey(bounds) ? current : bounds,
+    );
+    setInitialMapBounds((current) =>
+      current && boundsKey(current) === boundsKey(bounds) ? current : bounds,
+    );
+    markMapEntryCameraApplied();
   }, []);
 
   const whatKey = filters.what.join("\0");
@@ -134,6 +165,93 @@ export function useSearchFilters(options?: {
   const locationKey = mapViewport ? viewportBoundsKey : whereKey;
   const filterKey = `${daysKey}|${scheduleKey}|${debouncedWhatKey}`;
   const filterKeyRef = useRef(filterKey);
+
+  useEffect(() => {
+    if (!mapViewport) {
+      return;
+    }
+
+    const entry = readPendingMapEntryCamera();
+    if (!entry) {
+      return;
+    }
+
+    if (entry.source.kind === "nearby") {
+      nearbyCameraPendingRef.current = true;
+      setFilters((current) => ({
+        ...current,
+        where: { kind: "nearMe" },
+      }));
+      setError(null);
+      return;
+    }
+
+    if (entry.source.kind === "anywhere") {
+      markMapEntryCameraApplied();
+      return;
+    }
+
+    if (entry.source.kind !== "suburb") {
+      return;
+    }
+
+    const slug = entry.source.slug;
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const suburb = await fetchSuburbBySlug(slug);
+        if (cancelled || !suburb || suburb.lat == null || suburb.lng == null) {
+          return;
+        }
+
+        const bounds = boundsFromCenterRadiusKm(
+          suburb.lat,
+          suburb.lng,
+          nearbySuburbRadiusKm(suburb.sqkm),
+        );
+        if (!bounds || cancelled) {
+          return;
+        }
+
+        applyInitialMapBounds(bounds);
+        setFilters((current) => ({
+          ...current,
+          where: {
+            kind: "suburb",
+            id: suburb.id,
+            suburb,
+          },
+        }));
+      } catch {
+        // Keep default map camera if suburb lookup fails.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [mapViewport, applyInitialMapBounds]);
+
+  useEffect(() => {
+    if (!mapViewport || !nearbyCameraPendingRef.current) {
+      return;
+    }
+
+    if (!isNearMeReady(filters.where)) {
+      return;
+    }
+
+    const bounds = boundsFromCenterRadiusKm(
+      filters.where.lat,
+      filters.where.lng,
+      NEAR_ME_MAP_RADIUS_KM,
+    );
+    nearbyCameraPendingRef.current = false;
+    if (bounds) {
+      applyInitialMapBounds(bounds);
+    }
+  }, [mapViewport, whereKey, filters.where, applyInitialMapBounds]);
 
   useEffect(() => {
     function syncFromBrowserUrl() {
@@ -417,6 +535,7 @@ export function useSearchFilters(options?: {
     locating,
     error: displayError,
     resultsTitle,
+    initialMapBounds,
     handleDaysApply,
     handleWhereChange,
     handleWhatChange,

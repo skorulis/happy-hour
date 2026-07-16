@@ -21,7 +21,7 @@ export type WherePathKind =
   | { kind: "nearby"; map: boolean }
   | { kind: "suburb"; slug: string; map: boolean };
 
-function stripLocationParams(params: URLSearchParams): URLSearchParams {
+export function stripLocationParams(params: URLSearchParams): URLSearchParams {
   const filtered = new URLSearchParams(params.toString());
   filtered.delete("view");
   filtered.delete("suburbId");

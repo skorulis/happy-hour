@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  boundsFromCenterRadiusKm,
   boundsKey,
   boundsToApiParams,
   isValidBounds,
@@ -92,6 +93,34 @@ describe("boundsToApiParams", () => {
     expect(params.get("south")).toBe("-33.88");
     expect(params.get("east")).toBe("151.22");
     expect(params.get("west")).toBe("151.2");
+  });
+});
+
+describe("boundsFromCenterRadiusKm", () => {
+  it("returns a valid box around the center", () => {
+    const bounds = boundsFromCenterRadiusKm(-33.87, 151.21, 5);
+
+    expect(bounds).not.toBe(null);
+    expect(isValidBounds(bounds!)).toBe(true);
+    expect(bounds!.south).toBeLessThan(-33.87);
+    expect(bounds!.north).toBeGreaterThan(-33.87);
+    expect(bounds!.west).toBeLessThan(151.21);
+    expect(bounds!.east).toBeGreaterThan(151.21);
+  });
+
+  it("scales with radius", () => {
+    const small = boundsFromCenterRadiusKm(-33.87, 151.21, 1)!;
+    const large = boundsFromCenterRadiusKm(-33.87, 151.21, 10)!;
+
+    expect(large.north - large.south).toBeGreaterThan(small.north - small.south);
+    expect(large.east - large.west).toBeGreaterThan(small.east - small.west);
+  });
+
+  it("rejects invalid inputs", () => {
+    expect(boundsFromCenterRadiusKm(NaN, 151.21, 5)).toBe(null);
+    expect(boundsFromCenterRadiusKm(-33.87, 151.21, 0)).toBe(null);
+    expect(boundsFromCenterRadiusKm(-33.87, 151.21, -1)).toBe(null);
+    expect(boundsFromCenterRadiusKm(100, 151.21, 5)).toBe(null);
   });
 });
 

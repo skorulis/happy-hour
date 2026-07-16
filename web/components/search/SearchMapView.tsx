@@ -44,6 +44,7 @@ type SearchMapViewProps = {
   fullScreen?: boolean;
   onViewportIdle?: (bounds: MapBounds) => void;
   autoFitBounds?: boolean;
+  initialBounds?: MapBounds | null;
 };
 
 type SelectedMarker = number | "user" | null;
@@ -89,6 +90,35 @@ function FitBounds({
     }
     map.fitBounds(bounds, { top: 48, right: 48, bottom: 48, left: 48 });
   }, [map, venueGroups, userLocation]);
+
+  return null;
+}
+
+function InitialBounds({ bounds }: { bounds: MapBounds }) {
+  const map = useMap();
+  const appliedKeyRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!map) {
+      return;
+    }
+
+    const key = boundsKey(bounds);
+    if (appliedKeyRef.current === key) {
+      return;
+    }
+
+    appliedKeyRef.current = key;
+    map.fitBounds(
+      {
+        north: bounds.north,
+        south: bounds.south,
+        east: bounds.east,
+        west: bounds.west,
+      },
+      { top: 48, right: 48, bottom: 48, left: 48 },
+    );
+  }, [map, bounds]);
 
   return null;
 }
@@ -290,6 +320,7 @@ export function SearchMapView({
   fullScreen = false,
   onViewportIdle,
   autoFitBounds = true,
+  initialBounds = null,
 }: SearchMapViewProps) {
   const [selectedMarker, setSelectedMarker] = useState<SelectedMarker>(null);
   const now = useCurrentMinute();
@@ -328,6 +359,10 @@ export function SearchMapView({
         >
           {autoFitBounds ? (
             <FitBounds venueGroups={venueGroups} userLocation={userLocation} />
+          ) : null}
+
+          {!autoFitBounds && initialBounds ? (
+            <InitialBounds bounds={initialBounds} />
           ) : null}
 
           {onViewportIdle ? (

@@ -19,7 +19,10 @@ import {
   currentMinuteOfDay,
 } from "@/lib/search/schedule";
 import { expandKeywords } from "@data/products";
-import { nearbySuburbRadiusKm } from "@/lib/search/nearby-radius";
+import {
+  NEAR_ME_RADIUS_KM,
+  nearbySuburbRadiusKm,
+} from "@/lib/search/nearby-radius";
 import { parseWhatTokens } from "@/lib/search/url";
 import {
   parseSuburbWhereSlug,
@@ -32,6 +35,9 @@ export type SuburbSearchResult = {
   id: number;
   name: string;
   postcode: string | null;
+  lat?: number | null;
+  lng?: number | null;
+  sqkm?: number | null;
 };
 
 export type VenueSearchResult = {
@@ -215,7 +221,6 @@ function textSearchFilterForWhatQuery(query: string): SQL {
 
 const dealSearchVector = sql`to_tsvector('english', coalesce(${deal.title}, '') || ' ' || coalesce(${deal.details}, '') || ' ' || coalesce(${deal.conditions}, ''))`;
 
-const DEFAULT_NEAR_ME_RADIUS_KM = 30;
 
 function distanceKmExpression(lat: number, lng: number): SQL {
   return sql`(
@@ -290,6 +295,9 @@ export async function findSuburbByWhereSlug(
       id: suburb.id,
       name: suburb.name,
       postcode: suburb.postcode,
+      lat: suburb.lat,
+      lng: suburb.lng,
+      sqkm: suburb.sqkm,
     })
     .from(suburb)
     .where(postcode === null ? isNull(suburb.postcode) : eq(suburb.postcode, postcode));
@@ -393,7 +401,7 @@ export async function searchDeals(
       nearLocationFilter(
         options.lat!,
         options.lng!,
-        options.radiusKm ?? DEFAULT_NEAR_ME_RADIUS_KM,
+        options.radiusKm ?? NEAR_ME_RADIUS_KM,
       ),
     );
   }

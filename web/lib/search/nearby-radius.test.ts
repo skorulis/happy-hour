@@ -1,8 +1,22 @@
 import { describe, expect, it } from "vitest";
 import {
+  NEAR_ME_MAP_RADIUS_KM,
+  NEAR_ME_RADIUS_KM,
   NEARBY_SUBURB_BUFFER_KM,
   nearbySuburbRadiusKm,
 } from "./nearby-radius";
+
+describe("NEAR_ME_RADIUS_KM", () => {
+  it("is the fixed near-me search radius", () => {
+    expect(NEAR_ME_RADIUS_KM).toBe(30);
+  });
+});
+
+describe("NEAR_ME_MAP_RADIUS_KM", () => {
+  it("is the fixed nearby map viewport radius", () => {
+    expect(NEAR_ME_MAP_RADIUS_KM).toBe(2);
+  });
+});
 
 describe("nearbySuburbRadiusKm", () => {
   it("uses only the buffer when suburb area is missing or invalid", () => {

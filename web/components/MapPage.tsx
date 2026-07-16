@@ -30,6 +30,7 @@ export function MapPage({ initialWhere }: MapPageProps) {
     allVenueGroups,
     userLocation,
     isEmpty,
+    initialMapBounds,
     handleDaysApply,
     handleWhatChange,
     setViewportBounds,
@@ -55,6 +56,7 @@ export function MapPage({ initialWhere }: MapPageProps) {
         fullScreen
         onViewportIdle={setViewportBounds}
         autoFitBounds={false}
+        initialBounds={initialMapBounds}
       />
     </div>
   );

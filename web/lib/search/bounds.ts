@@ -98,3 +98,42 @@ export function boundsFromGoogleMap(map: google.maps.Map): MapBounds | null {
 
   return isValidBounds(bounds) ? bounds : null;
 }
+
+const KM_PER_DEG_LAT = 111;
+
+/**
+ * Approximate bounding box for a circle of `radiusKm` around a point.
+ * Used to seed the map viewport to match circular list search areas.
+ */
+export function boundsFromCenterRadiusKm(
+  lat: number,
+  lng: number,
+  radiusKm: number,
+): MapBounds | null {
+  if (
+    !Number.isFinite(lat) ||
+    !Number.isFinite(lng) ||
+    !Number.isFinite(radiusKm) ||
+    radiusKm <= 0 ||
+    lat < -90 ||
+    lat > 90 ||
+    lng < -180 ||
+    lng > 180
+  ) {
+    return null;
+  }
+
+  const latDelta = radiusKm / KM_PER_DEG_LAT;
+  const cosLat = Math.cos((lat * Math.PI) / 180);
+  const lngDelta =
+    Math.abs(cosLat) < 1e-6 ? 180 : radiusKm / (KM_PER_DEG_LAT * Math.abs(cosLat));
+
+  const bounds: MapBounds = {
+    north: Math.min(90, lat + latDelta),
+    south: Math.max(-90, lat - latDelta),
+    east: Math.min(180, lng + lngDelta),
+    west: Math.max(-180, lng - lngDelta),
+  };
+
+  return isValidBounds(bounds) ? bounds : null;
+}
