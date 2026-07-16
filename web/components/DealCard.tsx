@@ -62,6 +62,8 @@ export function DealCard({
     ? deal.imageUrl
     : null;
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const showFooterActions =
+    Boolean(deal.sourceUrl) || showReportButton || Boolean(onToggleFavorite);
 
   return (
     <article
@@ -71,47 +73,33 @@ export function DealCard({
       }`}
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-        <div className="flex min-w-0 flex-1 gap-3">
-          <DealProductIcon deal={deal} className="hidden sm:inline-flex" />
-          <div className="min-w-0 flex-1 space-y-2">
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex min-w-0 flex-1 items-start gap-3">
-                <DealProductIcon deal={deal} className="sm:hidden" />
-                <div className="min-w-0 space-y-2">
-                  <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                    {deal.title || "Untitled deal"}
-                  </h3>
-                  <DealScheduleLine text={scheduleLine} />
-                </div>
-              </div>
-              {onToggleFavorite ? (
-                <FavoriteDealButton
-                  isFavorited={isFavorited ?? false}
-                  onToggle={onToggleFavorite}
-                />
-              ) : null}
-            </div>
-            {showVenue ? (
-              <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                <Link
-                  href={venuePath(deal.venue.suburbName, deal.venue.name)}
-                  className="font-medium text-amber-700 hover:underline dark:text-amber-400"
-                >
-                  {deal.venue.name}
-                </Link>
-              </p>
-            ) : null}
-            {deal.details ? (
-              <MarkdownText className="text-sm text-zinc-700 dark:text-zinc-300">
-                {deal.details}
-              </MarkdownText>
-            ) : null}
-            {deal.conditions ? (
-              <MarkdownText className="text-sm text-zinc-500 dark:text-zinc-400">
-                {deal.conditions}
-              </MarkdownText>
-            ) : null}
+        <div className="min-w-0 flex-1 space-y-2">
+          <div className="space-y-2">
+            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+              {deal.title || "Untitled deal"}
+            </h3>
+            <DealScheduleLine text={scheduleLine} />
           </div>
+          {showVenue ? (
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              <Link
+                href={venuePath(deal.venue.suburbName, deal.venue.name)}
+                className="font-medium text-amber-700 hover:underline dark:text-amber-400"
+              >
+                {deal.venue.name}
+              </Link>
+            </p>
+          ) : null}
+          {deal.details ? (
+            <MarkdownText className="text-sm text-zinc-700 dark:text-zinc-300">
+              {deal.details}
+            </MarkdownText>
+          ) : null}
+          {deal.conditions ? (
+            <MarkdownText className="text-sm text-zinc-500 dark:text-zinc-400">
+              {deal.conditions}
+            </MarkdownText>
+          ) : null}
         </div>
 
         {creativeImageUrl ? (
@@ -137,9 +125,13 @@ export function DealCard({
               render={{ buttonPrev: () => null, buttonNext: () => null }}
             />
           </>
-        ) : null}
+        ) : (
+          <span className="inline-flex h-14 w-14 shrink-0 items-center justify-center self-start rounded-lg bg-amber-50 dark:bg-amber-950/40">
+            <DealProductIcon deal={deal} size={20} />
+          </span>
+        )}
       </div>
-      {deal.sourceUrl || showReportButton ? (
+      {showFooterActions ? (
         <div
           className={`mt-4 flex items-center gap-2 ${deal.sourceUrl ? "justify-between" : "justify-end"}`}
         >
@@ -153,7 +145,17 @@ export function DealCard({
               View source
             </a>
           ) : null}
-          {showReportButton ? <FlagDealButton dealId={deal.id} /> : null}
+          {onToggleFavorite || showReportButton ? (
+            <div className="flex items-center gap-2">
+              {onToggleFavorite ? (
+                <FavoriteDealButton
+                  isFavorited={isFavorited ?? false}
+                  onToggle={onToggleFavorite}
+                />
+              ) : null}
+              {showReportButton ? <FlagDealButton dealId={deal.id} /> : null}
+            </div>
+          ) : null}
         </div>
       ) : null}
     </article>
