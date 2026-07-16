@@ -1,5 +1,6 @@
 "use client";
 
+import { track } from "@/lib/analytics/client";
 import { navIconPillClassName } from "@/lib/navStyles";
 import {
   listHrefFromMapEntry,
@@ -7,7 +8,7 @@ import {
   readMapEntry,
   writeMapEntry,
 } from "@/lib/search/map-entry";
-import { pathnameToMapHref } from "@/lib/search/url";
+import { parseWherePath, pathnameToMapHref } from "@/lib/search/url";
 import { List, MapPin } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -36,6 +37,13 @@ export function MapNavLink() {
     if (!isMapOpen) {
       writeMapEntry(mapEntryFromListPathname(pathname));
     }
+
+    const where = parseWherePath(pathname);
+    track("view_mode_toggled", {
+      from: isMapOpen ? "map" : "list",
+      to: isMapOpen ? "list" : "map",
+      where_kind: where.kind,
+    });
   }
 
   return (

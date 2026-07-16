@@ -1,3 +1,4 @@
+import { AnalyticsProvider } from "@/components/AnalyticsProvider";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteNav } from "@/components/SiteNav";
 import { siteUrl } from "@/lib/site-url";
@@ -32,11 +33,13 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <SiteNav />
-        <main className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-950">
-          {children}
-        </main>
-        <SiteFooter />
+        <AnalyticsProvider>
+          <SiteNav />
+          <main className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-950">
+            {children}
+          </main>
+          <SiteFooter />
+        </AnalyticsProvider>
       </body>
     </html>
   );

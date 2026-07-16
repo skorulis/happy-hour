@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { SearchFilters } from "@/components/search/SearchBar";
 import type { TimeRange } from "@/components/search/DayPicker";
 import type { WhereFilter } from "@/components/search/SuburbSelect";
+import { track } from "@/lib/analytics/client";
 import type { DealSearchResult, SuburbSearchResult } from "@/lib/search/queries";
 import {
   boundsFromCenterRadiusKm,
@@ -21,6 +22,7 @@ import {
   NEAR_ME_MAP_RADIUS_KM,
   nearbySuburbRadiusKm,
 } from "@/lib/search/nearby-radius";
+import { suburbWhereSlug } from "@/lib/search/slugs";
 import {
   filtersToApiSearchParams,
   filtersToBrowserPath,
@@ -450,7 +452,27 @@ export function useSearchFilters(options?: {
           setDeals(data.deals);
         }
 
-        setNearbyDeals(mapViewport ? [] : (data.nearbyDeals ?? []));
+        const nearby = mapViewport ? [] : (data.nearbyDeals ?? []);
+        setNearbyDeals(nearby);
+
+        if (filterChanged || !mapViewport) {
+          const whereKind = filters.where.kind;
+          track("search_performed", {
+            view: mapViewport ? "map" : "list",
+            where_kind: whereKind,
+            suburb_slug:
+              whereKind === "suburb"
+                ? suburbWhereSlug(
+                    filters.where.suburb.name,
+                    filters.where.suburb.postcode,
+                  )
+                : null,
+            days: filters.days.slice().sort((a, b) => a - b).join(","),
+            time: timeRangeKey(filters.timeRange) || null,
+            what: debouncedWhat.join(",") || null,
+            result_count: data.deals.length + nearby.length,
+          });
+        }
       } catch (fetchError) {
         if ((fetchError as Error).name !== "AbortError") {
           setError("Could not load deals.");

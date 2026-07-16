@@ -7,13 +7,14 @@ import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
 import { DealProductIcon } from "@/components/DealProductIcon";
 import type { VenueGroupedDeals } from "@/components/VenueSearchCard";
+import { track } from "@/lib/analytics/client";
 import { isCreativeImageUrl } from "@/lib/search/creative-url";
 import {
   formatDealDayBadge,
   formatDealTimeBadge,
   sortDealsActiveFirst,
 } from "@/lib/search/schedule";
-import { venuePath } from "@/lib/search/slugs";
+import { slugify, venuePath } from "@/lib/search/slugs";
 import { appendDaysParam } from "@/lib/search/url";
 import { venueHeroThumbUrl } from "@/lib/search/venue-hero-url";
 
@@ -135,6 +136,15 @@ export function VenueMapPopup({
         <Link
           href={venueHref}
           className="mt-auto block rounded-lg bg-gradient-to-b from-amber-500 to-amber-600 px-3 py-2 text-center text-sm font-semibold text-white transition-colors hover:from-amber-600 hover:to-amber-700"
+          onClick={() => {
+            track("venue_opened", {
+              venue_id: group.venue.id,
+              source: "map",
+              suburb_slug: group.venue.suburbName
+                ? slugify(group.venue.suburbName)
+                : null,
+            });
+          }}
         >
           View Listing
         </Link>

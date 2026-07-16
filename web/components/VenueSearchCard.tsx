@@ -1,11 +1,14 @@
+"use client";
+
 import Link from "next/link";
 import { MapPin } from "lucide-react";
 import { DealProductIcon } from "@/components/DealProductIcon";
 import { DealScheduleLine } from "@/components/DealScheduleLine";
+import { track } from "@/lib/analytics/client";
 import { formatDistanceKm } from "@/lib/search/distance";
 import type { DealSearchResult } from "@/lib/search/queries";
 import { formatDealScheduleLine } from "@/lib/search/schedule";
-import { venuePath } from "@/lib/search/slugs";
+import { slugify, venuePath } from "@/lib/search/slugs";
 import { appendDaysParam } from "@/lib/search/url";
 import { venueHeroThumbUrl } from "@/lib/search/venue-hero-url";
 
@@ -51,6 +54,15 @@ export function VenueSearchCard({ group, searchDays = [] }: VenueSearchCardProps
     <Link
       href={venueHref}
       className="block rounded-xl border border-zinc-100 bg-white p-5 shadow-sm transition-shadow hover:shadow-md dark:border-zinc-800 dark:bg-zinc-950"
+      onClick={() => {
+        track("venue_opened", {
+          venue_id: group.venue.id,
+          source: "list",
+          suburb_slug: group.venue.suburbName
+            ? slugify(group.venue.suburbName)
+            : null,
+        });
+      }}
     >
       <div className="flex gap-3">
         {imageUrl ? (

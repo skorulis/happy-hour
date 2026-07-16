@@ -13,6 +13,7 @@ import {
 } from "@vis.gl/react-google-maps";
 import type { VenueGroupedDeals } from "@/components/VenueSearchCard";
 import { VenueMapPopup } from "@/components/search/VenueMapPopup";
+import { track } from "@/lib/analytics/client";
 import { hasAnyDealActiveNow } from "@/lib/search/schedule";
 import {
   boundsFromGoogleMap,
@@ -215,8 +216,14 @@ function VenueMarker({
   );
 
   const handleMarkerClick = useCallback(() => {
+    if (!isSelected) {
+      track("map_marker_selected", {
+        venue_id: group.venue.id,
+        venue_name: group.venue.name,
+      });
+    }
     onSelect(group.venue.id);
-  }, [group.venue.id, onSelect]);
+  }, [group.venue.id, group.venue.name, isSelected, onSelect]);
 
   return (
     <>
