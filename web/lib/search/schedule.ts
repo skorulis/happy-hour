@@ -29,7 +29,11 @@ export const DAY_ABBREVIATIONS: Record<number, string> = {
 export const ALL_WEEKDAYS = [1, 2, 3, 4, 5, 6, 7];
 
 export function formatDaySelectionLabel(days: number[]): string {
-  if (days.length === 0 || days.length === ALL_WEEKDAYS.length) {
+  if (days.length === 0) {
+    return "Today";
+  }
+
+  if (days.length === ALL_WEEKDAYS.length) {
     return "Any day";
   }
 

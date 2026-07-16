@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  ALL_WEEKDAYS,
   formatCompactTimeRange,
+  formatDaySelectionLabel,
   formatDealDateRange,
   formatDealScheduleLine,
   formatDealTimeBadge,
@@ -20,6 +22,21 @@ function atLocalTime(
 ): Date {
   return new Date(year, month - 1, day, hours, minutes);
 }
+
+describe("formatDaySelectionLabel", () => {
+  it("labels empty selection as Today", () => {
+    expect(formatDaySelectionLabel([])).toBe("Today");
+  });
+
+  it("labels all weekdays as Any day", () => {
+    expect(formatDaySelectionLabel(ALL_WEEKDAYS)).toBe("Any day");
+  });
+
+  it("abbreviates one or two selected days", () => {
+    expect(formatDaySelectionLabel([5])).toBe("Thu");
+    expect(formatDaySelectionLabel([5, 6])).toBe("Thu, Fri");
+  });
+});
 
 describe("formatCompactTimeRange", () => {
   it("shows Until end time when starting at midnight", () => {

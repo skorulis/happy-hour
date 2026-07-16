@@ -140,12 +140,14 @@ export function parseDaysParam(value: string | null): number[] {
   return days;
 }
 
-export function appendDaysParam(path: string, days: number[]): string {
-  if (days.length === 0) {
-    return path;
-  }
+/** Empty day selection means implicit today for API fetches and venue links. */
+export function effectiveSearchDays(days: number[]): number[] {
+  return days.length === 0 ? [currentCalendarWeekday()] : days;
+}
 
-  return `${path}?days=${days.join(",")}`;
+export function appendDaysParam(path: string, days: number[]): string {
+  const effective = effectiveSearchDays(days);
+  return `${path}?days=${effective.join(",")}`;
 }
 
 export function initialVenueDay(days: number[]): number | null {
@@ -310,19 +312,14 @@ export function searchParamsToFilters(
 }
 
 /**
- * Filters for the main search page. When the URL has no explicit `days` filter,
- * defaults to today's weekday so the page shows today's deals rather than every day.
+ * Filters for the main search page. Empty `days` stays empty in state/URL
+ * (implicit today); API builders apply {@link effectiveSearchDays}.
  */
 export function searchParamsToInitialFilters(
   params: URLSearchParams,
   where: WhereFilter = { kind: "anywhere" },
 ): SearchFilters {
-  const filters = searchParamsToFilters(params, where);
-  const daysParam = params.get("days");
-  if (daysParam === null || daysParam.trim() === "") {
-    return { ...filters, days: [currentCalendarWeekday()] };
-  }
-  return filters;
+  return searchParamsToFilters(params, where);
 }
 
 /** API query params — includes suburbId or lat/lng for the deals endpoint. */
@@ -331,6 +328,10 @@ export function filtersToApiSearchParams(
   what: string[],
 ): URLSearchParams {
   const params = filtersToBrowserSearchParams(filters, what);
+
+  if (!params.has("days")) {
+    params.set("days", effectiveSearchDays(filters.days).join(","));
+  }
 
   if (filters.where.kind === "suburb") {
     params.set("suburbId", String(filters.where.id));
@@ -353,9 +354,7 @@ export function filtersToMapApiSearchParams(
 ): URLSearchParams {
   const params = new URLSearchParams();
 
-  if (filters.days.length > 0) {
-    params.set("days", filters.days.join(","));
-  }
+  params.set("days", effectiveSearchDays(filters.days).join(","));
   if (filters.timeRange) {
     if (filters.timeRange.startMinute !== undefined) {
       params.set("startMinute", String(filters.timeRange.startMinute));

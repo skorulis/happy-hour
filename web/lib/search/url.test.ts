@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { SearchFilters } from "@/components/search/SearchBar";
+import { currentCalendarWeekday } from "./schedule";
 import {
+  appendDaysParam,
+  effectiveSearchDays,
   filtersToApiSearchParams,
   filtersToBrowserPath,
   filtersToBrowserSearchParams,
@@ -8,6 +11,7 @@ import {
   parseWherePath,
   pathnameToListHref,
   pathnameToMapHref,
+  searchParamsToInitialFilters,
   whereToListPath,
   whereToMapPath,
 } from "./url";
@@ -82,6 +86,50 @@ describe("filtersToBrowserSearchParams", () => {
     expect(params.get("suburbName")).toBeNull();
     expect(params.get("lat")).toBeNull();
   });
+
+  it("omits empty days from the browser URL", () => {
+    const params = filtersToBrowserSearchParams(
+      { ...baseFilters, days: [] },
+      [],
+    );
+    expect(params.get("days")).toBeNull();
+  });
+});
+
+describe("effectiveSearchDays", () => {
+  it("defaults empty selection to today", () => {
+    expect(effectiveSearchDays([])).toEqual([currentCalendarWeekday()]);
+  });
+
+  it("passes through an explicit selection", () => {
+    expect(effectiveSearchDays([5, 6])).toEqual([5, 6]);
+  });
+});
+
+describe("searchParamsToInitialFilters", () => {
+  it("keeps empty days when the URL has no days param", () => {
+    const filters = searchParamsToInitialFilters(new URLSearchParams());
+    expect(filters.days).toEqual([]);
+  });
+
+  it("parses an explicit days param", () => {
+    const filters = searchParamsToInitialFilters(
+      new URLSearchParams("days=5,6"),
+    );
+    expect(filters.days).toEqual([5, 6]);
+  });
+});
+
+describe("appendDaysParam", () => {
+  it("appends today when days are empty", () => {
+    expect(appendDaysParam("/venue/foo", [])).toBe(
+      `/venue/foo?days=${currentCalendarWeekday()}`,
+    );
+  });
+
+  it("appends an explicit selection", () => {
+    expect(appendDaysParam("/venue/foo", [5])).toBe("/venue/foo?days=5");
+  });
 });
 
 describe("filtersToApiSearchParams", () => {
@@ -109,6 +157,14 @@ describe("filtersToApiSearchParams", () => {
     );
     expect(params.get("lat")).toBeNull();
     expect(params.get("lng")).toBeNull();
+  });
+
+  it("sends today when days are empty", () => {
+    const params = filtersToApiSearchParams(
+      { ...baseFilters, days: [] },
+      [],
+    );
+    expect(params.get("days")).toBe(String(currentCalendarWeekday()));
   });
 });
 
