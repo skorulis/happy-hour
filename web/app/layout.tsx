@@ -1,3 +1,4 @@
+import { SiteFooter } from "@/components/SiteFooter";
 import { SiteNav } from "@/components/SiteNav";
 import { siteUrl } from "@/lib/site-url";
 import type { Metadata } from "next";
@@ -35,6 +36,7 @@ export default function RootLayout({
         <main className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-950">
           {children}
         </main>
+        <SiteFooter />
       </body>
     </html>
   );
