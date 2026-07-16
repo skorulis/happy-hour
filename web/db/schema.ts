@@ -120,6 +120,25 @@ export const dealReport = pgTable(
   ],
 );
 
+export const favoriteDeal = pgTable(
+  "favorite_deal",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    dealId: integer("deal_id")
+      .notNull()
+      .references(() => deal.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("favorite_deal_user_deal_idx").on(table.userId, table.dealId),
+    index("favorite_deal_user_id_idx").on(table.userId),
+  ],
+);
+
 export const dealSchedule = pgTable(
   "deal_schedule",
   {
@@ -181,6 +200,7 @@ export const dealRelations = relations(deal, ({ one, many }) => ({
   }),
   schedules: many(dealSchedule),
   reports: many(dealReport),
+  favorites: many(favoriteDeal),
 }));
 
 export const dealReportRelations = relations(dealReport, ({ one }) => ({
@@ -190,6 +210,17 @@ export const dealReportRelations = relations(dealReport, ({ one }) => ({
   }),
   user: one(user, {
     fields: [dealReport.userId],
+    references: [user.id],
+  }),
+}));
+
+export const favoriteDealRelations = relations(favoriteDeal, ({ one }) => ({
+  deal: one(deal, {
+    fields: [favoriteDeal.dealId],
+    references: [deal.id],
+  }),
+  user: one(user, {
+    fields: [favoriteDeal.userId],
     references: [user.id],
   }),
 }));
@@ -207,6 +238,7 @@ export type VenueLinks = typeof venueLinks.$inferSelect;
 export type Deal = typeof deal.$inferSelect;
 export type DealSchedule = typeof dealSchedule.$inferSelect;
 export type DealReport = typeof dealReport.$inferSelect;
+export type FavoriteDeal = typeof favoriteDeal.$inferSelect;
 export type SyncRun = typeof syncRun.$inferSelect;
 
 /** Full-text search vector for deals (used in raw SQL queries). */

@@ -78,6 +78,13 @@
       "when": 1784098098825,
       "tag": "0010_wealthy_carlie_cooper",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1784171923308,
+      "tag": "0011_curved_the_hood",
+      "breakpoints": true
     }
   ]
 }
