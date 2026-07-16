@@ -1,12 +1,12 @@
 import { Suspense } from "react";
 import { SearchPage } from "@/components/SearchPage";
-import { ViewMapRedirect } from "@/components/ViewMapRedirect";
+import { SearchUrlRedirect } from "@/components/SearchUrlRedirect";
 
 export default function Home() {
   return (
     <>
       <Suspense fallback={null}>
-        <ViewMapRedirect />
+        <SearchUrlRedirect />
       </Suspense>
       <Suspense
         fallback={

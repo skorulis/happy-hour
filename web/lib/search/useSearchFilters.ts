@@ -1,15 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { SearchFilters } from "@/components/search/SearchBar";
 import type { TimeRange } from "@/components/search/DayPicker";
-import type { DealSearchResult } from "@/lib/search/queries";
+import type { WhereFilter } from "@/components/search/SuburbSelect";
+import type { DealSearchResult, SuburbSearchResult } from "@/lib/search/queries";
 import { boundsKey, type MapBounds } from "@/lib/search/bounds";
 import {
   filtersToApiSearchParams,
+  filtersToBrowserPath,
+  filtersToBrowserSearchParams,
   filtersToMapApiSearchParams,
-  filtersToSearchParams,
+  parseWherePath,
   searchParamsEqual,
   searchParamsToInitialFilters,
   timeRangeKey,
@@ -22,6 +25,10 @@ function currentSearchString(): string {
   return window.location.search.startsWith("?")
     ? window.location.search.slice(1)
     : window.location.search;
+}
+
+function currentPathname(): string {
+  return window.location.pathname;
 }
 
 function mergeDeals(
@@ -45,25 +52,64 @@ function mergeDeals(
   return merged;
 }
 
-export function useSearchFilters(options?: { mapViewport?: boolean }) {
+function isNearMeReady(where: WhereFilter): boolean {
+  return (
+    where.kind === "nearMe" &&
+    where.lat !== undefined &&
+    where.lng !== undefined
+  );
+}
+
+function isNearMePending(where: WhereFilter): boolean {
+  return where.kind === "nearMe" && !isNearMeReady(where);
+}
+
+async function fetchSuburbBySlug(
+  slug: string,
+  signal?: AbortSignal,
+): Promise<SuburbSearchResult | null> {
+  const params = new URLSearchParams({ slug });
+  const response = await fetch(`/api/suburbs/where?${params.toString()}`, {
+    signal,
+  });
+  if (response.status === 404) {
+    return null;
+  }
+  if (!response.ok) {
+    throw new Error("Failed to load suburb");
+  }
+  const data = (await response.json()) as { suburb: SuburbSearchResult };
+  return data.suburb;
+}
+
+export function useSearchFilters(options?: {
+  mapViewport?: boolean;
+  initialWhere?: WhereFilter;
+}) {
   const mapViewport = options?.mapViewport ?? false;
+  const initialWhere = options?.initialWhere ?? { kind: "anywhere" as const };
   const searchParams = useSearchParams();
   const pathname = usePathname();
+  const router = useRouter();
   const syncedParamsRef = useRef(
     typeof window === "undefined"
       ? searchParams.toString()
       : currentSearchString(),
   );
+  const syncedPathRef = useRef(
+    typeof window === "undefined" ? pathname : currentPathname(),
+  );
 
   const [filters, setFilters] = useState<SearchFilters>(() =>
-    searchParamsToInitialFilters(searchParams),
+    searchParamsToInitialFilters(searchParams, initialWhere),
   );
   const [debouncedWhat, setDebouncedWhat] = useState<string[]>(
-    () => searchParamsToInitialFilters(searchParams).what,
+    () => searchParamsToInitialFilters(searchParams, initialWhere).what,
   );
   const [deals, setDeals] = useState<DealSearchResult[]>([]);
   const [nearbyDeals, setNearbyDeals] = useState<DealSearchResult[]>([]);
   const [loadingDeals, setLoadingDeals] = useState(false);
+  const [locating, setLocating] = useState(() => isNearMePending(initialWhere));
   const [error, setError] = useState<string | null>(null);
   const [viewportBounds, setViewportBoundsState] = useState<MapBounds | null>(
     null,
@@ -87,15 +133,62 @@ export function useSearchFilters(options?: { mapViewport?: boolean }) {
 
   useEffect(() => {
     function syncFromBrowserUrl() {
+      const path = currentPathname();
       const current = currentSearchString();
-      if (searchParamsEqual(current, syncedParamsRef.current)) {
+      if (
+        path === syncedPathRef.current &&
+        searchParamsEqual(current, syncedParamsRef.current)
+      ) {
         return;
       }
 
+      syncedPathRef.current = path;
       syncedParamsRef.current = current;
 
       const params = new URLSearchParams(current);
-      const fromUrl = searchParamsToInitialFilters(params);
+      const parsed = parseWherePath(path);
+
+      if (parsed.kind === "nearby") {
+        setFilters((currentFilters) => {
+          const existingNearMe =
+            currentFilters.where.kind === "nearMe"
+              ? currentFilters.where
+              : { kind: "nearMe" as const };
+          return searchParamsToInitialFilters(params, existingNearMe);
+        });
+        setDebouncedWhat(searchParamsToInitialFilters(params).what);
+        return;
+      }
+
+      if (parsed.kind === "suburb") {
+        const slug = parsed.slug;
+        void (async () => {
+          try {
+            const suburb = await fetchSuburbBySlug(slug);
+            if (!suburb) {
+              return;
+            }
+            if (currentPathname() !== path) {
+              return;
+            }
+            const where: WhereFilter = {
+              kind: "suburb",
+              id: suburb.id,
+              suburb,
+            };
+            const fromUrl = searchParamsToInitialFilters(params, where);
+            setFilters(fromUrl);
+            setDebouncedWhat(fromUrl.what);
+          } catch {
+            // Keep current filters if lookup fails during history navigation.
+          }
+        })();
+        return;
+      }
+
+      const fromUrl = searchParamsToInitialFilters(params, {
+        kind: "anywhere",
+      });
       setFilters(fromUrl);
       setDebouncedWhat(fromUrl.what);
     }
@@ -115,19 +208,97 @@ export function useSearchFilters(options?: { mapViewport?: boolean }) {
   }, [whatKey]);
 
   useEffect(() => {
-    const next = filtersToSearchParams(filters, debouncedWhat).toString();
-
-    if (searchParamsEqual(next, syncedParamsRef.current)) {
+    if (!isNearMePending(filters.where)) {
+      setLocating(false);
       return;
     }
 
+    if (!navigator.geolocation) {
+      setLocating(false);
+      setError("Location is not supported by your browser.");
+      return;
+    }
+
+    let cancelled = false;
+    setLocating(true);
+    setError(null);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        if (cancelled) {
+          return;
+        }
+        setLocating(false);
+        setFilters((current) => {
+          if (current.where.kind !== "nearMe") {
+            return current;
+          }
+          return {
+            ...current,
+            where: {
+              kind: "nearMe",
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+            },
+          };
+        });
+      },
+      (geoError) => {
+        if (cancelled) {
+          return;
+        }
+        setLocating(false);
+        setError(
+          geoError.code === geoError.PERMISSION_DENIED
+            ? "Location permission denied."
+            : "Could not get your location.",
+        );
+      },
+      { enableHighAccuracy: false, timeout: 10000 },
+    );
+
+    return () => {
+      cancelled = true;
+    };
+  }, [whereKey]);
+
+  useEffect(() => {
+    const nextPath = filtersToBrowserPath(filters, pathname);
+    const next = filtersToBrowserSearchParams(filters, debouncedWhat).toString();
+
+    if (
+      nextPath === syncedPathRef.current &&
+      searchParamsEqual(next, syncedParamsRef.current)
+    ) {
+      return;
+    }
+
+    const pathChanged = nextPath !== syncedPathRef.current;
+    syncedPathRef.current = nextPath;
     syncedParamsRef.current = next;
-    const href = next ? `${pathname}?${next}` : pathname;
-    window.history.replaceState(window.history.state, "", href);
-  }, [debouncedWhatKey, daysKey, scheduleKey, whereKey, pathname]);
+    const href = next ? `${nextPath}?${next}` : nextPath;
+
+    if (pathChanged) {
+      router.replace(href);
+    } else {
+      window.history.replaceState(window.history.state, "", href);
+    }
+  }, [
+    debouncedWhatKey,
+    daysKey,
+    scheduleKey,
+    whereKey,
+    pathname,
+    filters,
+    router,
+  ]);
 
   useEffect(() => {
     if (mapViewport && !viewportBounds) {
+      return;
+    }
+
+    if (!mapViewport && isNearMePending(filters.where)) {
       return;
     }
 
@@ -137,7 +308,9 @@ export function useSearchFilters(options?: { mapViewport?: boolean }) {
 
     async function loadDeals() {
       setLoadingDeals(true);
-      setError(null);
+      if (!isNearMePending(filters.where)) {
+        setError(null);
+      }
 
       try {
         const params = mapViewport
@@ -203,14 +376,18 @@ export function useSearchFilters(options?: { mapViewport?: boolean }) {
   const allVenueGroups = [...venueGroups, ...nearbyVenueGroups];
   const totalDeals = deals.length + nearbyDeals.length;
   const userLocation =
-    filters.where.kind === "nearMe"
+    filters.where.kind === "nearMe" &&
+    filters.where.lat !== undefined &&
+    filters.where.lng !== undefined
       ? { lat: filters.where.lat, lng: filters.where.lng }
       : null;
-  const isEmpty = !loadingDeals && totalDeals === 0;
+  const isEmpty = !loadingDeals && !locating && totalDeals === 0;
   const resultsTitle =
     filters.where.kind === "suburb"
       ? `Deals in ${filters.where.suburb.name}`
-      : "Results";
+      : filters.where.kind === "nearMe"
+        ? "Deals near you"
+        : "Results";
 
   return {
     filters,
@@ -221,6 +398,7 @@ export function useSearchFilters(options?: { mapViewport?: boolean }) {
     userLocation,
     isEmpty,
     loadingDeals,
+    locating,
     error,
     resultsTitle,
     handleDaysApply,

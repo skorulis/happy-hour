@@ -21,7 +21,11 @@ import {
 import { expandKeywords } from "@data/products";
 import { nearbySuburbRadiusKm } from "@/lib/search/nearby-radius";
 import { parseWhatTokens } from "@/lib/search/url";
-import { slugify, UNKNOWN_SUBURB_SLUG } from "@/lib/search/slugs";
+import {
+  parseSuburbWhereSlug,
+  slugify,
+  UNKNOWN_SUBURB_SLUG,
+} from "@/lib/search/slugs";
 import { deal, dealSchedule, suburb, venue, venueLinks } from "@/db/schema";
 
 export type SuburbSearchResult = {
@@ -271,6 +275,28 @@ export async function searchSuburbs(
     )
     .orderBy(suburb.name)
     .limit(limit);
+}
+
+export async function findSuburbByWhereSlug(
+  whereSlug: string,
+): Promise<SuburbSearchResult | null> {
+  const { nameSlug, postcode } = parseSuburbWhereSlug(whereSlug);
+  if (!nameSlug) {
+    return null;
+  }
+
+  const candidates = await db
+    .select({
+      id: suburb.id,
+      name: suburb.name,
+      postcode: suburb.postcode,
+    })
+    .from(suburb)
+    .where(postcode === null ? isNull(suburb.postcode) : eq(suburb.postcode, postcode));
+
+  return (
+    candidates.find((candidate) => slugify(candidate.name) === nameSlug) ?? null
+  );
 }
 
 export async function searchVenues(

@@ -1,13 +1,14 @@
 "use client";
 
-import { searchParamsToListHref } from "@/lib/search/url";
+import { pathnameToListHref } from "@/lib/search/url";
 import Image from "next/image";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 export function HomeNavLink() {
+  const pathname = usePathname();
   const searchParams = useSearchParams();
-  const href = searchParamsToListHref(searchParams);
+  const href = pathnameToListHref(pathname, searchParams);
 
   return (
     <Link

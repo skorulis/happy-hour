@@ -2,9 +2,14 @@
 
 import { VenueSearchCard } from "@/components/VenueSearchCard";
 import { SearchBar } from "@/components/search/SearchBar";
+import type { WhereFilter } from "@/components/search/SuburbSelect";
 import { useSearchFilters } from "@/lib/search/useSearchFilters";
 
-export function SearchPage() {
+type SearchPageProps = {
+  initialWhere?: WhereFilter;
+};
+
+export function SearchPage({ initialWhere }: SearchPageProps) {
   const {
     filters,
     venueGroups,
@@ -13,12 +18,13 @@ export function SearchPage() {
     totalDeals,
     isEmpty,
     loadingDeals,
+    locating,
     error,
     resultsTitle,
     handleDaysApply,
     handleWhereChange,
     handleWhatChange,
-  } = useSearchFilters();
+  } = useSearchFilters({ initialWhere });
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-10">
@@ -41,9 +47,11 @@ export function SearchPage() {
             {resultsTitle}
           </h2>
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            {loadingDeals
-              ? "Loading..."
-              : `${allVenueGroups.length} venues · ${totalDeals} deals`}
+            {locating
+              ? "Getting your location..."
+              : loadingDeals
+                ? "Loading..."
+                : `${allVenueGroups.length} venues · ${totalDeals} deals`}
           </p>
         </div>
 
@@ -53,7 +61,7 @@ export function SearchPage() {
           </p>
         ) : null}
 
-        {isEmpty ? (
+        {locating || error ? null : isEmpty ? (
           <p className="rounded-xl border border-dashed border-zinc-300 px-4 py-8 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
             No deals matched your filters. Try syncing data from DealScraper or
             broadening your search.

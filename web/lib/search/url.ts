@@ -3,6 +3,11 @@ import type { TimeRange } from "@/components/search/DayPicker";
 import type { WhereFilter } from "@/components/search/SuburbSelect";
 import { boundsToApiParams, type MapBounds } from "@/lib/search/bounds";
 import { currentCalendarWeekday } from "@/lib/search/schedule";
+import {
+  NEARBY_WHERE_SLUG,
+  suburbWherePath,
+  suburbWhereSlug,
+} from "@/lib/search/slugs";
 
 export const DEFAULT_SEARCH_FILTERS: SearchFilters = {
   days: [],
@@ -11,20 +16,107 @@ export const DEFAULT_SEARCH_FILTERS: SearchFilters = {
   what: [],
 };
 
-function filterSearchParams(params: URLSearchParams): URLSearchParams {
+export type WherePathKind =
+  | { kind: "anywhere"; map: boolean }
+  | { kind: "nearby"; map: boolean }
+  | { kind: "suburb"; slug: string; map: boolean };
+
+function stripLocationParams(params: URLSearchParams): URLSearchParams {
   const filtered = new URLSearchParams(params.toString());
   filtered.delete("view");
+  filtered.delete("suburbId");
+  filtered.delete("suburbName");
+  filtered.delete("suburbPostcode");
+  filtered.delete("lat");
+  filtered.delete("lng");
   return filtered;
 }
 
-export function searchParamsToMapHref(params: URLSearchParams): string {
-  const qs = filterSearchParams(params).toString();
+export function parseWherePath(pathname: string): WherePathKind {
+  const segments = pathname.split("/").filter(Boolean);
+
+  if (segments.length === 0) {
+    return { kind: "anywhere", map: false };
+  }
+
+  if (segments.length === 1 && segments[0] === "map") {
+    return { kind: "anywhere", map: true };
+  }
+
+  if (segments[0] === NEARBY_WHERE_SLUG) {
+    return {
+      kind: "nearby",
+      map: segments[1] === "map",
+    };
+  }
+
+  if (segments.length === 1) {
+    return { kind: "suburb", slug: segments[0]!, map: false };
+  }
+
+  if (segments.length === 2 && segments[1] === "map") {
+    return { kind: "suburb", slug: segments[0]!, map: true };
+  }
+
+  return { kind: "anywhere", map: false };
+}
+
+export function whereToListPath(where: WhereFilter): string {
+  if (where.kind === "suburb") {
+    return suburbWherePath(where.suburb.name, where.suburb.postcode);
+  }
+  if (where.kind === "nearMe") {
+    return `/${NEARBY_WHERE_SLUG}`;
+  }
+  return "/";
+}
+
+/** Map is always `/map` — it uses viewport bounds, not the where filter. */
+export function whereToMapPath(_where?: WhereFilter): string {
+  return "/map";
+}
+
+export function filtersToBrowserPath(
+  filters: SearchFilters,
+  pathname: string,
+): string {
+  const parsed = parseWherePath(pathname);
+  return parsed.map ? whereToMapPath(filters.where) : whereToListPath(filters.where);
+}
+
+export function pathnameToMapHref(
+  _pathname: string,
+  params: URLSearchParams,
+): string {
+  const qs = stripLocationParams(params).toString();
   return qs ? `/map?${qs}` : "/map";
 }
 
+export function pathnameToListHref(
+  pathname: string,
+  params: URLSearchParams,
+): string {
+  const parsed = parseWherePath(pathname);
+  const qs = stripLocationParams(params).toString();
+  let path: string;
+  if (parsed.kind === "nearby") {
+    path = `/${NEARBY_WHERE_SLUG}`;
+  } else if (parsed.kind === "suburb") {
+    path = `/${parsed.slug}`;
+  } else {
+    path = "/";
+  }
+  return qs ? `${path}?${qs}` : path;
+}
+
+/** Legacy helper: map href from query params alone (anywhere). */
+export function searchParamsToMapHref(params: URLSearchParams): string {
+  return pathnameToMapHref("/", params);
+}
+
+/** Legacy helper: list href from query params alone (anywhere). */
 export function searchParamsToListHref(params: URLSearchParams): string {
-  const qs = filterSearchParams(params).toString();
-  return qs ? `/?${qs}` : "/";
+  return pathnameToListHref("/map", params);
 }
 
 function parseWhatParam(value: string | null): string[] {
@@ -105,52 +197,6 @@ function parseTimeRange(
   };
 }
 
-function parseWhereFilter(params: URLSearchParams): WhereFilter {
-  const suburbIdParam = params.get("suburbId");
-  const latParam = params.get("lat");
-  const lngParam = params.get("lng");
-
-  if (suburbIdParam !== null && suburbIdParam !== "") {
-    const id = Number(suburbIdParam);
-    if (Number.isFinite(id)) {
-      const name = params.get("suburbName") ?? `#${id}`;
-      const postcode = params.get("suburbPostcode");
-      return {
-        kind: "suburb",
-        id,
-        suburb: {
-          id,
-          name,
-          postcode: postcode && postcode.length > 0 ? postcode : null,
-        },
-      };
-    }
-  }
-
-  if (
-    latParam !== null &&
-    latParam !== "" &&
-    lngParam !== null &&
-    lngParam !== ""
-  ) {
-    const lat = Number(latParam);
-    const lng = Number(lngParam);
-
-    if (
-      Number.isFinite(lat) &&
-      Number.isFinite(lng) &&
-      lat >= -90 &&
-      lat <= 90 &&
-      lng >= -180 &&
-      lng <= 180
-    ) {
-      return { kind: "nearMe", lat, lng };
-    }
-  }
-
-  return { kind: "anywhere" };
-}
-
 export function whatToQuery(what: string[]): string {
   return what.join(",");
 }
@@ -175,6 +221,9 @@ export function whereFilterKey(where: WhereFilter): string {
     return "anywhere";
   }
   if (where.kind === "nearMe") {
+    if (where.lat === undefined || where.lng === undefined) {
+      return "near:pending";
+    }
     return `near:${where.lat},${where.lng}`;
   }
   return `suburb:${where.id}:${where.suburb.name}:${where.suburb.postcode ?? ""}`;
@@ -212,7 +261,8 @@ export function searchParamsEqual(a: string, b: string): boolean {
   return true;
 }
 
-export function filtersToSearchParams(
+/** Browser URL query params — days, time, and what only. */
+export function filtersToBrowserSearchParams(
   filters: SearchFilters,
   what: string[],
 ): URLSearchParams {
@@ -220,16 +270,6 @@ export function filtersToSearchParams(
 
   if (filters.days.length > 0) {
     params.set("days", filters.days.join(","));
-  }
-  if (filters.where.kind === "suburb") {
-    params.set("suburbId", String(filters.where.id));
-    params.set("suburbName", filters.where.suburb.name);
-    if (filters.where.suburb.postcode) {
-      params.set("suburbPostcode", filters.where.suburb.postcode);
-    }
-  } else if (filters.where.kind === "nearMe") {
-    params.set("lat", String(filters.where.lat));
-    params.set("lng", String(filters.where.lng));
   }
   if (filters.timeRange) {
     if (filters.timeRange.startMinute !== undefined) {
@@ -246,14 +286,25 @@ export function filtersToSearchParams(
   return params;
 }
 
-export function searchParamsToFilters(params: URLSearchParams): SearchFilters {
+/** @deprecated Use filtersToBrowserSearchParams for browser URLs. */
+export function filtersToSearchParams(
+  filters: SearchFilters,
+  what: string[],
+): URLSearchParams {
+  return filtersToBrowserSearchParams(filters, what);
+}
+
+export function searchParamsToFilters(
+  params: URLSearchParams,
+  where: WhereFilter = { kind: "anywhere" },
+): SearchFilters {
   return {
     days: parseDaysParam(params.get("days")),
     timeRange: parseTimeRange(
       params.get("startMinute"),
       params.get("endMinute"),
     ),
-    where: parseWhereFilter(params),
+    where,
     what: parseWhatParam(params.get("q")),
   };
 }
@@ -264,8 +315,9 @@ export function searchParamsToFilters(params: URLSearchParams): SearchFilters {
  */
 export function searchParamsToInitialFilters(
   params: URLSearchParams,
+  where: WhereFilter = { kind: "anywhere" },
 ): SearchFilters {
-  const filters = searchParamsToFilters(params);
+  const filters = searchParamsToFilters(params, where);
   const daysParam = params.get("days");
   if (daysParam === null || daysParam.trim() === "") {
     return { ...filters, days: [currentCalendarWeekday()] };
@@ -273,11 +325,25 @@ export function searchParamsToInitialFilters(
   return filters;
 }
 
+/** API query params — includes suburbId or lat/lng for the deals endpoint. */
 export function filtersToApiSearchParams(
   filters: SearchFilters,
   what: string[],
 ): URLSearchParams {
-  return filtersToSearchParams(filters, what);
+  const params = filtersToBrowserSearchParams(filters, what);
+
+  if (filters.where.kind === "suburb") {
+    params.set("suburbId", String(filters.where.id));
+  } else if (
+    filters.where.kind === "nearMe" &&
+    filters.where.lat !== undefined &&
+    filters.where.lng !== undefined
+  ) {
+    params.set("lat", String(filters.where.lat));
+    params.set("lng", String(filters.where.lng));
+  }
+
+  return params;
 }
 
 export function filtersToMapApiSearchParams(
@@ -307,4 +373,80 @@ export function filtersToMapApiSearchParams(
   }
 
   return params;
+}
+
+export type LegacyLocationRedirect =
+  | { type: "suburb"; slug: string }
+  | { type: "nearby" }
+  | null;
+
+export function legacyLocationFromSearchParams(
+  params: URLSearchParams,
+): LegacyLocationRedirect {
+  const suburbName = params.get("suburbName");
+  const suburbPostcode = params.get("suburbPostcode");
+  const suburbIdParam = params.get("suburbId");
+
+  if (suburbName && suburbName.length > 0) {
+    return {
+      type: "suburb",
+      slug: suburbWhereSlug(suburbName, suburbPostcode),
+    };
+  }
+
+  if (suburbIdParam !== null && suburbIdParam !== "") {
+    // Name missing — cannot build a slug; fall through to nearby/anywhere.
+  }
+
+  const latParam = params.get("lat");
+  const lngParam = params.get("lng");
+  if (
+    latParam !== null &&
+    latParam !== "" &&
+    lngParam !== null &&
+    lngParam !== ""
+  ) {
+    const lat = Number(latParam);
+    const lng = Number(lngParam);
+    if (
+      Number.isFinite(lat) &&
+      Number.isFinite(lng) &&
+      lat >= -90 &&
+      lat <= 90 &&
+      lng >= -180 &&
+      lng <= 180
+    ) {
+      return { type: "nearby" };
+    }
+  }
+
+  return null;
+}
+
+export function legacyLocationRedirectHref(
+  pathname: string,
+  params: URLSearchParams,
+): string | null {
+  const legacy = legacyLocationFromSearchParams(params);
+  if (!legacy) {
+    return null;
+  }
+
+  const isMap =
+    params.get("view") === "map" ||
+    parseWherePath(pathname).map ||
+    pathname === "/map";
+  const qs = stripLocationParams(params).toString();
+
+  // Map always uses `/map`; list keeps the where path.
+  let path: string;
+  if (isMap) {
+    path = "/map";
+  } else if (legacy.type === "nearby") {
+    path = `/${NEARBY_WHERE_SLUG}`;
+  } else {
+    path = `/${legacy.slug}`;
+  }
+
+  return qs ? `${path}?${qs}` : path;
 }

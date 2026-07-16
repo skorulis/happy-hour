@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { SearchBar } from "@/components/search/SearchBar";
+import type { WhereFilter } from "@/components/search/SuburbSelect";
 import { useSearchFilters } from "@/lib/search/useSearchFilters";
 
 const SearchMapView = dynamic(
@@ -19,7 +20,11 @@ const SearchMapView = dynamic(
   },
 );
 
-export function MapPage() {
+type MapPageProps = {
+  initialWhere?: WhereFilter;
+};
+
+export function MapPage({ initialWhere }: MapPageProps) {
   const {
     filters,
     allVenueGroups,
@@ -28,7 +33,7 @@ export function MapPage() {
     handleDaysApply,
     handleWhatChange,
     setViewportBounds,
-  } = useSearchFilters({ mapViewport: true });
+  } = useSearchFilters({ mapViewport: true, initialWhere });
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">

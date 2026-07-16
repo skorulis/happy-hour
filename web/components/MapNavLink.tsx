@@ -2,8 +2,8 @@
 
 import { navIconPillClassName } from "@/lib/navStyles";
 import {
-  searchParamsToListHref,
-  searchParamsToMapHref,
+  pathnameToListHref,
+  pathnameToMapHref,
 } from "@/lib/search/url";
 import { List, MapPin } from "lucide-react";
 import Link from "next/link";
@@ -12,10 +12,10 @@ import { usePathname, useSearchParams } from "next/navigation";
 export function MapNavLink() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const isMapOpen = pathname === "/map";
+  const isMapOpen = pathname === "/map" || pathname.endsWith("/map");
   const href = isMapOpen
-    ? searchParamsToListHref(searchParams)
-    : searchParamsToMapHref(searchParams);
+    ? pathnameToListHref(pathname, searchParams)
+    : pathnameToMapHref(pathname, searchParams);
   const label = isMapOpen ? "List" : "Map";
   const Icon = isMapOpen ? List : MapPin;
 

@@ -1,0 +1,18 @@
+import { Suspense } from "react";
+import { MapPage } from "@/components/MapPage";
+
+export default function NearbyMapPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="relative flex min-h-0 flex-1 flex-col">
+          <div className="absolute inset-0 flex items-center justify-center bg-zinc-50 text-sm text-zinc-500 dark:bg-zinc-950 dark:text-zinc-400">
+            Loading map...
+          </div>
+        </div>
+      }
+    >
+      <MapPage initialWhere={{ kind: "nearMe" }} />
+    </Suspense>
+  );
+}

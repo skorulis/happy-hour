@@ -1,4 +1,7 @@
 export const UNKNOWN_SUBURB_SLUG = "unknown";
+export const NEARBY_WHERE_SLUG = "nearby";
+
+const POSTCODE_SUFFIX_RE = /^(.+)-(\d{4})$/;
 
 export function slugify(value: string): string {
   return value
@@ -8,6 +11,39 @@ export function slugify(value: string): string {
     .trim()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+export function suburbWhereSlug(
+  name: string,
+  postcode: string | null | undefined,
+): string {
+  const nameSlug = slugify(name);
+  const trimmedPostcode = postcode?.trim();
+  if (trimmedPostcode) {
+    return `${nameSlug}-${trimmedPostcode}`;
+  }
+  return nameSlug;
+}
+
+export function suburbWherePath(
+  name: string,
+  postcode: string | null | undefined,
+): string {
+  return `/${suburbWhereSlug(name, postcode)}`;
+}
+
+export type ParsedSuburbWhereSlug = {
+  nameSlug: string;
+  postcode: string | null;
+};
+
+export function parseSuburbWhereSlug(slug: string): ParsedSuburbWhereSlug {
+  const trimmed = slug.trim().toLowerCase();
+  const match = POSTCODE_SUFFIX_RE.exec(trimmed);
+  if (match) {
+    return { nameSlug: match[1]!, postcode: match[2]! };
+  }
+  return { nameSlug: trimmed, postcode: null };
 }
 
 export function venuePath(
