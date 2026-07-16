@@ -1,5 +1,7 @@
 import {
   and,
+  count,
+  desc,
   eq,
   exists,
   gte,
@@ -253,32 +255,29 @@ export async function searchSuburbs(
 ): Promise<SuburbSearchResult[]> {
   const trimmed = query.trim();
 
-  if (!trimmed) {
-    return db
-      .select({
-        id: suburb.id,
-        name: suburb.name,
-        postcode: suburb.postcode,
-      })
-      .from(suburb)
-      .orderBy(suburb.name)
-      .limit(limit);
-  }
-
-  return db
+  const baseQuery = db
     .select({
       id: suburb.id,
       name: suburb.name,
       postcode: suburb.postcode,
     })
     .from(suburb)
-    .where(
-      or(
-        ilike(suburb.name, `%${trimmed}%`),
-        ilike(suburb.postcode, `%${trimmed}%`),
-      ),
-    )
-    .orderBy(suburb.name)
+    .leftJoin(venue, eq(venue.suburbId, suburb.id))
+    .leftJoin(deal, eq(deal.venueId, venue.id))
+    .$dynamic();
+
+  const filtered = trimmed
+    ? baseQuery.where(
+        or(
+          ilike(suburb.name, `%${trimmed}%`),
+          ilike(suburb.postcode, `%${trimmed}%`),
+        ),
+      )
+    : baseQuery;
+
+  return filtered
+    .groupBy(suburb.id, suburb.name, suburb.postcode)
+    .orderBy(desc(count(deal.id)), suburb.name)
     .limit(limit);
 }
 

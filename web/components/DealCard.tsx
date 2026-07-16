@@ -140,9 +140,9 @@ export function DealCard({
               href={deal.sourceUrl}
               target="_blank"
               rel="noreferrer"
-              className="text-sm text-amber-700 hover:underline dark:text-amber-400"
+              className="inline-flex items-center rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600"
             >
-              View source
+              More info
             </a>
           ) : null}
           {onToggleFavorite || showReportButton ? (
