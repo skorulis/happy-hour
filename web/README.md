@@ -79,7 +79,9 @@ Open [http://localhost:3000](http://localhost:3000).
 
 Stack: Docker Compose with **Postgres 16**, **Next.js** (`output: "standalone"`), and **Caddy** (HTTPS) for `duskroute.com` / `www.duskroute.com`. Postgres is bound to `127.0.0.1` on the host only (not the public internet).
 
-Production releases use the same pattern as maxidle: push a `release/*` tag → GitHub Actions builds images to GHCR → SSH to the droplet → pull and restart.
+Production releases: push a `release/*` tag → GitHub Actions builds web + migrate images to GHCR → SSH to the droplet → pull → **run Drizzle migrations** → restart services.
+
+Each release applies pending SQL under `db/migrations/` via the migrate image (`deploy-release.sh` runs `docker compose run --rm migrate`) **before** starting the new `web` container. If migrate fails, the deploy stops and the previous app keeps running. Generate and commit migration files locally (`npm run db:generate`) before tagging a release that includes schema changes.
 
 ### Deploy a release
 
@@ -88,7 +90,7 @@ git tag release/0.1.0
 git push origin release/0.1.0
 ```
 
-Watch **Actions → Deploy production**. After it succeeds, check [https://duskroute.com](https://duskroute.com).
+Watch **Actions → Deploy production**. After it succeeds, the production schema matches the release and you can check [https://duskroute.com](https://duskroute.com).
 
 Rollback on the droplet:
 
@@ -180,18 +182,16 @@ DATABASE_URL=postgresql://happyhour:YOUR_PASSWORD@localhost:5433/happyhour
 
 `SQLITE_PATH` continues to come from `.env.local`.
 
-3. Migrate (first time or after schema changes) and sync:
+3. Sync approved deals into production Postgres:
 
 ```bash
 cd web
-npm run sync:prod -- --migrate
-# Later syncs (incremental by default):
 npm run sync:prod
 # Force a full venue sync:
 npm run sync:prod -- --all
 ```
 
-`--migrate` runs `drizzle-kit migrate` against the tunneled production URL, then syncs approved DealScraper deals. Omit `--migrate` when the schema is already up to date. Default sync is incremental (venues updated since the last successful `sync_run`); pass `--all` to sync every approved venue.
+Default sync is incremental (venues updated since the last successful `sync_run`); pass `--all` to sync every approved venue.
 
 ### Venue hero images (Cloudflare R2)
 

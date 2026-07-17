@@ -48,7 +48,7 @@ xcodebuild test -project DealScraper/DealScraper.xcodeproj -scheme DealScraper
 
 The `web/` directory is a Next.js app that reads from PostgreSQL. DealScraper remains the import and approval tool; approved deals are copied from its local SQLite database into Postgres for public search.
 
-**Production** runs on a DigitalOcean Sydney droplet at [https://duskroute.com](https://duskroute.com) (Docker Compose: Next.js + Postgres + Caddy). Releases deploy via GitHub Actions on `release/*` tags (build to GHCR, then SSH pull/restart). See [`web/README.md`](web/README.md).
+Releases deploy via GitHub Actions on `release/*` tags (build to GHCR, then SSH pull/restart). See [`web/README.md`](web/README.md).
 
 ### Prerequisites
 

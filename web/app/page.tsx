@@ -3,6 +3,9 @@ import { SearchPage } from "@/components/SearchPage";
 import { SearchUrlRedirect } from "@/components/SearchUrlRedirect";
 import { listPopularSuburbs } from "@/lib/search/queries";
 
+// Needs Postgres at request time — skip static prerender during Docker builds.
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
   const popularSuburbs = await listPopularSuburbs(10);
 
