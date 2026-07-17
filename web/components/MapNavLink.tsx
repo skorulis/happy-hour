@@ -12,26 +12,26 @@ import { parseWherePath, pathnameToMapHref } from "@/lib/search/url";
 import { List, MapPin } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
+
+const subscribeNoop = () => () => {};
 
 export function MapNavLink() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const isMapOpen = pathname === "/map" || pathname.endsWith("/map");
-  const mapHref = pathnameToMapHref(pathname, searchParams);
-  const [href, setHref] = useState(() =>
-    isMapOpen ? listHrefFromMapEntry(null, searchParams) : mapHref,
+  // The stored map entry lives in sessionStorage and can only be read on the
+  // client, so gate that read behind hydration to keep SSR output stable.
+  const isHydrated = useSyncExternalStore(
+    subscribeNoop,
+    () => true,
+    () => false,
   );
+  const href = isMapOpen
+    ? listHrefFromMapEntry(isHydrated ? readMapEntry() : null, searchParams)
+    : pathnameToMapHref(pathname, searchParams);
   const label = isMapOpen ? "List" : "Map";
   const Icon = isMapOpen ? List : MapPin;
-
-  useEffect(() => {
-    if (isMapOpen) {
-      setHref(listHrefFromMapEntry(readMapEntry(), searchParams));
-      return;
-    }
-    setHref(pathnameToMapHref(pathname, searchParams));
-  }, [isMapOpen, pathname, searchParams]);
 
   function handleClick() {
     if (!isMapOpen) {

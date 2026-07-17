@@ -180,6 +180,10 @@ export function useSearchFilters(options?: {
 
     if (entry.source.kind === "nearby") {
       nearbyCameraPendingRef.current = true;
+      // Seeding the where filter from the stored map entry must run after mount:
+      // sessionStorage is unavailable during SSR, so doing this any earlier
+      // would cause a hydration mismatch on the initial filter state.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFilters((current) => ({
         ...current,
         where: { kind: "nearMe" },
@@ -251,6 +255,9 @@ export function useSearchFilters(options?: {
     );
     nearbyCameraPendingRef.current = false;
     if (bounds) {
+      // Seeds the map camera once geolocation asynchronously resolves the
+      // near-me coordinates; this is a genuine reaction to an external event.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       applyInitialMapBounds(bounds);
     }
   }, [mapViewport, whereKey, filters.where, applyInitialMapBounds]);
@@ -416,13 +423,6 @@ export function useSearchFilters(options?: {
       return;
     }
 
-    if (!mapViewport && filters.where.kind === "anywhere") {
-      setDeals([]);
-      setNearbyDeals([]);
-      setLoadingDeals(false);
-      return;
-    }
-
     if (!mapViewport && isNearMePending(filters.where)) {
       return;
     }
@@ -432,6 +432,13 @@ export function useSearchFilters(options?: {
     filterKeyRef.current = filterKey;
 
     async function loadDeals() {
+      if (!mapViewport && filters.where.kind === "anywhere") {
+        setDeals([]);
+        setNearbyDeals([]);
+        setLoadingDeals(false);
+        return;
+      }
+
       setLoadingDeals(true);
       if (!isNearMePending(filters.where)) {
         setError(null);
