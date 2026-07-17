@@ -68,35 +68,35 @@ export function DealCard({
   return (
     <article
       id={id}
-      className={`rounded-xl border border-zinc-100 bg-white p-5 shadow-sm transition-shadow hover:shadow-md dark:border-zinc-800 dark:bg-zinc-950 ${
-        activeNow ? "border-l-2 border-l-amber-500 pl-[calc(1.25rem-2px)]" : ""
+      className={`rounded-xl border border-border-subtle bg-surface/90 p-5 shadow-card transition-shadow hover:shadow-card-hover ${
+        activeNow ? "border-l-2 border-l-accent pl-[calc(1.25rem-2px)]" : ""
       }`}
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
         <div className="min-w-0 flex-1 space-y-2">
           <div className="space-y-2">
-            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+            <h3 className="text-lg font-semibold text-foreground">
               {deal.title || "Untitled deal"}
             </h3>
             <DealScheduleLine text={scheduleLine} />
           </div>
           {showVenue ? (
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="text-sm text-secondary">
               <Link
                 href={venuePath(deal.venue.suburbName, deal.venue.name)}
-                className="font-medium text-amber-700 hover:underline dark:text-amber-400"
+                className="font-medium text-accent-soft hover:underline"
               >
                 {deal.venue.name}
               </Link>
             </p>
           ) : null}
           {deal.details ? (
-            <MarkdownText className="text-sm text-zinc-700 dark:text-zinc-300">
+            <MarkdownText className="text-sm text-secondary">
               {deal.details}
             </MarkdownText>
           ) : null}
           {deal.conditions ? (
-            <MarkdownText className="text-sm text-zinc-500 dark:text-zinc-400">
+            <MarkdownText className="text-sm text-muted">
               {deal.conditions}
             </MarkdownText>
           ) : null}
@@ -126,7 +126,7 @@ export function DealCard({
             />
           </>
         ) : (
-          <span className="inline-flex h-14 w-14 shrink-0 items-center justify-center self-start rounded-lg bg-amber-50 dark:bg-amber-950/40">
+          <span className="inline-flex h-14 w-14 shrink-0 items-center justify-center self-start rounded-lg bg-accent-muted">
             <DealProductIcon deal={deal} size={20} />
           </span>
         )}
@@ -140,7 +140,7 @@ export function DealCard({
               href={deal.sourceUrl}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600"
+              className="inline-flex items-center rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-accent-fg transition-colors hover:bg-accent-hover"
             >
               More info
             </a>

@@ -13,7 +13,7 @@ const SearchMapView = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="absolute inset-0 flex items-center justify-center bg-zinc-50 text-sm text-zinc-500 dark:bg-zinc-950 dark:text-zinc-400">
+      <div className="absolute inset-0 flex items-center justify-center bg-background text-sm text-muted">
         Loading map...
       </div>
     ),

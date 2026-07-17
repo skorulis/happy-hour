@@ -18,8 +18,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
-  title: "Happy Hour",
-  description: "Search pub and bar deals synced from DealScraper.",
+  title: "Duskroute",
+  description: "Find happy hour deals near you as the day fades into night.",
 };
 
 export default function RootLayout({
@@ -32,10 +32,10 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="flex min-h-full flex-col bg-background text-foreground">
         <AnalyticsProvider>
           <SiteNav />
-          <main className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-950">
+          <main className="flex flex-1 flex-col bg-transparent">
             {children}
           </main>
           <SiteFooter />

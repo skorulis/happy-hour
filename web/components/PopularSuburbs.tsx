@@ -14,7 +14,7 @@ function formatSuburbLabel(suburb: PopularSuburb): string {
 export function PopularSuburbs({ suburbs, search }: PopularSuburbsProps) {
   if (suburbs.length === 0) {
     return (
-      <p className="rounded-xl border border-dashed border-zinc-300 px-4 py-8 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+      <p className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted">
         No suburbs with deals yet. Try Near me or search for a suburb above.
       </p>
     );
@@ -23,10 +23,10 @@ export function PopularSuburbs({ suburbs, search }: PopularSuburbsProps) {
   return (
     <div className="space-y-4">
       <div className="space-y-1">
-        <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
+        <h2 className="text-xl font-semibold text-foreground">
           Popular suburbs
         </h2>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="text-sm text-muted">
           Pick a suburb to browse deals nearby.
         </p>
       </div>
@@ -40,12 +40,12 @@ export function PopularSuburbs({ suburbs, search }: PopularSuburbsProps) {
             <li key={suburb.id}>
               <Link
                 href={href}
-                className="flex items-baseline justify-between gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                className="flex items-baseline justify-between gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-surface-muted"
               >
-                <span className="font-medium text-zinc-900 dark:text-zinc-50">
+                <span className="font-medium text-foreground">
                   {formatSuburbLabel(suburb)}
                 </span>
-                <span className="shrink-0 text-sm text-zinc-500 dark:text-zinc-400">
+                <span className="shrink-0 text-sm text-muted">
                   {suburb.dealCount}{" "}
                   {suburb.dealCount === 1 ? "deal" : "deals"}
                 </span>

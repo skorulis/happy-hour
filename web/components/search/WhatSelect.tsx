@@ -34,13 +34,13 @@ function SuggestionIcon({ product }: { product: Product }) {
     return (
       <span
         aria-hidden
-        className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800"
+        className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-surface-muted"
       />
     );
   }
 
   return (
-    <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
+    <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-soft">
       <ProductMapIcon name={product.icon} size={14} />
     </span>
   );
@@ -56,7 +56,7 @@ function TokenIcon({ token }: { token: string }) {
     <ProductMapIcon
       name={icon}
       size={12}
-      className="shrink-0 text-amber-700 dark:text-amber-400"
+      className="shrink-0 text-accent-soft"
     />
   );
 }
@@ -166,19 +166,19 @@ export function WhatSelectPanel({
   const listboxId = "what-select-listbox";
 
   return (
-    <div className="w-80 max-w-[calc(100vw-3rem)] rounded-xl border border-zinc-200 bg-white p-3 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
-      <div className="flex min-h-[2.25rem] w-full flex-wrap items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-3 py-1.5 dark:border-zinc-600 dark:bg-zinc-950">
+    <div className="w-80 max-w-[calc(100vw-3rem)] rounded-xl border border-border bg-surface-elevated p-3 shadow-card">
+      <div className="flex min-h-[2.25rem] w-full flex-wrap items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5">
         {tokens.map((token, index) => (
           <span
             key={`${token}-${index}`}
-            className="inline-flex max-w-full items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-950/50 dark:text-amber-300"
+            className="inline-flex max-w-full items-center gap-1 rounded-full bg-accent-muted px-2.5 py-0.5 text-xs font-medium text-accent-soft"
           >
             <TokenIcon token={token} />
             <span className="truncate">{token}</span>
             <button
               type="button"
               onClick={() => removeToken(index)}
-              className="rounded p-0.5 text-amber-600 hover:bg-amber-200/80 hover:text-amber-900 dark:text-amber-400 dark:hover:bg-amber-900/60 dark:hover:text-amber-200"
+              className="rounded p-0.5 text-accent-soft hover:bg-accent-muted hover:text-foreground"
               aria-label={`Remove ${token}`}
             >
               <X className="h-3 w-3" />
@@ -204,7 +204,7 @@ export function WhatSelectPanel({
           }}
           onKeyDown={handleInputKeyDown}
           placeholder={tokens.length === 0 ? "steak, happy hour, pizza..." : ""}
-          className="min-w-[6ch] flex-1 border-0 bg-transparent text-sm font-medium text-zinc-900 outline-none placeholder:text-zinc-400 dark:text-zinc-50 dark:placeholder:text-zinc-500"
+          className="min-w-[6ch] flex-1 border-0 bg-transparent text-sm font-medium text-foreground outline-none placeholder:text-muted"
         />
       </div>
 
@@ -214,7 +214,7 @@ export function WhatSelectPanel({
         className="mt-2 max-h-48 overflow-y-auto rounded-lg"
       >
         {suggestions.length === 0 ? (
-          <p className="px-2 py-2 text-sm text-zinc-500">
+          <p className="px-2 py-2 text-sm text-muted">
             {input.trim() ? "No matches." : "No suggestions."}
           </p>
         ) : (
@@ -229,8 +229,8 @@ export function WhatSelectPanel({
               onClick={() => selectSuggestion(product)}
               className={`flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left text-sm ${
                 index === activeHighlightIndex
-                  ? "bg-amber-50 font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-400"
-                  : "text-zinc-800 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  ? "bg-accent-muted font-medium text-accent-soft"
+                  : "text-secondary hover:bg-surface-muted"
               }`}
             >
               <SuggestionIcon product={product} />

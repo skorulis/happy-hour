@@ -11,7 +11,7 @@ type VenuePageContentProps = {
 };
 
 const linkClassName =
-  "inline-flex items-center gap-1.5 rounded-full border border-zinc-300 px-3 py-1.5 text-sm font-medium text-amber-700 transition-colors hover:border-amber-500 hover:bg-amber-50 dark:border-zinc-600 dark:text-amber-400 dark:hover:border-amber-500 dark:hover:bg-amber-950/30";
+  "inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-sm font-medium text-accent-soft transition-colors hover:border-accent hover:bg-accent-muted";
 
 function VenueExternalLink({
   href,
@@ -49,16 +49,16 @@ export function VenuePageContent({
         ) : (
           <div
             aria-hidden
-            className="flex aspect-[21/9] w-full items-center justify-center rounded-xl border border-dashed border-zinc-300 bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900"
+            className="flex aspect-[21/9] w-full items-center justify-center rounded-xl border border-dashed border-border bg-surface-muted"
           >
             <Building2
               aria-hidden
               strokeWidth={1.5}
-              className="h-14 w-14 text-zinc-400 dark:text-zinc-600"
+              className="h-14 w-14 text-muted"
             />
           </div>
         )}
-        <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">
+        <h1 className="text-3xl font-bold text-foreground">
           {venue.name}
         </h1>
         <div className="flex flex-wrap gap-2">
@@ -108,7 +108,7 @@ export function VenuePageContent({
           ) : null}
         </div>
         {venue.blurb ? (
-          <p className="whitespace-pre-line text-base leading-relaxed text-zinc-700 dark:text-zinc-300">
+          <p className="whitespace-pre-line text-base leading-relaxed text-secondary">
             {venue.blurb}
           </p>
         ) : null}
@@ -116,7 +116,7 @@ export function VenuePageContent({
 
       <p
         role="note"
-        className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300"
+        className="rounded-lg border border-accent bg-accent-muted px-4 py-3 text-sm text-accent-soft"
       >
         Deals may be out of date. Please check with the venue when ordering.
       </p>

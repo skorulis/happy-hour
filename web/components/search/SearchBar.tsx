@@ -95,20 +95,20 @@ function SegmentButton({
       onClick={onClick}
       className={`flex min-w-0 flex-1 flex-col rounded-lg px-5 py-3 text-left transition-all md:rounded-full md:py-3.5 ${
         isActive
-          ? "bg-white shadow-md dark:bg-zinc-900 md:shadow-md"
+          ? "bg-surface-elevated shadow-md md:shadow-md"
           : hasOpenSegment
-            ? "bg-transparent hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60"
-            : "bg-transparent hover:bg-zinc-100 dark:hover:bg-zinc-800/50"
+            ? "bg-transparent hover:bg-surface-muted"
+            : "bg-transparent hover:bg-surface-muted"
       } ${className}`}
     >
-      <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
+      <span className="text-xs font-semibold text-secondary">
         {label}
       </span>
       <span
         className={`truncate text-sm ${
           isPlaceholder
-            ? "text-zinc-400 dark:text-zinc-500"
-            : "font-medium text-zinc-900 dark:text-zinc-50"
+            ? "text-muted"
+            : "font-medium text-foreground"
         }`}
       >
         {value}
@@ -303,10 +303,10 @@ export function SearchBar({
       className={`mx-auto w-full max-w-3xl ${className}`}
     >
       <div
-        className={`relative rounded-2xl border border-zinc-300 shadow-md transition-colors md:rounded-full dark:border-zinc-600 ${
+        className={`relative rounded-2xl border border-border shadow-md transition-colors md:rounded-full ${
           hasOpenSegment
-            ? "bg-zinc-100 dark:bg-zinc-800/80"
-            : "bg-white dark:bg-zinc-900"
+            ? "bg-surface-muted"
+            : "bg-surface-elevated"
         }`}
       >
         {/* Desktop: horizontal pill */}
@@ -316,7 +316,7 @@ export function SearchBar({
               {index > 0 ? (
                 <div
                   aria-hidden
-                  className="h-8 w-px shrink-0 bg-zinc-300 dark:bg-zinc-600"
+                  className="h-8 w-px shrink-0 bg-border"
                 />
               ) : null}
               <SegmentButton
@@ -342,7 +342,7 @@ export function SearchBar({
               {index > 0 ? (
                 <div
                   aria-hidden
-                  className="h-px bg-zinc-300 dark:bg-zinc-600"
+                  className="h-px bg-border"
                 />
               ) : null}
               <div className="relative">
@@ -356,7 +356,7 @@ export function SearchBar({
                   className="w-full px-6"
                 />
                 {openSegment === segment.id ? (
-                  <div className="border-t border-zinc-200 px-4 py-3 dark:border-zinc-700">
+                  <div className="border-t border-border-subtle px-4 py-3">
                     <ActivePanel
                       segment={segment.id}
                       filters={filters}

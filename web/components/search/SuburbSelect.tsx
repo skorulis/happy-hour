@@ -103,22 +103,22 @@ export function SuburbSelectPanel({
   }
 
   return (
-    <div className="w-80 max-w-[calc(100vw-3rem)] rounded-xl border border-zinc-200 bg-white p-3 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
+    <div className="w-80 max-w-[calc(100vw-3rem)] rounded-xl border border-border bg-surface-elevated p-3 shadow-card">
       <input
         ref={inputRef}
         type="search"
         value={query}
         onChange={(event) => setQuery(event.target.value)}
         placeholder="Search suburbs..."
-        className="mb-2 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none ring-amber-500 focus:ring-2 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-50"
+        className="mb-2 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground outline-none ring-accent focus:ring-2"
       />
       <button
         type="button"
         onClick={handleNearMe}
-        className={`mb-2 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
+        className={`mb-2 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm hover:bg-surface-muted ${
           where.kind === "nearMe"
-            ? "font-medium text-amber-700 dark:text-amber-400"
-            : "text-zinc-800 dark:text-zinc-200"
+            ? "font-medium text-accent-soft"
+            : "text-secondary"
         }`}
       >
         <MapPin aria-hidden className="h-4 w-4 shrink-0" />
@@ -126,19 +126,19 @@ export function SuburbSelectPanel({
       </button>
       <div className="max-h-48 overflow-y-auto">
         {loading ? (
-          <p className="px-2 py-2 text-sm text-zinc-500">Loading...</p>
+          <p className="px-2 py-2 text-sm text-muted">Loading...</p>
         ) : suburbs.length === 0 ? (
-          <p className="px-2 py-2 text-sm text-zinc-500">No suburbs found.</p>
+          <p className="px-2 py-2 text-sm text-muted">No suburbs found.</p>
         ) : (
           suburbs.map((suburb) => (
             <button
               key={suburb.id}
               type="button"
               onClick={() => handleSelect(suburb)}
-              className={`block w-full rounded-lg px-2 py-2 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
+              className={`block w-full rounded-lg px-2 py-2 text-left text-sm hover:bg-surface-muted ${
                 suburb.id === selectedSuburbId
-                  ? "font-medium text-amber-700 dark:text-amber-400"
-                  : "text-zinc-800 dark:text-zinc-200"
+                  ? "font-medium text-accent-soft"
+                  : "text-secondary"
               }`}
             >
               {formatSuburbLabel(suburb)}

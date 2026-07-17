@@ -3,7 +3,7 @@ import { SignupPageContent } from "@/components/SignupPageContent";
 
 export const metadata: Metadata = {
   title: "Sign up",
-  description: "Create a Happy Hours account.",
+  description: "Create a Duskroute account.",
 };
 
 export default function SignupPage() {

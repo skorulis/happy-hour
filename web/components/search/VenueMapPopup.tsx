@@ -67,7 +67,7 @@ function DealThumbnail({
   }
 
   return (
-    <span className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-amber-50">
+    <span className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-accent-muted">
       <DealProductIcon deal={deal} size={20} />
     </span>
   );
@@ -90,17 +90,17 @@ export function VenueMapPopup({
     null;
 
   return (
-    <div className="relative box-border flex w-full max-w-full overflow-hidden rounded-xl bg-white text-zinc-900">
+    <div className="relative box-border flex w-full max-w-full overflow-hidden rounded-xl bg-surface-elevated text-foreground">
       <button
         type="button"
         onClick={onClose}
-        className="absolute top-2 right-2 z-10 flex h-7 w-7 items-center justify-center rounded-full text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600"
+        className="absolute top-2 right-2 z-10 flex h-7 w-7 items-center justify-center rounded-full text-muted transition-colors hover:bg-surface-muted hover:text-secondary"
         aria-label="Close"
       >
         <X aria-hidden className="h-4 w-4" strokeWidth={2} />
       </button>
 
-      <div className="flex w-[38%] max-w-44 shrink-0 flex-col border-r border-zinc-200 p-3">
+      <div className="flex w-[38%] max-w-44 shrink-0 flex-col border-r border-border-subtle p-3">
         {imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -111,10 +111,10 @@ export function VenueMapPopup({
         ) : (
           <div
             aria-hidden
-            className="mb-3 flex aspect-[4/3] w-full items-center justify-center rounded-lg bg-zinc-100"
+            className="mb-3 flex aspect-[4/3] w-full items-center justify-center rounded-lg bg-surface-muted"
           >
             <Building2
-              className="h-8 w-8 text-zinc-400"
+              className="h-8 w-8 text-muted"
               strokeWidth={1.5}
             />
           </div>
@@ -123,10 +123,10 @@ export function VenueMapPopup({
         <p className="text-base font-bold leading-tight">{group.venue.name}</p>
 
         {group.venue.formattedAddress ? (
-          <p className="mt-2 inline-flex items-start gap-1.5 text-xs leading-snug text-zinc-600">
+          <p className="mt-2 inline-flex items-start gap-1.5 text-xs leading-snug text-secondary">
             <MapPin
               aria-hidden
-              className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500"
+              className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent-soft"
               strokeWidth={1.75}
             />
             <span>{group.venue.formattedAddress}</span>
@@ -135,7 +135,7 @@ export function VenueMapPopup({
 
         <Link
           href={venueHref}
-          className="mt-auto block rounded-lg bg-gradient-to-b from-amber-500 to-amber-600 px-3 py-2 text-center text-sm font-semibold text-white transition-colors hover:from-amber-600 hover:to-amber-700"
+          className="mt-auto block rounded-lg bg-gradient-to-b from-accent to-accent-hover px-3 py-2 text-center text-sm font-semibold text-accent-fg"
           onClick={() => {
             track("venue_opened", {
               venue_id: group.venue.id,
@@ -151,7 +151,7 @@ export function VenueMapPopup({
       </div>
 
       <div className="min-w-0 flex-1 p-3 pr-8">
-        <p className="text-sm text-zinc-700">
+        <p className="text-sm text-secondary">
           {specialsListedLabel(group.deals.length)}
         </p>
 
@@ -170,11 +170,11 @@ export function VenueMapPopup({
                       {deal.title || "Untitled deal"}
                     </p>
                     {description ? (
-                      <p className="line-clamp-3 text-xs leading-relaxed text-zinc-600">
+                      <p className="line-clamp-3 text-xs leading-relaxed text-secondary">
                         {description}
                       </p>
                     ) : null}
-                    <p className="text-xs text-zinc-500">
+                    <p className="text-xs text-muted">
                       {formatDealDayBadge(deal.schedules)}
                       {timeBadge && timeBadge !== "—" ? ` · ${timeBadge}` : ""}
                     </p>
@@ -183,7 +183,7 @@ export function VenueMapPopup({
               );
             })}
             {group.deals.length > previewDeals.length ? (
-              <li className="text-xs text-zinc-500">
+              <li className="text-xs text-muted">
                 +{group.deals.length - previewDeals.length} more
               </li>
             ) : null}

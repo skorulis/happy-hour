@@ -20,35 +20,35 @@ export function AdminPageContent({
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-10">
       <header className="space-y-2">
-        <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">
+        <h1 className="text-3xl font-bold text-foreground">
           Admin
         </h1>
       </header>
 
       <section className="space-y-4">
-        <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
+        <h2 className="text-xl font-semibold text-foreground">
           Reports
         </h2>
 
         {reports.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-zinc-300 px-4 py-8 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+          <p className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted">
             No reports yet
           </p>
         ) : (
-          <ul className="divide-y divide-zinc-200 rounded-xl border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
+          <ul className="divide-y divide-border-subtle rounded-xl border border-border">
             {reports.map((report) => (
               <li key={report.id} className="px-4 py-4">
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
+                  <p className="text-sm font-medium text-foreground">
                     {getDealReportCategoryLabel(report.category)}
                   </p>
-                  <p className="text-sm text-zinc-700 dark:text-zinc-300">
+                  <p className="text-sm text-secondary">
                     {report.dealTitle ?? "Untitled deal"}
                   </p>
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  <p className="text-sm text-muted">
                     <Link
                       href={venuePath(report.venueSuburbName, report.venueName)}
-                      className="text-amber-700 hover:underline dark:text-amber-400"
+                      className="text-accent-soft hover:underline"
                     >
                       {report.venueName}
                       {report.venueSuburbName
@@ -57,11 +57,11 @@ export function AdminPageContent({
                     </Link>
                   </p>
                   {report.details ? (
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                    <p className="text-sm text-secondary">
                       {report.details}
                     </p>
                   ) : null}
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  <p className="text-xs text-muted">
                     {report.reporterEmail ?? "Anonymous"} ·{" "}
                     {report.createdAt.toLocaleString()}
                   </p>
@@ -73,32 +73,32 @@ export function AdminPageContent({
       </section>
 
       <section className="space-y-4">
-        <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
+        <h2 className="text-xl font-semibold text-foreground">
           Recent syncs
         </h2>
 
         {syncRuns.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-zinc-300 px-4 py-8 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+          <p className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted">
             No syncs yet
           </p>
         ) : (
-          <ul className="divide-y divide-zinc-200 rounded-xl border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
+          <ul className="divide-y divide-border-subtle rounded-xl border border-border">
             {syncRuns.map((run) => (
               <li key={run.id} className="px-4 py-4">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
+                  <p className="text-sm font-medium text-foreground">
                     {formatSyncMode(run.mode)}
                     {run.finishedAt == null ? (
-                      <span className="ml-2 text-xs font-normal text-amber-700 dark:text-amber-400">
+                      <span className="ml-2 text-xs font-normal text-accent-soft">
                         Incomplete
                       </span>
                     ) : null}
                   </p>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  <p className="text-xs text-muted">
                     {run.startedAt.toLocaleString()}
                   </p>
                 </div>
-                <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                <p className="mt-1 text-sm text-secondary">
                   {run.venuesSynced} venues · {run.dealsSynced} deals ·{" "}
                   {run.suburbsSynced} suburbs
                 </p>
@@ -114,7 +114,7 @@ export function AdminPageContent({
 function RestrictedMessage() {
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-6 py-10">
-      <p className="text-sm text-zinc-600 dark:text-zinc-400">
+      <p className="text-sm text-secondary">
         This page is restricted to admin users
       </p>
     </div>

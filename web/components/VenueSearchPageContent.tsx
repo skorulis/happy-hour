@@ -61,7 +61,7 @@ export function VenueSearchPageContent() {
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-10">
       <header className="space-y-2">
-        <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">
+        <h1 className="text-3xl font-bold text-foreground">
           Venue search
         </h1>
       </header>
@@ -72,34 +72,34 @@ export function VenueSearchPageContent() {
         onChange={(event) => setQuery(event.target.value)}
         placeholder="Search venues by name..."
         autoFocus
-        className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none ring-amber-500 focus:ring-2 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-50"
+        className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground outline-none ring-accent focus:ring-2"
       />
 
       {!hasQuery ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="text-sm text-muted">
           Start typing to search venues.
         </p>
       ) : loading || !hasSearched ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">Searching...</p>
+        <p className="text-sm text-muted">Searching...</p>
       ) : error ? (
-        <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+        <p className="text-sm text-danger">{error}</p>
       ) : venues.length === 0 ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="text-sm text-muted">
           No venues found.
         </p>
       ) : (
-        <ul className="divide-y divide-zinc-200 rounded-xl border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
+        <ul className="divide-y divide-border-subtle rounded-xl border border-border">
           {venues.map((venue) => (
             <li key={venue.id}>
               <Link
                 href={venuePath(venue.suburbName, venue.name)}
-                className="block px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                className="block px-4 py-3 hover:bg-surface-muted"
               >
-                <span className="block text-sm font-medium text-zinc-900 dark:text-zinc-50">
+                <span className="block text-sm font-medium text-foreground">
                   {venue.name}
                 </span>
                 {venue.suburbName ? (
-                  <span className="block text-sm text-zinc-500 dark:text-zinc-400">
+                  <span className="block text-sm text-muted">
                     {venue.suburbName}
                   </span>
                 ) : null}

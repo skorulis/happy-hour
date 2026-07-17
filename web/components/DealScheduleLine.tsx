@@ -18,7 +18,7 @@ export function DealScheduleLine({ text, className = "" }: DealScheduleLineProps
 
   return (
     <span
-      className={`inline-flex min-w-0 items-center gap-1.5 text-sm text-zinc-500 dark:text-zinc-400 ${className}`}
+      className={`inline-flex min-w-0 items-center gap-1.5 text-sm text-muted ${className}`}
     >
       {usesCalendarIcon(text) ? (
         <CalendarDays {...iconProps} />

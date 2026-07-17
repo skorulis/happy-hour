@@ -7,7 +7,7 @@ import { auth } from "@/lib/auth";
 
 export const metadata: Metadata = {
   title: "Profile",
-  description: "Your Happy Hours account.",
+  description: "Your Duskroute account.",
 };
 
 export default async function ProfilePage() {

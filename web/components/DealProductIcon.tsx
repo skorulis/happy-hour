@@ -27,7 +27,7 @@ export function DealProductIcon({
 
   return (
     <span
-      className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 ${className}`}
+      className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-soft ${className}`}
     >
       {hasRegisteredIcon ? (
         <ProductMapIcon name={iconName} size={size} />

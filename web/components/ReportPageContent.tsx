@@ -6,10 +6,10 @@ import type { DealReportCategory } from "@/db/schema";
 import { dealReportCategories } from "@/lib/reports/categories";
 
 const inputClassName =
-  "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none ring-amber-500 focus:ring-2 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-50";
+  "w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground outline-none ring-accent focus:ring-2";
 
 const buttonClassName =
-  "w-full rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-amber-500 dark:hover:bg-amber-600";
+  "w-full rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-fg transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60";
 
 type ReportPageContentProps = {
   dealId: number;
@@ -69,10 +69,10 @@ export function ReportPageContent({
     return (
       <div className="mx-auto flex w-full max-w-md flex-col gap-6 text-center">
         <header className="space-y-2">
-          <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">
+          <h1 className="text-3xl font-bold text-foreground">
             Thank you for reporting
           </h1>
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="text-sm text-secondary">
             We&apos;ll review your report and update the deal if needed.
           </p>
         </header>
@@ -87,10 +87,10 @@ export function ReportPageContent({
   return (
     <div className="mx-auto flex w-full max-w-md flex-col gap-6">
       <header className="space-y-2">
-        <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">
+        <h1 className="text-3xl font-bold text-foreground">
           Report a deal
         </h1>
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="text-sm text-secondary">
           {dealTitle} at {venueName}
         </p>
       </header>
@@ -99,7 +99,7 @@ export function ReportPageContent({
         <div className="space-y-1">
           <label
             htmlFor="category"
-            className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+            className="block text-sm font-medium text-secondary"
           >
             What&apos;s wrong
           </label>
@@ -126,7 +126,7 @@ export function ReportPageContent({
         <div className="space-y-1">
           <label
             htmlFor="details"
-            className="block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+            className="block text-sm font-medium text-secondary"
           >
             More information
           </label>
@@ -142,7 +142,7 @@ export function ReportPageContent({
         </div>
 
         {error ? (
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+          <p className="text-sm text-danger">{error}</p>
         ) : null}
 
         <button type="submit" disabled={loading} className={buttonClassName}>

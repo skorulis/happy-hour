@@ -71,19 +71,19 @@ export function FavouritesPageContent() {
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-10">
       <header className="space-y-2">
-        <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">
+        <h1 className="text-3xl font-bold text-foreground">
           Favourites
         </h1>
       </header>
 
       {hasFavorites && loading ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="text-sm text-muted">
           Loading your favourite deals...
         </p>
       ) : null}
 
       {hasFavorites && error ? (
-        <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">
+        <p className="rounded-xl border border-border bg-danger-muted px-4 py-3 text-sm text-danger">
           {error}
         </p>
       ) : null}

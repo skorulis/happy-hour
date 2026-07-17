@@ -63,12 +63,12 @@ export function WeeklyDealsSection({
 
   return (
     <section className="space-y-4">
-      <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
+      <h2 className="text-xl font-semibold text-foreground">
         {heading(visibleCount, selectedDay)}
       </h2>
 
       {dealsByDay.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-zinc-300 px-4 py-8 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+        <p className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted">
           {emptyMessage}
         </p>
       ) : (
@@ -79,14 +79,14 @@ export function WeeklyDealsSection({
           />
 
           {selectedDay !== null && filteredDeals!.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-zinc-300 px-4 py-8 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+            <p className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted">
               {emptyDayMessage(DAY_LABELS[selectedDay] ?? `Day ${selectedDay}`)}
             </p>
           ) : selectedDay === null ? (
             <div className="space-y-8">
               {dealsByDay.map(({ dayOfWeek, dayLabel, deals: dayDeals }) => (
                 <div key={dayOfWeek} className="space-y-4">
-                  <h3 className="border-l-4 border-amber-500 pl-3 text-2xl font-bold text-zinc-700 dark:text-zinc-300">
+                  <h3 className="border-l-4 border-accent pl-3 text-2xl font-bold text-secondary">
                     {dayLabel}
                   </h3>
                   <div className="grid gap-5">

@@ -4,7 +4,7 @@ import { LoginPageContent } from "@/components/LoginPageContent";
 
 export const metadata: Metadata = {
   title: "Log in",
-  description: "Log in to your Happy Hours account.",
+  description: "Log in to your Duskroute account.",
 };
 
 export default function LoginPage() {
@@ -12,7 +12,7 @@ export default function LoginPage() {
     <Suspense
       fallback={
         <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-6 py-10">
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">Loading...</p>
+          <p className="text-sm text-muted">Loading...</p>
         </div>
       }
     >

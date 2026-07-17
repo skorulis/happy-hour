@@ -40,7 +40,7 @@ type MarkdownTextProps = {
 export function MarkdownText({ children, className = "" }: MarkdownTextProps) {
   return (
     <div
-      className={`space-y-1 [&_a]:text-amber-700 [&_a]:underline dark:[&_a]:text-amber-400 [&_del]:line-through [&_ol]:my-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_strong]:font-semibold [&_table]:my-2 [&_table]:w-full [&_table]:overflow-x-auto [&_table]:text-sm [&_td]:border [&_td]:border-zinc-200 [&_td]:px-2 [&_td]:py-1 dark:[&_td]:border-zinc-700 [&_th]:border [&_th]:border-zinc-200 [&_th]:px-2 [&_th]:py-1 dark:[&_th]:border-zinc-700 [&_ul]:my-1 [&_ul]:list-disc [&_ul]:pl-5 ${className}`}
+      className={`space-y-1 [&_a]:text-accent-soft [&_a]:underline [&_del]:line-through [&_ol]:my-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_strong]:font-semibold [&_table]:my-2 [&_table]:w-full [&_table]:overflow-x-auto [&_table]:text-sm [&_td]:border [&_td]:border-border [&_td]:px-2 [&_td]:py-1 [&_th]:border [&_th]:border-border [&_th]:px-2 [&_th]:py-1 [&_ul]:my-1 [&_ul]:list-disc [&_ul]:pl-5 ${className}`}
     >
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}

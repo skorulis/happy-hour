@@ -236,16 +236,20 @@ function VenueMarker({
           <div
             className={`flex h-8 w-8 items-center justify-center rounded-full border-2 shadow-md ${
               hasActiveDeal
-                ? "border-amber-700 bg-amber-500"
-                : "border-zinc-500 bg-zinc-400"
+                ? "border-accent bg-accent"
+                : "border-border bg-surface-muted"
             }`}
           >
-            <ProductMapIcon name={iconName} className="text-white" size={16} />
+            <ProductMapIcon
+              name={iconName}
+              className={hasActiveDeal ? "text-accent-fg" : "text-secondary"}
+              size={16}
+            />
           </div>
         ) : (
           <Pin
-            background={hasActiveDeal ? "#f59e0b" : "#a1a1aa"}
-            borderColor={hasActiveDeal ? "#b45309" : "#71717a"}
+            background={hasActiveDeal ? "#f59e0b" : "#64748b"}
+            borderColor={hasActiveDeal ? "#b45309" : "#475569"}
             glyphColor="#ffffff"
           />
         )}
@@ -307,10 +311,10 @@ function UserLocationMarker({
 function MapUnavailablePlaceholder({ fullScreen }: { fullScreen: boolean }) {
   return (
     <div
-      className={`flex items-center justify-center bg-zinc-50 p-6 text-center text-sm text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400 ${
+      className={`flex items-center justify-center bg-surface-muted p-6 text-center text-sm text-muted ${
         fullScreen
           ? "absolute inset-0"
-          : "h-[60vh] rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700"
+          : "h-[60vh] rounded-xl border border-dashed border-border"
       }`}
     >
       Map unavailable — check NEXT_PUBLIC_GOOGLE_MAPS_API_KEY and
@@ -353,7 +357,7 @@ export function SearchMapView({
       className={
         fullScreen
           ? "absolute inset-0"
-          : "relative min-h-[60vh] overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800"
+          : "relative min-h-[60vh] overflow-hidden rounded-xl border border-border"
       }
     >
       <APIProvider apiKey={googleMapsApiKey}>
@@ -400,8 +404,8 @@ export function SearchMapView({
       </APIProvider>
 
       {isEmpty ? (
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-white/70 p-6 dark:bg-zinc-950/70">
-          <p className="max-w-sm rounded-xl border border-dashed border-zinc-300 bg-white px-4 py-8 text-center text-sm text-zinc-500 shadow-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-400">
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-background/70 p-6">
+          <p className="max-w-sm rounded-xl border border-dashed border-border bg-surface px-4 py-8 text-center text-sm text-muted shadow-card">
             No deals matched your filters. Try syncing data from DealScraper or
             broadening your search.
           </p>

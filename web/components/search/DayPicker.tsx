@@ -37,15 +37,15 @@ function Checkbox({
 }) {
   return (
     <label
-      className={`flex cursor-pointer gap-2 py-1.5 text-sm text-zinc-800 dark:text-zinc-200 ${
+      className={`flex cursor-pointer gap-2 py-1.5 text-sm text-secondary ${
         badge ? "items-start" : "items-center"
       }`}
     >
       <span
         className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
           checked
-            ? "border-amber-600 bg-amber-600 text-white"
-            : "border-zinc-300 bg-white dark:border-zinc-600 dark:bg-zinc-950"
+            ? "border-accent bg-accent text-accent-fg"
+            : "border-border bg-surface"
         }`}
       >
         {checked ? (
@@ -61,7 +61,7 @@ function Checkbox({
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span>{label}</span>
         {badge ? (
-          <span className="self-start rounded bg-amber-600 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+          <span className="self-start rounded bg-accent px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-accent-fg">
             {badge}
           </span>
         ) : null}
@@ -143,7 +143,7 @@ export function DayPickerPanel({
   const rightColumn = WEEKDAY_UI_ORDER.slice(4);
 
   return (
-    <div className="w-72 max-w-[calc(100vw-3rem)] rounded-xl border border-zinc-200 bg-white p-4 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
+    <div className="w-72 max-w-[calc(100vw-3rem)] rounded-xl border border-border bg-surface-elevated p-4 shadow-card">
       <div className="grid grid-cols-2 gap-x-4">
         <div className="min-w-0">
           {leftColumn.map((day) => (
@@ -169,7 +169,7 @@ export function DayPickerPanel({
         </div>
       </div>
 
-      <div className="my-3 border-t border-zinc-200 dark:border-zinc-700" />
+      <div className="my-3 border-t border-border-subtle" />
 
       <Checkbox
         checked={allDaysSelected}
@@ -177,7 +177,7 @@ export function DayPickerPanel({
         label="All days"
       />
 
-      <div className="my-3 border-t border-zinc-200 dark:border-zinc-700" />
+      <div className="my-3 border-t border-border-subtle" />
 
       {!showTimeFilter ? (
         <button
@@ -187,13 +187,13 @@ export function DayPickerPanel({
             setStartMinute(null);
             setEndMinute(null);
           }}
-          className="text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+          className="text-sm text-muted hover:text-foreground"
         >
           + Filter by time
         </button>
       ) : (
         <div className="space-y-2">
-          <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          <p className="text-sm font-medium text-secondary">
             Time range
           </p>
           <div className="grid grid-cols-2 gap-2">
@@ -204,7 +204,7 @@ export function DayPickerPanel({
                 setStartMinute(value === "" ? null : Number(value));
               }}
               aria-label="Start time"
-              className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none ring-amber-500 focus:ring-2 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-50"
+              className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground outline-none ring-accent focus:ring-2"
             >
               <option value="">Any</option>
               {TIME_FILTER_HOUR_OPTIONS.map((option) => (
@@ -220,7 +220,7 @@ export function DayPickerPanel({
                 setEndMinute(value === "" ? null : Number(value));
               }}
               aria-label="End time"
-              className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none ring-amber-500 focus:ring-2 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-50"
+              className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground outline-none ring-accent focus:ring-2"
             >
               <option value="">Any</option>
               {TIME_FILTER_HOUR_OPTIONS.map((option) => (
@@ -231,7 +231,7 @@ export function DayPickerPanel({
             </select>
           </div>
           {timeRangeError ? (
-            <p className="text-xs text-red-600 dark:text-red-400">
+            <p className="text-xs text-danger">
               {timeRangeError}
             </p>
           ) : null}
@@ -242,27 +242,27 @@ export function DayPickerPanel({
               setStartMinute(null);
               setEndMinute(null);
             }}
-            className="text-xs text-zinc-500 hover:text-zinc-700 dark:text-zinc-400"
+            className="text-xs text-muted hover:text-foreground"
           >
             Remove time filter
           </button>
         </div>
       )}
 
-      <div className="my-3 border-t border-zinc-200 dark:border-zinc-700" />
+      <div className="my-3 border-t border-border-subtle" />
 
       <div className="flex items-center justify-between">
         <button
           type="button"
           onClick={handleClear}
-          className="text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+          className="text-sm text-muted hover:text-foreground"
         >
           Clear
         </button>
         <button
           type="button"
           onClick={handleApply}
-          className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700"
+          className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-fg hover:bg-accent-hover"
         >
           Apply
         </button>

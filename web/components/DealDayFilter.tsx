@@ -30,8 +30,8 @@ function DayFilterSegment({
       aria-label={ariaLabel}
       className={`min-w-0 flex-1 rounded-lg px-2 py-2 text-sm transition-colors ${
         isActive
-          ? "bg-white font-medium text-zinc-900 shadow-sm dark:bg-zinc-900 dark:text-zinc-50"
-          : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
+          ? "bg-surface-elevated font-medium text-foreground shadow-card"
+          : "text-secondary hover:text-foreground"
       }`}
     >
       {label}
@@ -45,7 +45,7 @@ export function DealDayFilter({
 }: DealDayFilterProps) {
   return (
     <div
-      className="overflow-x-auto rounded-xl border border-zinc-200 bg-zinc-100 p-1 dark:border-zinc-700 dark:bg-zinc-900"
+      className="overflow-x-auto rounded-xl border border-border bg-surface-muted p-1"
       role="group"
       aria-label="Filter deals by day"
     >

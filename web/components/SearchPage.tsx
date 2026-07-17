@@ -40,7 +40,7 @@ export function SearchPage({ initialWhere, popularSuburbs }: SearchPageProps) {
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-10">
       <header>
-        <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">
+        <h1 className="text-3xl font-bold text-foreground">
           Find pub and bar deals
         </h1>
       </header>
@@ -59,10 +59,10 @@ export function SearchPage({ initialWhere, popularSuburbs }: SearchPageProps) {
       ) : (
         <section className="space-y-4">
           <div className="space-y-1">
-            <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
+            <h2 className="text-xl font-semibold text-foreground">
               {resultsTitle}
             </h2>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="text-sm text-muted">
               {locating
                 ? "Getting your location..."
                 : loadingDeals
@@ -72,13 +72,13 @@ export function SearchPage({ initialWhere, popularSuburbs }: SearchPageProps) {
           </div>
 
           {error ? (
-            <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
+            <p className="rounded-lg border border-border bg-danger-muted px-4 py-3 text-sm text-danger">
               {error}
             </p>
           ) : null}
 
           {locating || error ? null : isEmpty ? (
-            <p className="rounded-xl border border-dashed border-zinc-300 px-4 py-8 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+            <p className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted">
               No deals matched your filters. Try syncing data from DealScraper or
               broadening your search.
             </p>
@@ -97,8 +97,8 @@ export function SearchPage({ initialWhere, popularSuburbs }: SearchPageProps) {
               ) : null}
 
               {nearbyVenueGroups.length > 0 ? (
-                <div className="space-y-4 border-t border-zinc-200 pt-8 dark:border-zinc-800">
-                  <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
+                <div className="space-y-4 border-t border-border-subtle pt-8">
+                  <h2 className="text-xl font-semibold text-foreground">
                     Nearby
                   </h2>
                   <div className="grid gap-4">

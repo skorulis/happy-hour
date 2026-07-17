@@ -23,15 +23,15 @@ export default async function ReportPage({ searchParams }: ReportPageProps) {
   if (!Number.isFinite(dealId) || !Number.isInteger(dealId) || dealId <= 0) {
     return (
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col gap-4 px-6 py-10 text-center">
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+        <h1 className="text-2xl font-bold text-foreground">
           Deal not found
         </h1>
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="text-sm text-secondary">
           A valid deal is required to submit a report.
         </p>
         <Link
           href="/"
-          className="text-sm font-medium text-amber-700 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300"
+          className="text-sm font-medium text-accent-soft hover:text-foreground"
         >
           Back to search
         </Link>
@@ -45,15 +45,15 @@ export default async function ReportPage({ searchParams }: ReportPageProps) {
   if (!deal) {
     return (
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col gap-4 px-6 py-10 text-center">
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+        <h1 className="text-2xl font-bold text-foreground">
           Deal not found
         </h1>
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="text-sm text-secondary">
           This deal may have been removed or does not exist.
         </p>
         <Link
           href="/"
-          className="text-sm font-medium text-amber-700 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300"
+          className="text-sm font-medium text-accent-soft hover:text-foreground"
         >
           Back to search
         </Link>
