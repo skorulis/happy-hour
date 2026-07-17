@@ -47,8 +47,10 @@ export async function GET() {
   const base = siteUrl();
   const venues = filterUniqueVenueSlugs(await getAllVenuesForSitemap());
 
+  const now = new Date();
   const entries = [
-    urlEntry(base, new Date(), "daily", "1.0"),
+    urlEntry(base, now, "daily", "1.0"),
+    urlEntry(`${base}/map`, now, "daily", "0.9"),
     ...venues.map((row) =>
       urlEntry(
         `${base}${venuePath(row.suburbName, row.name)}`,

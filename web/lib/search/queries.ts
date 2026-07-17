@@ -796,3 +796,18 @@ export async function getAllVenuesForSitemap(): Promise<VenueSitemapRow[]> {
     .leftJoin(suburb, eq(venue.suburbId, suburb.id))
     .orderBy(venue.name);
 }
+
+export type SuburbSitemapRow = {
+  name: string;
+  postcode: string | null;
+};
+
+export async function getAllSuburbsForSitemap(): Promise<SuburbSitemapRow[]> {
+  return db
+    .select({
+      name: suburb.name,
+      postcode: suburb.postcode,
+    })
+    .from(suburb)
+    .orderBy(suburb.name);
+}
