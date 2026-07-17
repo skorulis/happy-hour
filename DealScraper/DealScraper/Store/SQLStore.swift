@@ -21,6 +21,7 @@ final class SQLStore {
         }
         
         try! migrate()
+        try! seedDefaultCountries()
     }
     
     static func `default`() -> SQLStore {
@@ -34,6 +35,20 @@ final class SQLStore {
     private func migrate() throws {
         let migrations = SQLMigrations()
         try migrations.migrator.migrate(dbQueue)
+    }
+
+    private func seedDefaultCountries() throws {
+        try dbQueue.write { db in
+            for country in Country.defaults {
+                let existing = try Country
+                    .filter(Column("iso3") == country.iso3)
+                    .fetchOne(db)
+                if existing == nil {
+                    var mutable = country
+                    try mutable.insert(db)
+                }
+            }
+        }
     }
     
     static var docDir: URL {

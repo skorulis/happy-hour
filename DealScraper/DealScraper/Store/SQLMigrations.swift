@@ -242,5 +242,18 @@ final class SQLMigrations {
             }
             try db.execute(sql: "UPDATE venue SET last_update = CURRENT_TIMESTAMP")
         }
+
+        migrator.registerMigration("v29_create_country") { db in
+            try db.create(table: "country") { t in
+                t.autoIncrementedPrimaryKey("id")
+                t.column("name", .text).notNull()
+                t.column("iso3", .text).notNull().unique()
+            }
+
+            try db.alter(table: "suburb") { t in
+                t.add(column: "country_id", .integer)
+                    .references("country", onDelete: .setNull)
+            }
+        }
     }
 }
