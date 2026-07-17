@@ -1,3 +1,4 @@
+import { getAppVersion } from "@/lib/app-version";
 import type { AnalyticsEventPayload } from "@/lib/analytics/types";
 
 const AMPLITUDE_HTTP_API_URL = "https://api2.amplitude.com/2/httpapi";
@@ -9,6 +10,7 @@ export type AmplitudeEventBody = {
     device_id: string;
     insert_id: string;
     time: number;
+    app_version: string;
     user_id?: string;
     event_properties: Record<string, string | number | boolean | null>;
   }>;
@@ -23,6 +25,7 @@ export function buildAmplitudeRequestBody(
     device_id: event.device_id,
     insert_id: event.insert_id,
     time: event.time,
+    app_version: getAppVersion(),
     event_properties: event.event_properties,
   };
 

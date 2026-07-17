@@ -26,11 +26,25 @@ export async function generateMetadata({
       ? `Browse ${dealCount} happy hour ${dealCount === 1 ? "deal" : "deals"} at ${venue.name}${venue.suburbName ? ` in ${venue.suburbName}` : ""}.`
       : `Happy hour deals and specials at ${venue.name}${venue.suburbName ? ` in ${venue.suburbName}` : ""}.`;
 
+  const title = `${venue.name}${venue.suburbName ? `, ${venue.suburbName}` : ""}`;
+  const ogImages = venue.heroImage ? [{ url: venue.heroImage }] : undefined;
+
   return {
-    title: `${venue.name}${venue.suburbName ? `, ${venue.suburbName}` : ""}`,
+    title,
     description,
     alternates: {
       canonical: venuePath(venue.suburbName, venue.name),
+    },
+    openGraph: {
+      title,
+      description,
+      ...(ogImages ? { images: ogImages } : {}),
+    },
+    twitter: {
+      card: ogImages ? "summary_large_image" : "summary",
+      title,
+      description,
+      ...(ogImages ? { images: ogImages.map((image) => image.url) } : {}),
     },
   };
 }

@@ -79,7 +79,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 Stack: Docker Compose with **Postgres 16**, **Next.js** (`output: "standalone"`), and **Caddy** (HTTPS) for `duskroute.com` / `www.duskroute.com`. Postgres is bound to `127.0.0.1` on the host only (not the public internet).
 
-Production releases: push a `release/*` tag → GitHub Actions builds web + migrate images to GHCR → SSH to the droplet → pull → **run Drizzle migrations** → restart services.
+Production releases: push a `release/*` tag → GitHub Actions builds web + migrate images to GHCR → SSH to the droplet → pull → **run Drizzle migrations** → restart services. The tag version (e.g. `release/0.1.9` → `0.1.9`) is baked into the image as `NEXT_PUBLIC_APP_VERSION` and shown in the footer, Sentry releases, and Amplitude events. Local/dev builds show `debug`.
 
 Each release applies pending SQL under `db/migrations/` via the migrate image (`deploy-release.sh` runs `docker compose run --rm migrate`) **before** starting the new `web` container. If migrate fails, the deploy stops and the previous app keeps running. Generate and commit migration files locally (`npm run db:generate`) before tagging a release that includes schema changes.
 

@@ -48,6 +48,7 @@ jobs:
         run: |
           tag="${GITHUB_REF_NAME}"
           echo "IMAGE_TAG=${tag//\//-}" >> "${GITHUB_ENV}"
+          echo "APP_VERSION=${tag#release/}" >> "${GITHUB_ENV}"
 
       - name: Validate required secrets
         run: |
@@ -76,6 +77,7 @@ jobs:
             NEXT_PUBLIC_SITE_URL=${{ env.NEXT_PUBLIC_SITE_URL }}
             NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=${{ env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY }}
             NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID=${{ env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID }}
+            NEXT_PUBLIC_APP_VERSION=${{ env.APP_VERSION }}
           tags: |
             ${{ env.WEB_IMAGE_REPO }}:${{ env.IMAGE_TAG }}
             ${{ env.WEB_IMAGE_REPO }}:latest
@@ -93,6 +95,7 @@ jobs:
             NEXT_PUBLIC_SITE_URL=${{ env.NEXT_PUBLIC_SITE_URL }}
             NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=${{ env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY }}
             NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID=${{ env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID }}
+            NEXT_PUBLIC_APP_VERSION=${{ env.APP_VERSION }}
           tags: |
             ${{ env.MIGRATE_IMAGE_REPO }}:${{ env.IMAGE_TAG }}
             ${{ env.MIGRATE_IMAGE_REPO }}:latest

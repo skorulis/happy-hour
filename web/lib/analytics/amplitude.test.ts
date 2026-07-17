@@ -24,6 +24,7 @@ describe("buildAmplitudeRequestBody", () => {
           device_id: "device-abc",
           insert_id: "insert-abc",
           time: 1_700_000_000_000,
+          app_version: "debug",
           user_id: "user-1",
           event_properties: {
             view: "list",
