@@ -200,12 +200,14 @@ final class VenueDetailsViewModel {
 
     func generateBlurb() async {
         guard let venue, let venueId = venue.id, let suburb = suburbName else { return }
+        guard let website = venue.websiteUri else { return }
 
         generateBlurbState = .generating
 
         do {
             let blurb = try await venueBlurbGenerator.generateBlurb(
                 pubName: venue.name,
+                website: website,
                 suburb: suburb
             )
             try venueRepository.updateBlurb(venueId: venueId, blurb: blurb)

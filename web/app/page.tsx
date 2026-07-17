@@ -1,8 +1,11 @@
 import { Suspense } from "react";
 import { SearchPage } from "@/components/SearchPage";
 import { SearchUrlRedirect } from "@/components/SearchUrlRedirect";
+import { listPopularSuburbs } from "@/lib/search/queries";
 
-export default function Home() {
+export default async function Home() {
+  const popularSuburbs = await listPopularSuburbs(10);
+
   return (
     <>
       <Suspense fallback={null}>
@@ -19,7 +22,7 @@ export default function Home() {
           </div>
         }
       >
-        <SearchPage />
+        <SearchPage popularSuburbs={popularSuburbs} />
       </Suspense>
     </>
   );

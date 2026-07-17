@@ -29,7 +29,7 @@ final class VenueBlurbGenerator: @unchecked Sendable {
         self.llmModelStore = llmModelStore
     }
 
-    nonisolated func generateBlurb(pubName: String, suburb: String) async throws -> String {
+    nonisolated func generateBlurb(pubName: String, website: String, suburb: String) async throws -> String {
         let apiKey = await apiKeyStore.openRouterAPIKey
         guard !apiKey.isEmpty else {
             throw VenueBlurbGeneratorError.missingAPIKey
@@ -37,7 +37,8 @@ final class VenueBlurbGenerator: @unchecked Sendable {
 
         let model = await llmModelStore.openRouterModel
         let prompt = """
-            Give me a brief description of \(pubName) in \(suburb) for a directory listing.
+            Give me a fun description of \(pubName) in \(suburb) for a directory listing.
+            The website for this venue is \(website)
             Source information from existing descriptions on the web.
             Do not refer to the venue by name; write as if the reader already knows what is being described.
             Do not ask any questions and write the response so it can be directly stored.

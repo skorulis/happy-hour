@@ -42,6 +42,13 @@ export type SuburbSearchResult = {
   sqkm?: number | null;
 };
 
+export type PopularSuburb = {
+  id: number;
+  name: string;
+  postcode: string | null;
+  dealCount: number;
+};
+
 export type VenueSearchResult = {
   id: number;
   name: string;
@@ -278,6 +285,26 @@ export async function searchSuburbs(
   return filtered
     .groupBy(suburb.id, suburb.name, suburb.postcode)
     .orderBy(desc(count(deal.id)), suburb.name)
+    .limit(limit);
+}
+
+export async function listPopularSuburbs(
+  limit = 10,
+): Promise<PopularSuburb[]> {
+  const dealCount = count(deal.id);
+
+  return db
+    .select({
+      id: suburb.id,
+      name: suburb.name,
+      postcode: suburb.postcode,
+      dealCount,
+    })
+    .from(suburb)
+    .innerJoin(venue, eq(venue.suburbId, suburb.id))
+    .innerJoin(deal, eq(deal.venueId, venue.id))
+    .groupBy(suburb.id, suburb.name, suburb.postcode)
+    .orderBy(desc(dealCount), suburb.name)
     .limit(limit);
 }
 

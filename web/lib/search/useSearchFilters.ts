@@ -416,6 +416,13 @@ export function useSearchFilters(options?: {
       return;
     }
 
+    if (!mapViewport && filters.where.kind === "anywhere") {
+      setDeals([]);
+      setNearbyDeals([]);
+      setLoadingDeals(false);
+      return;
+    }
+
     if (!mapViewport && isNearMePending(filters.where)) {
       return;
     }
