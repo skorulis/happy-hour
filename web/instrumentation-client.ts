@@ -12,6 +12,15 @@ Sentry.init({
   // Enable logs to be sent to Sentry
   enableLogs: true,
 
+  // BrowserApiErrors wraps setTimeout/addEventListener and historically
+  // conflicts with the Google Maps JS API (async map.js / marker callbacks).
+  integrations: (integrations) =>
+    integrations.filter((integration) => integration.name !== "BrowserApiErrors"),
+
+  // Drop uncaught noise originating inside the Maps CDN. Map failures that
+  // reach our React tree are still reported via MapErrorBoundary / error.tsx.
+  denyUrls: [/maps\.googleapis\.com/i, /maps-api-v3/i],
+
   dataCollection: {
     // To disable sending user data and HTTP bodies, uncomment the lines below. For more info visit:
     // https://docs.sentry.io/platforms/javascript/guides/nextjs/configuration/options/#dataCollection

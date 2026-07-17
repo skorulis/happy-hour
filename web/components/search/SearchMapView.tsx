@@ -4,11 +4,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { resolveVenueMapIcon } from "@/lib/search/map-icon";
 import {
   AdvancedMarker,
+  APILoadingStatus,
   APIProvider,
   InfoWindow,
   Map,
   Pin,
   useAdvancedMarkerRef,
+  useApiLoadingStatus,
   useMap,
 } from "@vis.gl/react-google-maps";
 import type { VenueGroupedDeals } from "@/components/VenueSearchCard";
@@ -254,7 +256,7 @@ function VenueMarker({
           />
         )}
       </AdvancedMarker>
-      {isSelected ? (
+      {isSelected && marker ? (
         <InfoWindow
           anchor={marker}
           onClose={onClose}
@@ -299,7 +301,7 @@ function UserLocationMarker({
           glyphColor="#ffffff"
         />
       </AdvancedMarker>
-      {isSelected ? (
+      {isSelected && marker ? (
         <InfoWindow anchor={marker} onClose={onClose}>
           Your location
         </InfoWindow>
@@ -308,7 +310,13 @@ function UserLocationMarker({
   );
 }
 
-function MapUnavailablePlaceholder({ fullScreen }: { fullScreen: boolean }) {
+function MapUnavailablePlaceholder({
+  fullScreen,
+  message = "Map unavailable — check NEXT_PUBLIC_GOOGLE_MAPS_API_KEY and NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID in your environment.",
+}: {
+  fullScreen: boolean;
+  message?: string;
+}) {
   return (
     <div
       className={`flex items-center justify-center bg-surface-muted p-6 text-center text-sm text-muted ${
@@ -317,9 +325,112 @@ function MapUnavailablePlaceholder({ fullScreen }: { fullScreen: boolean }) {
           : "h-[60vh] rounded-xl border border-dashed border-border"
       }`}
     >
-      Map unavailable — check NEXT_PUBLIC_GOOGLE_MAPS_API_KEY and
-      NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID in your environment.
+      {message}
     </div>
+  );
+}
+
+function MapLoadingPlaceholder({ fullScreen }: { fullScreen: boolean }) {
+  return (
+    <div
+      className={`flex items-center justify-center bg-background text-sm text-muted ${
+        fullScreen ? "absolute inset-0" : "h-[60vh]"
+      }`}
+    >
+      Loading map...
+    </div>
+  );
+}
+
+function SearchMapCanvas({
+  mapId,
+  venueGroups,
+  userLocation,
+  searchDays,
+  fullScreen,
+  onViewportIdle,
+  autoFitBounds,
+  initialBounds,
+  selectedMarker,
+  onVenueSelect,
+  onUserSelect,
+  onInfoWindowClose,
+  now,
+}: {
+  mapId: string;
+  venueGroups: VenueGroupedDeals[];
+  userLocation: UserLocation | null;
+  searchDays: number[];
+  fullScreen: boolean;
+  onViewportIdle?: (bounds: MapBounds) => void;
+  autoFitBounds: boolean;
+  initialBounds: MapBounds | null;
+  selectedMarker: SelectedMarker;
+  onVenueSelect: (venueId: number) => void;
+  onUserSelect: () => void;
+  onInfoWindowClose: () => void;
+  now: Date;
+}) {
+  const loadingStatus = useApiLoadingStatus();
+
+  if (
+    loadingStatus === APILoadingStatus.FAILED ||
+    loadingStatus === APILoadingStatus.AUTH_FAILURE
+  ) {
+    return (
+      <MapUnavailablePlaceholder
+        fullScreen={fullScreen}
+        message="Map unavailable — Google Maps failed to authorize. Check the API key, map ID, and HTTP referrer restrictions."
+      />
+    );
+  }
+
+  if (loadingStatus !== APILoadingStatus.LOADED) {
+    return <MapLoadingPlaceholder fullScreen={fullScreen} />;
+  }
+
+  return (
+    <Map
+      mapId={mapId}
+      colorScheme="DARK"
+      defaultCenter={DEFAULT_CENTER}
+      defaultZoom={DEFAULT_ZOOM}
+      gestureHandling="greedy"
+      className={fullScreen ? "h-full w-full" : "h-[60vh] w-full"}
+    >
+      {autoFitBounds ? (
+        <FitBounds venueGroups={venueGroups} userLocation={userLocation} />
+      ) : null}
+
+      {!autoFitBounds && initialBounds ? (
+        <InitialBounds bounds={initialBounds} />
+      ) : null}
+
+      {onViewportIdle ? (
+        <ViewportIdleReporter onViewportIdle={onViewportIdle} />
+      ) : null}
+
+      {userLocation ? (
+        <UserLocationMarker
+          userLocation={userLocation}
+          isSelected={selectedMarker === "user"}
+          onSelect={onUserSelect}
+          onClose={onInfoWindowClose}
+        />
+      ) : null}
+
+      {venueGroups.map((group) => (
+        <VenueMarker
+          key={group.venue.id}
+          group={group}
+          searchDays={searchDays}
+          now={now}
+          isSelected={selectedMarker === group.venue.id}
+          onSelect={onVenueSelect}
+          onClose={onInfoWindowClose}
+        />
+      ))}
+    </Map>
   );
 }
 
@@ -361,47 +472,21 @@ export function SearchMapView({
       }
     >
       <APIProvider apiKey={googleMapsApiKey}>
-        <Map
+        <SearchMapCanvas
           mapId={googleMapsMapId}
-          colorScheme="DARK"
-          defaultCenter={DEFAULT_CENTER}
-          defaultZoom={DEFAULT_ZOOM}
-          gestureHandling="greedy"
-          className={fullScreen ? "h-full w-full" : "h-[60vh] w-full"}
-        >
-          {autoFitBounds ? (
-            <FitBounds venueGroups={venueGroups} userLocation={userLocation} />
-          ) : null}
-
-          {!autoFitBounds && initialBounds ? (
-            <InitialBounds bounds={initialBounds} />
-          ) : null}
-
-          {onViewportIdle ? (
-            <ViewportIdleReporter onViewportIdle={onViewportIdle} />
-          ) : null}
-
-          {userLocation ? (
-            <UserLocationMarker
-              userLocation={userLocation}
-              isSelected={selectedMarker === "user"}
-              onSelect={handleUserSelect}
-              onClose={handleInfoWindowClose}
-            />
-          ) : null}
-
-          {venueGroups.map((group) => (
-            <VenueMarker
-              key={group.venue.id}
-              group={group}
-              searchDays={searchDays}
-              now={now}
-              isSelected={selectedMarker === group.venue.id}
-              onSelect={handleVenueSelect}
-              onClose={handleInfoWindowClose}
-            />
-          ))}
-        </Map>
+          venueGroups={venueGroups}
+          userLocation={userLocation}
+          searchDays={searchDays}
+          fullScreen={fullScreen}
+          onViewportIdle={onViewportIdle}
+          autoFitBounds={autoFitBounds}
+          initialBounds={initialBounds}
+          selectedMarker={selectedMarker}
+          onVenueSelect={handleVenueSelect}
+          onUserSelect={handleUserSelect}
+          onInfoWindowClose={handleInfoWindowClose}
+          now={now}
+        />
       </APIProvider>
 
       {isEmpty ? (

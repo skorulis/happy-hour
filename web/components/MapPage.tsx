@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { MapErrorBoundary } from "@/components/MapErrorBoundary";
 import { SearchBar } from "@/components/search/SearchBar";
 import type { WhereFilter } from "@/components/search/SuburbSelect";
 import { useSearchFilters } from "@/lib/search/useSearchFilters";
@@ -19,6 +20,15 @@ const SearchMapView = dynamic(
     ),
   },
 );
+
+function MapCrashFallback() {
+  return (
+    <div className="absolute inset-0 flex items-center justify-center bg-surface-muted p-6 text-center text-sm text-muted">
+      Map unavailable — something went wrong loading Google Maps. Try
+      reloading the page.
+    </div>
+  );
+}
 
 type MapPageProps = {
   initialWhere?: WhereFilter;
@@ -48,16 +58,18 @@ export function MapPage({ initialWhere }: MapPageProps) {
         />
       </div>
 
-      <SearchMapView
-        venueGroups={allVenueGroups}
-        userLocation={userLocation}
-        isEmpty={isEmpty}
-        searchDays={filters.days}
-        fullScreen
-        onViewportIdle={setViewportBounds}
-        autoFitBounds={false}
-        initialBounds={initialMapBounds}
-      />
+      <MapErrorBoundary fallback={<MapCrashFallback />}>
+        <SearchMapView
+          venueGroups={allVenueGroups}
+          userLocation={userLocation}
+          isEmpty={isEmpty}
+          searchDays={filters.days}
+          fullScreen
+          onViewportIdle={setViewportBounds}
+          autoFitBounds={false}
+          initialBounds={initialMapBounds}
+        />
+      </MapErrorBoundary>
     </div>
   );
 }
