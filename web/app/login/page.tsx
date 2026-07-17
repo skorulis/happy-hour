@@ -4,7 +4,7 @@ import { LoginPageContent } from "@/components/LoginPageContent";
 
 export const metadata: Metadata = {
   title: "Log in",
-  description: "Log in to your Duskroute account.",
+  description: "Log in to your DuskRoute account.",
 };
 
 export default function LoginPage() {

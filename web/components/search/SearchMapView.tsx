@@ -234,15 +234,15 @@ function VenueMarker({
       >
         {showProductIcon ? (
           <div
-            className={`flex h-8 w-8 items-center justify-center rounded-full border-2 shadow-md ${
+            className={`flex h-8 w-8 items-center justify-center rounded-full shadow-md ${
               hasActiveDeal
-                ? "border-accent bg-accent"
-                : "border-border bg-surface-muted"
+                ? "border-2 border-accent bg-accent"
+                : "bg-slate-300"
             }`}
           >
             <ProductMapIcon
               name={iconName}
-              className={hasActiveDeal ? "text-accent-fg" : "text-secondary"}
+              className="text-accent-fg"
               size={16}
             />
           </div>
@@ -363,6 +363,7 @@ export function SearchMapView({
       <APIProvider apiKey={googleMapsApiKey}>
         <Map
           mapId={googleMapsMapId}
+          colorScheme="DARK"
           defaultCenter={DEFAULT_CENTER}
           defaultZoom={DEFAULT_ZOOM}
           gestureHandling="greedy"

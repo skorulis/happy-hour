@@ -7,7 +7,7 @@ import { auth } from "@/lib/auth";
 
 export const metadata: Metadata = {
   title: "Profile",
-  description: "Your Duskroute account.",
+  description: "Your DuskRoute account.",
 };
 
 export default async function ProfilePage() {

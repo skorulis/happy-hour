@@ -11,7 +11,7 @@ import { getRecentSyncRuns } from "@/lib/sync/queries";
 
 export const metadata: Metadata = {
   title: "Admin",
-  description: "Duskroute admin dashboard.",
+  description: "DuskRoute admin dashboard.",
 };
 
 export default async function AdminPage() {

@@ -7,7 +7,7 @@ export function HomeNavLink() {
   return (
     <Link
       href="/"
-      aria-label="Duskroute"
+      aria-label="DuskRoute"
       className="inline-flex items-center gap-2 text-lg font-semibold text-accent-soft transition-opacity hover:opacity-80"
     >
       <Image
@@ -19,7 +19,7 @@ export function HomeNavLink() {
         priority
       />
       <span className="hidden md:inline" aria-hidden>
-        Duskroute
+        DuskRoute
       </span>
     </Link>
   );
