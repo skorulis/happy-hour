@@ -208,7 +208,8 @@ nonisolated enum DealTimeParser {
         guard !trimmed.isEmpty else { return nil }
 
         let time = #"\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?"#
-        let pattern = #"(?i)from\s+(\#(time)).*draw(?:n|s)?(?:\s+(?:from|at))?\s+(\#(time))"#
+        // "FROM 4PM DRAWN 6PM", "SALES 5.30PM DRAWS 7.30PM"
+        let pattern = #"(?i)(?:from|sales?)\s+(\#(time)).*draw(?:n|s)?(?:\s+(?:from|at))?\s+(\#(time))"#
         guard let regex = try? NSRegularExpression(pattern: pattern),
               let match = regex.firstMatch(in: trimmed, range: NSRange(trimmed.startIndex..., in: trimmed)),
               let startRange = Range(match.range(at: 1), in: trimmed),
