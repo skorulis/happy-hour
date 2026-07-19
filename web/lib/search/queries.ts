@@ -40,6 +40,7 @@ export type SuburbSearchResult = {
   lat?: number | null;
   lng?: number | null;
   sqkm?: number | null;
+  heroImage?: string | null;
 };
 
 export type PopularSuburb = {
@@ -326,6 +327,7 @@ export async function findSuburbByWhereSlug(
       lat: suburb.lat,
       lng: suburb.lng,
       sqkm: suburb.sqkm,
+      heroImage: suburb.heroImage,
     })
     .from(suburb)
     .where(postcode === null ? isNull(suburb.postcode) : eq(suburb.postcode, postcode));

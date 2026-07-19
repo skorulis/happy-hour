@@ -29,12 +29,26 @@ export async function generateMetadata({
 
   const days = parseDaysParam(daysParam ?? null);
   const what = whatParam ? parseWhatTokens(whatParam) : [];
+  const title = formatSuburbDealsMetadataTitle(suburb.name, days, what);
+  const description = `Find pub and bar happy hour deals in ${suburb.name}${suburb.postcode ? ` (${suburb.postcode})` : ""}.`;
+  const ogImages = suburb.heroImage ? [{ url: suburb.heroImage }] : undefined;
 
   return {
-    title: formatSuburbDealsMetadataTitle(suburb.name, days, what),
-    description: `Find pub and bar happy hour deals in ${suburb.name}${suburb.postcode ? ` (${suburb.postcode})` : ""}.`,
+    title,
+    description,
     alternates: {
       canonical: suburbWherePath(suburb.name, suburb.postcode),
+    },
+    openGraph: {
+      title,
+      description,
+      ...(ogImages ? { images: ogImages } : {}),
+    },
+    twitter: {
+      card: ogImages ? "summary_large_image" : "summary",
+      title,
+      description,
+      ...(ogImages ? { images: ogImages.map((image) => image.url) } : {}),
     },
   };
 }
