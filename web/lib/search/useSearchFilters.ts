@@ -23,6 +23,7 @@ import {
   nearbySuburbRadiusKm,
 } from "@/lib/search/nearby-radius";
 import { suburbWhereSlug } from "@/lib/search/slugs";
+import { formatSuburbDealsTitle } from "@/lib/search/schedule";
 import {
   filtersToApiSearchParams,
   filtersToBrowserPath,
@@ -554,7 +555,7 @@ export function useSearchFilters(options?: {
   const displayError = error ?? geolocationError;
   const resultsTitle =
     filters.where.kind === "suburb"
-      ? `Deals in ${filters.where.suburb.name}`
+      ? formatSuburbDealsTitle(filters.where.suburb.name, filters.days)
       : filters.where.kind === "nearMe"
         ? "Deals near you"
         : "Results";

@@ -1,11 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
   ALL_WEEKDAYS,
+  currentCalendarWeekday,
+  DAY_LABELS,
   formatCompactTimeRange,
   formatDaySelectionLabel,
   formatDealDateRange,
   formatDealScheduleLine,
   formatDealTimeBadge,
+  formatSuburbDealsMetadataTitle,
+  formatSuburbDealsTitle,
   hasAnyDealActiveNow,
   isDealActiveNow,
   isScheduleActiveNow,
@@ -35,6 +39,46 @@ describe("formatDaySelectionLabel", () => {
   it("abbreviates one or two selected days", () => {
     expect(formatDaySelectionLabel([5])).toBe("Thu");
     expect(formatDaySelectionLabel([5, 6])).toBe("Thu, Fri");
+  });
+});
+
+describe("formatSuburbDealsTitle", () => {
+  it("prefixes a single selected day", () => {
+    expect(formatSuburbDealsTitle("Sydney", [5])).toBe(
+      "Thursday Deals in Sydney",
+    );
+  });
+
+  it("prefixes today when no day is selected", () => {
+    const today = DAY_LABELS[currentCalendarWeekday()];
+    expect(formatSuburbDealsTitle("Sydney", [])).toBe(
+      `${today} Deals in Sydney`,
+    );
+  });
+
+  it("omits the day for multiple selections", () => {
+    expect(formatSuburbDealsTitle("Sydney", [5, 6])).toBe("Deals in Sydney");
+  });
+});
+
+describe("formatSuburbDealsMetadataTitle", () => {
+  it("prefixes a single selected day", () => {
+    expect(formatSuburbDealsMetadataTitle("Sydney", [5])).toBe(
+      "Thursday Happy hour deals in Sydney",
+    );
+  });
+
+  it("prefixes today when no day is selected", () => {
+    const today = DAY_LABELS[currentCalendarWeekday()];
+    expect(formatSuburbDealsMetadataTitle("Sydney", [])).toBe(
+      `${today} Happy hour deals in Sydney`,
+    );
+  });
+
+  it("omits the day for multiple selections", () => {
+    expect(formatSuburbDealsMetadataTitle("Sydney", [5, 6])).toBe(
+      "Happy hour deals in Sydney",
+    );
   });
 });
 

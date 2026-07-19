@@ -50,6 +50,37 @@ export function formatDaySelectionLabel(days: number[]): string {
   return `${sorted.length} days`;
 }
 
+export function formatSuburbDealsTitle(
+  suburbName: string,
+  days: number[],
+): string {
+  const dayLabel = suburbTitleDayLabel(days);
+  if (dayLabel) {
+    return `${dayLabel} Deals in ${suburbName}`;
+  }
+  return `Deals in ${suburbName}`;
+}
+
+export function formatSuburbDealsMetadataTitle(
+  suburbName: string,
+  days: number[],
+): string {
+  const dayLabel = suburbTitleDayLabel(days);
+  if (dayLabel) {
+    return `${dayLabel} Happy hour deals in ${suburbName}`;
+  }
+  return `Happy hour deals in ${suburbName}`;
+}
+
+/** Single selected day, or today when none selected (implicit today search). */
+function suburbTitleDayLabel(days: number[]): string | null {
+  if (days.length > 1) {
+    return null;
+  }
+  const day = days.length === 0 ? currentCalendarWeekday() : days[0];
+  return DAY_LABELS[day] ?? null;
+}
+
 export function parseTimeInput(value: string): number | null {
   const trimmed = value.trim().toLowerCase();
   const match = trimmed.match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/);
