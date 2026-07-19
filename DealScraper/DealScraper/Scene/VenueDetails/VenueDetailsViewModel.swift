@@ -258,7 +258,7 @@ final class VenueDetailsViewModel {
             try await heroImageStore.setHeroImage(venueId: venueId, remoteURL: url)
             load()
         } catch {
-            // Keep the current UI state if persistence fails.
+            print("Failed to set venue hero image: \(error.localizedDescription)")
         }
     }
 

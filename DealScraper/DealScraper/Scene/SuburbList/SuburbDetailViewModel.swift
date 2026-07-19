@@ -93,7 +93,7 @@ final class SuburbDetailViewModel: CoordinatorViewModel {
             try await heroImageStore.setHeroImage(suburbId: suburbId, remoteURL: url)
             refreshSuburb()
         } catch {
-            // Keep the current UI state if persistence fails.
+            print("Failed to set suburb hero image: \(error.localizedDescription)")
         }
     }
 

@@ -75,7 +75,8 @@ enum HeroImageOptimizer {
     }
 
     private static func resize(_ image: CGImage, to size: CGSize) -> CGImage? {
-        let colorSpace = image.colorSpace ?? CGColorSpaceCreateDeviceRGB()
+        // Indexed / palette PNGs cannot back a premultiplied RGBA CGContext.
+        let colorSpace = drawingColorSpace(for: image)
         guard let context = CGContext(
             data: nil,
             width: Int(size.width),
@@ -90,6 +91,16 @@ enum HeroImageOptimizer {
         context.interpolationQuality = .high
         context.draw(image, in: CGRect(origin: .zero, size: size))
         return context.makeImage()
+    }
+
+    private static func drawingColorSpace(for image: CGImage) -> CGColorSpace {
+        guard let space = image.colorSpace else {
+            return CGColorSpaceCreateDeviceRGB()
+        }
+        if space.model == .indexed {
+            return space.baseColorSpace ?? CGColorSpaceCreateDeviceRGB()
+        }
+        return space
     }
 
     private static func encodeJPEG(_ image: CGImage) throws -> Data {
