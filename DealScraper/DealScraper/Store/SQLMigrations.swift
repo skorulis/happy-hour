@@ -262,6 +262,12 @@ final class SQLMigrations {
                 t.add(column: "hero_r2_url", .text)
             }
         }
+
+        migrator.registerMigration("v31_venue_google_rating") { db in
+            try db.alter(table: "venue") { t in
+                t.add(column: "google_rating", .double)
+            }
+        }
     }
 }
 

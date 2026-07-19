@@ -24,6 +24,7 @@ struct GooglePlacesClientTests {
           "formattedAddress": "123 George St, Sydney NSW 2000",
           "websiteUri": "https://theroyalpub.example.com",
           "types": ["bar", "point_of_interest"],
+          "rating": 4.5,
           "regularOpeningHours": {
             "openNow": true,
             "weekdayDescriptions": [
@@ -82,6 +83,7 @@ struct GooglePlacesClientTests {
         #expect(response.places.first?.displayName.text == "The Royal Pub")
         #expect(response.places.first?.location.latitude == -33.8688)
         #expect(response.places.first?.websiteUri == "https://theroyalpub.example.com")
+        #expect(response.places.first?.rating == 4.5)
         #expect(response.places.first?.regularOpeningHours?.openNow == true)
         #expect(response.places.first?.regularOpeningHours?.weekdayDescriptions?.count == 7)
         #expect(response.places.first?.regularOpeningHours?.periods?.first?.open?.hour == 11)
@@ -98,6 +100,12 @@ struct GooglePlacesClientTests {
         #expect(GooglePlacesAPI.placeFieldMask.contains("places.businessStatus"))
         #expect(GooglePlacesAPI.textSearchFieldMask.contains("places.businessStatus"))
         #expect(GooglePlacesAPI.nearbySearchFieldMask.contains("places.businessStatus"))
+    }
+
+    @Test func fieldMaskIncludesRating() {
+        #expect(GooglePlacesAPI.placeFieldMask.contains("places.rating"))
+        #expect(GooglePlacesAPI.textSearchFieldMask.contains("places.rating"))
+        #expect(GooglePlacesAPI.nearbySearchFieldMask.contains("places.rating"))
     }
 
     @Test func searchTextAllPagesFetchesSubsequentPages() async throws {

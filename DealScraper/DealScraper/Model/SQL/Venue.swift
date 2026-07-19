@@ -19,6 +19,7 @@ nonisolated struct Venue: Codable, Sendable {
     let heroImage: String?
     let heroR2Url: String?
     let blurb: String?
+    let googleRating: Double?
     let lastCrawlDate: Date?
     let lastCrawlUrl: String?
     let lastExtractionDate: Date?
@@ -37,6 +38,7 @@ nonisolated struct Venue: Codable, Sendable {
         case heroImage = "hero_image"
         case heroR2Url = "hero_r2_url"
         case blurb
+        case googleRating = "google_rating"
         case lastCrawlDate = "last_crawl_date"
         case lastCrawlUrl = "last_crawl_url"
         case lastExtractionDate = "last_extraction_date"
@@ -56,6 +58,7 @@ nonisolated struct Venue: Codable, Sendable {
         heroImage: String? = nil,
         heroR2Url: String? = nil,
         blurb: String? = nil,
+        googleRating: Double? = nil,
         lastCrawlDate: Date? = nil,
         lastCrawlUrl: String? = nil,
         lastExtractionDate: Date? = nil,
@@ -73,6 +76,7 @@ nonisolated struct Venue: Codable, Sendable {
         self.heroImage = heroImage
         self.heroR2Url = heroR2Url
         self.blurb = blurb
+        self.googleRating = googleRating
         self.lastCrawlDate = lastCrawlDate
         self.lastCrawlUrl = lastCrawlUrl
         self.lastExtractionDate = lastExtractionDate
@@ -98,6 +102,7 @@ nonisolated struct Venue: Codable, Sendable {
             lat: place.location.latitude,
             lng: place.location.longitude,
             websiteUri: place.websiteUri,
+            googleRating: place.rating,
             lastUpdate: .now,
             status: Self.statusWhenImported(from: place.websiteUri),
             json: jsonString

@@ -32,40 +32,8 @@ struct SuburbDetailView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top, spacing: 24) {
                 VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(SuburbListViewModel.displayName(for: suburb))
-                                .font(.title2)
-                                .fontWeight(.semibold)
-
-                            if let state = suburb.state, !state.isEmpty {
-                                Text(state)
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                            }
-
-                            if let countryName = viewModel.countryName, !countryName.isEmpty {
-                                Text(countryName)
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                            }
-
-                            if let statisticArea = suburb.statisticArea, !statisticArea.isEmpty {
-                                Text(statisticArea)
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                            }
-
-                            if let lastCrawlDate = suburb.lastCrawlDate {
-                                Text("Last crawled \(lastCrawlDate.formatted(date: .abbreviated, time: .shortened))")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            } else {
-                                Text("Never crawled")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
+                    HStack(alignment: .top) {
+                        details(suburb: suburb)
 
                         Spacer()
 
@@ -73,6 +41,7 @@ struct SuburbDetailView: View {
                             viewModel.crawl()
                         }
                         .buttonStyle(.borderedProminent)
+                        .zIndex(2)
                     }
 
                     if let actionMessage = viewModel.actionMessage {
@@ -91,11 +60,48 @@ struct SuburbDetailView: View {
                         await viewModel.setHeroImage(urlString: urlString)
                     }
                 )
+                .frame(maxHeight: 200)
             }
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.bar)
+    }
+    
+    private func details(suburb: Suburb) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(SuburbListViewModel.displayName(for: suburb))
+                .font(.title2)
+                .fontWeight(.semibold)
+
+            if let state = suburb.state, !state.isEmpty {
+                Text(state)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+
+            if let countryName = viewModel.countryName, !countryName.isEmpty {
+                Text(countryName)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+
+            if let statisticArea = suburb.statisticArea, !statisticArea.isEmpty {
+                Text(statisticArea)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+
+            if let lastCrawlDate = suburb.lastCrawlDate {
+                Text("Last crawled \(lastCrawlDate.formatted(date: .abbreviated, time: .shortened))")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else {
+                Text("Never crawled")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
     }
 
     @ViewBuilder

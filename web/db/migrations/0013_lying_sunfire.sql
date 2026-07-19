@@ -1,0 +1,1 @@
+ALTER TABLE "venue" ADD COLUMN "google_rating" double precision;

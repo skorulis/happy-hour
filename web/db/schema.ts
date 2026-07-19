@@ -44,6 +44,7 @@ export const venue = pgTable(
     websiteUri: text("website_uri"),
     heroImage: text("hero_image"),
     blurb: text("blurb"),
+    googleRating: doublePrecision("google_rating"),
     lastCrawlDate: timestamp("last_crawl_date", { withTimezone: true }),
     json: jsonb("json").notNull(),
     syncedAt: timestamp("synced_at", { withTimezone: true })

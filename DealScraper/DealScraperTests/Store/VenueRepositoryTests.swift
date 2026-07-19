@@ -93,6 +93,25 @@ struct VenueRepositoryTests {
         #expect(found.json.contains("openNow"))
     }
 
+    @Test func upsertPlacesPersistsGoogleRating() throws {
+        let repository = VenueRepository(store: SQLStore.inMemory())
+
+        let place = GooglePlace(
+            id: "places/ChIJRated",
+            displayName: .init(text: "Rated Pub", languageCode: "en"),
+            location: .init(latitude: -33.8600, longitude: 151.2100),
+            formattedAddress: "1 Circular Quay, Sydney NSW 2000",
+            websiteUri: "https://ratedpub.example.com",
+            types: ["bar"],
+            rating: 4.3
+        )
+
+        try repository.upsert(places: [place])
+
+        let found = try #require(try repository.find(googleMapId: "places/ChIJRated"))
+        #expect(found.googleRating == 4.3)
+    }
+
     @Test func upsertPlacesPrefersAddressSuburbOverCrawlSuburb() throws {
         let store = SQLStore.inMemory()
         let repository = VenueRepository(store: store)
