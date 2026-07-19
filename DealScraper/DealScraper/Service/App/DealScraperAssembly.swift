@@ -41,6 +41,7 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
         container.register(VenueDetailsViewModel.self) { (resolver: Resolver, googleID: String) in
             VenueDetailsViewModel.make(resolver: resolver, googleMapId: googleID)
         }
+        container.register(SuburbListViewModel.self) { SuburbListViewModel.make(resolver: $0) }
         container.register(ApprovalViewModel.self) { ApprovalViewModel.make(resolver: $0) }
         container.register(JobQueueViewModel.self) { JobQueueViewModel.make(resolver: $0) }
     }
@@ -185,6 +186,11 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
 
         container.register(SuburbRepository.self) { resolver in
             SuburbRepository(store: resolver.sqlStore())
+        }
+        .inObjectScope(.container)
+
+        container.register(CountryRepository.self) { resolver in
+            CountryRepository(store: resolver.sqlStore())
         }
         .inObjectScope(.container)
 

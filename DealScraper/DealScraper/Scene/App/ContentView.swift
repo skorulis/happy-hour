@@ -11,6 +11,7 @@ struct ContentView: View {
         case imageImport
         case experiment
         case venues
+        case suburbs
         case jobs
         case approval
         case settings
@@ -39,6 +40,13 @@ struct ContentView: View {
                     Label("Venues", systemImage: "mappin.and.ellipse")
                 }
                 .tag(Tab.venues)
+
+            CoordinatorView(coordinator: .init(root: MainPath.suburbList))
+                .withRenderers(resolver: resolver!)
+                .tabItem {
+                    Label("Suburbs", systemImage: "building.2")
+                }
+                .tag(Tab.suburbs)
 
             CoordinatorView(coordinator: .init(root: MainPath.jobQueue))
                 .withRenderers(resolver: resolver!)

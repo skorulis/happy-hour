@@ -110,6 +110,15 @@ final class VenueRepository {
         }
     }
 
+    func find(suburbId: Int64) throws -> [Venue] {
+        try store.dbQueue.read { db in
+            try Venue
+                .filter(Column("suburb_id") == suburbId)
+                .order(Column("name"))
+                .fetchAll(db)
+        }
+    }
+
     @discardableResult
     func delete(id: Int64) throws -> Bool {
         try store.dbQueue.write { db in

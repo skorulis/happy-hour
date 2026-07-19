@@ -8,6 +8,7 @@ import SwiftUI
 enum MainPath: CoordinatorPath {
     
     case venueImport
+    case suburbList
     case settings
     case stats
     case venueDetails(String)
@@ -17,6 +18,7 @@ enum MainPath: CoordinatorPath {
     var id: String {
         switch self {
         case .venueImport: "venueImport"
+        case .suburbList: "suburbList"
         case .settings: "settings"
         case .stats: "stats"
         case .venueDetails(let id): "venue-details-\(id)"
@@ -36,6 +38,8 @@ struct MainPathRenderer: CoordinatorPathRenderer {
         switch path {
         case .venueImport:
             VenueImportView(viewModel: resolver.venueImportViewModel())
+        case .suburbList:
+            SuburbListView(viewModel: resolver.suburbListViewModel())
         case .settings:
             SettingsView(viewModel: coordinator.apply(resolver.settingsViewModel()))
         case .stats:
