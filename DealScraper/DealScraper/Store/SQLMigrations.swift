@@ -255,5 +255,13 @@ final class SQLMigrations {
                     .references("country", onDelete: .setNull)
             }
         }
+
+        migrator.registerMigration("v30_suburb_hero_image") { db in
+            try db.alter(table: "suburb") { t in
+                t.add(column: "hero_image", .text)
+                t.add(column: "hero_r2_url", .text)
+            }
+        }
     }
 }
+

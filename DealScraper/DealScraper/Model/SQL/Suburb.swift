@@ -14,6 +14,8 @@ nonisolated struct Suburb: Codable, Sendable {
     let sqkm: Double?
     let statisticArea: String?
     let blurb: String?
+    let heroImage: String?
+    let heroR2Url: String?
     let lastCrawlDate: Date?
 
     enum CodingKeys: String, CodingKey {
@@ -27,6 +29,8 @@ nonisolated struct Suburb: Codable, Sendable {
         case sqkm
         case statisticArea = "statistic_area"
         case blurb
+        case heroImage = "hero_image"
+        case heroR2Url = "hero_r2_url"
         case lastCrawlDate = "last_crawl_date"
     }
 
@@ -41,6 +45,8 @@ nonisolated struct Suburb: Codable, Sendable {
         sqkm: Double? = nil,
         statisticArea: String? = nil,
         blurb: String? = nil,
+        heroImage: String? = nil,
+        heroR2Url: String? = nil,
         lastCrawlDate: Date? = nil
     ) {
         self.id = id
@@ -53,6 +59,8 @@ nonisolated struct Suburb: Codable, Sendable {
         self.sqkm = sqkm
         self.statisticArea = statisticArea
         self.blurb = blurb
+        self.heroImage = heroImage
+        self.heroR2Url = heroR2Url
         self.lastCrawlDate = lastCrawlDate
     }
 }

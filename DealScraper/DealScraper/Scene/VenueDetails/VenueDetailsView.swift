@@ -8,8 +8,6 @@ struct VenueDetailsView: View {
     @State var viewModel: VenueDetailsViewModel
     var onVenueDeleted: (() -> Void)?
     @State private var selectedTab: VenueDetailsTab = .details
-    @State private var showHeroImageURLPrompt = false
-    @State private var heroImageURLString = ""
     @State private var showDeleteVenueConfirmation = false
 
     var body: some View {
@@ -26,22 +24,6 @@ struct VenueDetailsView: View {
         }
         .frame(minWidth: 360, minHeight: 400)
         .navigationTitle(viewModel.venue.map(venueTitle) ?? "Venue")
-        .alert("Hero Image URL", isPresented: $showHeroImageURLPrompt) {
-            TextField("URL", text: $heroImageURLString)
-            Button("Cancel", role: .cancel) {
-                heroImageURLString = ""
-            }
-            Button("Save") {
-                let urlString = heroImageURLString
-                heroImageURLString = ""
-                Task {
-                    await viewModel.setHeroImage(urlString: urlString)
-                }
-            }
-            .disabled(!isValidHeroImageURL(heroImageURLString))
-        } message: {
-            Text("Enter the URL for the hero image.")
-        }
         .confirmationDialog(
             "Delete this venue?",
             isPresented: $showDeleteVenueConfirmation,
@@ -116,90 +98,19 @@ struct VenueDetailsView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            heroImageView(venue)
+            heroImagePicker(venue)
         }
     }
 
-    @ViewBuilder
-    private func heroImageView(_ venue: Venue) -> some View {
-        let shape = RoundedRectangle(cornerRadius: 8, style: .continuous)
-
-        if let heroImageURL = venue.heroImage.flatMap({ URL(string: $0) }) {
-            Link(destination: heroImageURL) {
-                Color.clear
-                    .aspectRatio(3 / 2, contentMode: .fill)
-                    .frame(maxWidth: 200)
-                    .overlay {
-                        AsyncImage(url: heroImageURL) { phase in
-                            switch phase {
-                            case .empty:
-                                heroImagePlaceholder
-                                    .overlay { ProgressView() }
-                            case .success(let image):
-                                image
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fill)
-                            case .failure:
-                                heroImagePlaceholder
-                                    .overlay {
-                                        Image(systemName: "photo")
-                                            .foregroundStyle(.secondary)
-                                    }
-                            @unknown default:
-                                EmptyView()
-                            }
-                        }
-                    }
-                    .clipShape(shape)
+    private func heroImagePicker(_ venue: Venue) -> some View {
+        HeroImagePickerView(
+            imageURL: venue.heroImage,
+            canClear: viewModel.canClearHeroImage,
+            onClear: { viewModel.clearHeroImage() },
+            onSetURL: { urlString in
+                await viewModel.setHeroImage(urlString: urlString)
             }
-            .buttonStyle(.plain)
-            .help("Open image in browser")
-            .overlay(alignment: .topTrailing) {
-                if viewModel.canClearHeroImage {
-                    Button {
-                        viewModel.clearHeroImage()
-                    } label: {
-                        Image(systemName: "minus.circle.fill")
-                            .font(.title2)
-                            .symbolRenderingMode(.palette)
-                            .foregroundStyle(.white, .red)
-                    }
-                    .buttonStyle(.plain)
-                    .padding(6)
-                }
-            }
-        } else {
-            heroImagePlaceholder
-                .aspectRatio(3 / 2, contentMode: .fit)
-                .frame(maxWidth: 200)
-                .overlay {
-                    Button {
-                        heroImageURLString = ""
-                        showHeroImageURLPrompt = true
-                    } label: {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.title)
-                            .foregroundStyle(.secondary)
-                    }
-                    .buttonStyle(.plain)
-                }
-        }
-    }
-
-    private func isValidHeroImageURL(_ string: String) -> Bool {
-        let trimmed = string.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, let url = URL(string: trimmed), url.scheme != nil else {
-            return false
-        }
-        return true
-    }
-
-    private var heroImagePlaceholder: some View {
-        RoundedRectangle(cornerRadius: 8, style: .continuous)
-            .strokeBorder(
-                Color.secondary.opacity(0.4),
-                style: StrokeStyle(lineWidth: 1, dash: [6, 4])
-            )
+        )
     }
 
     private var aboutSection: some View {
@@ -286,7 +197,7 @@ struct VenueDetailsView: View {
                 if let websiteUri = venue.websiteUri,
                    let websiteURL = URL(string: websiteUri)
                 {
-                    Link("Website", destination: websiteURL)
+                    Link(websiteUri, destination: websiteURL)
                 }
 
                 if let whatsOn = viewModel.venueLinks?.whatsOn,

@@ -14,14 +14,14 @@ struct VenueHeroImageStoreTests {
     )!
 
     @MainActor
-    final class FakeHeroUploader: VenueHeroImageUploading {
+    final class FakeHeroUploader: HeroImageUploading {
         var isConfigured: Bool = true
-        private(set) var uploads: [(venueId: Int64, full: Data, thumb: Data)] = []
+        private(set) var uploads: [(folder: HeroImageFolder, id: Int64, full: Data, thumb: Data)] = []
         var publicBaseURL = "https://images.duskroute.com"
 
-        func uploadHero(venueId: Int64, jpegData: Data, thumbJpegData: Data) async throws -> URL {
-            uploads.append((venueId, jpegData, thumbJpegData))
-            return URL(string: "\(publicBaseURL)/venues/\(venueId).jpg")!
+        func uploadHero(folder: HeroImageFolder, id: Int64, jpegData: Data, thumbJpegData: Data) async throws -> URL {
+            uploads.append((folder, id, jpegData, thumbJpegData))
+            return URL(string: "\(publicBaseURL)/\(folder.rawValue)/\(id).jpg")!
         }
 
         func clearUploads() {

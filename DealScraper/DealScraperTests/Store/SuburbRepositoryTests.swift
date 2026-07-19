@@ -141,6 +141,57 @@ struct SuburbRepositoryTests {
         #expect(found.lastCrawlDate == crawlDate)
     }
 
+    @Test func updateHeroImagePersistsURL() throws {
+        let store = SQLStore.inMemory()
+        let repository = SuburbRepository(store: store)
+        let suburbId = try insertSuburb(
+            Suburb(name: "Newtown", postcode: "2042", state: "NSW"),
+            store: store
+        )
+        let heroURL = "https://example.com/suburb.jpg"
+
+        try repository.updateHeroImage(suburbId: suburbId, url: heroURL)
+
+        let found = try #require(try repository.find(id: suburbId))
+        #expect(found.heroImage == heroURL)
+        #expect(found.heroR2Url == nil)
+    }
+
+    @Test func updateHeroR2UrlPersistsURL() throws {
+        let store = SQLStore.inMemory()
+        let repository = SuburbRepository(store: store)
+        let suburbId = try insertSuburb(
+            Suburb(name: "Newtown", postcode: "2042", state: "NSW"),
+            store: store
+        )
+        let r2URL = "https://images.duskroute.com/suburbs/\(suburbId).jpg"
+
+        try repository.updateHeroR2Url(suburbId: suburbId, url: r2URL)
+
+        let found = try #require(try repository.find(id: suburbId))
+        #expect(found.heroR2Url == r2URL)
+    }
+
+    @Test func clearHeroImageFieldsClearsBoth() throws {
+        let store = SQLStore.inMemory()
+        let repository = SuburbRepository(store: store)
+        let suburbId = try insertSuburb(
+            Suburb(name: "Newtown", postcode: "2042", state: "NSW"),
+            store: store
+        )
+        try repository.updateHeroImage(suburbId: suburbId, url: "https://example.com/suburb.jpg")
+        try repository.updateHeroR2Url(
+            suburbId: suburbId,
+            url: "https://images.duskroute.com/suburbs/\(suburbId).jpg"
+        )
+
+        try repository.clearHeroImageFields(suburbId: suburbId)
+
+        let found = try #require(try repository.find(id: suburbId))
+        #expect(found.heroImage == nil)
+        #expect(found.heroR2Url == nil)
+    }
+
     @Test func isEligibleForCrawlRequiresPostcodeAndGreaterSydney() throws {
         let eligible = Suburb(
             name: "Newtown",

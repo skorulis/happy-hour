@@ -135,6 +135,14 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
             )
         }
 
+        container.register(SuburbHeroImageStore.self) { resolver in
+            SuburbHeroImageStore(
+                suburbRepository: resolver.suburbRepository(),
+                imageFetcher: resolver.crawlImageFetcher(),
+                uploader: resolver.r2Client()
+            )
+        }
+
         container.register(R2Client.self) { resolver in
             R2Client(configStore: resolver.r2ConfigStore())
         }

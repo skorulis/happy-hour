@@ -64,6 +64,33 @@ final class SuburbRepository {
         }
     }
 
+    func updateHeroImage(suburbId: Int64, url: String?) throws {
+        try store.dbQueue.write { db in
+            try db.execute(
+                sql: "UPDATE suburb SET hero_image = ? WHERE id = ?",
+                arguments: [url, suburbId]
+            )
+        }
+    }
+
+    func updateHeroR2Url(suburbId: Int64, url: String?) throws {
+        try store.dbQueue.write { db in
+            try db.execute(
+                sql: "UPDATE suburb SET hero_r2_url = ? WHERE id = ?",
+                arguments: [url, suburbId]
+            )
+        }
+    }
+
+    func clearHeroImageFields(suburbId: Int64) throws {
+        try store.dbQueue.write { db in
+            try db.execute(
+                sql: "UPDATE suburb SET hero_image = NULL, hero_r2_url = NULL WHERE id = ?",
+                arguments: [suburbId]
+            )
+        }
+    }
+
     static func resolve(name: String, postcode: String?, state: String?, in db: Database) throws -> Int64? {
         let normalizedPostcode = normalized(postcode)
         let normalizedState = normalizedState(state)

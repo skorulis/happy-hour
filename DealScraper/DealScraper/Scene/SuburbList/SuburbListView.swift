@@ -73,7 +73,12 @@ struct SuburbListView: View {
                 countryName: viewModel.selectedCountryName,
                 venues: viewModel.venues,
                 actionMessage: viewModel.actionMessage,
-                onCrawl: { viewModel.crawlSelectedSuburb() }
+                canClearHeroImage: viewModel.canClearHeroImage,
+                onCrawl: { viewModel.crawlSelectedSuburb() },
+                onClearHeroImage: { viewModel.clearHeroImage() },
+                onSetHeroImage: { urlString in
+                    await viewModel.setHeroImage(urlString: urlString)
+                }
             )
             .id(suburb.id)
         } else {

@@ -42,9 +42,15 @@ final class SuburbListViewModel {
         return suburbs.first { $0.id == selectedSuburbId }
     }
 
+    var canClearHeroImage: Bool {
+        guard let suburb = selectedSuburb, suburb.id != nil else { return false }
+        return suburb.heroImage?.isEmpty == false
+    }
+
     private let suburbRepository: SuburbRepository
     private let venueRepository: VenueRepository
     private let countryRepository: CountryRepository
+    private let heroImageStore: SuburbHeroImageStore
     private let jobQueue: JobQueue
 
     @Resolvable<Resolver>
@@ -52,11 +58,13 @@ final class SuburbListViewModel {
         suburbRepository: SuburbRepository,
         venueRepository: VenueRepository,
         countryRepository: CountryRepository,
+        heroImageStore: SuburbHeroImageStore,
         jobQueue: JobQueue
     ) {
         self.suburbRepository = suburbRepository
         self.venueRepository = venueRepository
         self.countryRepository = countryRepository
+        self.heroImageStore = heroImageStore
         self.jobQueue = jobQueue
     }
 
@@ -104,6 +112,53 @@ final class SuburbListViewModel {
         }
 
         actionMessage = "Queued suburb crawl for \(name)."
+    }
+
+    func clearHeroImage() {
+        guard let suburbId = selectedSuburbId, canClearHeroImage else { return }
+
+        do {
+            try heroImageStore.clearHeroImage(suburbId: suburbId)
+            refreshSelectedSuburb()
+        } catch {
+            // Keep the current UI state if persistence fails.
+        }
+    }
+
+    func setHeroImage(urlString: String) async {
+        guard let suburbId = selectedSuburbId else { return }
+
+        let trimmed = urlString.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty,
+              let url = URL(string: trimmed),
+              url.scheme != nil
+        else {
+            return
+        }
+
+        do {
+            try await heroImageStore.setHeroImage(suburbId: suburbId, remoteURL: url)
+            refreshSelectedSuburb()
+        } catch {
+            // Keep the current UI state if persistence fails.
+        }
+    }
+
+    private func refreshSelectedSuburb() {
+        guard let selectedSuburbId else { return }
+        do {
+            guard let updated = try suburbRepository.find(id: selectedSuburbId) else {
+                loadSuburbs()
+                return
+            }
+            if let index = suburbs.firstIndex(where: { $0.id == selectedSuburbId }) {
+                suburbs[index] = updated
+            } else {
+                loadSuburbs()
+            }
+        } catch {
+            state = .failed(message: "Could not refresh suburb: \(error.localizedDescription)")
+        }
     }
 
     private func loadSelectionDetails() {

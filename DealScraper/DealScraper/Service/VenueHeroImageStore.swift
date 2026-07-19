@@ -26,13 +26,13 @@ final class VenueHeroImageStore {
 
     private let venueRepository: VenueRepository
     private let imageFetcher: CrawlImageFetcher
-    private let uploader: VenueHeroImageUploading
+    private let uploader: HeroImageUploading
 
     init(
         directory: URL? = nil,
         venueRepository: VenueRepository,
         imageFetcher: CrawlImageFetcher,
-        uploader: VenueHeroImageUploading
+        uploader: HeroImageUploading
     ) {
         if let directory {
             self.directory = directory
@@ -65,7 +65,8 @@ final class VenueHeroImageStore {
         try optimized.thumb.write(to: thumbDestination, options: .atomic)
 
         let publicURL = try await uploader.uploadHero(
-            venueId: venueId,
+            folder: .venues,
+            id: venueId,
             jpegData: optimized.full,
             thumbJpegData: optimized.thumb
         )
@@ -106,7 +107,8 @@ final class VenueHeroImageStore {
         try optimized.thumb.write(to: thumbDestination, options: .atomic)
 
         let publicURL = try await uploader.uploadHero(
-            venueId: venueId,
+            folder: .venues,
+            id: venueId,
             jpegData: optimized.full,
             thumbJpegData: optimized.thumb
         )

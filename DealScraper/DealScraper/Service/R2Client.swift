@@ -20,18 +20,23 @@ enum R2ClientError: LocalizedError {
     }
 }
 
-@MainActor
-protocol VenueHeroImageUploading {
-    var isConfigured: Bool { get }
-    var publicBaseURL: String { get }
-    /// Uploads full + thumb; returns the public URL of the full-size image.
-    func uploadHero(venueId: Int64, jpegData: Data, thumbJpegData: Data) async throws -> URL
+enum HeroImageFolder: String, Sendable {
+    case venues
+    case suburbs
 }
 
 @MainActor
-final class R2Client: HTTPService, VenueHeroImageUploading {
+protocol HeroImageUploading {
+    var isConfigured: Bool { get }
+    var publicBaseURL: String { get }
+    /// Uploads full + thumb; returns the public URL of the full-size image.
+    func uploadHero(folder: HeroImageFolder, id: Int64, jpegData: Data, thumbJpegData: Data) async throws -> URL
+}
 
-    /// Stable per-venue keys overwrite on replace; avoid `immutable` so updates can refresh.
+@MainActor
+final class R2Client: HTTPService, HeroImageUploading {
+
+    /// Stable per-entity keys overwrite on replace; avoid `immutable` so updates can refresh.
     static let cacheControl = "public, max-age=86400"
     static let contentType = "image/jpeg"
 
@@ -54,12 +59,12 @@ final class R2Client: HTTPService, VenueHeroImageUploading {
         configStore.publicBaseURL
     }
 
-    func objectKey(venueId: Int64) -> String {
-        "venues/\(venueId).jpg"
+    func objectKey(folder: HeroImageFolder, id: Int64) -> String {
+        "\(folder.rawValue)/\(id).jpg"
     }
 
-    func thumbObjectKey(venueId: Int64) -> String {
-        "venues/\(venueId)-thumb.jpg"
+    func thumbObjectKey(folder: HeroImageFolder, id: Int64) -> String {
+        "\(folder.rawValue)/\(id)-thumb.jpg"
     }
 
     func publicURL(for objectKey: String) throws -> URL {
@@ -78,14 +83,14 @@ final class R2Client: HTTPService, VenueHeroImageUploading {
         return url
     }
 
-    func uploadHero(venueId: Int64, jpegData: Data, thumbJpegData: Data) async throws -> URL {
+    func uploadHero(folder: HeroImageFolder, id: Int64, jpegData: Data, thumbJpegData: Data) async throws -> URL {
         guard isConfigured else {
             throw R2ClientError.notConfigured
         }
 
-        let fullKey = objectKey(venueId: venueId)
+        let fullKey = objectKey(folder: folder, id: id)
         try await putObject(key: fullKey, data: jpegData)
-        try await putObject(key: thumbObjectKey(venueId: venueId), data: thumbJpegData)
+        try await putObject(key: thumbObjectKey(folder: folder, id: id), data: thumbJpegData)
         return try publicURL(for: fullKey)
     }
 
