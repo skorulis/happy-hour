@@ -59,25 +59,43 @@ describe("formatSuburbDealsTitle", () => {
   it("omits the day for multiple selections", () => {
     expect(formatSuburbDealsTitle("Sydney", [5, 6])).toBe("Deals in Sydney");
   });
+
+  it("includes a single selected product", () => {
+    expect(formatSuburbDealsTitle("Sydney", [1], ["happy hour"])).toBe(
+      "Sunday Happy Hour Deals in Sydney",
+    );
+  });
+
+  it("joins two selected products with and", () => {
+    expect(
+      formatSuburbDealsTitle("Sydney", [1], ["happy hour", "beer"]),
+    ).toBe("Sunday Happy Hour and Beer Deals in Sydney");
+  });
+
+  it("omits products when more than two are selected", () => {
+    expect(
+      formatSuburbDealsTitle("Sydney", [1], ["happy hour", "beer", "wine"]),
+    ).toBe("Sunday Deals in Sydney");
+  });
 });
 
 describe("formatSuburbDealsMetadataTitle", () => {
-  it("prefixes a single selected day", () => {
-    expect(formatSuburbDealsMetadataTitle("Sydney", [5])).toBe(
-      "Thursday Happy hour deals in Sydney",
-    );
+  it("matches the on-page title including products", () => {
+    expect(
+      formatSuburbDealsMetadataTitle("Sydney", [5], ["happy hour"]),
+    ).toBe("Thursday Happy Hour Deals in Sydney");
   });
 
   it("prefixes today when no day is selected", () => {
     const today = DAY_LABELS[currentCalendarWeekday()];
     expect(formatSuburbDealsMetadataTitle("Sydney", [])).toBe(
-      `${today} Happy hour deals in Sydney`,
+      `${today} Deals in Sydney`,
     );
   });
 
   it("omits the day for multiple selections", () => {
     expect(formatSuburbDealsMetadataTitle("Sydney", [5, 6])).toBe(
-      "Happy hour deals in Sydney",
+      "Deals in Sydney",
     );
   });
 });

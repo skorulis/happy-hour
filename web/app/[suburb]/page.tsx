@@ -5,11 +5,11 @@ import { SearchPage } from "@/components/SearchPage";
 import { findSuburbByWhereSlug } from "@/lib/search/queries";
 import { formatSuburbDealsMetadataTitle } from "@/lib/search/schedule";
 import { NEARBY_WHERE_SLUG, suburbWherePath } from "@/lib/search/slugs";
-import { parseDaysParam } from "@/lib/search/url";
+import { parseDaysParam, parseWhatTokens } from "@/lib/search/url";
 
 type SuburbSearchPageProps = {
   params: Promise<{ suburb: string }>;
-  searchParams: Promise<{ days?: string }>;
+  searchParams: Promise<{ days?: string; q?: string }>;
 };
 
 export async function generateMetadata({
@@ -17,7 +17,7 @@ export async function generateMetadata({
   searchParams,
 }: SuburbSearchPageProps): Promise<Metadata> {
   const { suburb: whereSlug } = await params;
-  const { days: daysParam } = await searchParams;
+  const { days: daysParam, q: whatParam } = await searchParams;
   if (whereSlug === NEARBY_WHERE_SLUG) {
     return {};
   }
@@ -28,9 +28,10 @@ export async function generateMetadata({
   }
 
   const days = parseDaysParam(daysParam ?? null);
+  const what = whatParam ? parseWhatTokens(whatParam) : [];
 
   return {
-    title: formatSuburbDealsMetadataTitle(suburb.name, days),
+    title: formatSuburbDealsMetadataTitle(suburb.name, days, what),
     description: `Find pub and bar happy hour deals in ${suburb.name}${suburb.postcode ? ` (${suburb.postcode})` : ""}.`,
     alternates: {
       canonical: suburbWherePath(suburb.name, suburb.postcode),

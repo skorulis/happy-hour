@@ -555,7 +555,11 @@ export function useSearchFilters(options?: {
   const displayError = error ?? geolocationError;
   const resultsTitle =
     filters.where.kind === "suburb"
-      ? formatSuburbDealsTitle(filters.where.suburb.name, filters.days)
+      ? formatSuburbDealsTitle(
+          filters.where.suburb.name,
+          filters.days,
+          filters.what,
+        )
       : filters.where.kind === "nearMe"
         ? "Deals near you"
         : "Results";

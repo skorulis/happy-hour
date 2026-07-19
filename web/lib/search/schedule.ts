@@ -53,23 +53,23 @@ export function formatDaySelectionLabel(days: number[]): string {
 export function formatSuburbDealsTitle(
   suburbName: string,
   days: number[],
+  what: string[] = [],
 ): string {
   const dayLabel = suburbTitleDayLabel(days);
+  const productLabel = suburbTitleProductLabel(what);
+  const dealsPhrase = productLabel ? `${productLabel} Deals` : "Deals";
   if (dayLabel) {
-    return `${dayLabel} Deals in ${suburbName}`;
+    return `${dayLabel} ${dealsPhrase} in ${suburbName}`;
   }
-  return `Deals in ${suburbName}`;
+  return `${dealsPhrase} in ${suburbName}`;
 }
 
 export function formatSuburbDealsMetadataTitle(
   suburbName: string,
   days: number[],
+  what: string[] = [],
 ): string {
-  const dayLabel = suburbTitleDayLabel(days);
-  if (dayLabel) {
-    return `${dayLabel} Happy hour deals in ${suburbName}`;
-  }
-  return `Happy hour deals in ${suburbName}`;
+  return formatSuburbDealsTitle(suburbName, days, what);
 }
 
 /** Single selected day, or today when none selected (implicit today search). */
@@ -79,6 +79,26 @@ function suburbTitleDayLabel(days: number[]): string | null {
   }
   const day = days.length === 0 ? currentCalendarWeekday() : days[0];
   return DAY_LABELS[day] ?? null;
+}
+
+/** One or two product names for the title; 0 or 3+ falls back to generic Deals. */
+function suburbTitleProductLabel(what: string[]): string | null {
+  if (what.length === 0 || what.length > 2) {
+    return null;
+  }
+  const labels = what.map(titleCaseWords);
+  if (labels.length === 1) {
+    return labels[0]!;
+  }
+  return `${labels[0]} and ${labels[1]}`;
+}
+
+function titleCaseWords(value: string): string {
+  return value
+    .split(/\s+/)
+    .filter((word) => word.length > 0)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
 }
 
 export function parseTimeInput(value: string): number | null {
