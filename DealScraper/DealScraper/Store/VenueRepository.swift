@@ -126,6 +126,21 @@ final class VenueRepository {
         }
     }
 
+    func countsBySuburbId() throws -> [Int64: Int] {
+        try store.dbQueue.read { db in
+            let rows = try Row.fetchAll(db, sql: """
+                SELECT suburb_id, COUNT(*) AS count
+                FROM venue
+                WHERE suburb_id IS NOT NULL
+                GROUP BY suburb_id
+                """)
+            return Dictionary(uniqueKeysWithValues: rows.compactMap { row in
+                guard let suburbId: Int64 = row["suburb_id"] else { return nil }
+                return (suburbId, Int(row["count"] ?? 0))
+            })
+        }
+    }
+
     @discardableResult
     func delete(id: Int64) throws -> Bool {
         try store.dbQueue.write { db in

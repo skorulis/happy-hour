@@ -15,7 +15,7 @@ final class SuburbListViewModel {
 
     private(set) var state: State = .idle
     private(set) var suburbs: [Suburb] = []
-    private(set) var dealCountsBySuburbId: [Int64: Int] = [:]
+    private(set) var venueCountsBySuburbId: [Int64: Int] = [:]
     var searchText = ""
     var selectedSuburbId: Int64?
 
@@ -30,12 +30,12 @@ final class SuburbListViewModel {
     }
 
     private let suburbRepository: SuburbRepository
-    private let dealRepository: DealRepository
+    private let venueRepository: VenueRepository
 
     @Resolvable<Resolver>
-    init(suburbRepository: SuburbRepository, dealRepository: DealRepository) {
+    init(suburbRepository: SuburbRepository, venueRepository: VenueRepository) {
         self.suburbRepository = suburbRepository
-        self.dealRepository = dealRepository
+        self.venueRepository = venueRepository
     }
 
     static func displayName(for suburb: Suburb) -> String {
@@ -45,18 +45,18 @@ final class SuburbListViewModel {
         return suburb.name
     }
 
-    func dealCount(for suburb: Suburb) -> Int {
+    func venueCount(for suburb: Suburb) -> Int {
         guard let suburbId = suburb.id else { return 0 }
-        return dealCountsBySuburbId[suburbId] ?? 0
+        return venueCountsBySuburbId[suburbId] ?? 0
     }
 
     func loadSuburbs() {
         do {
             let allSuburbs = try suburbRepository.all()
-            dealCountsBySuburbId = try dealRepository.countsBySuburbId()
+            venueCountsBySuburbId = try venueRepository.countsBySuburbId()
             suburbs = allSuburbs.sorted { lhs, rhs in
-                let lhsCount = dealCount(for: lhs)
-                let rhsCount = dealCount(for: rhs)
+                let lhsCount = venueCount(for: lhs)
+                let rhsCount = venueCount(for: rhs)
                 if lhsCount != rhsCount {
                     return lhsCount > rhsCount
                 }

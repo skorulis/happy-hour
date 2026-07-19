@@ -101,11 +101,11 @@ struct SuburbListView: View {
 
     @ViewBuilder
     private func suburbRow(_ suburb: Suburb) -> some View {
-        let dealCount = viewModel.dealCount(for: suburb)
+        let venueCount = viewModel.venueCount(for: suburb)
         VStack(alignment: .leading, spacing: 2) {
             Text(SuburbListViewModel.displayName(for: suburb))
 
-            Text("\(dealCount) deal\(dealCount == 1 ? "" : "s")")
+            Text("\(venueCount) venue\(venueCount == 1 ? "" : "s")")
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
