@@ -1,5 +1,5 @@
 /**
- * Rewrites a CDN venue hero URL (`/venues/{id}.jpg`) to the 200px thumb
+ * Rewrites a CDN venue hero URL (`/venues/{id}.jpg`) to the 300px thumb
  * (`/venues/{id}-thumb.jpg`). Non-CDN / source URLs are returned unchanged.
  */
 export function venueHeroThumbUrl(

@@ -111,7 +111,16 @@ struct SuburbDetailView: View {
             List {
                 Section("\(viewModel.venues.count) venue\(viewModel.venues.count == 1 ? "" : "s")") {
                     ForEach(viewModel.venues, id: \.googleMapId) { venue in
-                        Text(venue.name)
+                        Button {
+                            viewModel.openVenueDetails(googleMapId: venue.googleMapId)
+                        } label: {
+                            VenueRow(
+                                venue: venue,
+                                sourceCount: viewModel.sourceCount(for: venue),
+                                dealCount: viewModel.dealCount(for: venue)
+                            )
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
             }

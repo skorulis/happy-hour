@@ -2,14 +2,20 @@
 
 import Foundation
 
-enum SuburbExtractor {
+struct ParsedAustralianAddress: Equatable {
+    let suburb: String
+    let state: String
+    let postcode: String
+}
+
+enum AustraliaAddressParser {
     private static let streetSuburbPattern =
         #/,\s*([^,]+?)\s+(?i)(NSW|VIC|QLD|SA|WA|TAS|NT|ACT)\s+(\d{4})\s*(?:,\s*Australia)?\s*$/#
 
     private static let standaloneSuburbPattern =
         #/^([^,]+?)\s+(?i)(NSW|VIC|QLD|SA|WA|TAS|NT|ACT)\s+(\d{4})\s*(?:,\s*Australia)?\s*$/#
 
-    static func extract(from formattedAddress: String) -> (name: String, postcode: String?, state: String?)? {
+    static func parse(from formattedAddress: String) -> ParsedAustralianAddress? {
         let trimmed = formattedAddress.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
 
@@ -19,16 +25,10 @@ enum SuburbExtractor {
                 let state = String(match.2).uppercased()
                 let postcode = String(match.3)
                 guard !suburb.isEmpty else { return nil }
-                return (suburb, postcode, state)
+                return ParsedAustralianAddress(suburb: suburb, state: state, postcode: postcode)
             }
         }
 
-        let parts = trimmed
-            .split(separator: ",", omittingEmptySubsequences: true)
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty && $0.caseInsensitiveCompare("Australia") != .orderedSame }
-
-        guard let suburb = parts.last else { return nil }
-        return (suburb, nil, nil)
+        return nil
     }
 }

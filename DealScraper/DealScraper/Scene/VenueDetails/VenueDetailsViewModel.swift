@@ -180,9 +180,9 @@ final class VenueDetailsViewModel {
             return suburb.name
         }
         if let address = formattedAddress,
-           let extracted = SuburbExtractor.extract(from: address)
+           let parsed = AustraliaAddressParser.parse(from: address)
         {
-            return extracted.name
+            return parsed.suburb
         }
         return nil
     }

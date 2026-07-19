@@ -205,7 +205,7 @@ One-time Cloudflare setup:
 
 Enter credentials in DealScraper **Settings → Cloudflare R2** (account ID, bucket, public base URL, access key ID, secret). Keys are stored in the Mac keychain.
 
-Objects are stored as `venues/{sqliteId}.jpg` (full, ~1600px) and `venues/{sqliteId}-thumb.jpg` (200px wide). Replace overwrites the same keys. Re-set a venue hero in DealScraper if an older `file://` path is still in the database.
+Objects are stored as `venues/{sqliteId}.jpg` (full, ~1600px) and `venues/{sqliteId}-thumb.jpg` (300px wide). Replace overwrites the same keys. Re-set a venue hero in DealScraper if an older `file://` path is still in the database.
 
 ## Delete the local database
 

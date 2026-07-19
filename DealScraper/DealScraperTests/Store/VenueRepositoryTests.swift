@@ -66,7 +66,7 @@ struct VenueRepositoryTests {
             id: "places/ChIJHours",
             displayName: .init(text: "Hours Pub", languageCode: "en"),
             location: .init(latitude: -33.8600, longitude: 151.2100),
-            formattedAddress: "1 Circular Quay, Sydney",
+            formattedAddress: "1 Circular Quay, Sydney NSW 2000",
             websiteUri: "https://hourspub.example.com",
             types: ["bar"],
             regularOpeningHours: GooglePlace.OpeningHours(
@@ -127,7 +127,7 @@ struct VenueRepositoryTests {
         #expect(found.suburbId != crawlSuburbId)
     }
 
-    @Test func upsertPlacesFallsBackToCrawlSuburbWhenAddressUnparseable() throws {
+    @Test func upsertPlacesSkipsNonAustralianAddresses() throws {
         let store = SQLStore.inMemory()
         let repository = VenueRepository(store: store)
         let crawlSuburbId = try store.dbQueue.write { db -> Int64 in
@@ -136,7 +136,7 @@ struct VenueRepositoryTests {
             return try #require(suburb.id)
         }
 
-        let place = GooglePlace(
+        let missingAddress = GooglePlace(
             id: "places/ChIJNoAddress",
             displayName: .init(text: "Mystery Pub", languageCode: "en"),
             location: .init(latitude: -33.8700, longitude: 151.2100),
@@ -144,11 +144,23 @@ struct VenueRepositoryTests {
             websiteUri: "https://mysterypub.example.com",
             types: ["bar"]
         )
+        let overseas = GooglePlace(
+            id: "places/ChIJOverseas",
+            displayName: .init(text: "Overseas Pub", languageCode: "en"),
+            location: .init(latitude: 51.5074, longitude: -0.1278),
+            formattedAddress: "10 Downing Street, London SW1A 2AA, United Kingdom",
+            websiteUri: "https://overseaspub.example.com",
+            types: ["bar"]
+        )
 
-        try repository.upsert(places: [place], suburbId: crawlSuburbId)
+        let newCount = try repository.upsert(
+            places: [missingAddress, overseas],
+            suburbId: crawlSuburbId
+        )
 
-        let found = try #require(try repository.find(googleMapId: "places/ChIJNoAddress"))
-        #expect(found.suburbId == crawlSuburbId)
+        #expect(newCount == 0)
+        #expect(try repository.find(googleMapId: "places/ChIJNoAddress") == nil)
+        #expect(try repository.find(googleMapId: "places/ChIJOverseas") == nil)
     }
 
     @Test func upsertPlacesMapsGooglePlaceToVenue() throws {
@@ -164,7 +176,7 @@ struct VenueRepositoryTests {
             id: "places/ChIJFromAPI",
             displayName: .init(text: "Harbour Pub", languageCode: "en"),
             location: .init(latitude: -33.8600, longitude: 151.2100),
-            formattedAddress: "1 Circular Quay, Sydney",
+            formattedAddress: "1 Circular Quay, Sydney NSW 2000",
             websiteUri: "https://harbourpub.example.com",
             types: ["bar"]
         )
@@ -189,7 +201,7 @@ struct VenueRepositoryTests {
             id: "places/ChIJNoWebsite",
             displayName: .init(text: "No Website Pub", languageCode: "en"),
             location: .init(latitude: -33.8600, longitude: 151.2100),
-            formattedAddress: "1 Circular Quay, Sydney",
+            formattedAddress: "1 Circular Quay, Sydney NSW 2000",
             websiteUri: nil,
             types: ["bar"]
         )
@@ -208,7 +220,7 @@ struct VenueRepositoryTests {
             id: "places/ChIJFromAPI",
             displayName: .init(text: "Harbour Pub", languageCode: "en"),
             location: .init(latitude: -33.8600, longitude: 151.2100),
-            formattedAddress: "1 Circular Quay, Sydney",
+            formattedAddress: "1 Circular Quay, Sydney NSW 2000",
             websiteUri: "https://harbourpub.example.com",
             types: ["bar"]
         )
@@ -273,7 +285,7 @@ struct VenueRepositoryTests {
             id: "places/ChIJFromAPI",
             displayName: .init(text: "Harbour Pub", languageCode: "en"),
             location: .init(latitude: -33.8600, longitude: 151.2100),
-            formattedAddress: "1 Circular Quay, Sydney",
+            formattedAddress: "1 Circular Quay, Sydney NSW 2000",
             websiteUri: "https://harbourpub.example.com",
             types: ["bar"]
         )
@@ -303,7 +315,7 @@ struct VenueRepositoryTests {
             id: "places/ChIJHeroR2",
             displayName: .init(text: "CDN Pub", languageCode: "en"),
             location: .init(latitude: -33.8600, longitude: 151.2100),
-            formattedAddress: "1 Circular Quay, Sydney",
+            formattedAddress: "1 Circular Quay, Sydney NSW 2000",
             websiteUri: "https://cdnpub.example.com",
             types: ["bar"]
         )
@@ -388,7 +400,7 @@ struct VenueRepositoryTests {
             id: "places/ChIJOpen",
             displayName: .init(text: "Open Pub", languageCode: "en"),
             location: .init(latitude: -33.8600, longitude: 151.2100),
-            formattedAddress: "1 Circular Quay, Sydney",
+            formattedAddress: "1 Circular Quay, Sydney NSW 2000",
             websiteUri: "https://openpub.example.com",
             types: ["bar"],
             businessStatus: .operational
@@ -397,7 +409,7 @@ struct VenueRepositoryTests {
             id: "places/ChIJTempClosed",
             displayName: .init(text: "Temp Closed Pub", languageCode: "en"),
             location: .init(latitude: -33.8610, longitude: 151.2110),
-            formattedAddress: "2 Circular Quay, Sydney",
+            formattedAddress: "2 Circular Quay, Sydney NSW 2000",
             websiteUri: "https://tempclosed.example.com",
             types: ["bar"],
             businessStatus: .closedTemporarily
@@ -406,7 +418,7 @@ struct VenueRepositoryTests {
             id: "places/ChIJPermClosed",
             displayName: .init(text: "Closed Pub", languageCode: "en"),
             location: .init(latitude: -33.8620, longitude: 151.2120),
-            formattedAddress: "3 Circular Quay, Sydney",
+            formattedAddress: "3 Circular Quay, Sydney NSW 2000",
             websiteUri: "https://closedpub.example.com",
             types: ["bar"],
             businessStatus: .closedPermanently
@@ -427,7 +439,7 @@ struct VenueRepositoryTests {
             id: "places/ChIJWasOpen",
             displayName: .init(text: "Former Pub", languageCode: "en"),
             location: .init(latitude: -33.8600, longitude: 151.2100),
-            formattedAddress: "1 Circular Quay, Sydney",
+            formattedAddress: "1 Circular Quay, Sydney NSW 2000",
             websiteUri: "https://formerpub.example.com",
             types: ["bar"],
             businessStatus: .operational

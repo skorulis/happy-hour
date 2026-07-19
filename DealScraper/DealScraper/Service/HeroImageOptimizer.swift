@@ -8,7 +8,7 @@ import UniformTypeIdentifiers
 enum HeroImageOptimizer {
 
     static let maxWidth = 1600
-    static let thumbWidth = 200
+    static let thumbWidth = 300
     static let jpegQuality: CGFloat = 0.82
 
     struct Output: Equatable {
@@ -30,7 +30,7 @@ enum HeroImageOptimizer {
         }
     }
 
-    /// Resize to full (~1600px) and thumb (200px) JPEGs for CDN upload.
+    /// Resize to full (~1600px) and thumb (300px) JPEGs for CDN upload.
     static func optimize(_ data: Data) throws -> Output {
         guard let nsImage = NSImage(data: data),
               let original = cgImage(from: nsImage)

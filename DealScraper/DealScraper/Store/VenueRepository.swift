@@ -83,6 +83,11 @@ final class VenueRepository {
                 }
                 continue
             }
+            guard let address = place.formattedAddress,
+                  AustraliaAddressParser.parse(from: address) != nil
+            else {
+                continue
+            }
             if try upsert(try Venue(from: place), preferredSuburbId: suburbId) {
                 newCount += 1
             }
@@ -193,15 +198,15 @@ final class VenueRepository {
         guard let jsonData = venue.json.data(using: .utf8),
               let place = try? JSONDecoder().decode(GooglePlace.self, from: jsonData),
               let address = place.formattedAddress,
-              let extracted = SuburbExtractor.extract(from: address)
+              let parsed = AustraliaAddressParser.parse(from: address)
         else {
             return
         }
 
         venue.suburbId = try SuburbRepository.resolve(
-            name: extracted.name,
-            postcode: extracted.postcode,
-            state: extracted.state,
+            name: parsed.suburb,
+            postcode: parsed.postcode,
+            state: parsed.state,
             in: db
         )
     }

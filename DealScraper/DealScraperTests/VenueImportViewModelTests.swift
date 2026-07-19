@@ -16,7 +16,7 @@ struct VenueImportViewModelTests {
             id: "places/ChIJFromAPI",
             displayName: .init(text: "Harbour Pub", languageCode: "en"),
             location: .init(latitude: -33.8600, longitude: 151.2100),
-            formattedAddress: "1 Circular Quay, Sydney",
+            formattedAddress: "1 Circular Quay, Sydney NSW 2000",
             websiteUri: nil,
             types: ["bar"]
         )

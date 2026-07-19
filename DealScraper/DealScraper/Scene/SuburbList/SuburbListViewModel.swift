@@ -15,6 +15,7 @@ final class SuburbListViewModel {
 
     private(set) var state: State = .idle
     private(set) var suburbs: [Suburb] = []
+    private(set) var dealCountsBySuburbId: [Int64: Int] = [:]
     var searchText = ""
     var selectedSuburbId: Int64?
 
@@ -29,10 +30,12 @@ final class SuburbListViewModel {
     }
 
     private let suburbRepository: SuburbRepository
+    private let dealRepository: DealRepository
 
     @Resolvable<Resolver>
-    init(suburbRepository: SuburbRepository) {
+    init(suburbRepository: SuburbRepository, dealRepository: DealRepository) {
         self.suburbRepository = suburbRepository
+        self.dealRepository = dealRepository
     }
 
     static func displayName(for suburb: Suburb) -> String {
@@ -42,9 +45,21 @@ final class SuburbListViewModel {
         return suburb.name
     }
 
+    func dealCount(for suburb: Suburb) -> Int {
+        guard let suburbId = suburb.id else { return 0 }
+        return dealCountsBySuburbId[suburbId] ?? 0
+    }
+
     func loadSuburbs() {
         do {
-            suburbs = try suburbRepository.all().sorted { lhs, rhs in
+            let allSuburbs = try suburbRepository.all()
+            dealCountsBySuburbId = try dealRepository.countsBySuburbId()
+            suburbs = allSuburbs.sorted { lhs, rhs in
+                let lhsCount = dealCount(for: lhs)
+                let rhsCount = dealCount(for: rhs)
+                if lhsCount != rhsCount {
+                    return lhsCount > rhsCount
+                }
                 let nameOrder = lhs.name.localizedCaseInsensitiveCompare(rhs.name)
                 if nameOrder != .orderedSame {
                     return nameOrder == .orderedAscending

@@ -1,17 +1,22 @@
 // Created by Alexander Skorulis on 19/7/2026.
 
+import ASKCoordinator
 import Foundation
 import Knit
 import KnitMacros
 
 @MainActor
 @Observable
-final class SuburbDetailViewModel {
+final class SuburbDetailViewModel: CoordinatorViewModel {
+
+    weak var coordinator: ASKCoordinator.Coordinator?
 
     let suburbId: Int64
     private(set) var suburb: Suburb?
     private(set) var venues: [Venue] = []
     private(set) var countryName: String?
+    private(set) var sourceCountsByVenueId: [Int64: Int] = [:]
+    private(set) var dealCountsByVenueId: [Int64: Int] = [:]
     var actionMessage: String?
 
     var canClearHeroImage: Bool {
@@ -22,6 +27,8 @@ final class SuburbDetailViewModel {
     private let suburbRepository: SuburbRepository
     private let venueRepository: VenueRepository
     private let countryRepository: CountryRepository
+    private let dealSourceRepository: DealSourceRepository
+    private let dealRepository: DealRepository
     private let heroImageStore: SuburbHeroImageStore
     private let jobQueue: JobQueue
 
@@ -31,6 +38,8 @@ final class SuburbDetailViewModel {
         suburbRepository: SuburbRepository,
         venueRepository: VenueRepository,
         countryRepository: CountryRepository,
+        dealSourceRepository: DealSourceRepository,
+        dealRepository: DealRepository,
         heroImageStore: SuburbHeroImageStore,
         jobQueue: JobQueue
     ) {
@@ -38,6 +47,8 @@ final class SuburbDetailViewModel {
         self.suburbRepository = suburbRepository
         self.venueRepository = venueRepository
         self.countryRepository = countryRepository
+        self.dealSourceRepository = dealSourceRepository
+        self.dealRepository = dealRepository
         self.heroImageStore = heroImageStore
         self.jobQueue = jobQueue
         load()
@@ -86,15 +97,33 @@ final class SuburbDetailViewModel {
         }
     }
 
+    func sourceCount(for venue: Venue) -> Int {
+        guard let venueId = venue.id else { return 0 }
+        return sourceCountsByVenueId[venueId] ?? 0
+    }
+
+    func dealCount(for venue: Venue) -> Int {
+        guard let venueId = venue.id else { return 0 }
+        return dealCountsByVenueId[venueId] ?? 0
+    }
+
+    func openVenueDetails(googleMapId: String) {
+        coordinator?.push(MainPath.venueDetails(googleMapId))
+    }
+
     private func load() {
         do {
             suburb = try suburbRepository.find(id: suburbId)
             guard let suburb else {
                 venues = []
                 countryName = nil
+                sourceCountsByVenueId = [:]
+                dealCountsByVenueId = [:]
                 return
             }
             venues = try venueRepository.find(suburbId: suburbId)
+            sourceCountsByVenueId = try dealSourceRepository.countsByVenueId()
+            dealCountsByVenueId = try dealRepository.countsByVenueId()
             if let countryId = suburb.countryId {
                 countryName = try countryRepository.find(id: countryId)?.name
             } else {
@@ -104,6 +133,8 @@ final class SuburbDetailViewModel {
             suburb = nil
             venues = []
             countryName = nil
+            sourceCountsByVenueId = [:]
+            dealCountsByVenueId = [:]
         }
     }
 
