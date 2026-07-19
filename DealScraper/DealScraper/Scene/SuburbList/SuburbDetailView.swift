@@ -4,24 +4,31 @@ import SwiftUI
 
 struct SuburbDetailView: View {
 
-    let suburb: Suburb
-    let countryName: String?
-    let venues: [Venue]
-    let actionMessage: String?
-    let canClearHeroImage: Bool
-    let onCrawl: () -> Void
-    let onClearHeroImage: () -> Void
-    let onSetHeroImage: (String) async -> Void
+    @State var viewModel: SuburbDetailViewModel
 
     var body: some View {
+        Group {
+            if let suburb = viewModel.suburb {
+                suburbContent(suburb)
+            } else {
+                ContentUnavailableView(
+                    "Suburb Not Found",
+                    systemImage: "building.2",
+                    description: Text("This suburb is no longer saved locally.")
+                )
+            }
+        }
+    }
+
+    private func suburbContent(_ suburb: Suburb) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            header
+            header(suburb)
             Divider()
             venueList
         }
     }
 
-    private var header: some View {
+    private func header(_ suburb: Suburb) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top, spacing: 24) {
                 VStack(alignment: .leading, spacing: 4) {
@@ -37,7 +44,7 @@ struct SuburbDetailView: View {
                                     .foregroundStyle(.secondary)
                             }
 
-                            if let countryName, !countryName.isEmpty {
+                            if let countryName = viewModel.countryName, !countryName.isEmpty {
                                 Text(countryName)
                                     .font(.subheadline)
                                     .foregroundStyle(.secondary)
@@ -62,11 +69,13 @@ struct SuburbDetailView: View {
 
                         Spacer()
 
-                        Button("Crawl", action: onCrawl)
-                            .buttonStyle(.borderedProminent)
+                        Button("Crawl") {
+                            viewModel.crawl()
+                        }
+                        .buttonStyle(.borderedProminent)
                     }
 
-                    if let actionMessage {
+                    if let actionMessage = viewModel.actionMessage {
                         Text(actionMessage)
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -76,9 +85,11 @@ struct SuburbDetailView: View {
 
                 HeroImagePickerView(
                     imageURL: suburb.heroImage,
-                    canClear: canClearHeroImage,
-                    onClear: onClearHeroImage,
-                    onSetURL: onSetHeroImage
+                    canClear: viewModel.canClearHeroImage,
+                    onClear: { viewModel.clearHeroImage() },
+                    onSetURL: { urlString in
+                        await viewModel.setHeroImage(urlString: urlString)
+                    }
                 )
             }
         }
@@ -89,7 +100,7 @@ struct SuburbDetailView: View {
 
     @ViewBuilder
     private var venueList: some View {
-        if venues.isEmpty {
+        if viewModel.venues.isEmpty {
             ContentUnavailableView(
                 "No Venues",
                 systemImage: "building.2",
@@ -98,8 +109,8 @@ struct SuburbDetailView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
             List {
-                Section("\(venues.count) venue\(venues.count == 1 ? "" : "s")") {
-                    ForEach(venues, id: \.googleMapId) { venue in
+                Section("\(viewModel.venues.count) venue\(viewModel.venues.count == 1 ? "" : "s")") {
+                    ForEach(viewModel.venues, id: \.googleMapId) { venue in
                         Text(venue.name)
                     }
                 }

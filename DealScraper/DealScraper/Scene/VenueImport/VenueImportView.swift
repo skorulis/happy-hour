@@ -1,5 +1,6 @@
 //Created by Alex Skorulis on 15/6/2026.
 
+import ASKCoordinator
 import ASKCore
 import Knit
 import SwiftUI
@@ -96,11 +97,9 @@ struct VenueImportView: View {
                 }
             )
         } else if let googleMapId = viewModel.selectedGoogleMapId {
-            VenueDetailsView(
-                viewModel: resolver!.venueDetailsViewModel(googleID: googleMapId),
-                onVenueDeleted: { viewModel.loadSavedVenues() }
-            )
-            .id(googleMapId)
+            CoordinatorView(coordinator: .init(root: MainPath.venueDetails(googleMapId)))
+                .withRenderers(resolver: resolver!)
+                .id(googleMapId)
         } else {
             ContentUnavailableView(
                 "Select a Venue",

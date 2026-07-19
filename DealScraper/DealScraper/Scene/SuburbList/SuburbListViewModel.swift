@@ -15,17 +15,8 @@ final class SuburbListViewModel {
 
     private(set) var state: State = .idle
     private(set) var suburbs: [Suburb] = []
-    private(set) var venues: [Venue] = []
-    private(set) var selectedCountryName: String?
     var searchText = ""
-    var actionMessage: String?
-
-    var selectedSuburbId: Int64? {
-        didSet {
-            guard selectedSuburbId != oldValue else { return }
-            loadSelectionDetails()
-        }
-    }
+    var selectedSuburbId: Int64?
 
     var filteredSuburbs: [Suburb] {
         let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -37,35 +28,11 @@ final class SuburbListViewModel {
         }
     }
 
-    var selectedSuburb: Suburb? {
-        guard let selectedSuburbId else { return nil }
-        return suburbs.first { $0.id == selectedSuburbId }
-    }
-
-    var canClearHeroImage: Bool {
-        guard let suburb = selectedSuburb, suburb.id != nil else { return false }
-        return suburb.heroImage?.isEmpty == false
-    }
-
     private let suburbRepository: SuburbRepository
-    private let venueRepository: VenueRepository
-    private let countryRepository: CountryRepository
-    private let heroImageStore: SuburbHeroImageStore
-    private let jobQueue: JobQueue
 
     @Resolvable<Resolver>
-    init(
-        suburbRepository: SuburbRepository,
-        venueRepository: VenueRepository,
-        countryRepository: CountryRepository,
-        heroImageStore: SuburbHeroImageStore,
-        jobQueue: JobQueue
-    ) {
+    init(suburbRepository: SuburbRepository) {
         self.suburbRepository = suburbRepository
-        self.venueRepository = venueRepository
-        self.countryRepository = countryRepository
-        self.heroImageStore = heroImageStore
-        self.jobQueue = jobQueue
     }
 
     static func displayName(for suburb: Suburb) -> String {
@@ -88,96 +55,10 @@ final class SuburbListViewModel {
                !suburbs.contains(where: { $0.id == selectedSuburbId })
             {
                 self.selectedSuburbId = nil
-            } else {
-                loadSelectionDetails()
             }
             state = .idle
         } catch {
             state = .failed(message: "Could not load suburbs: \(error.localizedDescription)")
-        }
-    }
-
-    func crawlSelectedSuburb() {
-        guard let suburbId = selectedSuburbId,
-              let suburb = selectedSuburb
-        else {
-            actionMessage = "Select a suburb to crawl."
-            return
-        }
-
-        let name = Self.displayName(for: suburb)
-        guard jobQueue.enqueue(suburbId: suburbId, type: .crawlSuburb) != nil else {
-            actionMessage = "A suburb crawl is already queued for \(name)."
-            return
-        }
-
-        actionMessage = "Queued suburb crawl for \(name)."
-    }
-
-    func clearHeroImage() {
-        guard let suburbId = selectedSuburbId, canClearHeroImage else { return }
-
-        do {
-            try heroImageStore.clearHeroImage(suburbId: suburbId)
-            refreshSelectedSuburb()
-        } catch {
-            // Keep the current UI state if persistence fails.
-        }
-    }
-
-    func setHeroImage(urlString: String) async {
-        guard let suburbId = selectedSuburbId else { return }
-
-        let trimmed = urlString.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty,
-              let url = URL(string: trimmed),
-              url.scheme != nil
-        else {
-            return
-        }
-
-        do {
-            try await heroImageStore.setHeroImage(suburbId: suburbId, remoteURL: url)
-            refreshSelectedSuburb()
-        } catch {
-            // Keep the current UI state if persistence fails.
-        }
-    }
-
-    private func refreshSelectedSuburb() {
-        guard let selectedSuburbId else { return }
-        do {
-            guard let updated = try suburbRepository.find(id: selectedSuburbId) else {
-                loadSuburbs()
-                return
-            }
-            if let index = suburbs.firstIndex(where: { $0.id == selectedSuburbId }) {
-                suburbs[index] = updated
-            } else {
-                loadSuburbs()
-            }
-        } catch {
-            state = .failed(message: "Could not refresh suburb: \(error.localizedDescription)")
-        }
-    }
-
-    private func loadSelectionDetails() {
-        guard let selectedSuburbId, let suburb = selectedSuburb else {
-            venues = []
-            selectedCountryName = nil
-            return
-        }
-        do {
-            venues = try venueRepository.find(suburbId: selectedSuburbId)
-            if let countryId = suburb.countryId {
-                selectedCountryName = try countryRepository.find(id: countryId)?.name
-            } else {
-                selectedCountryName = nil
-            }
-        } catch {
-            venues = []
-            selectedCountryName = nil
-            state = .failed(message: "Could not load suburb details: \(error.localizedDescription)")
         }
     }
 }

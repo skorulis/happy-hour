@@ -42,6 +42,9 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
             VenueDetailsViewModel.make(resolver: resolver, googleMapId: googleID)
         }
         container.register(SuburbListViewModel.self) { SuburbListViewModel.make(resolver: $0) }
+        container.register(SuburbDetailViewModel.self) { (resolver: Resolver, suburbId: Int64) in
+            SuburbDetailViewModel.make(resolver: resolver, suburbId: suburbId)
+        }
         container.register(ApprovalViewModel.self) { ApprovalViewModel.make(resolver: $0) }
         container.register(JobQueueViewModel.self) { JobQueueViewModel.make(resolver: $0) }
     }

@@ -1,11 +1,13 @@
 // Created by Alexander Skorulis on 19/7/2026.
 
+import ASKCoordinator
 import ASKCore
 import Knit
 import SwiftUI
 
 struct SuburbListView: View {
 
+    @Environment(\.resolver) private var resolver
     @State var viewModel: SuburbListViewModel
 
     var body: some View {
@@ -67,20 +69,10 @@ struct SuburbListView: View {
 
     @ViewBuilder
     private var detail: some View {
-        if let suburb = viewModel.selectedSuburb {
-            SuburbDetailView(
-                suburb: suburb,
-                countryName: viewModel.selectedCountryName,
-                venues: viewModel.venues,
-                actionMessage: viewModel.actionMessage,
-                canClearHeroImage: viewModel.canClearHeroImage,
-                onCrawl: { viewModel.crawlSelectedSuburb() },
-                onClearHeroImage: { viewModel.clearHeroImage() },
-                onSetHeroImage: { urlString in
-                    await viewModel.setHeroImage(urlString: urlString)
-                }
-            )
-            .id(suburb.id)
+        if let suburbId = viewModel.selectedSuburbId {
+            CoordinatorView(coordinator: .init(root: MainPath.suburbDetails(suburbId)))
+                .withRenderers(resolver: resolver!)
+                .id(suburbId)
         } else {
             ContentUnavailableView(
                 "Select a Suburb",
