@@ -35,13 +35,12 @@ struct SuburbDetailView: View {
                     HStack(alignment: .top) {
                         details(suburb: suburb)
 
-                        Spacer()
+                        Spacer(minLength: 16)
 
                         Button("Crawl") {
                             viewModel.crawl()
                         }
                         .buttonStyle(.borderedProminent)
-                        .zIndex(2)
                     }
 
                     if let actionMessage = viewModel.actionMessage {
@@ -51,6 +50,7 @@ struct SuburbDetailView: View {
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .zIndex(1)
 
                 HeroImagePickerView(
                     imageURL: suburb.heroImage,

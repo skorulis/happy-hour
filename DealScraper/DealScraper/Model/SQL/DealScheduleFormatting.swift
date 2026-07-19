@@ -2,7 +2,7 @@
 
 import Foundation
 
-enum DealScheduleFormatting {
+nonisolated enum DealScheduleFormatting {
     /// Mon → Sun display order (calendar weekday values 2–7, 1).
     static let weekdaysInDisplayOrder = [2, 3, 4, 5, 6, 7, 1]
 
