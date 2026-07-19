@@ -290,6 +290,10 @@ struct VenueDetailsView: View {
 
             LabeledContent("Google Place ID", value: venue.googleMapId)
 
+            if let googleRating = venue.googleRating {
+                LabeledContent("Google Rating", value: String(format: "%.1f", googleRating))
+            }
+
             if !viewModel.types.isEmpty {
                 LabeledContent("Types", value: viewModel.types.joined(separator: ", "))
             }
