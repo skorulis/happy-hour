@@ -85,6 +85,13 @@
       "when": 1784171923308,
       "tag": "0011_curved_the_hood",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1784434237715,
+      "tag": "0012_white_princess_powerful",
+      "breakpoints": true
     }
   ]
 }

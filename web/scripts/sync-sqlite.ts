@@ -23,6 +23,8 @@ type SqliteSuburb = {
   lng: number | null;
   sqkm: number | null;
   statistic_area: string | null;
+  hero_image: string | null;
+  hero_r2_url: string | null;
 };
 
 const GREATER_SYDNEY_STATISTIC_AREA = "Greater Sydney";
@@ -50,6 +52,16 @@ function venueHeroImageForPostgres(venueRow: SqliteVenue): string | null {
     return r2;
   }
   const source = venueRow.hero_image?.trim();
+  return source || null;
+}
+
+/** Public CDN URL for the website; falls back to source URL if R2 upload is missing. */
+function suburbHeroImageForPostgres(suburbRow: SqliteSuburb): string | null {
+  const r2 = suburbRow.hero_r2_url?.trim();
+  if (r2) {
+    return r2;
+  }
+  const source = suburbRow.hero_image?.trim();
   return source || null;
 }
 
@@ -198,6 +210,7 @@ async function main() {
       tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
       suburbRow: SqliteSuburb,
     ): Promise<number> {
+      const heroImage = suburbHeroImageForPostgres(suburbRow);
       const [upsertedSuburb] = await tx
         .insert(schema.suburb)
         .values({
@@ -207,6 +220,7 @@ async function main() {
           lat: suburbRow.lat,
           lng: suburbRow.lng,
           sqkm: suburbRow.sqkm,
+          heroImage,
         })
         .onConflictDoUpdate({
           target: [schema.suburb.name, schema.suburb.postcode],
@@ -217,6 +231,7 @@ async function main() {
             lat: suburbRow.lat,
             lng: suburbRow.lng,
             sqkm: suburbRow.sqkm,
+            heroImage,
           },
         })
         .returning({ id: schema.suburb.id });

@@ -23,6 +23,7 @@ export const suburb = pgTable(
     lat: doublePrecision("lat"),
     lng: doublePrecision("lng"),
     sqkm: doublePrecision("sqkm"),
+    heroImage: text("hero_image"),
   },
   (table) => [
     uniqueIndex("suburb_name_postcode_idx").on(table.name, table.postcode),

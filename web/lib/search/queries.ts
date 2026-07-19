@@ -46,6 +46,7 @@ export type PopularSuburb = {
   id: number;
   name: string;
   postcode: string | null;
+  heroImage: string | null;
   dealCount: number;
 };
 
@@ -298,12 +299,13 @@ export async function listPopularSuburbs(
       id: suburb.id,
       name: suburb.name,
       postcode: suburb.postcode,
+      heroImage: suburb.heroImage,
       dealCount,
     })
     .from(suburb)
     .innerJoin(venue, eq(venue.suburbId, suburb.id))
     .innerJoin(deal, eq(deal.venueId, venue.id))
-    .groupBy(suburb.id, suburb.name, suburb.postcode)
+    .groupBy(suburb.id, suburb.name, suburb.postcode, suburb.heroImage)
     .orderBy(desc(dealCount), suburb.name)
     .limit(limit);
 }

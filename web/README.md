@@ -207,6 +207,8 @@ Enter credentials in DealScraper **Settings → Cloudflare R2** (account ID, buc
 
 Objects are stored as `venues/{sqliteId}.jpg` (full, ~1600px) and `venues/{sqliteId}-thumb.jpg` (300px wide). Replace overwrites the same keys. Re-set a venue hero in DealScraper if an older `file://` path is still in the database.
 
+Suburb heroes follow the same pattern: DealScraper uploads to `suburbs/{sqliteId}.jpg` / `suburbs/{sqliteId}-thumb.jpg`, stores the public URL in SQLite `suburb.hero_r2_url`, and sync copies it into Postgres `suburb.hero_image`.
+
 ## Delete the local database
 
 **Stop the container** (data is kept in the Docker volume and will be there when you start again):

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { PopularSuburb } from "@/lib/search/queries";
 import { suburbWherePath } from "@/lib/search/slugs";
+import { suburbHeroThumbUrl } from "@/lib/search/venue-hero-url";
 
 type PopularSuburbsProps = {
   suburbs: PopularSuburb[];
@@ -35,15 +36,26 @@ export function PopularSuburbs({ suburbs, search }: PopularSuburbsProps) {
         {suburbs.map((suburb) => {
           const path = suburbWherePath(suburb.name, suburb.postcode);
           const href = search ? `${path}?${search}` : path;
+          const thumbUrl = suburbHeroThumbUrl(suburb.heroImage);
 
           return (
             <li key={suburb.id}>
               <Link
                 href={href}
-                className="flex items-baseline justify-between gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-surface-muted"
+                className="flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-surface-muted"
               >
-                <span className="font-medium text-foreground">
-                  {formatSuburbLabel(suburb)}
+                <span className="flex min-w-0 items-center gap-3">
+                  {thumbUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={thumbUrl}
+                      alt=""
+                      className="h-14 w-14 shrink-0 rounded-lg object-cover"
+                    />
+                  ) : null}
+                  <span className="font-medium text-foreground">
+                    {formatSuburbLabel(suburb)}
+                  </span>
                 </span>
                 <span className="shrink-0 text-sm text-muted">
                   {suburb.dealCount}{" "}

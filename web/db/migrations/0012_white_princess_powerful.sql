@@ -1,0 +1,1 @@
+ALTER TABLE "suburb" ADD COLUMN "hero_image" text;
