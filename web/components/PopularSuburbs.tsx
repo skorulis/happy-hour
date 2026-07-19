@@ -6,13 +6,20 @@ import { suburbHeroThumbUrl } from "@/lib/search/venue-hero-url";
 type PopularSuburbsProps = {
   suburbs: PopularSuburb[];
   search?: string;
+  title?: string;
+  description?: string;
 };
 
 function formatSuburbLabel(suburb: PopularSuburb): string {
   return suburb.postcode ? `${suburb.name} (${suburb.postcode})` : suburb.name;
 }
 
-export function PopularSuburbs({ suburbs, search }: PopularSuburbsProps) {
+export function PopularSuburbs({
+  suburbs,
+  search,
+  title = "Popular suburbs",
+  description = "Pick a suburb to browse deals nearby.",
+}: PopularSuburbsProps) {
   if (suburbs.length === 0) {
     return (
       <p className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted">
@@ -24,12 +31,8 @@ export function PopularSuburbs({ suburbs, search }: PopularSuburbsProps) {
   return (
     <div className="space-y-4">
       <div className="space-y-1">
-        <h2 className="text-xl font-semibold text-foreground">
-          Popular suburbs
-        </h2>
-        <p className="text-sm text-muted">
-          Pick a suburb to browse deals nearby.
-        </p>
+        <h2 className="text-xl font-semibold text-foreground">{title}</h2>
+        <p className="text-sm text-muted">{description}</p>
       </div>
 
       <ul className="grid gap-2 sm:grid-cols-2">

@@ -291,11 +291,11 @@ export async function searchSuburbs(
 }
 
 export async function listPopularSuburbs(
-  limit = 10,
+  limit?: number,
 ): Promise<PopularSuburb[]> {
   const dealCount = count(deal.id);
 
-  return db
+  const query = db
     .select({
       id: suburb.id,
       name: suburb.name,
@@ -307,8 +307,9 @@ export async function listPopularSuburbs(
     .innerJoin(venue, eq(venue.suburbId, suburb.id))
     .innerJoin(deal, eq(deal.venueId, venue.id))
     .groupBy(suburb.id, suburb.name, suburb.postcode, suburb.heroImage)
-    .orderBy(desc(dealCount), suburb.name)
-    .limit(limit);
+    .orderBy(desc(dealCount), suburb.name);
+
+  return limit === undefined ? query : query.limit(limit);
 }
 
 export async function findSuburbByWhereSlug(

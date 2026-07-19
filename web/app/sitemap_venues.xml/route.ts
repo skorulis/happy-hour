@@ -51,6 +51,7 @@ export async function GET() {
   const entries = [
     urlEntry(base, now, "daily", "1.0"),
     urlEntry(`${base}/map`, now, "daily", "0.9"),
+    urlEntry(`${base}/all-suburbs`, now, "daily", "0.8"),
     ...venues.map((row) =>
       urlEntry(
         `${base}${venuePath(row.suburbName, row.name)}`,
