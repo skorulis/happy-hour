@@ -69,6 +69,38 @@ final class SuburbDetailViewModel: CoordinatorViewModel {
         actionMessage = "Queued suburb crawl for \(name)."
     }
 
+    func crawlAllWebsites() {
+        let crawlableVenues = venues.compactMap { venue -> Int64? in
+            guard venue.websiteUri != nil, let venueId = venue.id else { return nil }
+            return venueId
+        }
+
+        guard !crawlableVenues.isEmpty else {
+            actionMessage = venues.isEmpty
+                ? "No venues to crawl."
+                : "No venues with websites to crawl."
+            return
+        }
+
+        var queuedCount = 0
+        var alreadyQueuedCount = 0
+        for venueId in crawlableVenues {
+            if jobQueue.enqueue(venueId: venueId, type: .crawlWebsite) != nil {
+                queuedCount += 1
+            } else {
+                alreadyQueuedCount += 1
+            }
+        }
+
+        if queuedCount == 0 {
+            actionMessage = "All \(alreadyQueuedCount) venue website crawl\(alreadyQueuedCount == 1 ? "" : "s") already queued."
+        } else if alreadyQueuedCount == 0 {
+            actionMessage = "Queued website crawl for \(queuedCount) venue\(queuedCount == 1 ? "" : "s")."
+        } else {
+            actionMessage = "Queued website crawl for \(queuedCount) venue\(queuedCount == 1 ? "" : "s") (\(alreadyQueuedCount) already queued)."
+        }
+    }
+
     func clearHeroImage() {
         guard canClearHeroImage else { return }
 

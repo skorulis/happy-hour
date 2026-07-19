@@ -37,10 +37,18 @@ struct SuburbDetailView: View {
 
                         Spacer(minLength: 16)
 
-                        Button("Crawl") {
-                            viewModel.crawl()
+                        HStack(spacing: 8) {
+                            Button("Crawl") {
+                                viewModel.crawl()
+                            }
+                            .buttonStyle(.borderedProminent)
+
+                            Button("Crawl all websites") {
+                                viewModel.crawlAllWebsites()
+                            }
+                            .buttonStyle(.bordered)
+                            .disabled(viewModel.venues.isEmpty)
                         }
-                        .buttonStyle(.borderedProminent)
                     }
 
                     if let actionMessage = viewModel.actionMessage {
