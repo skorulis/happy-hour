@@ -54,7 +54,11 @@ export function SearchPage({ initialWhere, popularSuburbs }: SearchPageProps) {
 
       {showPopularSuburbs ? (
         <section>
-          <PopularSuburbs suburbs={popularSuburbs} search={popularSearch} />
+          <PopularSuburbs
+            suburbs={popularSuburbs}
+            search={popularSearch}
+            includeSpecialLinks
+          />
         </section>
       ) : (
         <section className="space-y-4">

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { PopularSuburb } from "@/lib/search/queries";
-import { suburbWherePath } from "@/lib/search/slugs";
+import { NEARBY_WHERE_SLUG, suburbWherePath } from "@/lib/search/slugs";
 import { suburbHeroThumbUrl } from "@/lib/search/venue-hero-url";
 
 type PopularSuburbsProps = {
@@ -8,10 +8,57 @@ type PopularSuburbsProps = {
   search?: string;
   title?: string;
   description?: string;
+  includeSpecialLinks?: boolean;
 };
+
+type SuburbListItem =
+  | { kind: "suburb"; suburb: PopularSuburb }
+  | {
+      kind: "special";
+      id: "nearby" | "all-suburbs";
+      label: string;
+      href: string;
+      thumbSrc: string;
+    };
 
 function formatSuburbLabel(suburb: PopularSuburb): string {
   return suburb.postcode ? `${suburb.name} (${suburb.postcode})` : suburb.name;
+}
+
+function buildListItems(
+  suburbs: PopularSuburb[],
+  search: string | undefined,
+  includeSpecialLinks: boolean,
+): SuburbListItem[] {
+  const items: SuburbListItem[] = suburbs.map((suburb) => ({
+    kind: "suburb",
+    suburb,
+  }));
+
+  if (!includeSpecialLinks) {
+    return items;
+  }
+
+  const nearbyPath = `/${NEARBY_WHERE_SLUG}`;
+  const nearbyHref = search ? `${nearbyPath}?${search}` : nearbyPath;
+
+  return [
+    {
+      kind: "special",
+      id: "nearby",
+      label: "Nearby",
+      href: nearbyHref,
+      thumbSrc: "/nearby-thumb.jpg",
+    },
+    ...items,
+    {
+      kind: "special",
+      id: "all-suburbs",
+      label: "All suburbs",
+      href: "/all-suburbs",
+      thumbSrc: "/all-suburbs-thumb.jpg",
+    },
+  ];
 }
 
 export function PopularSuburbs({
@@ -19,8 +66,11 @@ export function PopularSuburbs({
   search,
   title = "Popular suburbs",
   description = "Pick a suburb to browse deals nearby.",
+  includeSpecialLinks = false,
 }: PopularSuburbsProps) {
-  if (suburbs.length === 0) {
+  const items = buildListItems(suburbs, search, includeSpecialLinks);
+
+  if (items.length === 0) {
     return (
       <p className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted">
         No suburbs with deals yet. Try Near me or search for a suburb above.
@@ -36,7 +86,31 @@ export function PopularSuburbs({
       </div>
 
       <ul className="grid gap-2 sm:grid-cols-2">
-        {suburbs.map((suburb) => {
+        {items.map((item) => {
+          if (item.kind === "special") {
+            return (
+              <li key={item.id}>
+                <Link
+                  href={item.href}
+                  className="flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-surface-muted"
+                >
+                  <span className="flex min-w-0 items-center gap-3">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={item.thumbSrc}
+                      alt=""
+                      className="h-14 w-14 shrink-0 rounded-lg object-cover"
+                    />
+                    <span className="font-medium text-foreground">
+                      {item.label}
+                    </span>
+                  </span>
+                </Link>
+              </li>
+            );
+          }
+
+          const { suburb } = item;
           const path = suburbWherePath(suburb.name, suburb.postcode);
           const href = search ? `${path}?${search}` : path;
           const thumbUrl = suburbHeroThumbUrl(suburb.heroImage);
