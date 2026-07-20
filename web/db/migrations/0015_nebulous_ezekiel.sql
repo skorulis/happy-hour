@@ -1,0 +1,1 @@
+ALTER TABLE "deal_report" ADD COLUMN "status" text DEFAULT 'new' NOT NULL;

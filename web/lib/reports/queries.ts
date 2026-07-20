@@ -39,6 +39,7 @@ export async function getAllDealReports(): Promise<AdminDealReport[]> {
     .innerJoin(venue, eq(deal.venueId, venue.id))
     .leftJoin(suburb, eq(venue.suburbId, suburb.id))
     .leftJoin(user, eq(dealReport.userId, user.id))
+    .where(eq(dealReport.status, "new"))
     .orderBy(desc(dealReport.createdAt));
 
   return rows.map((row) => ({

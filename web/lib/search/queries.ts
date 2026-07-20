@@ -401,7 +401,7 @@ export type SearchDealsOptions = {
 export async function searchDeals(
   options: SearchDealsOptions,
 ): Promise<DealSearchResult[]> {
-  const filters: SQL[] = [];
+  const filters: SQL[] = [eq(deal.status, "approved")];
   const hasBounds = options.bounds !== undefined;
   const hasNearLocation =
     !hasBounds &&
@@ -595,7 +595,7 @@ export async function getDealsByIds(
     .from(deal)
     .innerJoin(venue, eq(deal.venueId, venue.id))
     .leftJoin(suburb, eq(venue.suburbId, suburb.id))
-    .where(inArray(deal.id, dealIds))
+    .where(and(inArray(deal.id, dealIds), eq(deal.status, "approved")))
     .orderBy(venue.name, deal.title);
 
   if (rows.length === 0) {

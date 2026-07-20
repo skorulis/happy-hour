@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AdminReportActions } from "@/components/AdminReportActions";
 import type { AdminDealReport } from "@/lib/reports/queries";
 import { getDealReportCategoryLabel } from "@/lib/reports/categories";
 import type { AdminSyncRun } from "@/lib/sync/queries";
@@ -37,8 +38,11 @@ export function AdminPageContent({
         ) : (
           <ul className="divide-y divide-border-subtle rounded-xl border border-border">
             {reports.map((report) => (
-              <li key={report.id} className="px-4 py-4">
-                <div className="space-y-2">
+              <li
+                key={report.id}
+                className="flex items-start justify-between gap-4 px-4 py-4"
+              >
+                <div className="min-w-0 flex-1 space-y-2">
                   <p className="text-sm font-medium text-foreground">
                     {getDealReportCategoryLabel(report.category)}
                   </p>
@@ -66,6 +70,7 @@ export function AdminPageContent({
                     {report.createdAt.toLocaleString()}
                   </p>
                 </div>
+                <AdminReportActions reportId={report.id} />
               </li>
             ))}
           </ul>

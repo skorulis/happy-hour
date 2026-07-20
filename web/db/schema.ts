@@ -106,6 +106,9 @@ export const dealReportCategory = [
 ] as const;
 export type DealReportCategory = (typeof dealReportCategory)[number];
 
+export const dealReportStatus = ["new", "approved", "rejected"] as const;
+export type DealReportStatus = (typeof dealReportStatus)[number];
+
 export const dealReport = pgTable(
   "deal_report",
   {
@@ -116,6 +119,7 @@ export const dealReport = pgTable(
     userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
     category: text("category").notNull(),
     details: text("details"),
+    status: text("status").notNull().default("new"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
