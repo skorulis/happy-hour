@@ -25,6 +25,9 @@ struct StatsView: View {
             }
 
             Section("Coverage") {
+                statRow(title: "Total suburbs", value: viewModel.totalSuburbs)
+                statRow(title: "Crawled suburbs", value: viewModel.crawledSuburbs)
+                statRow(title: "Suburbs with venues", value: viewModel.suburbsWithVenues)
                 statRow(title: "Suburbs with deals", value: viewModel.suburbsWithDeals)
             }
 

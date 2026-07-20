@@ -1,0 +1,1 @@
+ALTER TABLE "deal" ADD COLUMN "status" text DEFAULT 'approved' NOT NULL;

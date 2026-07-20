@@ -21,18 +21,24 @@ final class StatsViewModel {
     private(set) var acceptedDealSources: Int = 0
     private(set) var totalDeals: Int = 0
     private(set) var acceptedDeals: Int = 0
+    private(set) var totalSuburbs: Int = 0
+    private(set) var crawledSuburbs: Int = 0
+    private(set) var suburbsWithVenues: Int = 0
     private(set) var suburbsWithDeals: Int = 0
 
+    private let suburbRepository: SuburbRepository
     private let venueRepository: VenueRepository
     private let dealSourceRepository: DealSourceRepository
     private let dealRepository: DealRepository
 
     @Resolvable<Resolver>
     init(
+        suburbRepository: SuburbRepository,
         venueRepository: VenueRepository,
         dealSourceRepository: DealSourceRepository,
         dealRepository: DealRepository
     ) {
+        self.suburbRepository = suburbRepository
         self.venueRepository = venueRepository
         self.dealSourceRepository = dealSourceRepository
         self.dealRepository = dealRepository
@@ -53,6 +59,10 @@ final class StatsViewModel {
             acceptedDealSources = try dealSourceRepository.count(status: .approved)
             totalDeals = try dealRepository.count()
             acceptedDeals = try dealRepository.count(status: .approved)
+            let suburbs = try suburbRepository.all()
+            totalSuburbs = suburbs.count
+            crawledSuburbs = suburbs.filter { $0.lastCrawlDate != nil }.count
+            suburbsWithVenues = try venueRepository.countsBySuburbId().count
             suburbsWithDeals = try dealRepository.countDistinctSuburbsWithDeals()
 
             state = .idle
