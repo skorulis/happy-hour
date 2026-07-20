@@ -241,6 +241,13 @@ export async function callOpenRouter(
     process.env.BETTER_AUTH_URL?.trim() ||
     "https://duskroute.com";
 
+  const model =
+    typeof body.model === "string" ? body.model : DEFAULT_OPENROUTER_MODEL;
+  console.log("[extract-deals] Starting OpenRouter call", {
+    model,
+    url: OPENROUTER_CHAT_URL,
+  });
+
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), OPENROUTER_TIMEOUT_MS);
 
@@ -258,10 +265,15 @@ export async function callOpenRouter(
     });
 
     const responseText = await response.text();
+
     let json: ChatCompletionResponse;
     try {
       json = JSON.parse(responseText) as ChatCompletionResponse;
     } catch {
+      console.log("[extract-deals] OpenRouter raw response (invalid JSON)", {
+        status: response.status,
+        body: responseText,
+      });
       throw new OpenRouterError(
         response.ok
           ? "Invalid JSON from OpenRouter"
@@ -273,6 +285,10 @@ export async function callOpenRouter(
     if (!response.ok) {
       const message =
         json.error?.message ?? `OpenRouter request failed (${response.status})`;
+      console.log("[extract-deals] OpenRouter error", {
+        status: response.status,
+        message,
+      });
       throw new OpenRouterError(message, response.status);
     }
 
@@ -280,6 +296,8 @@ export async function callOpenRouter(
     if (!content) {
       throw new OpenRouterError("Empty OpenRouter response", 502);
     }
+
+    console.log("[extract-deals] OpenRouter content", content);
 
     return parseDealExtractionPayload(content);
   } catch (error) {
