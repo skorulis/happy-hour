@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { NewDealPageContent } from "@/components/NewDealPageContent";
 import { getVenueDetailBySlug } from "@/lib/search/queries";
 
 type NewDealPageProps = {
@@ -33,9 +34,7 @@ export default async function NewDealPage({ params }: NewDealPageProps) {
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-10">
-      <h1 className="text-3xl font-bold text-foreground">
-        Add a new deal to {venue.name}
-      </h1>
+      <NewDealPageContent venueName={venue.name} />
     </div>
   );
 }
