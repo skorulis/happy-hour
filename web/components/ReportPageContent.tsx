@@ -11,11 +11,15 @@ const inputClassName =
 const buttonClassName =
   "w-full rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-fg transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60";
 
+const secondaryButtonClassName =
+  "w-full rounded-lg border border-border px-4 py-2 text-sm font-medium text-secondary transition-colors hover:bg-surface-muted";
+
 type ReportPageContentProps = {
   dealId: number;
   dealTitle: string;
   venueName: string;
   venuePath: string;
+  isLoggedIn: boolean;
 };
 
 export function ReportPageContent({
@@ -23,6 +27,7 @@ export function ReportPageContent({
   dealTitle,
   venueName,
   venuePath,
+  isLoggedIn,
 }: ReportPageContentProps) {
   const [category, setCategory] = useState<DealReportCategory | "">("");
   const [details, setDetails] = useState("");
@@ -77,9 +82,16 @@ export function ReportPageContent({
           </p>
         </header>
 
-        <Link href={venuePath} className={buttonClassName}>
-          Back to venue
-        </Link>
+        <div className="flex flex-col gap-3">
+          <Link href={venuePath} className={buttonClassName}>
+            Back to venue
+          </Link>
+          {isLoggedIn ? (
+            <Link href="/profile/reports" className={secondaryButtonClassName}>
+              See your reports
+            </Link>
+          ) : null}
+        </div>
       </div>
     );
   }

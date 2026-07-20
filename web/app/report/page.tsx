@@ -1,7 +1,9 @@
 import { ReportPageContent } from "@/components/ReportPageContent";
+import { auth } from "@/lib/auth";
 import { getDealsByIds } from "@/lib/search/queries";
 import { venuePath } from "@/lib/search/slugs";
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -61,6 +63,10 @@ export default async function ReportPage({ searchParams }: ReportPageProps) {
     );
   }
 
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-6 py-10">
       <ReportPageContent
@@ -68,6 +74,7 @@ export default async function ReportPage({ searchParams }: ReportPageProps) {
         dealTitle={deal.title || "Untitled deal"}
         venueName={deal.venue.name}
         venuePath={venuePath(deal.venue.suburbName, deal.venue.name)}
+        isLoggedIn={Boolean(session)}
       />
     </div>
   );
