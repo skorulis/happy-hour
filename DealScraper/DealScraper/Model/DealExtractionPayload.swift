@@ -97,7 +97,7 @@ nonisolated struct DealExtractionPayload: Codable, Sendable {
 
 nonisolated struct SourcedDealExtraction: Sendable {
     let material: VenueDealSourceMaterial
-    let deals: [DealExtractionPayload.RawDeal]
+    let deals: [ProcessedDeal]
 }
 
 nonisolated struct VenueDealSourceExtractionError: Sendable {

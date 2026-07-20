@@ -1,0 +1,249 @@
+{
+  "deals": [
+    {
+      "title": "$15 Lunch Specials",
+      "details": null,
+      "conditions": "Conditions Apply",
+      "creativeURL": "https://example.com/glebe-whats-on.jpg",
+      "sourceURL": "https://example.com/glebe-whats-on.jpg",
+      "status": "new",
+      "startDate": null,
+      "endDate": null,
+      "schedules": [
+        {
+          "dayOfWeek": 2,
+          "startMinute": 720,
+          "endMinute": 840
+        },
+        {
+          "dayOfWeek": 3,
+          "startMinute": 720,
+          "endMinute": 840
+        },
+        {
+          "dayOfWeek": 4,
+          "startMinute": 720,
+          "endMinute": 840
+        },
+        {
+          "dayOfWeek": 5,
+          "startMinute": 720,
+          "endMinute": 840
+        }
+      ]
+    },
+    {
+      "title": "$22 Steak Night",
+      "details": null,
+      "conditions": "Conditions Apply",
+      "creativeURL": "https://example.com/glebe-whats-on.jpg",
+      "sourceURL": "https://example.com/glebe-whats-on.jpg",
+      "status": "new",
+      "startDate": null,
+      "endDate": null,
+      "schedules": [
+        {
+          "dayOfWeek": 2,
+          "startMinute": 1020,
+          "endMinute": 1440
+        }
+      ]
+    },
+    {
+      "title": "2-4-1 Meal Deal",
+      "details": null,
+      "conditions": "Conditions Apply",
+      "creativeURL": "https://example.com/glebe-whats-on.jpg",
+      "sourceURL": "https://example.com/glebe-whats-on.jpg",
+      "status": "new",
+      "startDate": null,
+      "endDate": null,
+      "schedules": [
+        {
+          "dayOfWeek": 3,
+          "startMinute": 0,
+          "endMinute": 1440
+        }
+      ]
+    },
+    {
+      "title": "Trivia Night",
+      "details": "+\n+$20 Schnitzel",
+      "conditions": null,
+      "creativeURL": "https://example.com/glebe-whats-on.jpg",
+      "sourceURL": "https://example.com/glebe-whats-on.jpg",
+      "status": "new",
+      "startDate": null,
+      "endDate": null,
+      "schedules": [
+        {
+          "dayOfWeek": 4,
+          "startMinute": 1020,
+          "endMinute": 1440
+        }
+      ]
+    },
+    {
+      "title": "Pick The Joker",
+      "details": "$28 Curry & a can",
+      "conditions": null,
+      "creativeURL": "https://example.com/glebe-whats-on.jpg",
+      "sourceURL": "https://example.com/glebe-whats-on.jpg",
+      "status": "new",
+      "startDate": null,
+      "endDate": null,
+      "schedules": [
+        {
+          "dayOfWeek": 5,
+          "startMinute": 0,
+          "endMinute": 1440
+        }
+      ]
+    },
+    {
+      "title": "$18 Burgers",
+      "details": "Members meat tray & manicure draw at 6pm",
+      "conditions": null,
+      "creativeURL": "https://example.com/glebe-whats-on.jpg",
+      "sourceURL": "https://example.com/glebe-whats-on.jpg",
+      "status": "new",
+      "startDate": null,
+      "endDate": null,
+      "schedules": [
+        {
+          "dayOfWeek": 6,
+          "startMinute": 0,
+          "endMinute": 1440
+        }
+      ]
+    },
+    {
+      "title": "$13 Aperol Spritz & $15 Espresso Martinis",
+      "details": null,
+      "conditions": null,
+      "creativeURL": "https://example.com/glebe-whats-on.jpg",
+      "sourceURL": "https://example.com/glebe-whats-on.jpg",
+      "status": "new",
+      "startDate": null,
+      "endDate": null,
+      "schedules": [
+        {
+          "dayOfWeek": 6,
+          "startMinute": 0,
+          "endMinute": 1440
+        },
+        {
+          "dayOfWeek": 7,
+          "startMinute": 0,
+          "endMinute": 1440
+        },
+        {
+          "dayOfWeek": 1,
+          "startMinute": 0,
+          "endMinute": 1440
+        }
+      ]
+    },
+    {
+      "title": "Roast $35",
+      "details": "Add a dessert $7",
+      "conditions": null,
+      "creativeURL": "https://example.com/glebe-whats-on.jpg",
+      "sourceURL": "https://example.com/glebe-whats-on.jpg",
+      "status": "new",
+      "startDate": null,
+      "endDate": null,
+      "schedules": [
+        {
+          "dayOfWeek": 1,
+          "startMinute": 0,
+          "endMinute": 1440
+        }
+      ]
+    },
+    {
+      "title": "Pets Welcome",
+      "details": "Owners tolerated",
+      "conditions": null,
+      "creativeURL": "https://example.com/glebe-whats-on.jpg",
+      "sourceURL": "https://example.com/glebe-whats-on.jpg",
+      "status": "new",
+      "startDate": null,
+      "endDate": null,
+      "schedules": [
+        {
+          "dayOfWeek": 1,
+          "startMinute": 0,
+          "endMinute": 1440
+        },
+        {
+          "dayOfWeek": 2,
+          "startMinute": 0,
+          "endMinute": 1440
+        },
+        {
+          "dayOfWeek": 3,
+          "startMinute": 0,
+          "endMinute": 1440
+        },
+        {
+          "dayOfWeek": 4,
+          "startMinute": 0,
+          "endMinute": 1440
+        },
+        {
+          "dayOfWeek": 5,
+          "startMinute": 0,
+          "endMinute": 1440
+        },
+        {
+          "dayOfWeek": 6,
+          "startMinute": 0,
+          "endMinute": 1440
+        },
+        {
+          "dayOfWeek": 7,
+          "startMinute": 0,
+          "endMinute": 1440
+        }
+      ]
+    },
+    {
+      "title": "Members Happy Hour",
+      "details": "Beer & wine from $6",
+      "conditions": "See our bar staff for your FREE membership card",
+      "creativeURL": "https://example.com/glebe-whats-on.jpg",
+      "sourceURL": "https://example.com/glebe-whats-on.jpg",
+      "status": "new",
+      "startDate": null,
+      "endDate": null,
+      "schedules": [
+        {
+          "dayOfWeek": 2,
+          "startMinute": 960,
+          "endMinute": 1080
+        },
+        {
+          "dayOfWeek": 3,
+          "startMinute": 960,
+          "endMinute": 1080
+        },
+        {
+          "dayOfWeek": 4,
+          "startMinute": 960,
+          "endMinute": 1080
+        },
+        {
+          "dayOfWeek": 5,
+          "startMinute": 960,
+          "endMinute": 1080
+        },
+        {
+          "dayOfWeek": 6,
+          "startMinute": 960,
+          "endMinute": 1080
+        }
+      ]
+    }
+  ]
+}

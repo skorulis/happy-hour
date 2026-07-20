@@ -206,31 +206,9 @@ struct KeywordDealCondenserTests {
     }
 
     private func mountbattenMappedDeals() throws -> [DealWithSchedules] {
-        let happyHourMaterial = VenueDealSourceMaterial.fixture(
-            url: URL(string: "https://example.com/happy-hour.jpg")!,
-            sourceURL: URL(string: "https://example.com/happy-hour.jpg")!,
-            type: .image,
-            pngData: Data()
-        )
-        let cocktailsMaterial = VenueDealSourceMaterial.fixture(
-            index: 2,
-            dealSourceId: 2,
-            url: URL(string: "https://example.com/cocktails.jpg")!,
-            sourceURL: URL(string: "https://example.com/cocktails.jpg")!,
-            type: .image,
-            pngData: Data()
-        )
-
-        let happyHourPayload = try DealExtractionPayload.fixture(named: "mountbatten-happy-hour")
-        let cocktailsPayload = try DealExtractionPayload.fixture(named: "mountbatten-cocktails")
-
-        return VenueDealPersistenceMapper.map(
-            sourced: [
-                SourcedDealExtraction(material: happyHourMaterial, deals: happyHourPayload.deals),
-                SourcedDealExtraction(material: cocktailsMaterial, deals: cocktailsPayload.deals),
-            ],
-            venueId: 1
-        )
+        let happyHour = try ProcessedDealPayload.fixture(named: "mountbatten-happy-hour")
+        let cocktails = try ProcessedDealPayload.fixture(named: "mountbatten-cocktails")
+        return (happyHour.deals + cocktails.deals).map { $0.toDealWithSchedules(venueId: 1) }
     }
 
     private func makeDeal(

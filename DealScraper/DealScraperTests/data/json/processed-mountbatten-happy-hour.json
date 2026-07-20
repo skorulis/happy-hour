@@ -1,0 +1,51 @@
+{
+  "deals": [
+    {
+      "title": "Happy Hour",
+      "details": "Let's drink to that!",
+      "conditions": "Conditions apply.\nAvailable to LDA Rewards members only.\nSelected beers and wines only.\nThis promotion is at management's discretion and may not be available on public holidays or some special events.\nMountbatten Hotel practices the Responsible Service of Alcohol.\nPlease drink responsibly.",
+      "creativeURL": "https://example.com/mountbatten-happy-hour.jpg",
+      "sourceURL": "https://example.com/mountbatten-happy-hour.jpg",
+      "status": "new",
+      "startDate": null,
+      "endDate": null,
+      "schedules": [
+        {
+          "dayOfWeek": 1,
+          "startMinute": 1020,
+          "endMinute": 1200
+        },
+        {
+          "dayOfWeek": 2,
+          "startMinute": 1020,
+          "endMinute": 1200
+        },
+        {
+          "dayOfWeek": 3,
+          "startMinute": 1020,
+          "endMinute": 1200
+        },
+        {
+          "dayOfWeek": 4,
+          "startMinute": 1020,
+          "endMinute": 1200
+        },
+        {
+          "dayOfWeek": 5,
+          "startMinute": 1020,
+          "endMinute": 1200
+        },
+        {
+          "dayOfWeek": 6,
+          "startMinute": 1020,
+          "endMinute": 1200
+        },
+        {
+          "dayOfWeek": 7,
+          "startMinute": 1020,
+          "endMinute": 1200
+        }
+      ]
+    }
+  ]
+}

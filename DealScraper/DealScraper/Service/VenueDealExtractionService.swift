@@ -73,7 +73,7 @@ final class VenueDealExtractionService {
 
         try Task.checkCancellation()
 
-        let mapped = VenueDealPersistenceMapper.map(sourced: result.extractions, venueId: venueId)
+        let mapped = Self.toDealWithSchedules(result.extractions, venueId: venueId)
         let deals = dealCondenser.condense(mapped)
         let savedCount = try dealRepository.replaceAll(venueId: venueId, deals: deals)
         try venueRepository.updateLastExtractionDate(venueId: venueId, date: .now)
@@ -103,7 +103,7 @@ final class VenueDealExtractionService {
             progress: progress
         )
 
-        let mapped = VenueDealPersistenceMapper.map(sourced: result.extractions, venueId: 0)
+        let mapped = Self.toDealWithSchedules(result.extractions, venueId: 0)
         let deals = dealCondenser.condense(mapped)
         await progress.completed(results: deals)
         return deals
@@ -134,10 +134,19 @@ final class VenueDealExtractionService {
             progress: progress
         )
 
-        let mapped = VenueDealPersistenceMapper.map(sourced: result.extractions, venueId: 0)
+        let mapped = Self.toDealWithSchedules(result.extractions, venueId: 0)
         let deals = dealCondenser.condense(mapped)
         await progress.completed(results: deals)
         return deals
+    }
+
+    private static func toDealWithSchedules(
+        _ extractions: [SourcedDealExtraction],
+        venueId: Int64
+    ) -> [DealWithSchedules] {
+        extractions.flatMap { extraction in
+            extraction.deals.map { $0.toDealWithSchedules(venueId: venueId) }
+        }
     }
 
     private func extractPayload<Result>(

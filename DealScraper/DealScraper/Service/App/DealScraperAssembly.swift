@@ -56,14 +56,14 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
         container.register(DealTextFilter.self) { _ in DealTextFilter() }
         container.register(DealAdvancedTextFilter.self) { _ in DealAdvancedTextFilter() }
         container.register(OpenRouterClient.self) { _ in OpenRouterClient() }
-        container.register(ExtractDealsAPIClient.self) { _ in ExtractDealsAPIClient() }
+        container.register(ExtractProcessDealsAPIClient.self) { _ in ExtractProcessDealsAPIClient() }
         container.register(GooglePlacesClient.self) { _ in GooglePlacesClient() }
         container.register(WebMarkdownGenerator.self) { _ in WebMarkdownGenerator() }
             .inObjectScope(.container)
 
         container.register(OpenRouterVenueDealExtractor.self) { resolver in
             OpenRouterVenueDealExtractor(
-                client: resolver.extractDealsAPIClient(),
+                client: resolver.extractProcessDealsAPIClient(),
                 backendURLStore: resolver.backendURLStore(),
                 apiKeyStore: resolver.apiKeyStore(),
                 llmModelStore: resolver.llmModelStore()

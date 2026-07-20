@@ -3,7 +3,7 @@
 import ASKCore
 import Foundation
 
-enum ExtractDealsAPI {
+enum ExtractProcessDealsAPI {
 
     enum Error: Swift.Error, LocalizedError, Sendable {
         case invalidBackendURL(String)
@@ -17,18 +17,18 @@ enum ExtractDealsAPI {
             case let .apiError(_, message):
                 return message
             case .decodingFailure:
-                return "Failed to decode extract-deals response."
+                return "Failed to decode extract-process-deals response."
             }
         }
     }
 
-    nonisolated static func extractDealsRequest(
+    nonisolated static func extractProcessDealsRequest(
         baseURL: String,
         venueName: String,
         model: String,
         openRouterAPIKey: String,
         material: VenueDealSourceMaterial
-    ) throws -> BackendExtractDealsRequest {
+    ) throws -> BackendExtractProcessDealsRequest {
         let trimmedBase = baseURL.trimmingCharacters(in: .whitespacesAndNewlines)
         guard let root = URL(string: trimmedBase), root.scheme != nil, root.host != nil else {
             throw Error.invalidBackendURL(baseURL)
@@ -36,7 +36,7 @@ enum ExtractDealsAPI {
 
         let endpoint = root
             .appendingPathComponent("api")
-            .appendingPathComponent("extract-deals")
+            .appendingPathComponent("extract-process-deals")
             .absoluteString
 
         var source: [String: Any] = [
@@ -71,7 +71,7 @@ enum ExtractDealsAPI {
             "source": source,
         ]
 
-        return BackendExtractDealsRequest(
+        return BackendExtractProcessDealsRequest(
             endpoint: endpoint,
             body: try JSONSerialization.data(withJSONObject: bodyObject),
             headers: [
@@ -83,8 +83,8 @@ enum ExtractDealsAPI {
     }
 }
 
-struct BackendExtractDealsRequest: HTTPRequest {
-    typealias ResponseType = DealExtractionPayload
+struct BackendExtractProcessDealsRequest: HTTPRequest {
+    typealias ResponseType = ProcessedDealPayload
 
     let endpoint: String
     let method = "POST"
@@ -92,23 +92,23 @@ struct BackendExtractDealsRequest: HTTPRequest {
     let headers: [String: String]
     let params: [String: String] = [:]
 
-    func decode(data: Data, response: URLResponse) throws -> DealExtractionPayload {
+    func decode(data: Data, response: URLResponse) throws -> ProcessedDealPayload {
         let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 0
         if !(200..<300).contains(statusCode) {
             if let errorBody = try? JSONDecoder().decode(APIErrorBody.self, from: data),
                !errorBody.error.isEmpty {
-                throw ExtractDealsAPI.Error.apiError(statusCode: statusCode, message: errorBody.error)
+                throw ExtractProcessDealsAPI.Error.apiError(statusCode: statusCode, message: errorBody.error)
             }
-            throw ExtractDealsAPI.Error.apiError(
+            throw ExtractProcessDealsAPI.Error.apiError(
                 statusCode: statusCode,
-                message: "extract-deals failed (\(statusCode))"
+                message: "extract-process-deals failed (\(statusCode))"
             )
         }
 
         do {
-            return try JSONDecoder().decode(DealExtractionPayload.self, from: data)
+            return try JSONDecoder().decode(ProcessedDealPayload.self, from: data)
         } catch {
-            throw ExtractDealsAPI.Error.decodingFailure
+            throw ExtractProcessDealsAPI.Error.decodingFailure
         }
     }
 }

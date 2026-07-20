@@ -4,7 +4,7 @@ import ASKCore
 import Foundation
 
 @MainActor
-final class ExtractDealsAPIClient {
+final class ExtractProcessDealsAPIClient {
 
     private let urlSession: URLSessionProtocol
 
@@ -19,14 +19,14 @@ final class ExtractDealsAPIClient {
         }
     }
 
-    func extractDeals(
+    func extractProcessDeals(
         baseURL: String,
         venueName: String,
         model: String,
         openRouterAPIKey: String,
         material: VenueDealSourceMaterial
-    ) async throws -> DealExtractionPayload {
-        let request = try ExtractDealsAPI.extractDealsRequest(
+    ) async throws -> ProcessedDealPayload {
+        let request = try ExtractProcessDealsAPI.extractProcessDealsRequest(
             baseURL: baseURL,
             venueName: venueName,
             model: model,
@@ -35,7 +35,7 @@ final class ExtractDealsAPIClient {
         )
 
         guard let url = URL(string: request.endpoint) else {
-            throw ExtractDealsAPI.Error.invalidBackendURL(request.endpoint)
+            throw ExtractProcessDealsAPI.Error.invalidBackendURL(request.endpoint)
         }
 
         var urlRequest = URLRequest(url: url)

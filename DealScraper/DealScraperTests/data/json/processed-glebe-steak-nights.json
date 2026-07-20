@@ -1,0 +1,21 @@
+{
+  "deals": [
+    {
+      "title": "$22 Steak Night",
+      "details": "Raise\nThe\nSteaks",
+      "conditions": "only available with bar service in our public bar, beer garden and nude",
+      "creativeURL": "https://example.com/glebe-steak-nights.jpg",
+      "sourceURL": "https://example.com/glebe-steak-nights.jpg",
+      "status": "new",
+      "startDate": null,
+      "endDate": null,
+      "schedules": [
+        {
+          "dayOfWeek": 2,
+          "startMinute": 1020,
+          "endMinute": 1440
+        }
+      ]
+    }
+  ]
+}

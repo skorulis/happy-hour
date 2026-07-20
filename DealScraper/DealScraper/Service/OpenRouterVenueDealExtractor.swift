@@ -4,13 +4,13 @@ import Foundation
 
 final class OpenRouterVenueDealExtractor: VenueDealExtractor, @unchecked Sendable {
 
-    private let client: ExtractDealsAPIClient
+    private let client: ExtractProcessDealsAPIClient
     private let backendURLStore: BackendURLStore
     private let apiKeyStore: APIKeyStore
     private let llmModelStore: LLMModelStore
 
     nonisolated init(
-        client: ExtractDealsAPIClient,
+        client: ExtractProcessDealsAPIClient,
         backendURLStore: BackendURLStore,
         apiKeyStore: APIKeyStore,
         llmModelStore: LLMModelStore
@@ -55,14 +55,13 @@ final class OpenRouterVenueDealExtractor: VenueDealExtractor, @unchecked Sendabl
                     throw VisionVenueDealExtractorError.missingSourceText(.pdf)
                 }
 
-                let payload = try await client.extractDeals(
+                let payload = try await client.extractProcessDeals(
                     baseURL: baseURL,
                     venueName: venueName,
                     model: model,
                     openRouterAPIKey: apiKey,
                     material: material
                 )
-                Self.logPromotionDates(from: payload)
                 extractions.append(SourcedDealExtraction(material: material, deals: payload.deals))
             } catch {
                 errors.append(
@@ -79,13 +78,5 @@ final class OpenRouterVenueDealExtractor: VenueDealExtractor, @unchecked Sendabl
             errors: errors,
             duration: Date().timeIntervalSince(startTime)
         )
-    }
-
-    private nonisolated static func logPromotionDates(from payload: DealExtractionPayload) {
-        for deal in payload.deals {
-            if let dates = deal.promotionDates, !dates.isEmpty {
-                print("EXTRACT: promotionDates for '\(deal.title)': \(dates)")
-            }
-        }
     }
 }

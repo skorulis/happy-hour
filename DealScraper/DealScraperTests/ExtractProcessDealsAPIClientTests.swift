@@ -6,12 +6,12 @@ import Testing
 @testable import DealScraper
 
 @MainActor
-struct ExtractDealsAPIClientTests {
+struct ExtractProcessDealsAPIClientTests {
 
     @Test func postsPreparedImageSourceToBackend() async throws {
         let captured = RequestCapture()
 
-        let client = ExtractDealsAPIClient(
+        let client = ExtractProcessDealsAPIClient(
             urlSession: FakeURLSession { request in
                 captured.request = request
 
@@ -19,12 +19,21 @@ struct ExtractDealsAPIClientTests {
                 {
                   "deals": [
                     {
-                      "title": "HAPPY HOUR",
-                      "details": ["$8 WINES"],
-                      "conditions": [],
-                      "days": ["FRIDAY"],
-                      "times": ["4PM - 6PM"],
-                      "promotionDates": null
+                      "title": "Happy Hour",
+                      "details": "$8 wines",
+                      "conditions": null,
+                      "creativeURL": "https://example.com/poster.png",
+                      "sourceURL": "https://example.com/",
+                      "status": "new",
+                      "startDate": null,
+                      "endDate": null,
+                      "schedules": [
+                        {
+                          "dayOfWeek": 6,
+                          "startMinute": 960,
+                          "endMinute": 1080
+                        }
+                      ]
                     }
                   ]
                 }
@@ -49,7 +58,7 @@ struct ExtractDealsAPIClientTests {
             markdown: nil
         )
 
-        let payload = try await client.extractDeals(
+        let payload = try await client.extractProcessDeals(
             baseURL: "http://localhost:3000",
             venueName: "The Local",
             model: "google/gemini-2.5-pro",
@@ -58,7 +67,7 @@ struct ExtractDealsAPIClientTests {
         )
 
         let request = try #require(captured.request)
-        #expect(request.url?.absoluteString == "http://localhost:3000/api/extract-deals")
+        #expect(request.url?.absoluteString == "http://localhost:3000/api/extract-process-deals")
         #expect(request.httpMethod == "POST")
         #expect(request.value(forHTTPHeaderField: "Content-Type") == "application/json")
         #expect(request.value(forHTTPHeaderField: "Authorization") == "Bearer sk-or-v1-test")
@@ -74,11 +83,13 @@ struct ExtractDealsAPIClientTests {
         #expect(source["mimeType"] as? String == "image/png")
 
         #expect(payload.deals.count == 1)
-        #expect(payload.deals.first?.title == "HAPPY HOUR")
+        #expect(payload.deals.first?.title == "Happy Hour")
+        #expect(payload.deals.first?.schedules.count == 1)
+        #expect(payload.deals.first?.schedules.first?.dayOfWeek == 6)
     }
 
     @Test func surfacesBackendErrorMessage() async throws {
-        let client = ExtractDealsAPIClient(
+        let client = ExtractProcessDealsAPIClient(
             urlSession: FakeURLSession { request in
                 let responseData = """
                 {"error":"Image exceeds maximum size"}
@@ -103,7 +114,7 @@ struct ExtractDealsAPIClientTests {
         )
 
         do {
-            _ = try await client.extractDeals(
+            _ = try await client.extractProcessDeals(
                 baseURL: "http://localhost:3000",
                 venueName: "The Local",
                 model: "google/gemini-2.5-pro",
@@ -111,7 +122,7 @@ struct ExtractDealsAPIClientTests {
                 material: material
             )
             Issue.record("Expected request to fail")
-        } catch let error as ExtractDealsAPI.Error {
+        } catch let error as ExtractProcessDealsAPI.Error {
             guard case let .apiError(statusCode, message) = error else {
                 Issue.record("Expected apiError")
                 return

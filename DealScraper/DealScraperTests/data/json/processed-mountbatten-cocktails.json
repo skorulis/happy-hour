@@ -1,0 +1,51 @@
+{
+  "deals": [
+    {
+      "title": "$14 Cocktails",
+      "details": "A taste of perfection",
+      "conditions": "Conditions apply.\nAvailable to JDA Rewards members only.\nThis promotion is at management's discretion and may not be available on public holidays or some special events.\nPlease drink responsibly.",
+      "creativeURL": "https://example.com/mountbatten-cocktails.jpg",
+      "sourceURL": "https://example.com/mountbatten-cocktails.jpg",
+      "status": "new",
+      "startDate": null,
+      "endDate": null,
+      "schedules": [
+        {
+          "dayOfWeek": 1,
+          "startMinute": 1020,
+          "endMinute": 1200
+        },
+        {
+          "dayOfWeek": 2,
+          "startMinute": 1020,
+          "endMinute": 1200
+        },
+        {
+          "dayOfWeek": 3,
+          "startMinute": 1020,
+          "endMinute": 1200
+        },
+        {
+          "dayOfWeek": 4,
+          "startMinute": 1020,
+          "endMinute": 1200
+        },
+        {
+          "dayOfWeek": 5,
+          "startMinute": 1020,
+          "endMinute": 1200
+        },
+        {
+          "dayOfWeek": 6,
+          "startMinute": 1020,
+          "endMinute": 1200
+        },
+        {
+          "dayOfWeek": 7,
+          "startMinute": 1020,
+          "endMinute": 1200
+        }
+      ]
+    }
+  ]
+}

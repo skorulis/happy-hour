@@ -225,7 +225,7 @@ struct DealCondenserTests {
         #expect(steakNight.deal.creativeURL == "https://example.com/steak-nights.jpg")
         #expect(steakNight.schedules.count == 1)
         #expect(steakNight.schedules[0].dayOfWeek == 2)
-        #expect(steakNight.schedules[0].startMinute == 0)
+        #expect(steakNight.schedules[0].startMinute == 17 * 60)
         #expect(steakNight.schedules[0].endMinute == 1_440)
 
         let expectedTitles: Set<String> = [
@@ -249,12 +249,23 @@ struct DealCondenserTests {
         material: VenueDealSourceMaterial,
         venueId: Int64 = 42
     ) throws -> [DealWithSchedules] {
-        let payload = try DealExtractionPayload.fixture(named: name)
-        return VenueDealPersistenceMapper.map(
-            payload: payload,
-            venueId: venueId,
-            material: material
-        )
+        let payload = try ProcessedDealPayload.fixture(named: name)
+        return payload.deals.map { deal in
+            var processed = deal
+            // Preserve material URLs from the test fixture setup.
+            processed = ProcessedDeal(
+                title: deal.title,
+                details: deal.details,
+                conditions: deal.conditions,
+                creativeURL: material.type == .webpage ? nil : material.url.absoluteString,
+                sourceURL: material.sourceURL.absoluteString,
+                status: deal.status,
+                startDate: deal.startDate,
+                endDate: deal.endDate,
+                schedules: deal.schedules
+            )
+            return processed.toDealWithSchedules(venueId: venueId)
+        }
     }
 
     private func makeDeal(
@@ -495,12 +506,23 @@ struct DealCondenserShouldMergeTests {
         material: VenueDealSourceMaterial,
         venueId: Int64 = 42
     ) throws -> [DealWithSchedules] {
-        let payload = try DealExtractionPayload.fixture(named: name)
-        return VenueDealPersistenceMapper.map(
-            payload: payload,
-            venueId: venueId,
-            material: material
-        )
+        let payload = try ProcessedDealPayload.fixture(named: name)
+        return payload.deals.map { deal in
+            var processed = deal
+            // Preserve material URLs from the test fixture setup.
+            processed = ProcessedDeal(
+                title: deal.title,
+                details: deal.details,
+                conditions: deal.conditions,
+                creativeURL: material.type == .webpage ? nil : material.url.absoluteString,
+                sourceURL: material.sourceURL.absoluteString,
+                status: deal.status,
+                startDate: deal.startDate,
+                endDate: deal.endDate,
+                schedules: deal.schedules
+            )
+            return processed.toDealWithSchedules(venueId: venueId)
+        }
     }
 
     private func makeDeal(
