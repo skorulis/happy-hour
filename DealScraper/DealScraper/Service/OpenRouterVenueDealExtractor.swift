@@ -6,15 +6,18 @@ final class OpenRouterVenueDealExtractor: VenueDealExtractor, @unchecked Sendabl
 
     private let client: ExtractDealsAPIClient
     private let backendURLStore: BackendURLStore
+    private let apiKeyStore: APIKeyStore
     private let llmModelStore: LLMModelStore
 
     nonisolated init(
         client: ExtractDealsAPIClient,
         backendURLStore: BackendURLStore,
+        apiKeyStore: APIKeyStore,
         llmModelStore: LLMModelStore
     ) {
         self.client = client
         self.backendURLStore = backendURLStore
+        self.apiKeyStore = apiKeyStore
         self.llmModelStore = llmModelStore
     }
 
@@ -25,7 +28,15 @@ final class OpenRouterVenueDealExtractor: VenueDealExtractor, @unchecked Sendabl
     ) async -> VenueDealExtractionResult {
         let startTime = Date()
         let baseURL = await backendURLStore.backendURL
+        let apiKey = await apiKeyStore.openRouterAPIKey
         let model = await llmModelStore.openRouterModel
+
+        guard !apiKey.isEmpty else {
+            return VisionVenueDealExtractorSupport.missingAPIKeyResult(
+                materials: materials,
+                startTime: startTime
+            )
+        }
 
         var extractions: [SourcedDealExtraction] = []
         var errors: [VenueDealSourceExtractionError] = []
@@ -48,6 +59,7 @@ final class OpenRouterVenueDealExtractor: VenueDealExtractor, @unchecked Sendabl
                     baseURL: baseURL,
                     venueName: venueName,
                     model: model,
+                    openRouterAPIKey: apiKey,
                     material: material
                 )
                 Self.logPromotionDates(from: payload)

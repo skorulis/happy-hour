@@ -65,6 +65,7 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
             OpenRouterVenueDealExtractor(
                 client: resolver.extractDealsAPIClient(),
                 backendURLStore: resolver.backendURLStore(),
+                apiKeyStore: resolver.apiKeyStore(),
                 llmModelStore: resolver.llmModelStore()
             )
         }

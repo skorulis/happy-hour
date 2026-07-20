@@ -23,12 +23,14 @@ final class ExtractDealsAPIClient {
         baseURL: String,
         venueName: String,
         model: String,
+        openRouterAPIKey: String,
         material: VenueDealSourceMaterial
     ) async throws -> DealExtractionPayload {
         let request = try ExtractDealsAPI.extractDealsRequest(
             baseURL: baseURL,
             venueName: venueName,
             model: model,
+            openRouterAPIKey: openRouterAPIKey,
             material: material
         )
 

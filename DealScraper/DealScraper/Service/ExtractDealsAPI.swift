@@ -26,6 +26,7 @@ enum ExtractDealsAPI {
         baseURL: String,
         venueName: String,
         model: String,
+        openRouterAPIKey: String,
         material: VenueDealSourceMaterial
     ) throws -> BackendExtractDealsRequest {
         let trimmedBase = baseURL.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -76,6 +77,7 @@ enum ExtractDealsAPI {
             headers: [
                 "Content-Type": "application/json",
                 "Accept": "application/json",
+                "Authorization": "Bearer \(openRouterAPIKey)",
             ]
         )
     }

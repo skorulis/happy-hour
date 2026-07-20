@@ -1,3 +1,4 @@
+import { resolveExtractDealsOpenRouterKey } from "@/lib/extract/auth";
 import { buildInstructions } from "@/lib/extract/instructions";
 import {
   DEFAULT_OPENROUTER_MODEL,
@@ -24,26 +25,11 @@ export async function POST(request: Request) {
     }
   }
 
-  const apiKey = process.env.OPENROUTER_API_KEY?.trim();
-  if (!apiKey) {
-    console.error("OPENROUTER_API_KEY is not configured");
+  const credentials = await resolveExtractDealsOpenRouterKey(request);
+  if (!credentials.ok) {
     return NextResponse.json(
-      { error: "Deal extraction is not configured" },
-      { status: 503 },
-    );
-  }
-
-  // OpenRouter keys are sk-or-…; OpenAI sk-/sk-proj- keys produce opaque 401s.
-  if (!apiKey.startsWith("sk-or-")) {
-    console.error(
-      "OPENROUTER_API_KEY does not look like an OpenRouter key (expected sk-or-…)",
-    );
-    return NextResponse.json(
-      {
-        error:
-          "OPENROUTER_API_KEY must be an OpenRouter key (sk-or-…), not an OpenAI key",
-      },
-      { status: 503 },
+      { error: credentials.error },
+      { status: credentials.status },
     );
   }
 
@@ -63,7 +49,7 @@ export async function POST(request: Request) {
       instructions,
       body.source,
     );
-    const result = await callOpenRouter(apiKey, openRouterBody);
+    const result = await callOpenRouter(credentials.apiKey, openRouterBody);
     return NextResponse.json(result);
   } catch (error) {
     if (error instanceof ValidationError) {

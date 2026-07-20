@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
 
@@ -41,6 +42,7 @@ export function NewDealPageContent({ venueName }: NewDealPageContentProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [needsSignIn, setNeedsSignIn] = useState(false);
   const [deals, setDeals] = useState<ExtractedDeal[]>([]);
 
   useEffect(() => {
@@ -62,6 +64,7 @@ export function NewDealPageContent({ venueName }: NewDealPageContentProps) {
     if (nextFile) {
       setFile(nextFile);
       setError(null);
+      setNeedsSignIn(false);
       setDeals([]);
     }
   }, []);
@@ -81,6 +84,7 @@ export function NewDealPageContent({ venueName }: NewDealPageContentProps) {
 
     setIsProcessing(true);
     setError(null);
+    setNeedsSignIn(false);
     setDeals([]);
 
     try {
@@ -103,6 +107,12 @@ export function NewDealPageContent({ venueName }: NewDealPageContentProps) {
         deals?: ExtractedDeal[];
         error?: string;
       };
+
+      if (response.status === 401) {
+        setNeedsSignIn(true);
+        setError("Sign in to process images");
+        return;
+      }
 
       if (!response.ok) {
         throw new Error(payload.error ?? "Failed to extract deals");
@@ -160,7 +170,16 @@ export function NewDealPageContent({ venueName }: NewDealPageContentProps) {
 
       {error ? (
         <p className="text-sm text-danger" role="alert">
-          {error}
+          {needsSignIn ? (
+            <>
+              Sign in to process images.{" "}
+              <Link href="/login" className="underline hover:text-foreground">
+                Sign in
+              </Link>
+            </>
+          ) : (
+            error
+          )}
         </p>
       ) : null}
 

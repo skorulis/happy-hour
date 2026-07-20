@@ -53,6 +53,7 @@ struct ExtractDealsAPIClientTests {
             baseURL: "http://localhost:3000",
             venueName: "The Local",
             model: "google/gemini-2.5-pro",
+            openRouterAPIKey: "sk-or-v1-test",
             material: material
         )
 
@@ -60,6 +61,7 @@ struct ExtractDealsAPIClientTests {
         #expect(request.url?.absoluteString == "http://localhost:3000/api/extract-deals")
         #expect(request.httpMethod == "POST")
         #expect(request.value(forHTTPHeaderField: "Content-Type") == "application/json")
+        #expect(request.value(forHTTPHeaderField: "Authorization") == "Bearer sk-or-v1-test")
 
         let body = try #require(request.httpBody)
         let json = try #require(JSONSerialization.jsonObject(with: body) as? [String: Any])
@@ -105,6 +107,7 @@ struct ExtractDealsAPIClientTests {
                 baseURL: "http://localhost:3000",
                 venueName: "The Local",
                 model: "google/gemini-2.5-pro",
+                openRouterAPIKey: "sk-or-v1-test",
                 material: material
             )
             Issue.record("Expected request to fail")
