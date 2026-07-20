@@ -315,6 +315,25 @@ export async function listPopularSuburbs(
   return limit === undefined ? query : query.limit(limit);
 }
 
+/** Every suburb, including those with no deals (dealCount may be 0). */
+export async function listAllSuburbs(): Promise<PopularSuburb[]> {
+  const dealCount = count(deal.id);
+
+  return db
+    .select({
+      id: suburb.id,
+      name: suburb.name,
+      postcode: suburb.postcode,
+      heroImage: suburb.heroImage,
+      dealCount,
+    })
+    .from(suburb)
+    .leftJoin(venue, eq(venue.suburbId, suburb.id))
+    .leftJoin(deal, eq(deal.venueId, venue.id))
+    .groupBy(suburb.id, suburb.name, suburb.postcode, suburb.heroImage)
+    .orderBy(desc(dealCount), suburb.name);
+}
+
 export async function findSuburbByWhereSlug(
   whereSlug: string,
 ): Promise<SuburbSearchResult | null> {
