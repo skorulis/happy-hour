@@ -3,24 +3,23 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
+import type { ProcessedDeal } from "@/lib/extract/types";
 
 const buttonClassName =
   "w-full rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-fg transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60";
 
-type ExtractedDeal = {
-  title: string;
-  details: string[];
-  conditions: string[];
-  days: string[];
-  times: string[];
-  promotionDates: string[] | null;
-};
+const MAX_PIXELS = 12_000_000;
 
 type NewDealPageContentProps = {
   venueName: string;
 };
 
-function fileToBase64(file: File): Promise<string> {
+type ScaledImagePayload = {
+  base64: string;
+  mimeType: string;
+};
+
+function blobToBase64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
@@ -33,7 +32,68 @@ function fileToBase64(file: File): Promise<string> {
       resolve(commaIndex >= 0 ? result.slice(commaIndex + 1) : result);
     };
     reader.onerror = () => reject(reader.error ?? new Error("Failed to read image"));
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(blob);
+  });
+}
+
+function scaleImageForUpload(file: File): Promise<ScaledImagePayload> {
+  return new Promise((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file);
+    const image = new Image();
+
+    image.onload = () => {
+      try {
+        let { width, height } = image;
+        const pixelCount = width * height;
+
+        if (pixelCount >= MAX_PIXELS) {
+          const scale = Math.sqrt((MAX_PIXELS - 1) / pixelCount);
+          width = Math.max(1, Math.floor(width * scale));
+          height = Math.max(1, Math.floor(height * scale));
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          URL.revokeObjectURL(objectUrl);
+          reject(new Error("Failed to prepare image"));
+          return;
+        }
+
+        ctx.drawImage(image, 0, 0, width, height);
+
+        canvas.toBlob(
+          async (blob) => {
+            URL.revokeObjectURL(objectUrl);
+            if (!blob) {
+              reject(new Error("Failed to prepare image"));
+              return;
+            }
+            try {
+              const base64 = await blobToBase64(blob);
+              resolve({ base64, mimeType: "image/jpeg" });
+            } catch (err) {
+              reject(err);
+            }
+          },
+          "image/jpeg",
+          0.85,
+        );
+      } catch (err) {
+        URL.revokeObjectURL(objectUrl);
+        reject(err);
+      }
+    };
+
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Failed to load image"));
+    };
+
+    image.src = objectUrl;
   });
 }
 
@@ -44,7 +104,7 @@ export function NewDealPageContent({ venueName }: NewDealPageContentProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [needsSignIn, setNeedsSignIn] = useState(false);
-  const [deals, setDeals] = useState<ExtractedDeal[]>([]);
+  const [deals, setDeals] = useState<ProcessedDeal[]>([]);
 
   useEffect(() => {
     return () => {
@@ -90,8 +150,8 @@ export function NewDealPageContent({ venueName }: NewDealPageContentProps) {
     setDeals([]);
 
     try {
-      const imageBase64 = await fileToBase64(file);
-      const response = await fetch("/api/extract-deals", {
+      const { base64: imageBase64, mimeType } = await scaleImageForUpload(file);
+      const response = await fetch("/api/extract-process-deals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -100,13 +160,13 @@ export function NewDealPageContent({ venueName }: NewDealPageContentProps) {
             type: "image",
             url: file.name || "uploaded-image",
             imageBase64,
-            mimeType: file.type || "image/png",
+            mimeType,
           },
         }),
       });
 
       const payload = (await response.json()) as {
-        deals?: ExtractedDeal[];
+        deals?: ProcessedDeal[];
         error?: string;
       };
 
@@ -190,13 +250,21 @@ export function NewDealPageContent({ venueName }: NewDealPageContentProps) {
           <h2 className="text-lg font-semibold text-foreground">
             Extracted deals
           </h2>
-          <ul className="flex flex-col gap-2">
+          <ul className="flex flex-col gap-4">
             {deals.map((deal, index) => (
               <li
-                key={`${deal.title}-${index}`}
-                className="text-sm text-foreground"
+                key={`${deal.title ?? "deal"}-${index}`}
+                className="flex flex-col gap-2 rounded-xl border border-border-subtle bg-surface/90 p-5"
               >
-                {deal.title}
+                <h3 className="font-semibold text-foreground">
+                  {deal.title || "Untitled deal"}
+                </h3>
+                {deal.details ? (
+                  <p className="text-sm text-secondary">{deal.details}</p>
+                ) : null}
+                {deal.conditions ? (
+                  <p className="text-sm text-muted">{deal.conditions}</p>
+                ) : null}
               </li>
             ))}
           </ul>
