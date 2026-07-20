@@ -18,6 +18,15 @@ struct SettingsView: View {
             }
 
             Section {
+                TextField("Backend URL", text: $viewModel.backendURL)
+                    .textFieldStyle(.roundedBorder)
+            } header: {
+                Text("Backend")
+            } footer: {
+                Text("Deal extraction calls this server (e.g. http://localhost:3000 or https://duskroute.com).")
+            }
+
+            Section {
                 apiKeyField(
                     title: "Google Places API Key",
                     text: $viewModel.googlePlacesAPIKey
@@ -33,7 +42,7 @@ struct SettingsView: View {
             } header: {
                 Text("API Keys")
             } footer: {
-                Text("Keys are stored securely in the keychain. A Markdowner API key enables higher rate limits on md.dhr.wtf.")
+                Text("Keys are stored securely in the keychain. OpenRouter is used for venue blurbs. A Markdowner API key enables higher rate limits on md.dhr.wtf.")
             }
 
             Section {
@@ -60,6 +69,7 @@ struct SettingsView: View {
         .formStyle(.grouped)
         .padding(24)
         .frame(minWidth: 480, minHeight: 420)
+        .onChange(of: viewModel.backendURL) { viewModel.save() }
         .onChange(of: viewModel.googlePlacesAPIKey) { viewModel.save() }
         .onChange(of: viewModel.openRouterAPIKey) { viewModel.save() }
         .onChange(of: viewModel.markdownerAPIKey) { viewModel.save() }

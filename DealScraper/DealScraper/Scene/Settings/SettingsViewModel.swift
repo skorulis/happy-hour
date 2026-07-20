@@ -14,6 +14,7 @@ final class SettingsViewModel: CoordinatorViewModel {
     var googlePlacesAPIKey: String = ""
     var openRouterAPIKey: String = ""
     var markdownerAPIKey: String = ""
+    var backendURL: String = ""
 
     var r2AccountId: String = ""
     var r2Bucket: String = ""
@@ -23,11 +24,17 @@ final class SettingsViewModel: CoordinatorViewModel {
 
     private let apiKeyStore: APIKeyStore
     private let r2ConfigStore: R2ConfigStore
+    private let backendURLStore: BackendURLStore
 
     @Resolvable<Resolver>
-    init(apiKeyStore: APIKeyStore, r2ConfigStore: R2ConfigStore) {
+    init(
+        apiKeyStore: APIKeyStore,
+        r2ConfigStore: R2ConfigStore,
+        backendURLStore: BackendURLStore
+    ) {
         self.apiKeyStore = apiKeyStore
         self.r2ConfigStore = r2ConfigStore
+        self.backendURLStore = backendURLStore
         load()
     }
 
@@ -35,6 +42,7 @@ final class SettingsViewModel: CoordinatorViewModel {
         googlePlacesAPIKey = apiKeyStore.googlePlacesAPIKey
         openRouterAPIKey = apiKeyStore.openRouterAPIKey
         markdownerAPIKey = apiKeyStore.markdownerAPIKey
+        backendURL = backendURLStore.backendURL
 
         r2AccountId = r2ConfigStore.accountId
         r2Bucket = r2ConfigStore.bucket
@@ -47,6 +55,7 @@ final class SettingsViewModel: CoordinatorViewModel {
         apiKeyStore.googlePlacesAPIKey = googlePlacesAPIKey
         apiKeyStore.openRouterAPIKey = openRouterAPIKey
         apiKeyStore.markdownerAPIKey = markdownerAPIKey
+        backendURLStore.backendURL = backendURL
 
         r2ConfigStore.accountId = r2AccountId
         r2ConfigStore.bucket = r2Bucket

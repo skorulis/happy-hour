@@ -56,14 +56,15 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
         container.register(DealTextFilter.self) { _ in DealTextFilter() }
         container.register(DealAdvancedTextFilter.self) { _ in DealAdvancedTextFilter() }
         container.register(OpenRouterClient.self) { _ in OpenRouterClient() }
+        container.register(ExtractDealsAPIClient.self) { _ in ExtractDealsAPIClient() }
         container.register(GooglePlacesClient.self) { _ in GooglePlacesClient() }
         container.register(WebMarkdownGenerator.self) { _ in WebMarkdownGenerator() }
             .inObjectScope(.container)
 
         container.register(OpenRouterVenueDealExtractor.self) { resolver in
             OpenRouterVenueDealExtractor(
-                client: resolver.openRouterClient(),
-                apiKeyStore: resolver.apiKeyStore(),
+                client: resolver.extractDealsAPIClient(),
+                backendURLStore: resolver.backendURLStore(),
                 llmModelStore: resolver.llmModelStore()
             )
         }
@@ -220,6 +221,11 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
 
         container.register(LLMModelStore.self) { resolver in
             LLMModelStore(keyValueStore: resolver.pKeyValueStore())
+        }
+        .inObjectScope(.container)
+
+        container.register(BackendURLStore.self) { resolver in
+            BackendURLStore(keyValueStore: resolver.pKeyValueStore())
         }
         .inObjectScope(.container)
     }
