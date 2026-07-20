@@ -25,10 +25,6 @@ export async function PATCH(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (!isAdmin(session.user.email)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
   const { id: idParam } = await context.params;
   const reportId = parseReportId(idParam);
 
@@ -53,6 +49,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       id: dealReport.id,
       dealId: dealReport.dealId,
       status: dealReport.status,
+      userId: dealReport.userId,
     })
     .from(dealReport)
     .where(eq(dealReport.id, reportId))
@@ -67,6 +64,15 @@ export async function PATCH(request: Request, context: RouteContext) {
       { error: "Report has already been resolved" },
       { status: 409 },
     );
+  }
+
+  const admin = isAdmin(session.user.email);
+  const isOwner = existing.userId === session.user.id;
+  const allowed =
+    admin || (isOwner && body.action === "reject");
+
+  if (!allowed) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   try {

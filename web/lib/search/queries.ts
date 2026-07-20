@@ -32,6 +32,7 @@ import {
   UNKNOWN_SUBURB_SLUG,
 } from "@/lib/search/slugs";
 import { deal, dealSchedule, suburb, venue, venueLinks } from "@/db/schema";
+import { getDealIdsWithOpenReports } from "@/lib/reports/queries";
 
 export type SuburbSearchResult = {
   id: number;
@@ -69,6 +70,8 @@ export type DealSearchResult = {
   sourceUrl: string | null;
   startDate: string | null;
   endDate: string | null;
+  /** True when the deal has an unresolved user report (venue pages). */
+  hasOpenReport?: boolean;
   venue: {
     id: number;
     name: string;
@@ -689,6 +692,9 @@ async function buildVenueDetail(
     .limit(1);
 
   const deals = await searchDeals({ venueId: venueRow.id, limit: 500 });
+  const openReportDealIds = await getDealIdsWithOpenReports(
+    deals.map((dealRow) => dealRow.id),
+  );
 
   return {
     id: venueRow.id,
@@ -707,7 +713,11 @@ async function buildVenueDetail(
           facebook: linksRow.facebook,
         }
       : null,
-    deals,
+    deals: deals.map((dealRow) =>
+      openReportDealIds.has(dealRow.id)
+        ? { ...dealRow, hasOpenReport: true }
+        : dealRow,
+    ),
   };
 }
 

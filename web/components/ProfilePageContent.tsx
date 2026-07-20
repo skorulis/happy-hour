@@ -40,14 +40,22 @@ export function ProfilePageContent({ name, email, isAdmin }: ProfilePageContentP
         </dl>
       </div>
 
-      {isAdmin ? (
+      <div className="flex flex-wrap gap-3">
         <Link
-          href="/admin"
+          href="/profile/reports"
           className="w-fit rounded-lg border border-border px-4 py-2 text-sm font-medium text-secondary transition-colors hover:bg-surface-muted"
         >
-          Admin
+          Reports
         </Link>
-      ) : null}
+        {isAdmin ? (
+          <Link
+            href="/admin"
+            className="w-fit rounded-lg border border-border px-4 py-2 text-sm font-medium text-secondary transition-colors hover:bg-surface-muted"
+          >
+            Admin
+          </Link>
+        ) : null}
+      </div>
 
       <button
         type="button"

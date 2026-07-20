@@ -158,6 +158,14 @@ export function DealCard({
           ) : null}
         </div>
       ) : null}
+      {deal.hasOpenReport ? (
+        <p
+          role="note"
+          className="mt-4 rounded-lg border border-danger/30 bg-danger-muted px-3 py-2 text-xs text-danger"
+        >
+          This deal has been flagged as inaccurate
+        </p>
+      ) : null}
     </article>
   );
 }
