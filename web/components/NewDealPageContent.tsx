@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
 
 const buttonClassName =
@@ -40,29 +40,31 @@ function fileToBase64(file: File): Promise<string> {
 export function NewDealPageContent({ venueName }: NewDealPageContentProps) {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const previewUrlRef = useRef<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [needsSignIn, setNeedsSignIn] = useState(false);
   const [deals, setDeals] = useState<ExtractedDeal[]>([]);
 
   useEffect(() => {
-    if (!file) {
-      setPreviewUrl(null);
-      return;
-    }
-
-    const objectUrl = URL.createObjectURL(file);
-    setPreviewUrl(objectUrl);
-
     return () => {
-      URL.revokeObjectURL(objectUrl);
+      if (previewUrlRef.current) {
+        URL.revokeObjectURL(previewUrlRef.current);
+        previewUrlRef.current = null;
+      }
     };
-  }, [file]);
+  }, []);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const nextFile = acceptedFiles[0];
     if (nextFile) {
+      if (previewUrlRef.current) {
+        URL.revokeObjectURL(previewUrlRef.current);
+      }
+      const objectUrl = URL.createObjectURL(nextFile);
+      previewUrlRef.current = objectUrl;
       setFile(nextFile);
+      setPreviewUrl(objectUrl);
       setError(null);
       setNeedsSignIn(false);
       setDeals([]);
