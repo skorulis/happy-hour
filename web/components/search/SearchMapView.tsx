@@ -392,6 +392,7 @@ function SearchMapCanvas({
   return (
     <Map
       mapId={mapId}
+      clickableIcons={false}
       colorScheme="DARK"
       defaultCenter={DEFAULT_CENTER}
       defaultZoom={DEFAULT_ZOOM}
