@@ -1,7 +1,9 @@
 import { WeeklyDealsSection } from "@/components/WeeklyDealsSection";
 import { googleMapsPlaceUrl } from "@/lib/search/google-maps";
 import type { VenueDetailResult } from "@/lib/search/queries";
-import { Building2, Link, MapPin } from "lucide-react";
+import { venuePath } from "@/lib/search/slugs";
+import { Building2, CirclePlus, Link, MapPin } from "lucide-react";
+import NextLink from "next/link";
 import type { ReactNode } from "react";
 import { SiFacebook, SiInstagram } from "react-icons/si";
 
@@ -126,6 +128,18 @@ export function VenuePageContent({
         initialSelectedDay={initialSelectedDay}
         showReportButton
       />
+
+      <NextLink
+        href={`${venuePath(venue.suburbName, venue.name)}/new-deal`}
+        className={linkClassName}
+      >
+        <CirclePlus
+          aria-hidden
+          className="h-4 w-4 shrink-0"
+          strokeWidth={1.5}
+        />
+        Add a missing deal
+      </NextLink>
     </div>
   );
 }
