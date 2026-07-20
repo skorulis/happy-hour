@@ -3,12 +3,21 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
+import { EditDealContent } from "@/components/EditDealContent";
 import type { ProcessedDeal } from "@/lib/extract/types";
 
 const buttonClassName =
   "w-full rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-fg transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60";
 
 const MAX_PIXELS = 12_000_000;
+
+const PROCESSING_MESSAGES = [
+  "Reading the deal from your image…",
+  "Looking for titles, prices, and times…",
+  "Sorting out the schedule…",
+  "Almost there — finishing up…",
+  "Still working — large images can take a minute…",
+] as const;
 
 type NewDealPageContentProps = {
   venueName: string;
@@ -102,6 +111,8 @@ export function NewDealPageContent({ venueName }: NewDealPageContentProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const previewUrlRef = useRef<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [hasProcessed, setHasProcessed] = useState(false);
+  const [processingMessageIndex, setProcessingMessageIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [needsSignIn, setNeedsSignIn] = useState(false);
   const [deals, setDeals] = useState<ProcessedDeal[]>([]);
@@ -115,6 +126,23 @@ export function NewDealPageContent({ venueName }: NewDealPageContentProps) {
     };
   }, []);
 
+  useEffect(() => {
+    if (!isProcessing) {
+      setProcessingMessageIndex(0);
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      setProcessingMessageIndex(
+        (index) => (index + 1) % PROCESSING_MESSAGES.length,
+      );
+    }, 3000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [isProcessing]);
+
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const nextFile = acceptedFiles[0];
     if (nextFile) {
@@ -127,6 +155,7 @@ export function NewDealPageContent({ venueName }: NewDealPageContentProps) {
       setPreviewUrl(objectUrl);
       setError(null);
       setNeedsSignIn(false);
+      setHasProcessed(false);
       setDeals([]);
     }
   }, []);
@@ -147,6 +176,7 @@ export function NewDealPageContent({ venueName }: NewDealPageContentProps) {
     setIsProcessing(true);
     setError(null);
     setNeedsSignIn(false);
+    setHasProcessed(false);
     setDeals([]);
 
     try {
@@ -181,6 +211,7 @@ export function NewDealPageContent({ venueName }: NewDealPageContentProps) {
       }
 
       setDeals(payload.deals ?? []);
+      setHasProcessed(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to extract deals");
     } finally {
@@ -217,17 +248,24 @@ export function NewDealPageContent({ venueName }: NewDealPageContentProps) {
         )}
       </div>
 
-      {file ? (
-        <button
-          type="button"
-          className={buttonClassName}
-          onClick={() => {
-            void processImage();
-          }}
-          disabled={isProcessing}
-        >
-          {isProcessing ? "Processing…" : "Process image"}
-        </button>
+      {file && !hasProcessed ? (
+        <div className="flex flex-col gap-2">
+          <button
+            type="button"
+            className={buttonClassName}
+            onClick={() => {
+              void processImage();
+            }}
+            disabled={isProcessing}
+          >
+            {isProcessing ? "Processing…" : "Process image"}
+          </button>
+          {isProcessing ? (
+            <p className="text-center text-sm text-secondary" aria-live="polite">
+              {PROCESSING_MESSAGES[processingMessageIndex]}
+            </p>
+          ) : null}
+        </div>
       ) : null}
 
       {error ? (
@@ -248,26 +286,21 @@ export function NewDealPageContent({ venueName }: NewDealPageContentProps) {
       {deals.length > 0 ? (
         <div className="flex flex-col gap-3">
           <h2 className="text-lg font-semibold text-foreground">
-            Extracted deals
+            Extracted {deals.length} {deals.length === 1 ? "deal" : "deals"}
           </h2>
-          <ul className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4">
             {deals.map((deal, index) => (
-              <li
-                key={`${deal.title ?? "deal"}-${index}`}
-                className="flex flex-col gap-2 rounded-xl border border-border-subtle bg-surface/90 p-5"
-              >
-                <h3 className="font-semibold text-foreground">
-                  {deal.title || "Untitled deal"}
-                </h3>
-                {deal.details ? (
-                  <p className="text-sm text-secondary">{deal.details}</p>
-                ) : null}
-                {deal.conditions ? (
-                  <p className="text-sm text-muted">{deal.conditions}</p>
-                ) : null}
-              </li>
+              <EditDealContent
+                key={index}
+                deal={deal}
+                onChange={(next) => {
+                  setDeals((prev) =>
+                    prev.map((current, i) => (i === index ? next : current)),
+                  );
+                }}
+              />
             ))}
-          </ul>
+          </div>
         </div>
       ) : null}
     </div>
