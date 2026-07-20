@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { List, LocateFixed } from "lucide-react";
 import type { PopularSuburb } from "@/lib/search/queries";
 import { NEARBY_WHERE_SLUG, suburbWherePath } from "@/lib/search/slugs";
 import { suburbHeroThumbUrl } from "@/lib/search/venue-hero-url";
@@ -18,7 +19,6 @@ type SuburbListItem =
       id: "nearby" | "all-suburbs";
       label: string;
       href: string;
-      thumbSrc: string;
     };
 
 function formatSuburbLabel(suburb: PopularSuburb): string {
@@ -48,7 +48,6 @@ function buildListItems(
       id: "nearby",
       label: "Nearby",
       href: nearbyHref,
-      thumbSrc: "/nearby-thumb.jpg",
     },
     ...items,
     {
@@ -56,7 +55,6 @@ function buildListItems(
       id: "all-suburbs",
       label: "All suburbs",
       href: "/all-suburbs",
-      thumbSrc: "/all-suburbs-thumb.jpg",
     },
   ];
 }
@@ -95,12 +93,21 @@ export function PopularSuburbs({
                   className="flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-surface-muted"
                 >
                   <span className="flex min-w-0 items-center gap-3">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={item.thumbSrc}
-                      alt=""
-                      className="h-14 w-14 shrink-0 rounded-lg object-cover"
-                    />
+                    <span className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-soft">
+                      {item.id === "nearby" ? (
+                        <LocateFixed
+                          aria-hidden
+                          className="h-5 w-5"
+                          strokeWidth={1.75}
+                        />
+                      ) : (
+                        <List
+                          aria-hidden
+                          className="h-5 w-5"
+                          strokeWidth={1.75}
+                        />
+                      )}
+                    </span>
                     <span className="font-medium text-foreground">
                       {item.label}
                     </span>
