@@ -158,6 +158,17 @@ export function AuthForm({
           {alternateLabel}
         </Link>
       </p>
+
+      <p className="text-center text-xs text-muted">
+        By continuing, you agree to our{" "}
+        <Link
+          href="/privacy"
+          className="font-medium text-accent-soft hover:text-foreground"
+        >
+          Privacy Policy
+        </Link>
+        .
+      </p>
     </div>
   );
 }

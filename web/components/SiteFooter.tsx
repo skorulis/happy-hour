@@ -16,6 +16,13 @@ export function SiteFooter() {
             About
           </Link>
           {" | "}
+          <Link
+            href="/privacy"
+            className="transition-colors hover:text-accent-soft"
+          >
+            Privacy
+          </Link>
+          {" | "}
           <a
             href="https://skorulis.com"
             className="transition-colors hover:text-accent-soft"

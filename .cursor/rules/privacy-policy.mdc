@@ -1,0 +1,28 @@
+---
+description: Keep the privacy policy in sync when user data handling changes
+alwaysApply: true
+---
+
+# Privacy policy sync
+
+When changing how DuskRoute handles user or visitor data, update the privacy policy in the **same change**.
+
+Source of truth: `web/app/privacy/page.tsx` (served at `/privacy`).
+
+## When this applies
+
+Update the privacy page if you change any of:
+
+- Authentication, sessions, cookies, or browser storage (`localStorage` / `sessionStorage`)
+- Analytics, Amplitude, Sentry, or other telemetry
+- Geolocation / “near me” location handling
+- Favorites, user-generated deals, image uploads, or deal reports
+- Email sending (verification or otherwise)
+- Third-party processors (Google OAuth/Maps, Resend, Cloudflare R2, OpenRouter, hosting, etc.)
+- Account deletion, export, retention, or consent UX
+
+## How to update
+
+- Keep the policy **factual** and aligned with shipped behavior (including stating that there is no in-product account deletion if that remains true).
+- Bump the **Last updated** date when material sections change.
+- Do not invent legal claims the product does not implement.
