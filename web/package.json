@@ -35,6 +35,7 @@
     "react-markdown": "^10.1.0",
     "rehype-sanitize": "^6.0.0",
     "remark-gfm": "^4.0.1",
+    "resend": "^6.17.2",
     "yet-another-react-lightbox": "^3.32.0"
   },
   "devDependencies": {

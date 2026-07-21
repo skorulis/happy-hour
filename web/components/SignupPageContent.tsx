@@ -8,13 +8,19 @@ import { useEffect } from "react";
 export function SignupPageContent() {
   const router = useRouter();
   const { data: session, isPending } = useSession();
-  const callbackUrl = "/profile";
+  const profileUrl = "/profile";
 
   useEffect(() => {
     if (!isPending && session) {
-      router.replace(callbackUrl);
+      if (session.user.emailVerified) {
+        router.replace(profileUrl);
+        return;
+      }
+      router.replace(
+        `/verify-email?email=${encodeURIComponent(session.user.email)}`,
+      );
     }
-  }, [callbackUrl, isPending, router, session]);
+  }, [isPending, router, session]);
 
   async function handleSubmit({
     email,
@@ -23,25 +29,26 @@ export function SignupPageContent() {
     email: string;
     password: string;
   }) {
+    const verifyUrl = `/verify-email?email=${encodeURIComponent(email)}`;
     const result = await signUp.email({
       name: email.split("@")[0] ?? email,
       email,
       password,
-      callbackURL: callbackUrl,
+      callbackURL: verifyUrl,
     });
 
     if (result.error) {
       throw new Error(result.error.message ?? "Could not create account.");
     }
 
-    router.push(callbackUrl);
+    router.push(verifyUrl);
     router.refresh();
   }
 
   async function handleGoogleSignIn() {
     const result = await signIn.social({
       provider: "google",
-      callbackURL: callbackUrl,
+      callbackURL: profileUrl,
     });
 
     if (result.error) {

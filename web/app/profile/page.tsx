@@ -23,6 +23,7 @@ export default async function ProfilePage() {
     <ProfilePageContent
       name={session.user.name}
       email={session.user.email}
+      emailVerified={session.user.emailVerified}
       isAdmin={isAdmin(session.user.email)}
     />
   );

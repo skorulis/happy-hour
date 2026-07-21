@@ -158,6 +158,17 @@ https://duskroute.com/api/auth/callback/google
 
 Set `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` in `/opt/happy-hour/deploy/.env.production`, then redeploy (new tag or re-run the workflow).
 
+### Email verification (Resend)
+
+Signup sends a verification email (link + 6-digit code) via [Resend](https://resend.com).
+
+1. Create a Resend account and API key; set `RESEND_API_KEY` (and optional `EMAIL_FROM`) in `/opt/happy-hour/deploy/.env.production`.
+2. Add domain `mail.duskroute.com` in Resend.
+3. In Cloudflare DNS for `duskroute.com`, add the SPF / DKIM / MX records Resend shows. Keep them **DNS only** (grey cloud), not proxied.
+4. Add a DMARC TXT at `_dmarc.mail.duskroute.com`, e.g. `v=DMARC1; p=none; rua=mailto:you@example.com`.
+
+Without `RESEND_API_KEY`, verification codes are logged to the web server console (useful for local development).
+
 ### Emergency on-server rebuild
 
 If CI/GHCR is unavailable, you can still build on the droplet with `web/scripts/deploy.sh` and `web/docker-compose.prod.yml` (slow on a small VPS). Prefer tag deploys for normal releases.
