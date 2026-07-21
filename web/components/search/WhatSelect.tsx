@@ -17,6 +17,7 @@ type WhatSelectPanelProps = {
   tokens: string[];
   onChange: (tokens: string[]) => void;
   onClose: () => void;
+  onInputBlur?: () => void;
   open: boolean;
 };
 
@@ -65,11 +66,13 @@ export function WhatSelectPanel({
   tokens,
   onChange,
   onClose,
+  onInputBlur,
   open,
 }: WhatSelectPanelProps) {
   const [input, setInput] = useState("");
   const [highlightIndex, setHighlightIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   const exclude = useMemo(() => tokenSet(tokens), [tokens]);
   const suggestions = useMemo(() => {
@@ -121,6 +124,24 @@ export function WhatSelectPanel({
     addToken(product.name);
   }
 
+  function keepFocusForPanelInteraction(
+    event: React.PointerEvent<HTMLButtonElement>,
+  ) {
+    event.preventDefault();
+  }
+
+  function handleInputBlur() {
+    if (!onInputBlur) {
+      return;
+    }
+
+    window.setTimeout(() => {
+      if (!panelRef.current?.contains(document.activeElement)) {
+        onInputBlur();
+      }
+    }, 0);
+  }
+
   function handleInputKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
     if (event.key === "ArrowDown") {
       event.preventDefault();
@@ -166,7 +187,10 @@ export function WhatSelectPanel({
   const listboxId = "what-select-listbox";
 
   return (
-    <div className="w-80 max-w-[calc(100vw-3rem)] rounded-xl border border-border bg-surface-elevated p-3 shadow-card">
+    <div
+      ref={panelRef}
+      className="w-80 max-w-[calc(100vw-3rem)] rounded-xl border border-border bg-surface-elevated p-3 shadow-card"
+    >
       <div className="flex min-h-[2.25rem] w-full flex-wrap items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5">
         {tokens.map((token, index) => (
           <span
@@ -177,6 +201,7 @@ export function WhatSelectPanel({
             <span className="truncate">{token}</span>
             <button
               type="button"
+              onPointerDown={keepFocusForPanelInteraction}
               onClick={() => removeToken(index)}
               className="rounded p-0.5 text-accent-soft hover:bg-accent-muted hover:text-foreground"
               aria-label={`Remove ${token}`}
@@ -203,6 +228,7 @@ export function WhatSelectPanel({
             setHighlightIndex(0);
           }}
           onKeyDown={handleInputKeyDown}
+          onBlur={handleInputBlur}
           placeholder={tokens.length === 0 ? "steak, happy hour, pizza..." : ""}
           className="min-w-[6ch] flex-1 border-0 bg-transparent text-sm font-medium text-foreground outline-none placeholder:text-muted"
         />
@@ -226,6 +252,7 @@ export function WhatSelectPanel({
               role="option"
               aria-selected={index === activeHighlightIndex}
               onMouseEnter={() => setHighlightIndex(index)}
+              onPointerDown={keepFocusForPanelInteraction}
               onClick={() => selectSuggestion(product)}
               className={`flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left text-sm ${
                 index === activeHighlightIndex

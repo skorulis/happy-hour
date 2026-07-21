@@ -13,6 +13,7 @@ type SuburbSelectPanelProps = {
   where: WhereFilter;
   onChange: (where: WhereFilter) => void;
   onClose: () => void;
+  onInputBlur?: () => void;
   open: boolean;
 };
 
@@ -34,12 +35,14 @@ export function SuburbSelectPanel({
   where,
   onChange,
   onClose,
+  onInputBlur,
   open,
 }: SuburbSelectPanelProps) {
   const [query, setQuery] = useState("");
   const [suburbs, setSuburbs] = useState<SuburbSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const selectedSuburbId = where.kind === "suburb" ? where.id : null;
 
   useEffect(() => {
@@ -102,18 +105,41 @@ export function SuburbSelectPanel({
     setQuery("");
   }
 
+  function keepFocusForPanelInteraction(
+    event: React.PointerEvent<HTMLButtonElement>,
+  ) {
+    event.preventDefault();
+  }
+
+  function handleInputBlur() {
+    if (!onInputBlur) {
+      return;
+    }
+
+    window.setTimeout(() => {
+      if (!panelRef.current?.contains(document.activeElement)) {
+        onInputBlur();
+      }
+    }, 0);
+  }
+
   return (
-    <div className="w-80 max-w-[calc(100vw-3rem)] rounded-xl border border-border bg-surface-elevated p-3 shadow-card">
+    <div
+      ref={panelRef}
+      className="w-80 max-w-[calc(100vw-3rem)] rounded-xl border border-border bg-surface-elevated p-3 shadow-card"
+    >
       <input
         ref={inputRef}
         type="search"
         value={query}
         onChange={(event) => setQuery(event.target.value)}
+        onBlur={handleInputBlur}
         placeholder="Search suburbs..."
         className="mb-2 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground outline-none ring-accent focus:ring-2"
       />
       <button
         type="button"
+        onPointerDown={keepFocusForPanelInteraction}
         onClick={handleNearMe}
         className={`mb-2 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm hover:bg-surface-muted ${
           where.kind === "nearMe"
@@ -134,6 +160,7 @@ export function SuburbSelectPanel({
             <button
               key={suburb.id}
               type="button"
+              onPointerDown={keepFocusForPanelInteraction}
               onClick={() => handleSelect(suburb)}
               className={`block w-full rounded-lg px-2 py-2 text-left text-sm hover:bg-surface-muted ${
                 suburb.id === selectedSuburbId

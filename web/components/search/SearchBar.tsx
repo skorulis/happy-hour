@@ -77,6 +77,7 @@ type SegmentButtonProps = {
   isActive: boolean;
   hasOpenSegment: boolean;
   onClick: () => void;
+  onPointerDown?: () => void;
   className?: string;
 };
 
@@ -87,11 +88,13 @@ function SegmentButton({
   isActive,
   hasOpenSegment,
   onClick,
+  onPointerDown,
   className = "",
 }: SegmentButtonProps) {
   return (
     <button
       type="button"
+      onPointerDown={onPointerDown}
       onClick={onClick}
       className={`flex min-w-0 flex-1 flex-col rounded-lg px-5 py-3 text-left transition-all md:rounded-full md:py-3.5 ${
         isActive
@@ -123,6 +126,7 @@ function ActivePanel({
   onDaysApply,
   onWhereChange,
   onWhatChange,
+  onInputBlur,
   onClose,
 }: {
   segment: ActiveSegment;
@@ -130,6 +134,7 @@ function ActivePanel({
   onDaysApply: (days: number[], timeRange: TimeRange) => void;
   onWhereChange: (where: WhereFilter) => void;
   onWhatChange: (what: string[]) => void;
+  onInputBlur?: () => void;
   onClose: () => void;
 }) {
   if (!segment) {
@@ -156,6 +161,7 @@ function ActivePanel({
         where={filters.where}
         onChange={onWhereChange}
         onClose={onClose}
+        onInputBlur={onInputBlur}
         open={open}
       />
     );
@@ -166,6 +172,7 @@ function ActivePanel({
       tokens={filters.what}
       onChange={onWhatChange}
       onClose={onClose}
+      onInputBlur={onInputBlur}
       open={open}
     />
   );
@@ -250,6 +257,10 @@ export function SearchBar({
 }: SearchBarProps) {
   const [activeSegment, setActiveSegment] = useState<ActiveSegment>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const ignoreInputBlurCloseRef = useRef(false);
+  const pendingInputBlurCloseRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   const visibleSegments = buildSegmentConfigs(filters).filter((segment) =>
     segments.includes(segment.id),
@@ -260,11 +271,55 @@ export function SearchBar({
   }
 
   function closePanel() {
+    if (pendingInputBlurCloseRef.current) {
+      clearTimeout(pendingInputBlurCloseRef.current);
+      pendingInputBlurCloseRef.current = null;
+    }
     setActiveSegment(null);
+  }
+
+  function handleSegmentPointerDown() {
+    ignoreInputBlurCloseRef.current = true;
+    if (pendingInputBlurCloseRef.current) {
+      clearTimeout(pendingInputBlurCloseRef.current);
+      pendingInputBlurCloseRef.current = null;
+    }
+  }
+
+  function handleSegmentClick(segment: SearchBarSegment) {
+    toggleSegment(segment);
+    window.setTimeout(() => {
+      ignoreInputBlurCloseRef.current = false;
+    }, 0);
+  }
+
+  function scheduleInputPanelClose() {
+    if (ignoreInputBlurCloseRef.current) {
+      return;
+    }
+
+    if (pendingInputBlurCloseRef.current) {
+      clearTimeout(pendingInputBlurCloseRef.current);
+    }
+
+    pendingInputBlurCloseRef.current = window.setTimeout(() => {
+      pendingInputBlurCloseRef.current = null;
+      if (!ignoreInputBlurCloseRef.current) {
+        setActiveSegment(null);
+      }
+    }, 150);
   }
 
   const openSegment =
     activeSegment && segments.includes(activeSegment) ? activeSegment : null;
+
+  useEffect(() => {
+    return () => {
+      if (pendingInputBlurCloseRef.current) {
+        clearTimeout(pendingInputBlurCloseRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!openSegment) {
@@ -325,7 +380,8 @@ export function SearchBar({
                 isPlaceholder={segment.isPlaceholder}
                 isActive={openSegment === segment.id}
                 hasOpenSegment={hasOpenSegment}
-                onClick={() => toggleSegment(segment.id)}
+                onClick={() => handleSegmentClick(segment.id)}
+                onPointerDown={handleSegmentPointerDown}
                 className={desktopSegmentClassName(
                   segment.id,
                   segments,
@@ -352,7 +408,8 @@ export function SearchBar({
                   isPlaceholder={segment.isPlaceholder}
                   isActive={openSegment === segment.id}
                   hasOpenSegment={hasOpenSegment}
-                  onClick={() => toggleSegment(segment.id)}
+                  onClick={() => handleSegmentClick(segment.id)}
+                  onPointerDown={handleSegmentPointerDown}
                   className="w-full px-6"
                 />
                 {openSegment === segment.id ? (
@@ -363,6 +420,7 @@ export function SearchBar({
                       onDaysApply={onDaysApply}
                       onWhereChange={handleWhereChange}
                       onWhatChange={onWhatChange}
+                      onInputBlur={scheduleInputPanelClose}
                       onClose={closePanel}
                     />
                   </div>
@@ -383,6 +441,7 @@ export function SearchBar({
               onDaysApply={onDaysApply}
               onWhereChange={handleWhereChange}
               onWhatChange={onWhatChange}
+              onInputBlur={scheduleInputPanelClose}
               onClose={closePanel}
             />
           </div>
