@@ -13,6 +13,13 @@ import {
   useApiLoadingStatus,
   useMap,
 } from "@vis.gl/react-google-maps";
+import {
+  MarkerClusterer,
+  MarkerClustererEvents,
+  MarkerUtils,
+  type Marker,
+  type Renderer,
+} from "@googlemaps/markerclusterer";
 import type { VenueGroupedDeals } from "@/components/VenueSearchCard";
 import { VenueMapPopup } from "@/components/search/VenueMapPopup";
 import { track } from "@/lib/analytics/client";
@@ -30,6 +37,62 @@ import {
 const DEFAULT_CENTER = { lat: -33.87, lng: 151.21 };
 const DEFAULT_ZOOM = 11;
 const VIEWPORT_IDLE_DEBOUNCE_MS = 300;
+
+const CLUSTER_ACCENT = "#f59e0b";
+const CLUSTER_ACCENT_BORDER = "#b45309";
+const CLUSTER_LABEL = "#081426";
+
+const venueClusterRenderer: Renderer = {
+  render({ count, position }, _stats, map) {
+    const size = count < 10 ? 40 : count < 50 ? 48 : 56;
+
+    if (MarkerUtils.isAdvancedMarkerAvailable(map)) {
+      const content = document.createElement("div");
+      content.style.width = `${size}px`;
+      content.style.height = `${size}px`;
+      content.style.borderRadius = "9999px";
+      content.style.background = CLUSTER_ACCENT;
+      content.style.border = `2px solid ${CLUSTER_ACCENT_BORDER}`;
+      content.style.boxShadow = "0 2px 6px rgba(0,0,0,0.35)";
+      content.style.display = "flex";
+      content.style.alignItems = "center";
+      content.style.justifyContent = "center";
+      content.style.color = CLUSTER_LABEL;
+      content.style.fontSize = count < 10 ? "13px" : "14px";
+      content.style.fontWeight = "700";
+      content.style.fontFamily = "system-ui, sans-serif";
+      content.textContent = String(count);
+
+      return new google.maps.marker.AdvancedMarkerElement({
+        position,
+        content,
+        zIndex: 1000 + count,
+      });
+    }
+
+    const svg = window.btoa(`
+      <svg fill="${CLUSTER_ACCENT}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+        <circle cx="120" cy="120" opacity=".9" r="70" />
+        <circle cx="120" cy="120" opacity=".4" r="90" />
+        <circle cx="120" cy="120" opacity=".2" r="110" />
+      </svg>`);
+
+    return new google.maps.Marker({
+      position,
+      icon: {
+        url: `data:image/svg+xml;base64,${svg}`,
+        scaledSize: new google.maps.Size(size, size),
+      },
+      label: {
+        text: String(count),
+        color: CLUSTER_LABEL,
+        fontSize: "12px",
+        fontWeight: "700",
+      },
+      zIndex: 1000 + count,
+    });
+  },
+};
 
 const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 const googleMapsMapId = process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID;
@@ -253,6 +316,7 @@ function VenueMarker({
   isSelected,
   onSelect,
   onClose,
+  setMarkerRef,
 }: {
   group: VenueGroupedDeals;
   searchDays: number[];
@@ -260,8 +324,11 @@ function VenueMarker({
   isSelected: boolean;
   onSelect: (venueId: number) => void;
   onClose: () => void;
+  setMarkerRef: (marker: Marker | null, venueId: number) => void;
 }) {
-  const [markerRef, marker] = useAdvancedMarkerRef();
+  const [marker, setMarker] = useState<google.maps.marker.AdvancedMarkerElement | null>(
+    null,
+  );
   const iconName = useMemo(
     () => resolveVenueMapIcon(group.deals, now),
     [group.deals, now],
@@ -283,11 +350,26 @@ function VenueMarker({
     onSelect(group.venue.id);
   }, [group.venue.id, group.venue.name, isSelected, onSelect]);
 
+  const handleMarkerRef = useCallback(
+    (instance: google.maps.marker.AdvancedMarkerElement | null) => {
+      setMarker(instance);
+      setMarkerRef(instance, group.venue.id);
+    },
+    [group.venue.id, setMarkerRef],
+  );
+
+  const position = useMemo(
+    () => ({ lat: group.venue.lat, lng: group.venue.lng }),
+    [group.venue.lat, group.venue.lng],
+  );
+
+  const markerVisible = marker != null && MarkerUtils.getVisible(marker);
+
   return (
     <>
       <AdvancedMarker
-        ref={markerRef}
-        position={{ lat: group.venue.lat, lng: group.venue.lng }}
+        ref={handleMarkerRef}
+        position={position}
         onClick={handleMarkerClick}
       >
         {showProductIcon ? (
@@ -312,7 +394,7 @@ function VenueMarker({
           />
         )}
       </AdvancedMarker>
-      {isSelected && marker ? (
+      {isSelected && marker && markerVisible ? (
         <InfoWindow
           anchor={marker}
           onClose={onClose}
@@ -327,6 +409,118 @@ function VenueMarker({
           />
         </InfoWindow>
       ) : null}
+    </>
+  );
+}
+
+function ClusteredVenueMarkers({
+  venueGroups,
+  searchDays,
+  now,
+  selectedMarker,
+  onVenueSelect,
+  onInfoWindowClose,
+}: {
+  venueGroups: VenueGroupedDeals[];
+  searchDays: number[];
+  now: Date;
+  selectedMarker: SelectedMarker;
+  onVenueSelect: (venueId: number) => void;
+  onInfoWindowClose: () => void;
+}) {
+  const map = useMap();
+  const [markers, setMarkers] = useState<Record<string, Marker>>({});
+  // Create in an effect (not useMemo) so React Strict Mode / remounts get a
+  // fresh clusterer. useMemo + setMap(null) cleanup left a dead instance that
+  // stopped clustering while AdvancedMarkers stayed on the map.
+  const [clusterer, setClusterer] = useState<MarkerClusterer | null>(null);
+
+  useEffect(() => {
+    if (!map) {
+      return;
+    }
+
+    const instance = new MarkerClusterer({
+      map,
+      renderer: venueClusterRenderer,
+    });
+    setClusterer(instance);
+
+    return () => {
+      instance.clearMarkers();
+      (instance as unknown as google.maps.OverlayView).setMap(null);
+      setClusterer((current) => (current === instance ? null : current));
+    };
+  }, [map]);
+
+  useEffect(() => {
+    if (!clusterer) {
+      return;
+    }
+
+    clusterer.clearMarkers();
+    clusterer.addMarkers(Object.values(markers));
+  }, [clusterer, markers]);
+
+  useEffect(() => {
+    if (!clusterer) {
+      return;
+    }
+
+    const listener = google.maps.event.addListener(
+      clusterer,
+      MarkerClustererEvents.CLUSTERING_END,
+      () => {
+        if (typeof selectedMarker !== "number") {
+          return;
+        }
+
+        const marker = markers[String(selectedMarker)];
+        if (marker && !MarkerUtils.getVisible(marker)) {
+          onInfoWindowClose();
+        }
+      },
+    );
+
+    return () => {
+      listener.remove();
+    };
+  }, [clusterer, markers, onInfoWindowClose, selectedMarker]);
+
+  const setMarkerRef = useCallback((marker: Marker | null, venueId: number) => {
+    const key = String(venueId);
+    setMarkers((current) => {
+      if (marker) {
+        // Replace when AdvancedMarker recreates the element for the same venue.
+        if (current[key] === marker) {
+          return current;
+        }
+        return { ...current, [key]: marker };
+      }
+
+      if (!current[key]) {
+        return current;
+      }
+
+      const { [key]: _, ...rest } = current;
+      return rest;
+    });
+  }, []);
+
+  return (
+    <>
+      {venueGroups.map((group) => (
+        <VenueMarker
+          key={group.venue.id}
+          group={group}
+          searchDays={searchDays}
+          now={now}
+          isSelected={selectedMarker === group.venue.id}
+          onSelect={onVenueSelect}
+          onClose={onInfoWindowClose}
+          setMarkerRef={setMarkerRef}
+        />
+      ))}
     </>
   );
 }
@@ -485,17 +679,14 @@ function SearchMapCanvas({
         />
       ) : null}
 
-      {venueGroups.map((group) => (
-        <VenueMarker
-          key={group.venue.id}
-          group={group}
-          searchDays={searchDays}
-          now={now}
-          isSelected={selectedMarker === group.venue.id}
-          onSelect={onVenueSelect}
-          onClose={onInfoWindowClose}
-        />
-      ))}
+      <ClusteredVenueMarkers
+        venueGroups={venueGroups}
+        searchDays={searchDays}
+        now={now}
+        selectedMarker={selectedMarker}
+        onVenueSelect={onVenueSelect}
+        onInfoWindowClose={onInfoWindowClose}
+      />
     </Map>
   );
 }
