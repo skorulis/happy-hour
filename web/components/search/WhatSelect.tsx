@@ -191,7 +191,7 @@ export function WhatSelectPanel({
       ref={panelRef}
       className="w-80 max-w-[calc(100vw-3rem)] rounded-xl border border-border bg-surface-elevated p-3 shadow-card"
     >
-      <div className="flex min-h-[2.25rem] w-full flex-wrap items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5">
+      <div className="flex min-h-[2.25rem] w-full flex-wrap items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 ring-accent focus-within:ring-2">
         {tokens.map((token, index) => (
           <span
             key={`${token}-${index}`}
