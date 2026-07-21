@@ -132,9 +132,16 @@ export function parseDealHours(str: string): DealHours | null {
       .map((p) => p.trim())
       .filter((p) => p.length > 0);
     if (parts.length === 2) {
-      const start = toMinutes(parts[0]!);
       const end = toMinutes(parts[1]!);
-      if (start !== null && end !== null) {
+      if (end === null) continue;
+
+      // "Open - 6pm" / "opening to 6pm" → from open (start of day) until end.
+      if (isOpenStartToken(parts[0]!)) {
+        return makeBetween(0, end);
+      }
+
+      const start = toMinutes(parts[0]!);
+      if (start !== null) {
         return makeBetween(start, end);
       }
     }
@@ -143,6 +150,17 @@ export function parseDealHours(str: string): DealHours | null {
   const minutes = toMinutes(normalized);
   if (minutes === null) return null;
   return { kind: "from", minutes };
+}
+
+/** Venue "open" as the start of a range (same as midnight / till-end semantics). */
+function isOpenStartToken(str: string): boolean {
+  switch (normalizeTimeComponent(str)) {
+    case "open":
+    case "opening":
+      return true;
+    default:
+      return false;
+  }
 }
 
 function normalizeTimeComponent(str: string): string {

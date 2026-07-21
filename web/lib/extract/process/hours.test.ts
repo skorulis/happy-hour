@@ -99,6 +99,13 @@ describe("parseDealHours", () => {
     expect(parseDealHours("all-day")).toEqual(allDay);
   });
 
+  it("parses open-to-end time range", () => {
+    expect(parseDealHours("Open - 6pm")).toEqual(between(0, 18 * 60));
+    expect(parseDealHours("Open-6pm")).toEqual(between(0, 18 * 60));
+    expect(parseDealHours("opening to 6 PM")).toEqual(between(0, 18 * 60));
+    expect(parseDealHours("Open – 6:00pm")).toEqual(between(0, 18 * 60));
+  });
+
   it("returns null for unparseable input", () => {
     expect(parseDealHours("")).toBeNull();
     expect(parseDealHours("not a time")).toBeNull();

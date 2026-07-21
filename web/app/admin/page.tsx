@@ -6,6 +6,7 @@ import {
 } from "@/components/AdminPageContent";
 import { isAdmin } from "@/lib/admin";
 import { auth } from "@/lib/auth";
+import { getPendingDeals } from "@/lib/deals/queries";
 import { getAllDealReports } from "@/lib/reports/queries";
 import { getRecentSyncRuns } from "@/lib/sync/queries";
 
@@ -23,10 +24,17 @@ export default async function AdminPage() {
     return <RestrictedMessage />;
   }
 
-  const [reports, syncRuns] = await Promise.all([
+  const [pendingDeals, reports, syncRuns] = await Promise.all([
+    getPendingDeals(),
     getAllDealReports(),
     getRecentSyncRuns(5),
   ]);
 
-  return <AdminPageContent reports={reports} syncRuns={syncRuns} />;
+  return (
+    <AdminPageContent
+      pendingDeals={pendingDeals}
+      reports={reports}
+      syncRuns={syncRuns}
+    />
+  );
 }
