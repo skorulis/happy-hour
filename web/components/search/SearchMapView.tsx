@@ -42,7 +42,6 @@ type UserLocation = {
 type SearchMapViewProps = {
   venueGroups: VenueGroupedDeals[];
   userLocation: UserLocation | null;
-  isEmpty: boolean;
   searchDays?: number[];
   fullScreen?: boolean;
   onViewportIdle?: (bounds: MapBounds) => void;
@@ -438,7 +437,6 @@ function SearchMapCanvas({
 export function SearchMapView({
   venueGroups,
   userLocation,
-  isEmpty,
   searchDays = [],
   fullScreen = false,
   onViewportIdle,
@@ -489,15 +487,6 @@ export function SearchMapView({
           now={now}
         />
       </APIProvider>
-
-      {isEmpty ? (
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-background/70 p-6">
-          <p className="max-w-sm rounded-xl border border-dashed border-border bg-surface px-4 py-8 text-center text-sm text-muted shadow-card">
-            No deals matched your filters. Try syncing data from DealScraper or
-            broadening your search.
-          </p>
-        </div>
-      ) : null}
     </div>
   );
 }

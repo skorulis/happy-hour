@@ -39,7 +39,6 @@ export function MapPage({ initialWhere }: MapPageProps) {
     filters,
     allVenueGroups,
     userLocation,
-    isEmpty,
     initialMapBounds,
     handleDaysApply,
     handleWhatChange,
@@ -62,7 +61,6 @@ export function MapPage({ initialWhere }: MapPageProps) {
         <SearchMapView
           venueGroups={allVenueGroups}
           userLocation={userLocation}
-          isEmpty={isEmpty}
           searchDays={filters.days}
           fullScreen
           onViewportIdle={setViewportBounds}
