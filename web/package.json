@@ -18,6 +18,7 @@
     "import-suburbs": "tsx scripts/import-suburbs.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1091.0",
     "@lucide/lab": "^0.1.2",
     "@sentry/nextjs": "^10.66.0",
     "@vis.gl/react-google-maps": "^1.8.3",

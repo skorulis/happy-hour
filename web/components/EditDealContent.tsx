@@ -1,5 +1,6 @@
 "use client";
 
+import { Trash2 } from "lucide-react";
 import { useId, useRef, useState, type ReactNode } from "react";
 import {
   DEFAULT_SCHEDULE_DAY,
@@ -126,6 +127,7 @@ export function EditDealContent({ deal, onChange }: EditDealContentProps) {
   const [schedules, setSchedules] = useState(() =>
     withScheduleIds(deal.schedules),
   );
+  const isDiscarded = deal.status === "rejected";
 
   function update(partial: Partial<ProcessedDeal>) {
     onChange({ ...deal, ...partial });
@@ -165,20 +167,52 @@ export function EditDealContent({ deal, onChange }: EditDealContentProps) {
     commitSchedules(schedules.filter((schedule) => schedule.id !== id));
   }
 
+  if (isDiscarded) {
+    return (
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border-subtle bg-surface/90 px-5 py-4">
+        <p className="text-sm text-secondary">This deal will not be created</p>
+        <button
+          type="button"
+          className="text-sm font-medium text-accent-soft hover:underline"
+          onClick={() => {
+            update({ status: "new" });
+          }}
+        >
+          Undo
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-4 rounded-xl border border-border-subtle bg-surface/90 p-5">
-      <Field label="Title">
-        <input
-          id={`${formId}-title`}
-          type="text"
-          className={inputClassName}
-          value={deal.title ?? ""}
-          onChange={(event) => {
-            update({ title: event.target.value || null });
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <Field label="Title">
+            <input
+              id={`${formId}-title`}
+              type="text"
+              className={inputClassName}
+              value={deal.title ?? ""}
+              onChange={(event) => {
+                update({ title: event.target.value || null });
+              }}
+              placeholder="Untitled deal"
+            />
+          </Field>
+        </div>
+        <button
+          type="button"
+          className="mt-5 shrink-0 rounded-lg p-2 text-muted transition-colors hover:bg-danger-muted hover:text-danger"
+          aria-label="Discard deal"
+          title="Discard deal"
+          onClick={() => {
+            update({ status: "rejected" });
           }}
-          placeholder="Untitled deal"
-        />
-      </Field>
+        >
+          <Trash2 className="size-4" aria-hidden />
+        </button>
+      </div>
 
       <Field label="Details">
         <textarea

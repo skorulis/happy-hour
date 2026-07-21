@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { NewDealPageContent } from "@/components/NewDealPageContent";
 import { getVenueDetailBySlug } from "@/lib/search/queries";
+import { venuePath } from "@/lib/search/slugs";
 
 type NewDealPageProps = {
   params: Promise<{ suburb: string; venueSlug: string }>;
@@ -34,7 +35,11 @@ export default async function NewDealPage({ params }: NewDealPageProps) {
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-10">
-      <NewDealPageContent venueName={venue.name} />
+      <NewDealPageContent
+        venueId={venue.id}
+        venueName={venue.name}
+        venuePath={venuePath(venue.suburbName, venue.name)}
+      />
     </div>
   );
 }

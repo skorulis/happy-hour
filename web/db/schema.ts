@@ -86,12 +86,14 @@ export const deal = pgTable(
     conditions: text("conditions"),
     startDate: date("start_date"),
     endDate: date("end_date"),
+    userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
     syncedAt: timestamp("synced_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
   },
   (table) => [
     index("deal_venue_id_idx").on(table.venueId),
+    index("deal_user_id_idx").on(table.userId),
     uniqueIndex("deal_venue_source_deal_id_idx").on(
       table.venueId,
       table.sourceDealId,
@@ -207,6 +209,10 @@ export const dealRelations = relations(deal, ({ one, many }) => ({
   venue: one(venue, {
     fields: [deal.venueId],
     references: [venue.id],
+  }),
+  user: one(user, {
+    fields: [deal.userId],
+    references: [user.id],
   }),
   schedules: many(dealSchedule),
   reports: many(dealReport),

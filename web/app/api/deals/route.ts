@@ -1,4 +1,10 @@
 import { NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
+import {
+  CreateUserDealsValidationError,
+  createUserDeals,
+  parseUserDealInputs,
+} from "@/lib/deals/create-user-deals";
 import { parseBoundsParams } from "@/lib/search/bounds";
 import { parseDealIdsParam } from "@/lib/search/parse-deal-ids";
 import { getDealsByIds, searchDeals, searchDealsForSuburb } from "@/lib/search/queries";
@@ -208,6 +214,64 @@ export async function GET(request: Request) {
     console.error("Failed to search deals", error);
     return NextResponse.json(
       { error: "Failed to search deals" },
+      { status: 500 },
+    );
+  }
+}
+
+type CreateDealsRequestBody = {
+  venueId?: unknown;
+  imageUrl?: unknown;
+  deals?: unknown;
+};
+
+export async function POST(request: Request) {
+  const session = await auth.api.getSession({ headers: request.headers });
+  if (!session?.user.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  let body: CreateDealsRequestBody;
+  try {
+    body = (await request.json()) as CreateDealsRequestBody;
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  const venueId =
+    typeof body.venueId === "number"
+      ? body.venueId
+      : typeof body.venueId === "string"
+        ? Number(body.venueId)
+        : NaN;
+
+  if (!Number.isFinite(venueId) || !Number.isInteger(venueId) || venueId <= 0) {
+    return NextResponse.json({ error: "Invalid venueId" }, { status: 400 });
+  }
+
+  if (typeof body.imageUrl !== "string" || body.imageUrl.trim().length === 0) {
+    return NextResponse.json({ error: "Invalid imageUrl" }, { status: 400 });
+  }
+
+  try {
+    const deals = parseUserDealInputs(body.deals);
+    const dealIds = await createUserDeals({
+      venueId,
+      imageUrl: body.imageUrl.trim(),
+      userId: session.user.id,
+      deals,
+    });
+
+    return NextResponse.json({ dealIds }, { status: 201 });
+  } catch (error) {
+    if (error instanceof CreateUserDealsValidationError) {
+      const status = error.message === "Venue not found" ? 404 : 400;
+      return NextResponse.json({ error: error.message }, { status });
+    }
+
+    console.error("Failed to create user deals", error);
+    return NextResponse.json(
+      { error: "Failed to create deals" },
       { status: 500 },
     );
   }

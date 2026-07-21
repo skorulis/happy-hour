@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { EditDealContent } from "@/components/EditDealContent";
@@ -20,7 +21,9 @@ const PROCESSING_MESSAGES = [
 ] as const;
 
 type NewDealPageContentProps = {
+  venueId: number;
   venueName: string;
+  venuePath: string;
 };
 
 type ScaledImagePayload = {
@@ -106,16 +109,25 @@ function scaleImageForUpload(file: File): Promise<ScaledImagePayload> {
   });
 }
 
-export function NewDealPageContent({ venueName }: NewDealPageContentProps) {
+export function NewDealPageContent({
+  venueId,
+  venueName,
+  venuePath,
+}: NewDealPageContentProps) {
+  const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const previewUrlRef = useRef<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [hasProcessed, setHasProcessed] = useState(false);
   const [processingMessageIndex, setProcessingMessageIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [needsSignIn, setNeedsSignIn] = useState(false);
   const [deals, setDeals] = useState<ProcessedDeal[]>([]);
+
+  const dealsToCreate = deals.filter((deal) => deal.status !== "rejected");
+  const createCount = dealsToCreate.length;
 
   useEffect(() => {
     return () => {
@@ -165,11 +177,11 @@ export function NewDealPageContent({ venueName }: NewDealPageContentProps) {
     accept: { "image/*": [] },
     maxFiles: 1,
     multiple: false,
-    disabled: isProcessing,
+    disabled: isProcessing || isSaving,
   });
 
   const processImage = useCallback(async () => {
-    if (!file || isProcessing) {
+    if (!file || isProcessing || isSaving) {
       return;
     }
 
@@ -217,7 +229,88 @@ export function NewDealPageContent({ venueName }: NewDealPageContentProps) {
     } finally {
       setIsProcessing(false);
     }
-  }, [file, isProcessing, venueName]);
+  }, [file, isProcessing, isSaving, venueName]);
+
+  const saveDeals = useCallback(async () => {
+    if (!file || isSaving || isProcessing || createCount === 0) {
+      return;
+    }
+
+    setIsSaving(true);
+    setError(null);
+    setNeedsSignIn(false);
+
+    try {
+      const { base64: imageBase64, mimeType } = await scaleImageForUpload(file);
+      const imageResponse = await fetch("/api/deal-images", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageBase64, mimeType }),
+      });
+
+      const imagePayload = (await imageResponse.json()) as {
+        url?: string;
+        error?: string;
+      };
+
+      if (imageResponse.status === 401) {
+        setNeedsSignIn(true);
+        setError("Sign in to add deals");
+        return;
+      }
+
+      if (!imageResponse.ok || !imagePayload.url) {
+        throw new Error(imagePayload.error ?? "Failed to upload image");
+      }
+
+      const dealsResponse = await fetch("/api/deals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          venueId,
+          imageUrl: imagePayload.url,
+          deals: dealsToCreate.map((deal) => ({
+            title: deal.title,
+            details: deal.details,
+            conditions: deal.conditions,
+            startDate: deal.startDate,
+            endDate: deal.endDate,
+            schedules: deal.schedules,
+          })),
+        }),
+      });
+
+      const dealsPayload = (await dealsResponse.json()) as {
+        dealIds?: number[];
+        error?: string;
+      };
+
+      if (dealsResponse.status === 401) {
+        setNeedsSignIn(true);
+        setError("Sign in to add deals");
+        return;
+      }
+
+      if (!dealsResponse.ok) {
+        throw new Error(dealsPayload.error ?? "Failed to create deals");
+      }
+
+      router.push(venuePath);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create deals");
+    } finally {
+      setIsSaving(false);
+    }
+  }, [
+    createCount,
+    dealsToCreate,
+    file,
+    isProcessing,
+    isSaving,
+    router,
+    venueId,
+    venuePath,
+  ]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -231,7 +324,7 @@ export function NewDealPageContent({ venueName }: NewDealPageContentProps) {
           isDragActive
             ? "border-accent bg-accent-muted"
             : "border-border bg-surface-muted hover:border-accent"
-        } ${isProcessing ? "pointer-events-none opacity-60" : ""}`}
+        } ${isProcessing || isSaving ? "pointer-events-none opacity-60" : ""}`}
       >
         <input {...getInputProps()} />
         {previewUrl ? (
@@ -272,7 +365,7 @@ export function NewDealPageContent({ venueName }: NewDealPageContentProps) {
         <p className="text-sm text-danger" role="alert">
           {needsSignIn ? (
             <>
-              Sign in to process images.{" "}
+              Sign in to continue.{" "}
               <Link href="/login" className="underline hover:text-foreground">
                 Sign in
               </Link>
@@ -302,6 +395,21 @@ export function NewDealPageContent({ venueName }: NewDealPageContentProps) {
             ))}
           </div>
         </div>
+      ) : null}
+
+      {hasProcessed ? (
+        <button
+          type="button"
+          className={buttonClassName}
+          onClick={() => {
+            void saveDeals();
+          }}
+          disabled={isSaving || createCount === 0}
+        >
+          {isSaving
+            ? "Saving…"
+            : `Add ${createCount} ${createCount === 1 ? "deal" : "deals"}`}
+        </button>
       ) : null}
     </div>
   );
