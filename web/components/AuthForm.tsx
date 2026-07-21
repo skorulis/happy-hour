@@ -11,11 +11,17 @@ const buttonClassName =
 
 type AuthFormProps = {
   mode: "login" | "signup";
+  callbackUrl?: string;
   onSubmit: (values: { email: string; password: string }) => Promise<void>;
   onGoogleSignIn: () => Promise<void>;
 };
 
-export function AuthForm({ mode, onSubmit, onGoogleSignIn }: AuthFormProps) {
+export function AuthForm({
+  mode,
+  callbackUrl,
+  onSubmit,
+  onGoogleSignIn,
+}: AuthFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +30,10 @@ export function AuthForm({ mode, onSubmit, onGoogleSignIn }: AuthFormProps) {
 
   const isSignup = mode === "signup";
   const title = isSignup ? "Create an account" : "Log in";
-  const alternateHref = isSignup ? "/login" : "/signup";
+  const alternatePath = isSignup ? "/login" : "/signup";
+  const alternateHref = callbackUrl
+    ? `${alternatePath}?callbackUrl=${encodeURIComponent(callbackUrl)}`
+    : alternatePath;
   const alternateLabel = isSignup
     ? "Already have an account? Log in"
     : "Don't have an account? Sign up";

@@ -45,7 +45,7 @@ final class R2Client: HTTPService, HeroImageUploading {
     init(
         configStore: R2ConfigStore,
         urlSession: URLSessionProtocol = URLSession(configuration: .default),
-        logger: HTTPLogger? = nil
+        logger: HTTPLogger? = .init(level: .errors)
     ) {
         self.configStore = configStore
         super.init(baseURL: nil, logger: logger, urlSession: urlSession)

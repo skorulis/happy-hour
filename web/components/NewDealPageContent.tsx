@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { EditDealContent } from "@/components/EditDealContent";
+import { useSession } from "@/lib/auth-client";
 import type { ProcessedDeal } from "@/lib/extract/types";
 
 const buttonClassName =
@@ -116,6 +118,9 @@ export function NewDealPageContent({
   venueName,
   venuePath,
 }: NewDealPageContentProps) {
+  const pathname = usePathname();
+  const { data: session, isPending } = useSession();
+  const callbackUrl = encodeURIComponent(pathname);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const previewUrlRef = useRef<string | null>(null);
@@ -305,6 +310,43 @@ export function NewDealPageContent({
     }
   }, [createCount, dealsToCreate, file, isProcessing, isSaving, venueId]);
 
+  if (isPending) {
+    return <p className="text-sm text-muted">Loading...</p>;
+  }
+
+  if (!session) {
+    return (
+      <div className="mx-auto flex w-full max-w-md flex-col gap-6 text-center">
+        <header className="space-y-2">
+          <h1 className="text-3xl font-bold text-foreground">
+            Add a new deal to {venueName}
+          </h1>
+          <p className="text-sm text-secondary">
+            Log in or create an account to add deals to this venue.
+          </p>
+        </header>
+
+        <div className="flex flex-col gap-3">
+          <Link
+            href={`/login?callbackUrl=${callbackUrl}`}
+            className={buttonClassName}
+          >
+            Log in
+          </Link>
+          <Link
+            href={`/signup?callbackUrl=${callbackUrl}`}
+            className={secondaryButtonClassName}
+          >
+            Sign up
+          </Link>
+          <Link href={venuePath} className={secondaryButtonClassName}>
+            Back to venue
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   if (submitted) {
     return (
       <div className="mx-auto flex w-full max-w-md flex-col gap-6 text-center">
@@ -383,7 +425,10 @@ export function NewDealPageContent({
           {needsSignIn ? (
             <>
               Sign in to continue.{" "}
-              <Link href="/login" className="underline hover:text-foreground">
+              <Link
+                href={`/login?callbackUrl=${callbackUrl}`}
+                className="underline hover:text-foreground"
+              >
                 Sign in
               </Link>
             </>

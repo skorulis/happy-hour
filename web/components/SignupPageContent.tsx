@@ -2,25 +2,32 @@
 
 import { AuthForm } from "@/components/AuthForm";
 import { signIn, signUp, useSession } from "@/lib/auth-client";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
+
+function buildVerifyEmailUrl(email: string, callbackUrl: string) {
+  const params = new URLSearchParams({ email });
+  if (callbackUrl !== "/profile") {
+    params.set("callbackUrl", callbackUrl);
+  }
+  return `/verify-email?${params.toString()}`;
+}
 
 export function SignupPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: session, isPending } = useSession();
-  const profileUrl = "/profile";
+  const callbackUrl = searchParams.get("callbackUrl") ?? "/profile";
 
   useEffect(() => {
     if (!isPending && session) {
       if (session.user.emailVerified) {
-        router.replace(profileUrl);
+        router.replace(callbackUrl);
         return;
       }
-      router.replace(
-        `/verify-email?email=${encodeURIComponent(session.user.email)}`,
-      );
+      router.replace(buildVerifyEmailUrl(session.user.email, callbackUrl));
     }
-  }, [isPending, router, session]);
+  }, [callbackUrl, isPending, router, session]);
 
   async function handleSubmit({
     email,
@@ -29,7 +36,7 @@ export function SignupPageContent() {
     email: string;
     password: string;
   }) {
-    const verifyUrl = `/verify-email?email=${encodeURIComponent(email)}`;
+    const verifyUrl = buildVerifyEmailUrl(email, callbackUrl);
     const result = await signUp.email({
       name: email.split("@")[0] ?? email,
       email,
@@ -48,7 +55,7 @@ export function SignupPageContent() {
   async function handleGoogleSignIn() {
     const result = await signIn.social({
       provider: "google",
-      callbackURL: profileUrl,
+      callbackURL: callbackUrl,
     });
 
     if (result.error) {
@@ -68,6 +75,7 @@ export function SignupPageContent() {
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-6 py-10">
       <AuthForm
         mode="signup"
+        callbackUrl={callbackUrl}
         onSubmit={handleSubmit}
         onGoogleSignIn={handleGoogleSignIn}
       />

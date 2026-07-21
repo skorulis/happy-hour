@@ -32,6 +32,7 @@ export function VerifyEmailPageContent() {
   const searchParams = useSearchParams();
   const initialEmail = searchParams.get("email") ?? "";
   const initialOtp = searchParams.get("otp") ?? "";
+  const callbackUrl = searchParams.get("callbackUrl") ?? "/profile";
   const shouldAutoVerify = Boolean(initialEmail && initialOtp);
 
   const [email, setEmail] = useState(initialEmail);
@@ -49,7 +50,7 @@ export function VerifyEmailPageContent() {
 
     try {
       await verifyEmailOtp(nextEmail, nextOtp);
-      router.push("/profile");
+      router.push(callbackUrl);
       router.refresh();
     } catch (verifyError) {
       setError(verifyErrorMessage(verifyError));
@@ -67,7 +68,7 @@ export function VerifyEmailPageContent() {
       try {
         await verifyEmailOtp(initialEmail, initialOtp);
         if (cancelled) return;
-        router.push("/profile");
+        router.push(callbackUrl);
         router.refresh();
       } catch (verifyError) {
         if (cancelled) return;
@@ -79,7 +80,7 @@ export function VerifyEmailPageContent() {
     return () => {
       cancelled = true;
     };
-  }, [initialEmail, initialOtp, router, shouldAutoVerify]);
+  }, [callbackUrl, initialEmail, initialOtp, router, shouldAutoVerify]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

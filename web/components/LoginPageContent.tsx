@@ -61,6 +61,7 @@ export function LoginPageContent() {
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-6 py-10">
       <AuthForm
         mode="login"
+        callbackUrl={callbackUrl}
         onSubmit={handleSubmit}
         onGoogleSignIn={handleGoogleSignIn}
       />
