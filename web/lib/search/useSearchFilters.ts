@@ -20,6 +20,7 @@ import {
 } from "@/lib/search/map-entry";
 import {
   NEAR_ME_MAP_RADIUS_KM,
+  VENUE_MAP_RADIUS_KM,
   nearbySuburbRadiusKm,
 } from "@/lib/search/nearby-radius";
 import { suburbWhereSlug } from "@/lib/search/slugs";
@@ -195,6 +196,22 @@ export function useSearchFilters(options?: {
 
     if (entry.source.kind === "anywhere") {
       markMapEntryCameraApplied();
+      return;
+    }
+
+    if (entry.source.kind === "venue") {
+      const bounds = boundsFromCenterRadiusKm(
+        entry.source.lat,
+        entry.source.lng,
+        VENUE_MAP_RADIUS_KM,
+      );
+      if (bounds) {
+        // Seeds the map camera from the venue page entry written before navigation.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        applyInitialMapBounds(bounds);
+      } else {
+        markMapEntryCameraApplied();
+      }
       return;
     }
 

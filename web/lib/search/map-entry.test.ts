@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
   MAP_ENTRY_STORAGE_KEY,
+  clearVenueMapCameraSeed,
   listHrefFromMapEntry,
   mapEntryFromListPathname,
+  mapEntryFromVenue,
   markMapEntryCameraApplied,
   readMapEntry,
   readPendingMapEntryCamera,
+  setVenueMapCameraSeed,
   writeMapEntry,
   type MapEntry,
 } from "./map-entry";
@@ -47,6 +50,50 @@ describe("mapEntryFromListPathname", () => {
       cameraPending: true,
     });
   });
+
+  it("builds a venue entry when a matching venue camera seed is set", () => {
+    setVenueMapCameraSeed({
+      listPath: "/surry-hills/the-local",
+      lat: -33.88,
+      lng: 151.21,
+    });
+
+    expect(mapEntryFromListPathname("/surry-hills/the-local")).toEqual({
+      listPath: "/surry-hills/the-local",
+      source: { kind: "venue", lat: -33.88, lng: 151.21 },
+      cameraPending: true,
+    });
+
+    clearVenueMapCameraSeed();
+  });
+
+  it("ignores a venue camera seed when the pathname does not match", () => {
+    setVenueMapCameraSeed({
+      listPath: "/surry-hills/the-local",
+      lat: -33.88,
+      lng: 151.21,
+    });
+
+    expect(mapEntryFromListPathname("/")).toEqual({
+      listPath: "/",
+      source: { kind: "anywhere" },
+      cameraPending: true,
+    });
+
+    clearVenueMapCameraSeed();
+  });
+});
+
+describe("mapEntryFromVenue", () => {
+  it("builds a pending venue camera entry", () => {
+    expect(mapEntryFromVenue("/surry-hills/the-local", -33.88, 151.21)).toEqual(
+      {
+        listPath: "/surry-hills/the-local",
+        source: { kind: "venue", lat: -33.88, lng: 151.21 },
+        cameraPending: true,
+      },
+    );
+  });
 });
 
 describe("listHrefFromMapEntry", () => {
@@ -59,6 +106,18 @@ describe("listHrefFromMapEntry", () => {
 
     expect(listHrefFromMapEntry(entry, new URLSearchParams("days=5"))).toBe(
       "/abbotsbury-2176?days=5",
+    );
+  });
+
+  it("restores the venue path with filter params", () => {
+    const entry: MapEntry = {
+      listPath: "/surry-hills/the-local",
+      source: { kind: "venue", lat: -33.88, lng: 151.21 },
+      cameraPending: false,
+    };
+
+    expect(listHrefFromMapEntry(entry, new URLSearchParams("days=5"))).toBe(
+      "/surry-hills/the-local?days=5",
     );
   });
 
@@ -88,6 +147,14 @@ describe("map entry storage", () => {
     writeMapEntry(entry, storage);
     expect(readMapEntry(storage)).toEqual(entry);
     expect(storage.data[MAP_ENTRY_STORAGE_KEY]).toBeTruthy();
+  });
+
+  it("writes and reads a venue map entry", () => {
+    const storage = memoryStorage();
+    const entry = mapEntryFromVenue("/surry-hills/the-local", -33.88, 151.21);
+
+    writeMapEntry(entry, storage);
+    expect(readMapEntry(storage)).toEqual(entry);
   });
 
   it("reads pending camera and clears it after apply while keeping listPath", () => {

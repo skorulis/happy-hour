@@ -1,4 +1,5 @@
 import { WeeklyDealsSection } from "@/components/WeeklyDealsSection";
+import { VenueMapCameraSeed } from "@/components/VenueMapCameraSeed";
 import { googleMapsPlaceUrl } from "@/lib/search/google-maps";
 import type { VenueDetailResult } from "@/lib/search/queries";
 import { venuePath } from "@/lib/search/slugs";
@@ -37,9 +38,11 @@ export function VenuePageContent({
   initialSelectedDay,
 }: VenuePageContentProps) {
   const mapsUrl = googleMapsPlaceUrl(venue.name, venue.googleMapId);
+  const path = venuePath(venue.suburbName, venue.name);
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-10">
+      <VenueMapCameraSeed listPath={path} lat={venue.lat} lng={venue.lng} />
       <header className="space-y-4">
         {venue.heroImage ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -129,10 +132,7 @@ export function VenuePageContent({
         showReportButton
       />
 
-      <NextLink
-        href={`${venuePath(venue.suburbName, venue.name)}/new-deal`}
-        className={linkClassName}
-      >
+      <NextLink href={`${path}/new-deal`} className={linkClassName}>
         <CirclePlus
           aria-hidden
           className="h-4 w-4 shrink-0"

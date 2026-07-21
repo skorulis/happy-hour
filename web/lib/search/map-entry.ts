@@ -6,7 +6,8 @@ export const MAP_ENTRY_STORAGE_KEY = "happy-hour:map-entry";
 export type MapEntrySource =
   | { kind: "anywhere" }
   | { kind: "nearby" }
-  | { kind: "suburb"; slug: string };
+  | { kind: "suburb"; slug: string }
+  | { kind: "venue"; lat: number; lng: number };
 
 export type MapEntry = {
   listPath: string;
@@ -15,8 +16,17 @@ export type MapEntry = {
   cameraPending: boolean;
 };
 
+export type VenueMapCameraSeed = {
+  listPath: string;
+  lat: number;
+  lng: number;
+};
+
 /** Survives React Strict Mode remounts within the same map visit. */
 let seededMapBoundsMemory: MapBounds | null = null;
+
+/** Set while a venue page is mounted so Map → /map can center on that venue. */
+let venueMapCameraSeed: VenueMapCameraSeed | null = null;
 
 function getSessionStorage(): Storage | null {
   try {
@@ -29,20 +39,37 @@ function getSessionStorage(): Storage | null {
   }
 }
 
+function isFiniteCoordinate(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
 function isMapEntrySource(value: unknown): value is MapEntrySource {
   if (!value || typeof value !== "object") {
     return false;
   }
 
-  const source = value as { kind?: unknown; slug?: unknown };
+  const source = value as {
+    kind?: unknown;
+    slug?: unknown;
+    lat?: unknown;
+    lng?: unknown;
+  };
   if (source.kind === "anywhere" || source.kind === "nearby") {
     return true;
   }
 
-  return (
+  if (
     source.kind === "suburb" &&
     typeof source.slug === "string" &&
     source.slug.length > 0
+  ) {
+    return true;
+  }
+
+  return (
+    source.kind === "venue" &&
+    isFiniteCoordinate(source.lat) &&
+    isFiniteCoordinate(source.lng)
   );
 }
 
@@ -81,7 +108,36 @@ function parseMapEntry(raw: string | null): MapEntry | null {
   }
 }
 
+export function setVenueMapCameraSeed(seed: VenueMapCameraSeed): void {
+  venueMapCameraSeed = seed;
+}
+
+export function clearVenueMapCameraSeed(): void {
+  venueMapCameraSeed = null;
+}
+
+export function readVenueMapCameraSeed(): VenueMapCameraSeed | null {
+  return venueMapCameraSeed;
+}
+
+export function mapEntryFromVenue(
+  listPath: string,
+  lat: number,
+  lng: number,
+): MapEntry {
+  return {
+    listPath,
+    source: { kind: "venue", lat, lng },
+    cameraPending: true,
+  };
+}
+
 export function mapEntryFromListPathname(pathname: string): MapEntry {
+  const venueSeed = venueMapCameraSeed;
+  if (venueSeed && venueSeed.listPath === pathname) {
+    return mapEntryFromVenue(venueSeed.listPath, venueSeed.lat, venueSeed.lng);
+  }
+
   const parsed = parseWherePath(pathname);
 
   if (parsed.kind === "nearby") {

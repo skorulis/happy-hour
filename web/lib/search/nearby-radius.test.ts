@@ -3,6 +3,7 @@ import {
   NEAR_ME_MAP_RADIUS_KM,
   NEAR_ME_RADIUS_KM,
   NEARBY_SUBURB_BUFFER_KM,
+  VENUE_MAP_RADIUS_KM,
   nearbySuburbRadiusKm,
 } from "./nearby-radius";
 
@@ -15,6 +16,12 @@ describe("NEAR_ME_RADIUS_KM", () => {
 describe("NEAR_ME_MAP_RADIUS_KM", () => {
   it("is the fixed nearby map viewport radius", () => {
     expect(NEAR_ME_MAP_RADIUS_KM).toBe(2);
+  });
+});
+
+describe("VENUE_MAP_RADIUS_KM", () => {
+  it("is the fixed venue map viewport radius", () => {
+    expect(VENUE_MAP_RADIUS_KM).toBe(1);
   });
 });
 
