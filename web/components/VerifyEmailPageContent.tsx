@@ -10,17 +10,35 @@ const inputClassName =
 const buttonClassName =
   "w-full rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-fg transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60";
 
+function verifyErrorMessage(error: unknown) {
+  return error instanceof Error
+    ? error.message
+    : "Could not verify email. Please try again.";
+}
+
+async function verifyEmailOtp(nextEmail: string, nextOtp: string) {
+  const result = await authClient.emailOtp.verifyEmail({
+    email: nextEmail.trim(),
+    otp: nextOtp.trim(),
+  });
+
+  if (result.error) {
+    throw new Error(result.error.message ?? "Could not verify email.");
+  }
+}
+
 export function VerifyEmailPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialEmail = searchParams.get("email") ?? "";
   const initialOtp = searchParams.get("otp") ?? "";
+  const shouldAutoVerify = Boolean(initialEmail && initialOtp);
 
   const [email, setEmail] = useState(initialEmail);
   const [otp, setOtp] = useState(initialOtp);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(shouldAutoVerify);
   const [resending, setResending] = useState(false);
   const autoSubmitted = useRef(false);
 
@@ -30,33 +48,38 @@ export function VerifyEmailPageContent() {
     setLoading(true);
 
     try {
-      const result = await authClient.emailOtp.verifyEmail({
-        email: nextEmail.trim(),
-        otp: nextOtp.trim(),
-      });
-
-      if (result.error) {
-        throw new Error(result.error.message ?? "Could not verify email.");
-      }
-
+      await verifyEmailOtp(nextEmail, nextOtp);
       router.push("/profile");
       router.refresh();
     } catch (verifyError) {
-      setError(
-        verifyError instanceof Error
-          ? verifyError.message
-          : "Could not verify email. Please try again.",
-      );
+      setError(verifyErrorMessage(verifyError));
       setLoading(false);
     }
   }
 
   useEffect(() => {
-    if (autoSubmitted.current) return;
-    if (!initialEmail || !initialOtp) return;
+    if (autoSubmitted.current || !shouldAutoVerify) return;
     autoSubmitted.current = true;
-    void verify(initialEmail, initialOtp);
-  }, [initialEmail, initialOtp]);
+
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        await verifyEmailOtp(initialEmail, initialOtp);
+        if (cancelled) return;
+        router.push("/profile");
+        router.refresh();
+      } catch (verifyError) {
+        if (cancelled) return;
+        setError(verifyErrorMessage(verifyError));
+        setLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [initialEmail, initialOtp, router, shouldAutoVerify]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

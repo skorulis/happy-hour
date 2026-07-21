@@ -142,7 +142,6 @@ export function NewDealPageContent({
 
   useEffect(() => {
     if (!isProcessing) {
-      setProcessingMessageIndex(0);
       return;
     }
 
@@ -188,6 +187,7 @@ export function NewDealPageContent({
     }
 
     setIsProcessing(true);
+    setProcessingMessageIndex(0);
     setError(null);
     setNeedsSignIn(false);
     setHasProcessed(false);
