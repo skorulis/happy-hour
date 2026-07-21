@@ -207,7 +207,6 @@ export function useSearchFilters(options?: {
       );
       if (bounds) {
         // Seeds the map camera from the venue page entry written before navigation.
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         applyInitialMapBounds(bounds);
       } else {
         markMapEntryCameraApplied();

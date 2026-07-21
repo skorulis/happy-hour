@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Heart } from "lucide-react";
 import { resolveVenueMapIcon } from "@/lib/search/map-icon";
 import {
@@ -255,13 +262,11 @@ function MapInteractionReporter({
   const onUserMapInteractRef = useRef(onUserMapInteract);
   const settledRef = useRef(false);
   const initialBoundsKey = initialBounds ? boundsKey(initialBounds) : null;
-  const prevInitialBoundsKeyRef = useRef(initialBoundsKey);
 
-  // Reset before sibling InitialBounds effects run fitBounds in this commit.
-  if (prevInitialBoundsKeyRef.current !== initialBoundsKey) {
-    prevInitialBoundsKeyRef.current = initialBoundsKey;
+  // Layout effect so this runs before sibling InitialBounds useEffects fitBounds.
+  useLayoutEffect(() => {
     settledRef.current = false;
-  }
+  }, [initialBoundsKey]);
 
   useEffect(() => {
     onUserMapInteractRef.current = onUserMapInteract;
@@ -456,7 +461,7 @@ function ClusteredVenueMarkers({
   // Create in an effect (not useMemo) so React Strict Mode / remounts get a
   // fresh clusterer. useMemo + setMap(null) cleanup left a dead instance that
   // stopped clustering while AdvancedMarkers stayed on the map.
-  const [clusterer, setClusterer] = useState<MarkerClusterer | null>(null);
+  const clustererRef = useRef<MarkerClusterer | null>(null);
 
   useEffect(() => {
     if (!map) {
@@ -467,25 +472,29 @@ function ClusteredVenueMarkers({
       map,
       renderer: venueClusterRenderer,
     });
-    setClusterer(instance);
+    clustererRef.current = instance;
 
     return () => {
       instance.clearMarkers();
       (instance as unknown as google.maps.OverlayView).setMap(null);
-      setClusterer((current) => (current === instance ? null : current));
+      if (clustererRef.current === instance) {
+        clustererRef.current = null;
+      }
     };
   }, [map]);
 
   useEffect(() => {
+    const clusterer = clustererRef.current;
     if (!clusterer) {
       return;
     }
 
     clusterer.clearMarkers();
     clusterer.addMarkers(Object.values(markers));
-  }, [clusterer, markers]);
+  }, [map, markers]);
 
   useEffect(() => {
+    const clusterer = clustererRef.current;
     if (!clusterer) {
       return;
     }
@@ -508,7 +517,7 @@ function ClusteredVenueMarkers({
     return () => {
       listener.remove();
     };
-  }, [clusterer, markers, onInfoWindowClose, selectedMarker]);
+  }, [map, markers, onInfoWindowClose, selectedMarker]);
 
   const setMarkerRef = useCallback((marker: Marker | null, venueId: number) => {
     const key = String(venueId);
@@ -525,7 +534,8 @@ function ClusteredVenueMarkers({
         return current;
       }
 
-      const { [key]: _, ...rest } = current;
+      const rest = { ...current };
+      delete rest[key];
       return rest;
     });
   }, []);
