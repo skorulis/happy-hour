@@ -1,6 +1,7 @@
 import {
   and,
   count,
+  countDistinct,
   desc,
   eq,
   exists,
@@ -50,6 +51,7 @@ export type PopularSuburb = {
   postcode: string | null;
   heroImage: string | null;
   dealCount: number;
+  venueCount: number;
 };
 
 export type VenueSearchResult = {
@@ -297,6 +299,7 @@ export async function listPopularSuburbs(
   limit?: number,
 ): Promise<PopularSuburb[]> {
   const dealCount = count(deal.id);
+  const venueCount = countDistinct(venue.id);
 
   const query = db
     .select({
@@ -305,6 +308,7 @@ export async function listPopularSuburbs(
       postcode: suburb.postcode,
       heroImage: suburb.heroImage,
       dealCount,
+      venueCount,
     })
     .from(suburb)
     .innerJoin(venue, eq(venue.suburbId, suburb.id))
@@ -318,6 +322,7 @@ export async function listPopularSuburbs(
 /** Every suburb, including those with no deals (dealCount may be 0). */
 export async function listAllSuburbs(): Promise<PopularSuburb[]> {
   const dealCount = count(deal.id);
+  const venueCount = countDistinct(venue.id);
 
   return db
     .select({
@@ -326,6 +331,7 @@ export async function listAllSuburbs(): Promise<PopularSuburb[]> {
       postcode: suburb.postcode,
       heroImage: suburb.heroImage,
       dealCount,
+      venueCount,
     })
     .from(suburb)
     .leftJoin(venue, eq(venue.suburbId, suburb.id))

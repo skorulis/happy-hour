@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { EditDealContent } from "@/components/EditDealContent";
@@ -9,6 +8,9 @@ import type { ProcessedDeal } from "@/lib/extract/types";
 
 const buttonClassName =
   "w-full rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-fg transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60";
+
+const secondaryButtonClassName =
+  "w-full rounded-lg border border-border px-4 py-2 text-sm font-medium text-secondary transition-colors hover:bg-surface-muted";
 
 const MAX_PIXELS = 12_000_000;
 
@@ -114,7 +116,6 @@ export function NewDealPageContent({
   venueName,
   venuePath,
 }: NewDealPageContentProps) {
-  const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const previewUrlRef = useRef<string | null>(null);
@@ -124,6 +125,7 @@ export function NewDealPageContent({
   const [processingMessageIndex, setProcessingMessageIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [needsSignIn, setNeedsSignIn] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [deals, setDeals] = useState<ProcessedDeal[]>([]);
 
   const dealsToCreate = deals.filter((deal) => deal.status !== "rejected");
@@ -295,22 +297,37 @@ export function NewDealPageContent({
         throw new Error(dealsPayload.error ?? "Failed to create deals");
       }
 
-      router.push(venuePath);
+      setSubmitted(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create deals");
     } finally {
       setIsSaving(false);
     }
-  }, [
-    createCount,
-    dealsToCreate,
-    file,
-    isProcessing,
-    isSaving,
-    router,
-    venueId,
-    venuePath,
-  ]);
+  }, [createCount, dealsToCreate, file, isProcessing, isSaving, venueId]);
+
+  if (submitted) {
+    return (
+      <div className="mx-auto flex w-full max-w-md flex-col gap-6 text-center">
+        <header className="space-y-2">
+          <h1 className="text-3xl font-bold text-foreground">
+            Thank you for your contribution
+          </h1>
+          <p className="text-sm text-secondary">
+            It is currently waiting for approval
+          </p>
+        </header>
+
+        <div className="flex flex-col gap-3">
+          <Link href="/profile/contributions" className={buttonClassName}>
+            View your contributions
+          </Link>
+          <Link href={venuePath} className={secondaryButtonClassName}>
+            Back to venue
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6">

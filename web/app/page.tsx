@@ -7,7 +7,7 @@ import { listPopularSuburbs } from "@/lib/search/queries";
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const popularSuburbs = await listPopularSuburbs(10);
+  const popularSuburbs = await listPopularSuburbs(20);
 
   return (
     <>

@@ -141,9 +141,15 @@ export function PopularSuburbs({
                     {formatSuburbLabel(suburb)}
                   </span>
                 </span>
-                <span className="shrink-0 text-sm text-muted">
-                  {suburb.dealCount}{" "}
-                  {suburb.dealCount === 1 ? "deal" : "deals"}
+                <span className="flex shrink-0 flex-col items-end text-sm leading-tight text-muted">
+                  <span>
+                    {suburb.venueCount}{" "}
+                    {suburb.venueCount === 1 ? "venue" : "venues"}
+                  </span>
+                  <span>
+                    {suburb.dealCount}{" "}
+                    {suburb.dealCount === 1 ? "deal" : "deals"}
+                  </span>
                 </span>
               </Link>
             </li>
