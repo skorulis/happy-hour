@@ -8,7 +8,7 @@ export default function NearbyPage() {
         <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-10">
           <header>
             <h1 className="text-3xl font-bold text-foreground">
-              Find pub and bar deals
+            Your evening starts here
             </h1>
           </header>
         </div>
