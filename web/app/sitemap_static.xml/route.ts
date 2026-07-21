@@ -28,6 +28,7 @@ export function GET() {
     urlEntry(`${base}/map`, now, "daily", "0.9"),
     urlEntry(`${base}/all-suburbs`, now, "daily", "0.8"),
     urlEntry(`${base}/venue-search`, now, "daily", "0.7"),
+    urlEntry(`${base}/about`, now, "monthly", "0.5"),
   ];
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries.join("\n")}\n</urlset>`;

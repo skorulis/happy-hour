@@ -80,6 +80,49 @@ body {
   }
 }
 
+@keyframes dusk-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(3deg);
+  }
+}
+
+.animate-dusk-float {
+  animation: dusk-float 8s ease-in-out infinite;
+}
+
+@keyframes dusk-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-dusk-rise {
+  animation: dusk-rise 0.7s ease-out both;
+}
+
+@keyframes dusk-glow-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(245 158 11 / 0.2), var(--shadow-card);
+  }
+  50% {
+    box-shadow: 0 0 28px 4px rgb(245 158 11 / 0.28), var(--shadow-card);
+  }
+}
+
+.animate-dusk-glow-pulse {
+  animation: dusk-glow-pulse 4s ease-in-out infinite;
+}
+
 /* Blend Google Maps InfoWindow chrome into the custom dusk card. */
 .gm-style .gm-style-iw-c {
   padding: 0 !important;
