@@ -47,6 +47,7 @@ type SearchMapViewProps = {
   onViewportIdle?: (bounds: MapBounds) => void;
   autoFitBounds?: boolean;
   initialBounds?: MapBounds | null;
+  onUserMapInteract?: () => void;
 };
 
 type SelectedMarker = number | "user" | null;
@@ -172,6 +173,62 @@ function ViewportIdleReporter({
       if (debounceRef.current) {
         clearTimeout(debounceRef.current);
       }
+    };
+  }, [map]);
+
+  return null;
+}
+
+function MapInteractionReporter({
+  onUserMapInteract,
+  initialBounds,
+}: {
+  onUserMapInteract: () => void;
+  initialBounds: MapBounds | null;
+}) {
+  const map = useMap();
+  const onUserMapInteractRef = useRef(onUserMapInteract);
+  const settledRef = useRef(false);
+  const initialBoundsKey = initialBounds ? boundsKey(initialBounds) : null;
+  const prevInitialBoundsKeyRef = useRef(initialBoundsKey);
+
+  // Reset before sibling InitialBounds effects run fitBounds in this commit.
+  if (prevInitialBoundsKeyRef.current !== initialBoundsKey) {
+    prevInitialBoundsKeyRef.current = initialBoundsKey;
+    settledRef.current = false;
+  }
+
+  useEffect(() => {
+    onUserMapInteractRef.current = onUserMapInteract;
+  }, [onUserMapInteract]);
+
+  useEffect(() => {
+    if (!map) {
+      return;
+    }
+
+    settledRef.current = false;
+
+    function reportInteract() {
+      onUserMapInteractRef.current();
+    }
+
+    const idleListener = map.addListener("idle", () => {
+      settledRef.current = true;
+    });
+    const dragListener = map.addListener("dragstart", reportInteract);
+    const clickListener = map.addListener("click", reportInteract);
+    const zoomListener = map.addListener("zoom_changed", () => {
+      if (settledRef.current) {
+        reportInteract();
+      }
+    });
+
+    return () => {
+      idleListener.remove();
+      dragListener.remove();
+      clickListener.remove();
+      zoomListener.remove();
     };
   }, [map]);
 
@@ -348,6 +405,7 @@ function SearchMapCanvas({
   searchDays,
   fullScreen,
   onViewportIdle,
+  onUserMapInteract,
   autoFitBounds,
   initialBounds,
   selectedMarker,
@@ -362,6 +420,7 @@ function SearchMapCanvas({
   searchDays: number[];
   fullScreen: boolean;
   onViewportIdle?: (bounds: MapBounds) => void;
+  onUserMapInteract?: () => void;
   autoFitBounds: boolean;
   initialBounds: MapBounds | null;
   selectedMarker: SelectedMarker;
@@ -410,6 +469,13 @@ function SearchMapCanvas({
         <ViewportIdleReporter onViewportIdle={onViewportIdle} />
       ) : null}
 
+      {onUserMapInteract ? (
+        <MapInteractionReporter
+          onUserMapInteract={onUserMapInteract}
+          initialBounds={initialBounds}
+        />
+      ) : null}
+
       {userLocation ? (
         <UserLocationMarker
           userLocation={userLocation}
@@ -442,15 +508,23 @@ export function SearchMapView({
   onViewportIdle,
   autoFitBounds = true,
   initialBounds = null,
+  onUserMapInteract,
 }: SearchMapViewProps) {
   const [selectedMarker, setSelectedMarker] = useState<SelectedMarker>(null);
   const now = useCurrentMinute();
+  const onUserMapInteractRef = useRef(onUserMapInteract);
+
+  useEffect(() => {
+    onUserMapInteractRef.current = onUserMapInteract;
+  }, [onUserMapInteract]);
 
   const handleVenueSelect = useCallback((venueId: number) => {
+    onUserMapInteractRef.current?.();
     setSelectedMarker((current) => (current === venueId ? null : venueId));
   }, []);
 
   const handleUserSelect = useCallback(() => {
+    onUserMapInteractRef.current?.();
     setSelectedMarker((current) => (current === "user" ? null : "user"));
   }, []);
 
@@ -478,6 +552,7 @@ export function SearchMapView({
           searchDays={searchDays}
           fullScreen={fullScreen}
           onViewportIdle={onViewportIdle}
+          onUserMapInteract={onUserMapInteract}
           autoFitBounds={autoFitBounds}
           initialBounds={initialBounds}
           selectedMarker={selectedMarker}
