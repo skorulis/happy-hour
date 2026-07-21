@@ -67,6 +67,19 @@ body {
   font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
 
+/* iOS Safari auto-zooms focused inputs with font-size below 16px. */
+@media (max-width: 767px) {
+  :is(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(
+        [type="file"]
+      ):not([type="hidden"]),
+    select,
+    textarea
+  ) {
+    font-size: 1rem;
+  }
+}
+
 /* Blend Google Maps InfoWindow chrome into the custom dusk card. */
 .gm-style .gm-style-iw-c {
   padding: 0 !important;
