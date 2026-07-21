@@ -34,6 +34,7 @@ type SearchBarProps = {
   onWhereChange?: (where: WhereFilter) => void;
   segments?: SearchBarSegment[];
   className?: string;
+  embedded?: boolean;
 };
 
 type ActiveSegment = SearchBarSegment | null;
@@ -254,6 +255,7 @@ export function SearchBar({
   onWhatChange,
   segments = DEFAULT_SEGMENTS,
   className = "",
+  embedded = false,
 }: SearchBarProps) {
   const [activeSegment, setActiveSegment] = useState<ActiveSegment>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -288,7 +290,7 @@ export function SearchBar({
 
   function handleSegmentClick(segment: SearchBarSegment) {
     toggleSegment(segment);
-    window.setTimeout(() => {
+    setTimeout(() => {
       ignoreInputBlurCloseRef.current = false;
     }, 0);
   }
@@ -302,7 +304,7 @@ export function SearchBar({
       clearTimeout(pendingInputBlurCloseRef.current);
     }
 
-    pendingInputBlurCloseRef.current = window.setTimeout(() => {
+    pendingInputBlurCloseRef.current = setTimeout(() => {
       pendingInputBlurCloseRef.current = null;
       if (!ignoreInputBlurCloseRef.current) {
         setActiveSegment(null);
@@ -352,16 +354,24 @@ export function SearchBar({
   const hasOpenSegment = openSegment !== null;
   const handleWhereChange = onWhereChange ?? (() => {});
 
+  const cardClassName = embedded
+    ? hasOpenSegment
+      ? "bg-surface-muted"
+      : "bg-transparent"
+    : hasOpenSegment
+      ? "bg-surface-muted"
+      : "bg-surface-elevated";
+
   return (
     <section
       ref={containerRef}
-      className={`mx-auto w-full max-w-3xl ${className}`}
+      className={`mx-auto w-full ${embedded ? "" : "max-w-3xl"} ${className}`}
     >
       <div
-        className={`relative rounded-2xl border border-border shadow-md transition-colors md:rounded-full ${
-          hasOpenSegment
-            ? "bg-surface-muted"
-            : "bg-surface-elevated"
+        className={`relative transition-colors ${
+          embedded
+            ? cardClassName
+            : `rounded-2xl border border-border shadow-md md:rounded-full ${cardClassName}`
         }`}
       >
         {/* Desktop: horizontal pill */}

@@ -2,8 +2,8 @@
 
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useState } from "react";
-import { Search } from "lucide-react";
 import { MapErrorBoundary } from "@/components/MapErrorBoundary";
+import { MobileMapSearchShell } from "@/components/search/MobileMapSearchShell";
 import { SearchBar } from "@/components/search/SearchBar";
 import type { WhereFilter } from "@/components/search/SuburbSelect";
 import { useSearchFilters } from "@/lib/search/useSearchFilters";
@@ -72,11 +72,17 @@ export function MapPage({ initialWhere }: MapPageProps) {
     setFiltersExpanded(false);
   }, []);
 
-  const showSearchBar = !isMobile || filtersExpanded;
-
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
-      {showSearchBar ? (
+      {isMobile ? (
+        <MobileMapSearchShell
+          filtersExpanded={filtersExpanded}
+          onExpand={() => setFiltersExpanded(true)}
+          filters={filters}
+          onDaysApply={handleDaysApply}
+          onWhatChange={handleWhatChange}
+        />
+      ) : (
         <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-center px-4 pt-4">
           <SearchBar
             className="pointer-events-auto max-w-2xl"
@@ -86,15 +92,6 @@ export function MapPage({ initialWhere }: MapPageProps) {
             onWhatChange={handleWhatChange}
           />
         </div>
-      ) : (
-        <button
-          type="button"
-          aria-label="Search filters"
-          onClick={() => setFiltersExpanded(true)}
-          className="absolute top-4 right-4 z-10 inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-surface-elevated text-secondary shadow-md transition-colors hover:border-accent hover:bg-accent-muted hover:text-accent-soft"
-        >
-          <Search aria-hidden className="h-5 w-5" strokeWidth={1.75} />
-        </button>
       )}
 
       <MapErrorBoundary fallback={<MapCrashFallback />}>
