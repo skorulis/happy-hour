@@ -1,5 +1,11 @@
 import { user } from "@/db/auth-schema";
-import { deal, dealSchedule, suburb, venue } from "@/db/schema";
+import {
+  deal,
+  dealSchedule,
+  suburb,
+  venue,
+  type DealStatus,
+} from "@/db/schema";
 import { db } from "@/lib/db";
 import { formatScheduleSummary } from "@/lib/search/schedule";
 import { desc, eq, inArray } from "drizzle-orm";
@@ -14,6 +20,17 @@ export type AdminPendingDeal = {
   venueName: string;
   venueSuburbName: string | null;
   submitterEmail: string | null;
+  scheduleSummary: string;
+};
+
+export type UserDealContribution = {
+  id: number;
+  title: string | null;
+  details: string | null;
+  status: DealStatus;
+  syncedAt: Date;
+  venueName: string;
+  venueSuburbName: string | null;
   scheduleSummary: string;
 };
 
@@ -77,6 +94,67 @@ export async function getPendingDeals(): Promise<AdminPendingDeal[]> {
     venueName: row.venueName,
     venueSuburbName: row.venueSuburbName,
     submitterEmail: row.submitterEmail,
+    scheduleSummary: formatScheduleSummary(schedulesByDeal.get(row.id) ?? []),
+  }));
+}
+
+export async function getContributionsForUser(
+  userId: string,
+): Promise<UserDealContribution[]> {
+  const rows = await db
+    .select({
+      id: deal.id,
+      title: deal.title,
+      details: deal.details,
+      status: deal.status,
+      syncedAt: deal.syncedAt,
+      venueName: venue.name,
+      venueSuburbName: suburb.name,
+    })
+    .from(deal)
+    .innerJoin(venue, eq(deal.venueId, venue.id))
+    .leftJoin(suburb, eq(venue.suburbId, suburb.id))
+    .where(eq(deal.userId, userId))
+    .orderBy(desc(deal.syncedAt));
+
+  if (rows.length === 0) {
+    return [];
+  }
+
+  const dealIds = rows.map((row) => row.id);
+  const schedules = await db
+    .select({
+      dealId: dealSchedule.dealId,
+      dayOfWeek: dealSchedule.dayOfWeek,
+      startMinute: dealSchedule.startMinute,
+      endMinute: dealSchedule.endMinute,
+    })
+    .from(dealSchedule)
+    .where(inArray(dealSchedule.dealId, dealIds))
+    .orderBy(dealSchedule.dayOfWeek, dealSchedule.startMinute);
+
+  const schedulesByDeal = new Map<
+    number,
+    { dayOfWeek: number; startMinute: number; endMinute: number }[]
+  >();
+  for (const schedule of schedules) {
+    const existing = schedulesByDeal.get(schedule.dealId) ?? [];
+    existing.push({
+      dayOfWeek: schedule.dayOfWeek,
+      startMinute: schedule.startMinute,
+      endMinute: schedule.endMinute,
+    });
+    schedulesByDeal.set(schedule.dealId, existing);
+  }
+
+  return rows.map((row) => ({
+    id: row.id,
+    title: row.title,
+    details: row.details,
+    status: row.status as DealStatus,
+    syncedAt: row.syncedAt,
+    venueName: row.venueName,
+    venueSuburbName: row.venueSuburbName,
     scheduleSummary: formatScheduleSummary(schedulesByDeal.get(row.id) ?? []),
   }));
 }

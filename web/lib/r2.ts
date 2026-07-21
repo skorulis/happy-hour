@@ -23,8 +23,9 @@ export function resolveR2Config(): R2Config {
   const accessKeyId = process.env.R2_ACCESS_KEY_ID?.trim();
   const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY?.trim();
   const bucket = process.env.R2_BUCKET?.trim() || "duskroute-heroes";
-  const publicBaseUrl =
-    process.env.R2_PUBLIC_BASE_URL?.trim() || "https://images.duskroute.com";
+  const publicBaseUrl = normalizePublicBaseUrl(
+    process.env.R2_PUBLIC_BASE_URL?.trim() || "https://images.duskroute.com",
+  );
 
   if (!accountId || !accessKeyId || !secretAccessKey) {
     throw new R2ConfigError("Cloudflare R2 is not configured");
@@ -35,8 +36,46 @@ export function resolveR2Config(): R2Config {
     accessKeyId,
     secretAccessKey,
     bucket,
-    publicBaseUrl: publicBaseUrl.replace(/\/$/, ""),
+    publicBaseUrl,
   };
+}
+
+/**
+ * Ensures R2_PUBLIC_BASE_URL is a clean http(s) origin/path.
+ * Catches common .env mistakes where the next KEY=value line was pasted
+ * onto the same line (e.g. `https://images.duskroute.comAMPLITUDE_API_KEY=…`).
+ */
+export function normalizePublicBaseUrl(raw: string): string {
+  const trimmed = raw.trim();
+  if (trimmed.length === 0) {
+    throw new R2ConfigError("R2_PUBLIC_BASE_URL is empty");
+  }
+
+  if (trimmed.includes("=")) {
+    throw new R2ConfigError(
+      "R2_PUBLIC_BASE_URL is malformed (contains '='). Check for a missing newline before the next env var",
+    );
+  }
+
+  let parsed: URL;
+  try {
+    parsed = new URL(trimmed);
+  } catch {
+    throw new R2ConfigError("R2_PUBLIC_BASE_URL must be a valid URL");
+  }
+
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    throw new R2ConfigError("R2_PUBLIC_BASE_URL must use http or https");
+  }
+
+  if (!parsed.hostname.includes(".")) {
+    throw new R2ConfigError(
+      "R2_PUBLIC_BASE_URL hostname looks invalid. Check for a missing newline in your .env",
+    );
+  }
+
+  const path = parsed.pathname.replace(/\/$/, "");
+  return `${parsed.origin}${path === "/" ? "" : path}`;
 }
 
 function createR2Client(config: R2Config): S3Client {

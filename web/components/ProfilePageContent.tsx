@@ -42,6 +42,12 @@ export function ProfilePageContent({ name, email, isAdmin }: ProfilePageContentP
 
       <div className="flex flex-wrap gap-3">
         <Link
+          href="/profile/contributions"
+          className="w-fit rounded-lg border border-border px-4 py-2 text-sm font-medium text-secondary transition-colors hover:bg-surface-muted"
+        >
+          Contributions
+        </Link>
+        <Link
           href="/profile/reports"
           className="w-fit rounded-lg border border-border px-4 py-2 text-sm font-medium text-secondary transition-colors hover:bg-surface-muted"
         >
