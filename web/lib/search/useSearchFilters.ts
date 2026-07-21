@@ -569,6 +569,7 @@ export function useSearchFilters(options?: {
       ? "Location is not supported by your browser."
       : null;
   const displayError = error ?? geolocationError;
+  const locationAccessError = nearMePending && displayError !== null;
   const resultsTitle =
     filters.where.kind === "suburb"
       ? formatSuburbDealsTitle(
@@ -591,6 +592,7 @@ export function useSearchFilters(options?: {
     loadingDeals,
     locating,
     error: displayError,
+    locationAccessError,
     resultsTitle,
     initialMapBounds,
     handleDaysApply,

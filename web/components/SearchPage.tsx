@@ -1,5 +1,6 @@
 "use client";
 
+import { MapPinCheckInside } from "lucide-react";
 import { PopularSuburbs } from "@/components/PopularSuburbs";
 import { VenueSearchCard } from "@/components/VenueSearchCard";
 import { SearchBar } from "@/components/search/SearchBar";
@@ -24,6 +25,7 @@ export function SearchPage({ initialWhere, popularSuburbs }: SearchPageProps) {
     loadingDeals,
     locating,
     error,
+    locationAccessError,
     resultsTitle,
     handleDaysApply,
     handleWhereChange,
@@ -66,16 +68,41 @@ export function SearchPage({ initialWhere, popularSuburbs }: SearchPageProps) {
             <h2 className="text-xl font-semibold text-foreground">
               {resultsTitle}
             </h2>
-            <p className="text-sm text-muted">
-              {locating
-                ? "Getting your location..."
-                : loadingDeals
-                  ? "Loading..."
-                  : `${allVenueGroups.length} venues · ${totalDeals} deals`}
-            </p>
+            {locationAccessError ? null : (
+              <p className="text-sm text-muted">
+                {locating
+                  ? "Getting your location..."
+                  : loadingDeals
+                    ? "Loading..."
+                    : `${allVenueGroups.length} venues · ${totalDeals} deals`}
+              </p>
+            )}
           </div>
 
-          {error ? (
+          {locationAccessError ? (
+            <div className="flex flex-col items-center gap-4 px-4 py-12 text-center">
+              <MapPinCheckInside
+                aria-hidden
+                className="size-12 text-muted"
+                strokeWidth={1.5}
+              />
+              <div className="space-y-1">
+                <p className="text-base font-medium text-foreground">
+                  This page needs your location to find nearby deals
+                </p>
+                <p className="text-sm text-muted">
+                  Please enable location access in your browser
+                </p>
+              </div>
+              <button
+                type="button"
+                className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-fg transition-colors hover:bg-accent-hover"
+                onClick={() => window.location.reload()}
+              >
+                Reload
+              </button>
+            </div>
+          ) : error ? (
             <p className="rounded-lg border border-border bg-danger-muted px-4 py-3 text-sm text-danger">
               {error}
             </p>
