@@ -105,9 +105,13 @@ async function fetchSuburbBySlug(
 export function useSearchFilters(options?: {
   mapViewport?: boolean;
   initialWhere?: WhereFilter;
+  initialDeals?: DealSearchResult[];
+  initialNearbyDeals?: DealSearchResult[];
 }) {
   const mapViewport = options?.mapViewport ?? false;
   const initialWhere = options?.initialWhere ?? { kind: "anywhere" as const };
+  const initialDeals = options?.initialDeals ?? [];
+  const initialNearbyDeals = options?.initialNearbyDeals ?? [];
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
@@ -119,6 +123,11 @@ export function useSearchFilters(options?: {
   const syncedPathRef = useRef(
     typeof window === "undefined" ? pathname : currentPathname(),
   );
+  // First client fetch after SSR seed (all-days → today, or matching ?days=)
+  // should not flash "Loading…" over already-rendered cards.
+  const skipLoadingOnceRef = useRef(
+    initialDeals.length > 0 || initialNearbyDeals.length > 0,
+  );
 
   const [filters, setFilters] = useState<SearchFilters>(() =>
     searchParamsToInitialFilters(searchParams, initialWhere),
@@ -126,8 +135,9 @@ export function useSearchFilters(options?: {
   const [debouncedWhat, setDebouncedWhat] = useState<string[]>(
     () => searchParamsToInitialFilters(searchParams, initialWhere).what,
   );
-  const [deals, setDeals] = useState<DealSearchResult[]>([]);
-  const [nearbyDeals, setNearbyDeals] = useState<DealSearchResult[]>([]);
+  const [deals, setDeals] = useState<DealSearchResult[]>(initialDeals);
+  const [nearbyDeals, setNearbyDeals] =
+    useState<DealSearchResult[]>(initialNearbyDeals);
   const [loadingDeals, setLoadingDeals] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [viewportBounds, setViewportBoundsState] = useState<MapBounds | null>(
@@ -456,7 +466,11 @@ export function useSearchFilters(options?: {
         return;
       }
 
-      setLoadingDeals(true);
+      if (skipLoadingOnceRef.current) {
+        // Keep seeded SSR cards visible during the first refine (all-days → today).
+      } else {
+        setLoadingDeals(true);
+      }
       if (!isNearMePending(filters.where)) {
         setError(null);
       }
@@ -485,6 +499,7 @@ export function useSearchFilters(options?: {
 
         const nearby = mapViewport ? [] : (data.nearbyDeals ?? []);
         setNearbyDeals(nearby);
+        skipLoadingOnceRef.current = false;
 
         if (filterChanged || !mapViewport) {
           const whereKind = filters.where.kind;
@@ -507,6 +522,7 @@ export function useSearchFilters(options?: {
       } catch (fetchError) {
         if ((fetchError as Error).name !== "AbortError") {
           setError("Could not load deals.");
+          skipLoadingOnceRef.current = false;
         }
       } finally {
         setLoadingDeals(false);

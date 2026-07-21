@@ -2,10 +2,15 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { SearchPage } from "@/components/SearchPage";
-import { findSuburbByWhereSlug } from "@/lib/search/queries";
+import {
+  findSuburbByWhereSlug,
+  searchDealsForSuburb,
+} from "@/lib/search/queries";
 import { formatSuburbDealsMetadataTitle } from "@/lib/search/schedule";
 import { NEARBY_WHERE_SLUG, suburbWherePath } from "@/lib/search/slugs";
 import { parseDaysParam, parseWhatTokens } from "@/lib/search/url";
+
+const SUBURB_SSR_DEAL_LIMIT = 200;
 
 type SuburbSearchPageProps = {
   params: Promise<{ suburb: string }>;
@@ -55,8 +60,10 @@ export async function generateMetadata({
 
 export default async function SuburbSearchPage({
   params,
+  searchParams,
 }: SuburbSearchPageProps) {
   const { suburb: whereSlug } = await params;
+  const { days: daysParam, q: whatParam } = await searchParams;
 
   if (whereSlug === NEARBY_WHERE_SLUG) {
     notFound();
@@ -66,6 +73,18 @@ export default async function SuburbSearchPage({
   if (!suburb) {
     notFound();
   }
+
+  const days = parseDaysParam(daysParam ?? null);
+  const what = whatParam ? parseWhatTokens(whatParam) : [];
+  // Empty days → omit day filter so SSR HTML includes the full week for crawlers.
+  // Explicit ?days= stays honest for deep links.
+  const { deals: initialDeals, nearbyDeals: initialNearbyDeals } =
+    await searchDealsForSuburb({
+      suburbId: suburb.id,
+      ...(days.length > 0 ? { days } : {}),
+      ...(what.length > 0 ? { query: what.join(",") } : {}),
+      limit: SUBURB_SSR_DEAL_LIMIT,
+    });
 
   const initialWhere = {
     kind: "suburb" as const,
@@ -85,7 +104,11 @@ export default async function SuburbSearchPage({
         </div>
       }
     >
-      <SearchPage initialWhere={initialWhere} />
+      <SearchPage
+        initialWhere={initialWhere}
+        initialDeals={initialDeals}
+        initialNearbyDeals={initialNearbyDeals}
+      />
     </Suspense>
   );
 }

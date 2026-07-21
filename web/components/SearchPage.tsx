@@ -5,16 +5,23 @@ import { PopularSuburbs } from "@/components/PopularSuburbs";
 import { VenueSearchCard } from "@/components/VenueSearchCard";
 import { SearchBar } from "@/components/search/SearchBar";
 import type { WhereFilter } from "@/components/search/SuburbSelect";
-import type { PopularSuburb } from "@/lib/search/queries";
+import type { DealSearchResult, PopularSuburb } from "@/lib/search/queries";
 import { filtersToBrowserSearchParams } from "@/lib/search/url";
 import { useSearchFilters } from "@/lib/search/useSearchFilters";
 
 type SearchPageProps = {
   initialWhere?: WhereFilter;
+  initialDeals?: DealSearchResult[];
+  initialNearbyDeals?: DealSearchResult[];
   popularSuburbs?: PopularSuburb[];
 };
 
-export function SearchPage({ initialWhere, popularSuburbs }: SearchPageProps) {
+export function SearchPage({
+  initialWhere,
+  initialDeals,
+  initialNearbyDeals,
+  popularSuburbs,
+}: SearchPageProps) {
   const {
     filters,
     venueGroups,
@@ -30,7 +37,7 @@ export function SearchPage({ initialWhere, popularSuburbs }: SearchPageProps) {
     handleDaysApply,
     handleWhereChange,
     handleWhatChange,
-  } = useSearchFilters({ initialWhere });
+  } = useSearchFilters({ initialWhere, initialDeals, initialNearbyDeals });
 
   const showPopularSuburbs =
     filters.where.kind === "anywhere" && popularSuburbs !== undefined;

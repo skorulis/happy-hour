@@ -69,6 +69,11 @@ export function formatSuburbDealsMetadataTitle(
   days: number[],
   what: string[] = [],
 ): string {
+  // Bare suburb URLs SSR the full week; omit weekday so the title matches that body.
+  // Explicit single-day ?days= still gets a weekday prefix.
+  if (days.length === 0) {
+    return formatSuburbDealsTitle(suburbName, ALL_WEEKDAYS, what);
+  }
   return formatSuburbDealsTitle(suburbName, days, what);
 }
 

@@ -86,16 +86,21 @@ describe("formatSuburbDealsMetadataTitle", () => {
     ).toBe("Thursday Happy Hour Specials in Sydney");
   });
 
-  it("prefixes today when no day is selected", () => {
-    const today = DAY_LABELS[currentCalendarWeekday()];
+  it("omits the day when no day is selected (SSR all-days body)", () => {
     expect(formatSuburbDealsMetadataTitle("Sydney", [])).toBe(
-      `${today} Specials in Sydney`,
+      "Specials in Sydney",
     );
   });
 
   it("omits the day for multiple selections", () => {
     expect(formatSuburbDealsMetadataTitle("Sydney", [5, 6])).toBe(
       "Specials in Sydney",
+    );
+  });
+
+  it("keeps a single explicit day in the metadata title", () => {
+    expect(formatSuburbDealsMetadataTitle("Sydney", [5])).toBe(
+      "Thursday Specials in Sydney",
     );
   });
 });
