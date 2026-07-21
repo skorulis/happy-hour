@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Heart } from "lucide-react";
 import { resolveVenueMapIcon } from "@/lib/search/map-icon";
 import {
   AdvancedMarker,
@@ -23,6 +24,7 @@ import {
 import type { VenueGroupedDeals } from "@/components/VenueSearchCard";
 import { VenueMapPopup } from "@/components/search/VenueMapPopup";
 import { track } from "@/lib/analytics/client";
+import { useFavorites } from "@/lib/favorites/useFavorites";
 import { hasAnyDealActiveNow } from "@/lib/search/schedule";
 import {
   boundsFromGoogleMap,
@@ -329,6 +331,7 @@ function VenueMarker({
   const [marker, setMarker] = useState<google.maps.marker.AdvancedMarkerElement | null>(
     null,
   );
+  const { isFavorite } = useFavorites();
   const iconName = useMemo(
     () => resolveVenueMapIcon(group.deals, now),
     [group.deals, now],
@@ -339,6 +342,7 @@ function VenueMarker({
     () => hasAnyDealActiveNow(group.deals, now),
     [group.deals, now],
   );
+  const hasFavoriteDeal = group.deals.some((deal) => isFavorite(deal.id));
 
   const handleMarkerClick = useCallback(() => {
     if (!isSelected) {
@@ -372,7 +376,26 @@ function VenueMarker({
         position={position}
         onClick={handleMarkerClick}
       >
-        {showProductIcon ? (
+        {hasFavoriteDeal ? (
+          <div className="relative flex h-10 w-10 items-center justify-center">
+            <Heart
+              aria-hidden
+              className={`absolute inset-0 h-10 w-10 drop-shadow-md ${
+                hasActiveDeal
+                  ? "fill-accent text-accent"
+                  : "fill-slate-300 text-slate-300"
+              }`}
+              strokeWidth={1.5}
+            />
+            {showProductIcon ? (
+              <ProductMapIcon
+                name={iconName}
+                className="relative z-10 text-accent-fg"
+                size={16}
+              />
+            ) : null}
+          </div>
+        ) : showProductIcon ? (
           <div
             className={`flex h-8 w-8 items-center justify-center rounded-full shadow-md ${
               hasActiveDeal
