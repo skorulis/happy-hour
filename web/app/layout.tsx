@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
-  title: "DuskRoute",
+  title: "DuskRoute: Your evening starts here",
   description: "Find happy hour deals near you as the day fades into night.",
 };
 

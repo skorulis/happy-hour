@@ -578,7 +578,7 @@ export function useSearchFilters(options?: {
           filters.what,
         )
       : filters.where.kind === "nearMe"
-        ? "Deals near you"
+        ? "Specials near you"
         : "Results";
 
   return {

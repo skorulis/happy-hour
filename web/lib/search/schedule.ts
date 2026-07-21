@@ -57,11 +57,11 @@ export function formatSuburbDealsTitle(
 ): string {
   const dayLabel = suburbTitleDayLabel(days);
   const productLabel = suburbTitleProductLabel(what);
-  const dealsPhrase = productLabel ? `${productLabel} Deals` : "Deals";
+  const specialsPhrase = productLabel ? `${productLabel} Specials` : "Specials";
   if (dayLabel) {
-    return `${dayLabel} ${dealsPhrase} in ${suburbName}`;
+    return `${dayLabel} ${specialsPhrase} in ${suburbName}`;
   }
-  return `${dealsPhrase} in ${suburbName}`;
+  return `${specialsPhrase} in ${suburbName}`;
 }
 
 export function formatSuburbDealsMetadataTitle(
@@ -81,7 +81,7 @@ function suburbTitleDayLabel(days: number[]): string | null {
   return DAY_LABELS[day] ?? null;
 }
 
-/** One or two product names for the title; 0 or 3+ falls back to generic Deals. */
+/** One or two product names for the title; 0 or 3+ falls back to generic Specials. */
 function suburbTitleProductLabel(what: string[]): string | null {
   if (what.length === 0 || what.length > 2) {
     return null;
