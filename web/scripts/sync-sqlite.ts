@@ -22,6 +22,7 @@ type SqliteSuburb = {
   lat: number | null;
   lng: number | null;
   sqkm: number | null;
+  population: number | null;
   statistic_area: string | null;
   region_id: number | null;
   hero_image: string | null;
@@ -290,6 +291,7 @@ async function main() {
           lat: suburbRow.lat,
           lng: suburbRow.lng,
           sqkm: suburbRow.sqkm,
+          population: suburbRow.population,
           heroImage,
           regionId,
         })
@@ -302,6 +304,7 @@ async function main() {
             lat: suburbRow.lat,
             lng: suburbRow.lng,
             sqkm: suburbRow.sqkm,
+            population: suburbRow.population,
             heroImage,
             regionId,
           },

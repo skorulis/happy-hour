@@ -49,6 +49,7 @@ export const suburb = pgTable(
     lat: doublePrecision("lat"),
     lng: doublePrecision("lng"),
     sqkm: doublePrecision("sqkm"),
+    population: integer("population"),
     heroImage: text("hero_image"),
   },
   (table) => [

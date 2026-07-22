@@ -1,0 +1,1 @@
+ALTER TABLE "suburb" ADD COLUMN "population" integer;

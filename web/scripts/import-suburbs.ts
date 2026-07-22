@@ -32,6 +32,7 @@ type AustralianSuburb = {
   lat: number;
   lng: number;
   sqkm: number;
+  population: number;
   statistic_area: string;
   local_goverment_area: string;
 };
@@ -48,6 +49,7 @@ type DbSuburb = {
   lat: number | null;
   lng: number | null;
   sqkm: number | null;
+  population: number | null;
   statistic_area: string | null;
   region_id: number | null;
 };
@@ -106,6 +108,16 @@ function resolveSqlitePath(rawPath: string | undefined): string {
 
 function suburbKey(name: string, postcode: string | null): string {
   return `${name}\u0000${postcode ?? ""}`;
+}
+
+function ensureSuburbPopulationColumn(db: Database.Database): void {
+  const columns = db.prepare("PRAGMA table_info(suburb)").all() as Array<{
+    name: string;
+  }>;
+  if (columns.some((column) => column.name === "population")) {
+    return;
+  }
+  db.exec("ALTER TABLE suburb ADD COLUMN population INTEGER");
 }
 
 function canonicalSuburbName(
@@ -188,6 +200,7 @@ function hasMissingFields(
     (existing.lat == null && entry.lat != null) ||
     (existing.lng == null && entry.lng != null) ||
     (existing.sqkm == null && entry.sqkm != null) ||
+    (existing.population == null && entry.population != null) ||
     (existing.statistic_area == null && entry.statistic_area != null) ||
     (existing.region_id == null && regionId != null)
   );
@@ -244,7 +257,7 @@ function upsertCatalog(
     DbSuburb | undefined
   >(
     `
-    SELECT id, name, postcode, state, lat, lng, sqkm, statistic_area, region_id
+    SELECT id, name, postcode, state, lat, lng, sqkm, population, statistic_area, region_id
     FROM suburb
     WHERE name = ? AND (
       (postcode IS NULL AND ? IS NULL) OR postcode = ?
@@ -254,8 +267,8 @@ function upsertCatalog(
 
   const insertStmt = db.prepare(
     `
-    INSERT INTO suburb (name, postcode, state, lat, lng, sqkm, statistic_area, region_id)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO suburb (name, postcode, state, lat, lng, sqkm, population, statistic_area, region_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `,
   );
 
@@ -267,6 +280,7 @@ function upsertCatalog(
         lat = COALESCE(lat, ?),
         lng = COALESCE(lng, ?),
         sqkm = COALESCE(sqkm, ?),
+        population = COALESCE(population, ?),
         statistic_area = COALESCE(statistic_area, ?),
         region_id = COALESCE(region_id, ?)
     WHERE id = ?
@@ -315,6 +329,7 @@ function upsertCatalog(
             entry.lat,
             entry.lng,
             entry.sqkm,
+            entry.population,
             entry.statistic_area,
             regionId,
           );
@@ -338,6 +353,7 @@ function upsertCatalog(
           entry.lat,
           entry.lng,
           entry.sqkm,
+          entry.population,
           entry.statistic_area,
           regionId,
           existing.id,
@@ -364,6 +380,8 @@ async function main() {
   const db = new Database(sqlitePath);
 
   try {
+    ensureSuburbPopulationColumn(db);
+
     const existingCount = (
       db.prepare("SELECT COUNT(*) AS count FROM suburb").get() as {
         count: number;
