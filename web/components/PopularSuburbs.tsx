@@ -1,17 +1,18 @@
 import Link from "next/link";
 import { List, LocateFixed } from "lucide-react";
-import type { PopularSuburb } from "@/lib/search/queries";
+import type { PopularSuburb, SuburbStatistics } from "@/lib/search/queries";
 import { NEARBY_WHERE_SLUG, suburbWherePath } from "@/lib/search/slugs";
 import { suburbHeroThumbUrl } from "@/lib/search/venue-hero-url";
 
 type PopularSuburbsProps = {
-  suburbs: PopularSuburb[];
+  suburbs: PopularSuburb[] | SuburbStatistics[];
   search?: string;
   title?: string;
   description?: string;
   includeSpecialLinks?: boolean;
   includeNearbyLink?: boolean;
   allSuburbsHref?: string;
+  statsMode?: "counts" | "perSqkm";
 };
 
 type SuburbListItem =
@@ -25,6 +26,14 @@ type SuburbListItem =
 
 function formatSuburbLabel(suburb: PopularSuburb): string {
   return suburb.postcode ? `${suburb.name} (${suburb.postcode})` : suburb.name;
+}
+
+function formatPerSqkm(value: number | null): string {
+  return value === null ? "—" : value.toFixed(1);
+}
+
+function isSuburbStatistics(suburb: PopularSuburb): suburb is SuburbStatistics {
+  return "venuesPerSqkm" in suburb && "dealsPerSqkm" in suburb;
 }
 
 function buildListItems(
@@ -77,6 +86,7 @@ export function PopularSuburbs({
   includeSpecialLinks = false,
   includeNearbyLink = true,
   allSuburbsHref = "/all-suburbs",
+  statsMode = "counts",
 }: PopularSuburbsProps) {
   const items = buildListItems(
     suburbs,
@@ -160,14 +170,27 @@ export function PopularSuburbs({
                   </span>
                 </span>
                 <span className="flex shrink-0 flex-col items-end text-sm leading-tight text-muted">
-                  <span>
-                    {suburb.venueCount}{" "}
-                    {suburb.venueCount === 1 ? "venue" : "venues"}
-                  </span>
-                  <span>
-                    {suburb.dealCount}{" "}
-                    {suburb.dealCount === 1 ? "deal" : "deals"}
-                  </span>
+                  {statsMode === "perSqkm" && isSuburbStatistics(suburb) ? (
+                    <>
+                      <span>
+                        {formatPerSqkm(suburb.venuesPerSqkm)} venues/km²
+                      </span>
+                      <span>
+                        {formatPerSqkm(suburb.dealsPerSqkm)} deals/km²
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span>
+                        {suburb.venueCount}{" "}
+                        {suburb.venueCount === 1 ? "venue" : "venues"}
+                      </span>
+                      <span>
+                        {suburb.dealCount}{" "}
+                        {suburb.dealCount === 1 ? "deal" : "deals"}
+                      </span>
+                    </>
+                  )}
                 </span>
               </Link>
             </li>

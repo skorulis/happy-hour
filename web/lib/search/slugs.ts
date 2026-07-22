@@ -136,3 +136,7 @@ export function regionPath(name: string): string {
 export function regionAllSuburbsPath(name: string): string {
   return `/${regionSlug(name)}/all-suburbs`;
 }
+
+export function regionStatisticsPath(name: string): string {
+  return `/${regionSlug(name)}/statistics`;
+}

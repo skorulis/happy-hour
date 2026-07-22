@@ -64,6 +64,12 @@ export type PopularSuburb = {
   venueCount: number;
 };
 
+export type SuburbStatistics = PopularSuburb & {
+  sqkm: number | null;
+  venuesPerSqkm: number | null;
+  dealsPerSqkm: number | null;
+};
+
 export type VenueSearchResult = {
   id: number;
   name: string;
@@ -330,6 +336,10 @@ export type ListAllSuburbsOptions = {
   regionId?: number;
 };
 
+export type ListSuburbStatisticsOptions = {
+  regionId?: number;
+};
+
 export async function listPopularSuburbs(
   limit?: number,
   options: ListPopularSuburbsOptions = {},
@@ -416,6 +426,68 @@ export async function listAllSuburbs(
   return query
     .groupBy(suburb.id, suburb.name, suburb.postcode, suburb.heroImage)
     .orderBy(desc(dealCount), suburb.name);
+}
+
+export async function listSuburbStatistics(
+  options: ListSuburbStatisticsOptions = {},
+): Promise<SuburbStatistics[]> {
+  const dealCount = count(deal.id);
+  const venueCount = countDistinct(venue.id);
+
+  let query = db
+    .select({
+      id: suburb.id,
+      name: suburb.name,
+      postcode: suburb.postcode,
+      heroImage: suburb.heroImage,
+      sqkm: suburb.sqkm,
+      dealCount,
+      venueCount,
+    })
+    .from(suburb)
+    .leftJoin(venue, eq(venue.suburbId, suburb.id))
+    .leftJoin(
+      deal,
+      and(eq(deal.venueId, venue.id), eq(deal.status, "approved")),
+    )
+    .$dynamic();
+
+  if (options.regionId !== undefined) {
+    query = query.where(eq(suburb.regionId, options.regionId));
+  }
+
+  const rows = await query.groupBy(
+    suburb.id,
+    suburb.name,
+    suburb.postcode,
+    suburb.heroImage,
+    suburb.sqkm,
+  );
+
+  return rows
+    .map((row) => {
+      const sqkm = row.sqkm;
+      const hasValidSqkm = sqkm !== null && sqkm > 0;
+      return {
+        ...row,
+        venuesPerSqkm: hasValidSqkm ? row.venueCount / sqkm : null,
+        dealsPerSqkm: hasValidSqkm ? row.dealCount / sqkm : null,
+      };
+    })
+    .sort((a, b) => {
+      const aHasSqkm = a.sqkm !== null && a.sqkm > 0;
+      const bHasSqkm = b.sqkm !== null && b.sqkm > 0;
+      if (aHasSqkm && !bHasSqkm) return -1;
+      if (!aHasSqkm && bHasSqkm) return 1;
+      if (aHasSqkm && bHasSqkm) {
+        const dealDiff = (b.dealsPerSqkm ?? 0) - (a.dealsPerSqkm ?? 0);
+        if (dealDiff !== 0) return dealDiff;
+        return a.name.localeCompare(b.name);
+      }
+      const dealCountDiff = b.dealCount - a.dealCount;
+      if (dealCountDiff !== 0) return dealCountDiff;
+      return a.name.localeCompare(b.name);
+    });
 }
 
 export async function listRegions(): Promise<RegionWithCounts[]> {

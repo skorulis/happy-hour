@@ -3,6 +3,7 @@ import {
   parseSuburbWhereSlug,
   regionAllSuburbsPath,
   regionPath,
+  regionStatisticsPath,
   resolveSuburbWhereSlug,
   resolveVenueSuburbSlug,
   suburbMapRedirectPath,
@@ -45,6 +46,13 @@ describe("region slugs", () => {
     expect(regionAllSuburbsPath("Sydney")).toBe("/sydney/all-suburbs");
     expect(regionAllSuburbsPath("Sunshine Coast")).toBe(
       "/sunshine-coast/all-suburbs",
+    );
+  });
+
+  it("builds statistics paths", () => {
+    expect(regionStatisticsPath("Sydney")).toBe("/sydney/statistics");
+    expect(regionStatisticsPath("Sunshine Coast")).toBe(
+      "/sunshine-coast/statistics",
     );
   });
 });
