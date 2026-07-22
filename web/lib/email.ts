@@ -101,3 +101,50 @@ export async function sendPasswordResetEmail({
     throw new Error(error.message ?? "Failed to send password reset email.");
   }
 }
+
+export async function sendVenueAdminAddedEmail({
+  to,
+  venueName,
+  adminUrl,
+}: {
+  to: string;
+  venueName: string;
+  adminUrl: string;
+}): Promise<void> {
+  const subject = `You have been added as an admin for ${venueName}`;
+  const text = [
+    `You've been added as an admin for ${venueName} on DuskRoute.`,
+    "",
+    `Open the venue admin page: ${adminUrl}`,
+    "",
+    "If you were not expecting this, you can ignore this email.",
+  ].join("\n");
+
+  const html = `
+    <p>You've been added as an admin for <strong>${venueName}</strong> on DuskRoute.</p>
+    <p><a href="${adminUrl}">Open the venue admin page</a></p>
+    <p style="color:#666;font-size:14px;">If you were not expecting this, you can ignore this email.</p>
+  `.trim();
+
+  const apiKey = process.env.RESEND_API_KEY?.trim();
+  if (!apiKey) {
+    console.info(
+      `[email] RESEND_API_KEY unset — venue admin added for ${to}: venue=${venueName} url=${adminUrl}`,
+    );
+    return;
+  }
+
+  const resend = new Resend(apiKey);
+  const { error } = await resend.emails.send({
+    from: getFromAddress(),
+    to,
+    subject,
+    text,
+    html,
+  });
+
+  if (error) {
+    console.error("[email] Failed to send venue admin email:", error);
+    throw new Error(error.message ?? "Failed to send venue admin email.");
+  }
+}

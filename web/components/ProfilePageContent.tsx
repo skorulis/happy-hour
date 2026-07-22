@@ -10,6 +10,7 @@ type ProfilePageContentProps = {
   email: string;
   emailVerified: boolean;
   isAdmin: boolean;
+  hasVenueAdmin: boolean;
 };
 
 export function ProfilePageContent({
@@ -17,6 +18,7 @@ export function ProfilePageContent({
   email,
   emailVerified,
   isAdmin,
+  hasVenueAdmin,
 }: ProfilePageContentProps) {
   const router = useRouter();
   const [verifyLoading, setVerifyLoading] = useState(false);
@@ -104,6 +106,14 @@ export function ProfilePageContent({
         >
           Reports
         </Link>
+        {hasVenueAdmin ? (
+          <Link
+            href="/profile/venue-admin"
+            className="w-fit rounded-lg border border-border px-4 py-2 text-sm font-medium text-secondary transition-colors hover:bg-surface-muted"
+          >
+            Venue admin
+          </Link>
+        ) : null}
         {isAdmin ? (
           <Link
             href="/admin"

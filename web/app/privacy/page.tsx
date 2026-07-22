@@ -126,9 +126,10 @@ export default function PrivacyPage() {
             </li>
           </ul>
           <p>
-            We use email for account verification (one-time codes and links) and
-            password reset links. We do not operate a marketing newsletter from
-            this product today.
+            We use email for account verification (one-time codes and links),
+            password reset links, and notices when you are added as a venue
+            admin. We do not operate a marketing newsletter from this product
+            today.
           </p>
         </section>
 
@@ -173,7 +174,7 @@ export default function PrivacyPage() {
             </li>
             <li>
               <span className="text-foreground">Resend</span> — transactional
-              verification and password-reset emails.
+              verification, password-reset, and venue-admin notification emails.
             </li>
             <li>
               <span className="text-foreground">Amplitude</span> — product
