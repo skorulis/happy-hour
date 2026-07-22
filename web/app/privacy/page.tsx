@@ -113,7 +113,8 @@ export default function PrivacyPage() {
             </li>
             <li>
               Moderate user-submitted deals and reports (including showing
-              submitter or reporter email to admins).
+              submitter or reporter email to site admins and to venue admins for
+              reports on their venues).
             </li>
             <li>
               Understand product usage via analytics (for example page views,

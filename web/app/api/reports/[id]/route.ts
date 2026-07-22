@@ -1,5 +1,5 @@
 import { deal, dealReport } from "@/db/schema";
-import { isAdmin } from "@/lib/admin";
+import { canManageVenue, isAdmin } from "@/lib/admin";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { eq } from "drizzle-orm";
@@ -50,8 +50,10 @@ export async function PATCH(request: Request, context: RouteContext) {
       dealId: dealReport.dealId,
       status: dealReport.status,
       userId: dealReport.userId,
+      venueId: deal.venueId,
     })
     .from(dealReport)
+    .innerJoin(deal, eq(dealReport.dealId, deal.id))
     .where(eq(dealReport.id, reportId))
     .limit(1);
 
@@ -67,9 +69,12 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
 
   const admin = isAdmin(session.user.email);
-  const isOwner = existing.userId === session.user.id;
+  const isReporter = existing.userId === session.user.id;
+  const venueManager = await canManageVenue(session.user, existing.venueId);
   const allowed =
-    admin || (isOwner && body.action === "reject");
+    admin ||
+    venueManager ||
+    (isReporter && body.action === "reject");
 
   if (!allowed) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });

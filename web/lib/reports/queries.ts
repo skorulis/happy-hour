@@ -68,6 +68,44 @@ export async function getAllDealReports(): Promise<AdminDealReport[]> {
   }));
 }
 
+export async function getDealReportsForVenue(
+  venueId: number,
+): Promise<AdminDealReport[]> {
+  const rows = await db
+    .select({
+      id: dealReport.id,
+      category: dealReport.category,
+      details: dealReport.details,
+      createdAt: dealReport.createdAt,
+      dealId: dealReport.dealId,
+      dealTitle: deal.title,
+      venueName: venue.name,
+      venueSuburbName: suburb.name,
+      reporterEmail: user.email,
+    })
+    .from(dealReport)
+    .innerJoin(deal, eq(dealReport.dealId, deal.id))
+    .innerJoin(venue, eq(deal.venueId, venue.id))
+    .leftJoin(suburb, eq(venue.suburbId, suburb.id))
+    .leftJoin(user, eq(dealReport.userId, user.id))
+    .where(
+      and(eq(dealReport.status, "new"), eq(deal.venueId, venueId)),
+    )
+    .orderBy(desc(dealReport.createdAt));
+
+  return rows.map((row) => ({
+    id: row.id,
+    category: row.category as DealReportCategory,
+    details: row.details,
+    createdAt: row.createdAt,
+    dealId: row.dealId,
+    dealTitle: row.dealTitle,
+    venueName: row.venueName,
+    venueSuburbName: row.venueSuburbName,
+    reporterEmail: row.reporterEmail,
+  }));
+}
+
 export async function getReportsForUser(
   userId: string,
 ): Promise<UserDealReport[]> {

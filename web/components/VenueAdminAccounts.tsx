@@ -95,8 +95,6 @@ export function VenueAdminAccounts({
 
   return (
     <section className="space-y-4">
-      <h2 className="text-xl font-semibold text-foreground">Accounts</h2>
-
       {owners.length === 0 ? (
         <p className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted">
           No venue admins yet
