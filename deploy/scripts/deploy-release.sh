@@ -71,6 +71,11 @@ fi
 
 cd "${DEPLOY_DIR}"
 
+# Free space before pull (keeps images used by running containers).
+# Do not use --volumes — never delete duskroute_pgdata.
+echo "==> Pruning unused Docker images…"
+docker image prune -af
+
 echo "==> Pulling images for tag ${IMAGE_TAG}…"
 IMAGE_TAG="${IMAGE_TAG}" \
 WEB_IMAGE_REPO="${WEB_IMAGE_REPO}" \
@@ -88,6 +93,10 @@ IMAGE_TAG="${IMAGE_TAG}" \
 WEB_IMAGE_REPO="${WEB_IMAGE_REPO}" \
 MIGRATE_IMAGE_REPO="${MIGRATE_IMAGE_REPO}" \
 docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" up -d --remove-orphans
+
+# Drop previous web tag + one-shot migrate image now that the new stack is up.
+echo "==> Pruning unused Docker images after deploy…"
+docker image prune -af
 
 echo "==> Deployment complete."
 docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" ps

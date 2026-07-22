@@ -13,6 +13,11 @@ services:
   postgres:
     image: postgres:16
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-happyhour}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.production}
@@ -35,6 +40,11 @@ services:
   web:
     image: ${WEB_IMAGE_REPO}:${IMAGE_TAG:-latest}
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     environment:
       # Prefer DATABASE_URL from .env.production (must URL-encode special chars in password).
       DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in .env.production}
@@ -72,6 +82,11 @@ services:
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     ports:
       - "80:80"
       - "443:443"

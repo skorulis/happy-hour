@@ -101,6 +101,21 @@ export MIGRATE_IMAGE_REPO=ghcr.io/skorulis/happy-hour-migrate
 /opt/happy-hour/deploy/scripts/deploy-release.sh
 ```
 
+### Disk space / Docker cleanup
+
+Each release pulls uniquely tagged `web` + `migrate` images. `deploy-release.sh` runs `docker image prune -af` before pull and after `up` so unused old tags do not accumulate (images still used by running containers are kept; Postgres volumes are never pruned).
+
+If a deploy fails with `no space left on device`, free space on the droplet first, then re-run the Actions job:
+
+```bash
+docker system df
+docker images
+docker image prune -af
+df -h /
+```
+
+Do **not** run `docker system prune --volumes` — that can delete unused volumes and must never remove `duskroute_pgdata`.
+
 ### GitHub Actions secrets
 
 | Secret | Example / notes |
