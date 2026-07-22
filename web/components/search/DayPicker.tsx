@@ -1,9 +1,7 @@
 "use client";
 
-import { Check } from "lucide-react";
 import { useState } from "react";
 import {
-  ALL_WEEKDAYS,
   currentCalendarWeekday,
   DAY_LABELS,
   snapToTimeFilterHour,
@@ -24,14 +22,23 @@ type DayPickerPanelProps = {
   open: boolean;
 };
 
-function Checkbox({
+/** Single day kept; multi-day / empty / all-seven collapse to All days (`[]`). */
+function initialDraftDays(days: number[]): number[] {
+  return days.length === 1 ? days : [];
+}
+
+function Radio({
   checked,
   onChange,
+  name,
+  value,
   label,
   badge,
 }: {
   checked: boolean;
   onChange: () => void;
+  name: string;
+  value: string;
   label: string;
   badge?: string;
 }) {
@@ -42,18 +49,18 @@ function Checkbox({
       }`}
     >
       <span
-        className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
-          checked
-            ? "border-accent bg-accent text-accent-fg"
-            : "border-border bg-surface"
+        className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
+          checked ? "border-accent bg-accent" : "border-border bg-surface"
         }`}
       >
         {checked ? (
-          <Check className="h-3 w-3" strokeWidth={3} />
+          <span className="h-1.5 w-1.5 rounded-full bg-accent-fg" />
         ) : null}
       </span>
       <input
-        type="checkbox"
+        type="radio"
+        name={name}
+        value={value}
         checked={checked}
         onChange={onChange}
         className="sr-only"
@@ -76,7 +83,9 @@ export function DayPickerPanel({
   onApply,
   onClose,
 }: DayPickerPanelProps) {
-  const [draftDays, setDraftDays] = useState<number[]>(days);
+  const [draftDays, setDraftDays] = useState<number[]>(() =>
+    initialDraftDays(days),
+  );
   const [showTimeFilter, setShowTimeFilter] = useState(timeRange !== null);
   const [startMinute, setStartMinute] = useState<number | null>(
     timeRange?.startMinute !== undefined
@@ -90,18 +99,15 @@ export function DayPickerPanel({
   );
   const today = currentCalendarWeekday();
 
-  const allDaysSelected = draftDays.length === ALL_WEEKDAYS.length;
+  const selectedDay = draftDays.length === 1 ? draftDays[0]! : null;
+  const allDaysSelected = selectedDay === null;
 
-  function toggleDay(day: number) {
-    setDraftDays((current) =>
-      current.includes(day)
-        ? current.filter((value) => value !== day)
-        : [...current, day],
-    );
+  function selectDay(day: number) {
+    setDraftDays([day]);
   }
 
-  function toggleAllDays() {
-    setDraftDays(allDaysSelected ? [] : [...ALL_WEEKDAYS]);
+  function selectAllDays() {
+    setDraftDays([]);
   }
 
   function handleClear() {
@@ -147,10 +153,12 @@ export function DayPickerPanel({
       <div className="grid grid-cols-2 gap-x-4">
         <div className="min-w-0">
           {leftColumn.map((day) => (
-            <Checkbox
+            <Radio
               key={day}
-              checked={draftDays.includes(day)}
-              onChange={() => toggleDay(day)}
+              name="day-filter"
+              value={String(day)}
+              checked={selectedDay === day}
+              onChange={() => selectDay(day)}
               label={DAY_LABELS[day]}
               badge={day === today ? "Today" : undefined}
             />
@@ -158,24 +166,25 @@ export function DayPickerPanel({
         </div>
         <div className="min-w-0">
           {rightColumn.map((day) => (
-            <Checkbox
+            <Radio
               key={day}
-              checked={draftDays.includes(day)}
-              onChange={() => toggleDay(day)}
+              name="day-filter"
+              value={String(day)}
+              checked={selectedDay === day}
+              onChange={() => selectDay(day)}
               label={DAY_LABELS[day]}
               badge={day === today ? "Today" : undefined}
             />
           ))}
+          <Radio
+            name="day-filter"
+            value="all"
+            checked={allDaysSelected}
+            onChange={selectAllDays}
+            label="All days"
+          />
         </div>
       </div>
-
-      <div className="my-3 border-t border-border-subtle" />
-
-      <Checkbox
-        checked={allDaysSelected}
-        onChange={toggleAllDays}
-        label="All days"
-      />
 
       <div className="my-3 border-t border-border-subtle" />
 
