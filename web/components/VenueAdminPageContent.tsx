@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { AdminReportActions } from "@/components/AdminReportActions";
 import { AdminTabs } from "@/components/AdminTabs";
+import { PendingDealsList } from "@/components/PendingDealsList";
 import { VenueAdminAccounts } from "@/components/VenueAdminAccounts";
+import type { AdminPendingDeal } from "@/lib/deals/queries";
 import type { AdminDealReport } from "@/lib/reports/queries";
 import { getDealReportCategoryLabel } from "@/lib/reports/categories";
 import { venuePath } from "@/lib/search/slugs";
@@ -11,6 +13,7 @@ type VenueAdminPageContentProps = {
   venueName: string;
   venueId: number;
   reports: AdminDealReport[];
+  pendingDeals: AdminPendingDeal[];
   owners: VenueOwner[];
   currentUserId: string;
 };
@@ -68,6 +71,7 @@ export function VenueAdminPageContent({
   venueName,
   venueId,
   reports,
+  pendingDeals,
   owners,
   currentUserId,
 }: VenueAdminPageContentProps) {
@@ -88,6 +92,12 @@ export function VenueAdminPageContent({
             label: "Issue Reports",
             badgeCount: reports.length,
             content: <ReportsList reports={reports} />,
+          },
+          {
+            id: "pending-deals",
+            label: "Pending deals",
+            badgeCount: pendingDeals.length,
+            content: <PendingDealsList pendingDeals={pendingDeals} />,
           },
           {
             id: "accounts",

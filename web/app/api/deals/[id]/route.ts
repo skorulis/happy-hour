@@ -1,5 +1,5 @@
 import { deal } from "@/db/schema";
-import { isAdmin } from "@/lib/admin";
+import { canManageVenue, isAdmin } from "@/lib/admin";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { eq } from "drizzle-orm";
@@ -25,10 +25,6 @@ export async function PATCH(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (!isAdmin(session.user.email)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
   const { id: idParam } = await context.params;
   const dealId = parseDealId(idParam);
 
@@ -52,6 +48,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     .select({
       id: deal.id,
       status: deal.status,
+      venueId: deal.venueId,
     })
     .from(deal)
     .where(eq(deal.id, dealId))
@@ -66,6 +63,13 @@ export async function PATCH(request: Request, context: RouteContext) {
       { error: "Deal has already been resolved" },
       { status: 409 },
     );
+  }
+
+  const admin = isAdmin(session.user.email);
+  const venueManager = await canManageVenue(session.user, existing.venueId);
+
+  if (!admin && !venueManager) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   try {

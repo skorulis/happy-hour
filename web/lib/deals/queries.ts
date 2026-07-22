@@ -8,7 +8,7 @@ import {
 } from "@/db/schema";
 import { db } from "@/lib/db";
 import { formatScheduleSummary } from "@/lib/search/schedule";
-import { desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 
 export type AdminPendingDeal = {
   id: number;
@@ -34,7 +34,9 @@ export type UserDealContribution = {
   scheduleSummary: string;
 };
 
-export async function getPendingDeals(): Promise<AdminPendingDeal[]> {
+async function queryPendingDeals(
+  venueId?: number,
+): Promise<AdminPendingDeal[]> {
   const rows = await db
     .select({
       id: deal.id,
@@ -51,7 +53,12 @@ export async function getPendingDeals(): Promise<AdminPendingDeal[]> {
     .innerJoin(venue, eq(deal.venueId, venue.id))
     .leftJoin(suburb, eq(venue.suburbId, suburb.id))
     .leftJoin(user, eq(deal.userId, user.id))
-    .where(eq(deal.status, "new"))
+    .where(
+      and(
+        eq(deal.status, "new"),
+        venueId != null ? eq(deal.venueId, venueId) : undefined,
+      ),
+    )
     .orderBy(desc(deal.syncedAt));
 
   if (rows.length === 0) {
@@ -96,6 +103,16 @@ export async function getPendingDeals(): Promise<AdminPendingDeal[]> {
     submitterEmail: row.submitterEmail,
     scheduleSummary: formatScheduleSummary(schedulesByDeal.get(row.id) ?? []),
   }));
+}
+
+export async function getPendingDeals(): Promise<AdminPendingDeal[]> {
+  return queryPendingDeals();
+}
+
+export async function getPendingDealsForVenue(
+  venueId: number,
+): Promise<AdminPendingDeal[]> {
+  return queryPendingDeals(venueId);
 }
 
 export async function getContributionsForUser(

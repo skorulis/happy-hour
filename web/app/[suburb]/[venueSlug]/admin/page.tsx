@@ -5,6 +5,7 @@ import { RestrictedMessage } from "@/components/AdminPageContent";
 import { VenueAdminPageContent } from "@/components/VenueAdminPageContent";
 import { canManageVenue } from "@/lib/admin";
 import { auth } from "@/lib/auth";
+import { getPendingDealsForVenue } from "@/lib/deals/queries";
 import { getDealReportsForVenue } from "@/lib/reports/queries";
 import { getVenueDetailBySlug } from "@/lib/search/queries";
 import { listVenueOwners } from "@/lib/venue-ownership/queries";
@@ -45,9 +46,10 @@ export default async function VenueAdminPage({ params }: VenueAdminPageProps) {
     return <RestrictedMessage />;
   }
 
-  const [owners, reports] = await Promise.all([
+  const [owners, reports, pendingDeals] = await Promise.all([
     listVenueOwners(venue.id),
     getDealReportsForVenue(venue.id),
+    getPendingDealsForVenue(venue.id),
   ]);
 
   return (
@@ -55,6 +57,7 @@ export default async function VenueAdminPage({ params }: VenueAdminPageProps) {
       venueName={venue.name}
       venueId={venue.id}
       reports={reports}
+      pendingDeals={pendingDeals}
       owners={owners}
       currentUserId={session.user.id}
     />
