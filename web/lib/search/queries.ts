@@ -66,8 +66,11 @@ export type PopularSuburb = {
 
 export type SuburbStatistics = PopularSuburb & {
   sqkm: number | null;
+  population: number | null;
   venuesPerSqkm: number | null;
   dealsPerSqkm: number | null;
+  venuesPerThousand: number | null;
+  dealsPerThousand: number | null;
 };
 
 export type VenueSearchResult = {
@@ -441,6 +444,7 @@ export async function listSuburbStatistics(
       postcode: suburb.postcode,
       heroImage: suburb.heroImage,
       sqkm: suburb.sqkm,
+      population: suburb.population,
       dealCount,
       venueCount,
     })
@@ -462,32 +466,26 @@ export async function listSuburbStatistics(
     suburb.postcode,
     suburb.heroImage,
     suburb.sqkm,
+    suburb.population,
   );
 
-  return rows
-    .map((row) => {
-      const sqkm = row.sqkm;
-      const hasValidSqkm = sqkm !== null && sqkm > 0;
-      return {
-        ...row,
-        venuesPerSqkm: hasValidSqkm ? row.venueCount / sqkm : null,
-        dealsPerSqkm: hasValidSqkm ? row.dealCount / sqkm : null,
-      };
-    })
-    .sort((a, b) => {
-      const aHasSqkm = a.sqkm !== null && a.sqkm > 0;
-      const bHasSqkm = b.sqkm !== null && b.sqkm > 0;
-      if (aHasSqkm && !bHasSqkm) return -1;
-      if (!aHasSqkm && bHasSqkm) return 1;
-      if (aHasSqkm && bHasSqkm) {
-        const dealDiff = (b.dealsPerSqkm ?? 0) - (a.dealsPerSqkm ?? 0);
-        if (dealDiff !== 0) return dealDiff;
-        return a.name.localeCompare(b.name);
-      }
-      const dealCountDiff = b.dealCount - a.dealCount;
-      if (dealCountDiff !== 0) return dealCountDiff;
-      return a.name.localeCompare(b.name);
-    });
+  return rows.map((row) => {
+    const sqkm = row.sqkm;
+    const population = row.population;
+    const hasValidSqkm = sqkm !== null && sqkm > 0;
+    const hasValidPopulation = population !== null && population > 0;
+    return {
+      ...row,
+      venuesPerSqkm: hasValidSqkm ? row.venueCount / sqkm : null,
+      dealsPerSqkm: hasValidSqkm ? row.dealCount / sqkm : null,
+      venuesPerThousand: hasValidPopulation
+        ? (row.venueCount / population) * 1000
+        : null,
+      dealsPerThousand: hasValidPopulation
+        ? (row.dealCount / population) * 1000
+        : null,
+    };
+  });
 }
 
 export async function listRegions(): Promise<RegionWithCounts[]> {

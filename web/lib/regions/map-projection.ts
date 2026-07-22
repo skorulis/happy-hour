@@ -1,5 +1,5 @@
 import { feature } from "topojson-client";
-import type { Feature, FeatureCollection, Geometry } from "geojson";
+import type { FeatureCollection, Geometry } from "geojson";
 import { geoMercator, geoPath, type GeoProjection } from "d3-geo";
 import type { Topology } from "topojson-specification";
 import australiaOutlineTopo from "@/data/australia-outline.json";

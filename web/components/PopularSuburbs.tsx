@@ -12,7 +12,7 @@ type PopularSuburbsProps = {
   includeSpecialLinks?: boolean;
   includeNearbyLink?: boolean;
   allSuburbsHref?: string;
-  statsMode?: "counts" | "perSqkm";
+  statsMode?: "counts" | "perSqkm" | "perThousand";
 };
 
 type SuburbListItem =
@@ -32,8 +32,17 @@ function formatPerSqkm(value: number | null): string {
   return value === null ? "—" : value.toFixed(1);
 }
 
+function formatPerThousand(value: number | null): string {
+  return value === null ? "—" : value.toFixed(1);
+}
+
 function isSuburbStatistics(suburb: PopularSuburb): suburb is SuburbStatistics {
-  return "venuesPerSqkm" in suburb && "dealsPerSqkm" in suburb;
+  return (
+    "venuesPerSqkm" in suburb &&
+    "dealsPerSqkm" in suburb &&
+    "venuesPerThousand" in suburb &&
+    "dealsPerThousand" in suburb
+  );
 }
 
 function buildListItems(
@@ -177,6 +186,16 @@ export function PopularSuburbs({
                       </span>
                       <span>
                         {formatPerSqkm(suburb.dealsPerSqkm)} deals/km²
+                      </span>
+                    </>
+                  ) : statsMode === "perThousand" &&
+                    isSuburbStatistics(suburb) ? (
+                    <>
+                      <span>
+                        {formatPerThousand(suburb.venuesPerThousand)} venues/1k
+                      </span>
+                      <span>
+                        {formatPerThousand(suburb.dealsPerThousand)} deals/1k
                       </span>
                     </>
                   ) : (

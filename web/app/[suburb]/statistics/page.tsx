@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { PopularSuburbs } from "@/components/PopularSuburbs";
+import { RegionStatisticsView } from "@/components/RegionStatisticsView";
 import { findRegionBySlug, listSuburbStatistics } from "@/lib/search/queries";
 import { regionStatisticsPath } from "@/lib/search/slugs";
 
@@ -20,7 +20,7 @@ export async function generateMetadata({
   }
 
   const title = `Statistics for ${region.name}`;
-  const description = `Venues and deals per square kilometre across suburbs in ${region.name}.`;
+  const description = `Compare venues and deals by density and population across suburbs in ${region.name}.`;
 
   return {
     title,
@@ -51,13 +51,7 @@ export default async function RegionStatisticsPage({
       </header>
 
       <section>
-        <PopularSuburbs
-          suburbs={suburbs}
-          statsMode="perSqkm"
-          title="Suburbs by density"
-          description="Venues and deals per square kilometre."
-          includeSpecialLinks={false}
-        />
+        <RegionStatisticsView suburbs={suburbs} regionName={region.name} />
       </section>
     </div>
   );
