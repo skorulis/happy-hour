@@ -80,6 +80,11 @@ export default function PrivacyPage() {
               account.
             </li>
             <li>
+              <span className="text-foreground">Venue ownership</span> — a link
+              between your account and a venue when you are authorized as a
+              venue admin for that venue.
+            </li>
+            <li>
               <span className="text-foreground">Analytics device ID</span> — a
               random ID stored in your browser and sent with product analytics
               events. If you are signed in, events may also include your user
@@ -102,6 +107,10 @@ export default function PrivacyPage() {
             <li>Create and manage accounts, sessions, and email verification.</li>
             <li>Power search, map views, and nearby results.</li>
             <li>Sync and display your favorites.</li>
+            <li>
+              Authorize venue admins to access venue-specific admin tools when
+              ownership is recorded for their account.
+            </li>
             <li>
               Moderate user-submitted deals and reports (including showing
               submitter or reporter email to admins).
@@ -131,7 +140,8 @@ export default function PrivacyPage() {
             <li>
               <span className="text-foreground">Application database</span> —
               Postgres hosted on a DigitalOcean droplet in Sydney (accounts,
-              sessions, favorites, deals, reports, and related app data).
+              sessions, favorites, venue ownership, deals, reports, and related
+              app data).
             </li>
             <li>
               <span className="text-foreground">Uploaded images</span> —

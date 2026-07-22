@@ -151,6 +151,29 @@ export const favoriteDeal = pgTable(
   ],
 );
 
+export const venueOwnership = pgTable(
+  "venue_ownership",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    venueId: integer("venue_id")
+      .notNull()
+      .references(() => venue.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("venue_ownership_user_venue_idx").on(
+      table.userId,
+      table.venueId,
+    ),
+    index("venue_ownership_user_id_idx").on(table.userId),
+    index("venue_ownership_venue_id_idx").on(table.venueId),
+  ],
+);
+
 export const dealSchedule = pgTable(
   "deal_schedule",
   {
@@ -192,6 +215,7 @@ export const venueRelations = relations(venue, ({ one, many }) => ({
     references: [venueLinks.venueId],
   }),
   deals: many(deal),
+  ownerships: many(venueOwnership),
 }));
 
 export const suburbRelations = relations(suburb, ({ many }) => ({
@@ -241,6 +265,17 @@ export const favoriteDealRelations = relations(favoriteDeal, ({ one }) => ({
   }),
 }));
 
+export const venueOwnershipRelations = relations(venueOwnership, ({ one }) => ({
+  venue: one(venue, {
+    fields: [venueOwnership.venueId],
+    references: [venue.id],
+  }),
+  user: one(user, {
+    fields: [venueOwnership.userId],
+    references: [user.id],
+  }),
+}));
+
 export const dealScheduleRelations = relations(dealSchedule, ({ one }) => ({
   deal: one(deal, {
     fields: [dealSchedule.dealId],
@@ -255,6 +290,7 @@ export type Deal = typeof deal.$inferSelect;
 export type DealSchedule = typeof dealSchedule.$inferSelect;
 export type DealReport = typeof dealReport.$inferSelect;
 export type FavoriteDeal = typeof favoriteDeal.$inferSelect;
+export type VenueOwnership = typeof venueOwnership.$inferSelect;
 export type SyncRun = typeof syncRun.$inferSelect;
 
 /** Full-text search vector for deals (used in raw SQL queries). */

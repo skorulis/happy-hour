@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { VenuePageContent } from "@/components/VenuePageContent";
+import { canManageVenue } from "@/lib/admin";
+import { auth } from "@/lib/auth";
 import { getVenueDetailBySlug } from "@/lib/search/queries";
 import { venuePath } from "@/lib/search/slugs";
 import { initialVenueDay, parseDaysParam } from "@/lib/search/url";
@@ -60,7 +63,18 @@ export default async function VenuePage({ params, searchParams }: VenuePageProps
 
   const initialSelectedDay = initialVenueDay(parseDaysParam(daysParam ?? null));
 
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+  const showAdminLink = session
+    ? await canManageVenue(session.user, venue.id)
+    : false;
+
   return (
-    <VenuePageContent venue={venue} initialSelectedDay={initialSelectedDay} />
+    <VenuePageContent
+      venue={venue}
+      initialSelectedDay={initialSelectedDay}
+      showAdminLink={showAdminLink}
+    />
   );
 }

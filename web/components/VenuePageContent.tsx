@@ -3,7 +3,7 @@ import { VenueMapCameraSeed } from "@/components/VenueMapCameraSeed";
 import { googleMapsPlaceUrl } from "@/lib/search/google-maps";
 import type { VenueDetailResult } from "@/lib/search/queries";
 import { venuePath } from "@/lib/search/slugs";
-import { Building2, CirclePlus, Link, MapPin } from "lucide-react";
+import { Building2, CirclePlus, Link, MapPin, Settings } from "lucide-react";
 import NextLink from "next/link";
 import type { ReactNode } from "react";
 import { SiFacebook, SiInstagram } from "react-icons/si";
@@ -11,6 +11,7 @@ import { SiFacebook, SiInstagram } from "react-icons/si";
 type VenuePageContentProps = {
   venue: VenueDetailResult;
   initialSelectedDay?: number | null;
+  showAdminLink?: boolean;
 };
 
 const linkClassName =
@@ -36,6 +37,7 @@ function VenueExternalLink({
 export function VenuePageContent({
   venue,
   initialSelectedDay,
+  showAdminLink = false,
 }: VenuePageContentProps) {
   const mapsUrl = googleMapsPlaceUrl(venue.name, venue.googleMapId);
   const path = venuePath(venue.suburbName, venue.name);
@@ -110,6 +112,16 @@ export function VenuePageContent({
             >
               Facebook
             </VenueExternalLink>
+          ) : null}
+          {showAdminLink ? (
+            <NextLink href={`${path}/admin`} className={linkClassName}>
+              <Settings
+                aria-hidden
+                className="h-4 w-4 shrink-0"
+                strokeWidth={1.5}
+              />
+              Admin
+            </NextLink>
           ) : null}
         </div>
         {venue.blurb ? (
