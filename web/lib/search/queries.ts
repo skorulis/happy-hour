@@ -306,6 +306,7 @@ export async function searchSuburbs(
 export type RegionWithCounts = {
   id: number;
   name: string;
+  slug: string;
   dealCount: number;
   venueCount: number;
 };
@@ -419,7 +420,7 @@ export async function listRegions(): Promise<RegionWithCounts[]> {
   const dealCount = count(deal.id);
   const venueCount = countDistinct(venue.id);
 
-  return db
+  const rows = await db
     .select({
       id: geographicRegion.id,
       name: geographicRegion.name,
@@ -435,6 +436,11 @@ export async function listRegions(): Promise<RegionWithCounts[]> {
     )
     .groupBy(geographicRegion.id, geographicRegion.name)
     .orderBy(desc(dealCount), geographicRegion.name);
+
+  return rows.map((row) => ({
+    ...row,
+    slug: regionSlug(row.name),
+  }));
 }
 
 export async function findRegionBySlug(

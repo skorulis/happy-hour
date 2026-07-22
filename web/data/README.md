@@ -2,6 +2,35 @@
 
 Shared keyword list used for search suggestions and query expansion. Defined in [`products.json`](products.json).
 
+## Region map boundaries
+
+The `/regions` page renders an SVG map from committed TopoJSON files:
+
+| File | Purpose |
+|------|---------|
+| [`region-boundaries.json`](region-boundaries.json) | Maps product region slugs to ABS ASGS boundary layers |
+| [`regions-australia.json`](regions-australia.json) | Clickable region polygons |
+| [`australia-outline.json`](australia-outline.json) | Muted Australia state background |
+
+### Refreshing boundaries
+
+When adding a region:
+
+1. Add an entry to `region-boundaries.json` (`absLayer`: `GCCSA` or `LGA`, `absName`: exact ABS feature name).
+2. Regenerate TopoJSON:
+
+```bash
+# Remote fetch from geo.abs.gov.au (no local ABS download required)
+npm run build:region-boundaries -- --fetch
+
+# Or from local ABS GeoJSON files
+ASGS_BOUNDARIES_PATH=~/Downloads/asgs-boundaries/2021/GeoJSON npm run build:region-boundaries
+```
+
+Local ASGS GeoJSON can be downloaded from [ABS ASGS Edition 3 digital boundary files](https://www.abs.gov.au/statistics/standards/australian-statistical-geography-standard-asgs-edition-3/jul2021-jun2026/access-and-downloads/digital-boundary-files).
+
+Commit the updated `.json` boundary files with your region change.
+
 ## Entry fields
 
 | Field | Required | Description |

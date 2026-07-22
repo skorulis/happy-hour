@@ -1,0 +1,10 @@
+{
+  "sydney": {
+    "absLayer": "GCCSA",
+    "absName": "Greater Sydney"
+  },
+  "sunshine-coast": {
+    "absLayer": "LGA",
+    "absName": "Sunshine Coast"
+  }
+}
