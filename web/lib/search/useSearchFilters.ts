@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { SearchFilters } from "@/components/search/SearchBar";
 import type { TimeRange } from "@/components/search/DayPicker";
 import type { WhereFilter } from "@/components/search/SuburbSelect";
@@ -47,6 +47,19 @@ function currentSearchString(): string {
 
 function currentPathname(): string {
   return window.location.pathname;
+}
+
+function filtersFromSeed(
+  where: WhereFilter,
+  days?: number[],
+  what?: string[],
+): SearchFilters {
+  return {
+    days: days ?? [],
+    timeRange: null,
+    where,
+    what: what ?? [],
+  };
 }
 
 function mergeDeals(
@@ -105,6 +118,8 @@ async function fetchSuburbBySlug(
 export function useSearchFilters(options?: {
   mapViewport?: boolean;
   initialWhere?: WhereFilter;
+  initialDays?: number[];
+  initialWhat?: string[];
   initialDeals?: DealSearchResult[];
   initialNearbyDeals?: DealSearchResult[];
 }) {
@@ -112,28 +127,28 @@ export function useSearchFilters(options?: {
   const initialWhere = options?.initialWhere ?? { kind: "anywhere" as const };
   const initialDeals = options?.initialDeals ?? [];
   const initialNearbyDeals = options?.initialNearbyDeals ?? [];
-  const searchParams = useSearchParams();
+  const seededFilters = filtersFromSeed(
+    initialWhere,
+    options?.initialDays,
+    options?.initialWhat,
+  );
   const pathname = usePathname();
   const router = useRouter();
+  // Seed from filter state (not window) so the mount sync can detect home/map
+  // deep links whose query string was not passed as server props.
   const syncedParamsRef = useRef(
-    typeof window === "undefined"
-      ? searchParams.toString()
-      : currentSearchString(),
+    filtersToBrowserSearchParams(seededFilters, seededFilters.what).toString(),
   );
-  const syncedPathRef = useRef(
-    typeof window === "undefined" ? pathname : currentPathname(),
-  );
+  const syncedPathRef = useRef(pathname);
   // First client fetch after SSR seed (all-days → today, or matching ?days=)
   // should not flash "Loading…" over already-rendered cards.
   const skipLoadingOnceRef = useRef(
     initialDeals.length > 0 || initialNearbyDeals.length > 0,
   );
 
-  const [filters, setFilters] = useState<SearchFilters>(() =>
-    searchParamsToInitialFilters(searchParams, initialWhere),
-  );
+  const [filters, setFilters] = useState<SearchFilters>(seededFilters);
   const [debouncedWhat, setDebouncedWhat] = useState<string[]>(
-    () => searchParamsToInitialFilters(searchParams, initialWhere).what,
+    () => seededFilters.what,
   );
   const [deals, setDeals] = useState<DealSearchResult[]>(initialDeals);
   const [nearbyDeals, setNearbyDeals] =
@@ -351,6 +366,9 @@ export function useSearchFilters(options?: {
       setDebouncedWhat(fromUrl.what);
     }
 
+    // Align with the real URL after hydration (home/map deep links) without
+    // useSearchParams, which would suspend the whole results tree.
+    syncFromBrowserUrl();
     window.addEventListener("popstate", syncFromBrowserUrl);
     return () => window.removeEventListener("popstate", syncFromBrowserUrl);
   }, []);

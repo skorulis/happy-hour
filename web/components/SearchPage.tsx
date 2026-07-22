@@ -11,6 +11,8 @@ import { useSearchFilters } from "@/lib/search/useSearchFilters";
 
 type SearchPageProps = {
   initialWhere?: WhereFilter;
+  initialDays?: number[];
+  initialWhat?: string[];
   initialDeals?: DealSearchResult[];
   initialNearbyDeals?: DealSearchResult[];
   popularSuburbs?: PopularSuburb[];
@@ -18,6 +20,8 @@ type SearchPageProps = {
 
 export function SearchPage({
   initialWhere,
+  initialDays,
+  initialWhat,
   initialDeals,
   initialNearbyDeals,
   popularSuburbs,
@@ -37,7 +41,13 @@ export function SearchPage({
     handleDaysApply,
     handleWhereChange,
     handleWhatChange,
-  } = useSearchFilters({ initialWhere, initialDeals, initialNearbyDeals });
+  } = useSearchFilters({
+    initialWhere,
+    initialDays,
+    initialWhat,
+    initialDeals,
+    initialNearbyDeals,
+  });
 
   const showPopularSuburbs =
     filters.where.kind === "anywhere" && popularSuburbs !== undefined;
