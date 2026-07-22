@@ -15,14 +15,20 @@ final class SuburbListViewModel {
 
     private(set) var state: State = .idle
     private(set) var suburbs: [Suburb] = []
+    private(set) var regions: [GeographicRegion] = []
     private(set) var venueCountsBySuburbId: [Int64: Int] = [:]
     var searchText = ""
+    var selectedRegionId: Int64?
     var selectedSuburbId: Int64?
 
     var filteredSuburbs: [Suburb] {
+        var result = suburbs
+        if let selectedRegionId {
+            result = result.filter { $0.regionId == selectedRegionId }
+        }
         let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !query.isEmpty else { return suburbs }
-        return suburbs.filter { suburb in
+        guard !query.isEmpty else { return result }
+        return result.filter { suburb in
             suburb.name.localizedCaseInsensitiveContains(query)
                 || (suburb.postcode?.localizedCaseInsensitiveContains(query) ?? false)
                 || (suburb.state?.localizedCaseInsensitiveContains(query) ?? false)
@@ -31,11 +37,17 @@ final class SuburbListViewModel {
 
     private let suburbRepository: SuburbRepository
     private let venueRepository: VenueRepository
+    private let geographicRegionRepository: GeographicRegionRepository
 
     @Resolvable<Resolver>
-    init(suburbRepository: SuburbRepository, venueRepository: VenueRepository) {
+    init(
+        suburbRepository: SuburbRepository,
+        venueRepository: VenueRepository,
+        geographicRegionRepository: GeographicRegionRepository
+    ) {
         self.suburbRepository = suburbRepository
         self.venueRepository = venueRepository
+        self.geographicRegionRepository = geographicRegionRepository
     }
 
     static func displayName(for suburb: Suburb) -> String {
@@ -52,6 +64,7 @@ final class SuburbListViewModel {
 
     func loadSuburbs() {
         do {
+            regions = try geographicRegionRepository.all()
             let allSuburbs = try suburbRepository.all()
             venueCountsBySuburbId = try venueRepository.countsBySuburbId()
             suburbs = allSuburbs.sorted { lhs, rhs in

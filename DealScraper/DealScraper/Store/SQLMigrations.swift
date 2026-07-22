@@ -268,6 +268,22 @@ final class SQLMigrations {
                 t.add(column: "google_rating", .double)
             }
         }
+
+        migrator.registerMigration("v32_create_geographic_region") { db in
+            try db.create(table: "geographic_region") { t in
+                t.autoIncrementedPrimaryKey("id")
+                t.column("country_id", .integer)
+                    .notNull()
+                    .references("country", onDelete: .cascade)
+                t.column("name", .text).notNull()
+                t.uniqueKey(["country_id", "name"])
+            }
+
+            try db.alter(table: "suburb") { t in
+                t.add(column: "region_id", .integer)
+                    .references("geographic_region", onDelete: .setNull)
+            }
+        }
     }
 }
 

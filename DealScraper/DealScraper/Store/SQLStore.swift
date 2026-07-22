@@ -22,6 +22,7 @@ final class SQLStore {
         
         try! migrate()
         try! seedDefaultCountries()
+        try! seedDefaultGeographicRegions()
     }
     
     static func `default`() -> SQLStore {
@@ -46,6 +47,29 @@ final class SQLStore {
                 if existing == nil {
                     var mutable = country
                     try mutable.insert(db)
+                }
+            }
+        }
+    }
+
+    private func seedDefaultGeographicRegions() throws {
+        try dbQueue.write { db in
+            guard let australia = try Country
+                .filter(Column("iso3") == Country.australia.iso3)
+                .fetchOne(db),
+                let australiaId = australia.id
+            else {
+                return
+            }
+
+            for name in GeographicRegion.australiaRegionNames {
+                let existing = try GeographicRegion
+                    .filter(Column("country_id") == australiaId)
+                    .filter(Column("name") == name)
+                    .fetchOne(db)
+                if existing == nil {
+                    var region = GeographicRegion(countryId: australiaId, name: name)
+                    try region.insert(db)
                 }
             }
         }

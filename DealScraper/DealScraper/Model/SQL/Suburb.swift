@@ -6,6 +6,7 @@ import Foundation
 nonisolated struct Suburb: Codable, Sendable {
     var id: Int64?
     var countryId: Int64?
+    var regionId: Int64?
     let name: String
     let postcode: String?
     let state: String?
@@ -21,6 +22,7 @@ nonisolated struct Suburb: Codable, Sendable {
     enum CodingKeys: String, CodingKey {
         case id
         case countryId = "country_id"
+        case regionId = "region_id"
         case name
         case postcode
         case state
@@ -37,6 +39,7 @@ nonisolated struct Suburb: Codable, Sendable {
     init(
         id: Int64? = nil,
         countryId: Int64? = nil,
+        regionId: Int64? = nil,
         name: String,
         postcode: String? = nil,
         state: String? = nil,
@@ -51,6 +54,7 @@ nonisolated struct Suburb: Codable, Sendable {
     ) {
         self.id = id
         self.countryId = countryId
+        self.regionId = regionId
         self.name = name
         self.postcode = postcode
         self.state = state

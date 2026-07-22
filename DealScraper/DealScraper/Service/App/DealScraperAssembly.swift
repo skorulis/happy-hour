@@ -207,6 +207,11 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
         }
         .inObjectScope(.container)
 
+        container.register(GeographicRegionRepository.self) { resolver in
+            GeographicRegionRepository(store: resolver.sqlStore())
+        }
+        .inObjectScope(.container)
+
         container.register(APIKeyStore.self) { resolver in
             APIKeyStore(secureStore: resolver.secureKeyValueStore())
         }
