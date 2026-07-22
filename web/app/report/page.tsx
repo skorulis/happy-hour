@@ -24,7 +24,7 @@ export default async function ReportPage({ searchParams }: ReportPageProps) {
 
   if (!Number.isFinite(dealId) || !Number.isInteger(dealId) || dealId <= 0) {
     return (
-      <div className="mx-auto flex w-full max-w-md flex-1 flex-col gap-4 px-6 py-10 text-center">
+      <div className="mx-auto flex w-full max-w-md flex-1 flex-col gap-4 px-4 py-10 md:px-6 text-center">
         <h1 className="text-2xl font-bold text-foreground">
           Deal not found
         </h1>
@@ -46,7 +46,7 @@ export default async function ReportPage({ searchParams }: ReportPageProps) {
 
   if (!deal) {
     return (
-      <div className="mx-auto flex w-full max-w-md flex-1 flex-col gap-4 px-6 py-10 text-center">
+      <div className="mx-auto flex w-full max-w-md flex-1 flex-col gap-4 px-4 py-10 md:px-6 text-center">
         <h1 className="text-2xl font-bold text-foreground">
           Deal not found
         </h1>
@@ -68,7 +68,7 @@ export default async function ReportPage({ searchParams }: ReportPageProps) {
   });
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-6 py-10">
+    <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-4 py-10 md:px-6">
       <ReportPageContent
         dealId={deal.id}
         dealTitle={deal.title || "Untitled deal"}

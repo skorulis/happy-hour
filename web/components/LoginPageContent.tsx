@@ -51,14 +51,14 @@ export function LoginPageContent() {
 
   if (isPending || session) {
     return (
-      <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-6 py-10">
+      <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-4 py-10 md:px-6">
         <p className="text-sm text-muted">Loading...</p>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-6 py-10">
+    <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-4 py-10 md:px-6">
       <AuthForm
         mode="login"
         callbackUrl={callbackUrl}

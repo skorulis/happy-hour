@@ -15,7 +15,7 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 py-16 text-center">
+    <div className="flex flex-1 flex-col items-center justify-center gap-4 px-4 py-16 text-center md:px-6">
       <div
         className="flex h-12 w-12 items-center justify-center rounded-full border border-border text-2xl text-muted"
         aria-hidden

@@ -84,7 +84,7 @@ export function VenueAdminPageContent({
   currentUserId,
 }: VenueAdminPageContentProps) {
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-10">
+    <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-4 py-10 md:px-6">
       <header className="space-y-2">
         <Link
           href={venuePath(venueSuburbName, venueName)}

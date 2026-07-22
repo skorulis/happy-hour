@@ -22,7 +22,7 @@ const floatingIcons = [
 
 export default function NotFound() {
   return (
-    <div className="relative flex flex-1 flex-col items-center justify-center overflow-hidden px-6 py-20 text-center">
+    <div className="relative flex flex-1 flex-col items-center justify-center overflow-hidden px-4 py-20 md:px-6 text-center">
       <DuskAtmosphere icons={floatingIcons} />
 
       <div className="relative flex flex-col items-center gap-6">

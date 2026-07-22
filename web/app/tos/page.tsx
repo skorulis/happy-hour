@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function TermsOfServicePage() {
   return (
-    <div className="mx-auto w-full max-w-prose flex-1 px-6 py-12 md:py-16">
+    <div className="mx-auto w-full max-w-prose flex-1 px-4 py-12 md:px-6 md:py-16">
       <header className="mb-10 space-y-3">
         <p className="text-sm font-medium tracking-[0.2em] text-accent-soft uppercase">
           DuskRoute

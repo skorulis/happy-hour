@@ -109,7 +109,7 @@ export function AdminPageContent({
   syncRuns,
 }: AdminPageContentProps) {
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-10">
+    <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-4 py-10 md:px-6">
       <header className="space-y-2">
         <h1 className="text-3xl font-bold text-foreground">Admin</h1>
       </header>
@@ -143,7 +143,7 @@ export function AdminPageContent({
 
 function RestrictedMessage() {
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-6 py-10">
+    <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-4 py-10 md:px-6">
       <p className="text-sm text-secondary">
         This page is restricted to admin users
       </p>
