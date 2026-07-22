@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { SearchPage } from "@/components/SearchPage";
 import { SearchUrlRedirect } from "@/components/SearchUrlRedirect";
@@ -15,6 +15,7 @@ import {
   regionAllSuburbsPath,
   regionPath,
   suburbWherePath,
+  suburbWhereRedirectPath,
 } from "@/lib/search/slugs";
 import { parseDaysParam, parseWhatTokens } from "@/lib/search/url";
 
@@ -98,6 +99,14 @@ export default async function SuburbSearchPage({
 
   if (whereSlug === NEARBY_WHERE_SLUG) {
     notFound();
+  }
+
+  const redirectPath = suburbWhereRedirectPath(whereSlug, {
+    days: daysParam,
+    q: whatParam,
+  });
+  if (redirectPath) {
+    redirect(redirectPath);
   }
 
   const days = parseDaysParam(daysParam ?? null);

@@ -1,8 +1,8 @@
 import { Suspense } from "react";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { MapPage } from "@/components/MapPage";
 import { findSuburbByWhereSlug } from "@/lib/search/queries";
-import { NEARBY_WHERE_SLUG } from "@/lib/search/slugs";
+import { NEARBY_WHERE_SLUG, suburbMapRedirectPath } from "@/lib/search/slugs";
 
 type SuburbMapPageProps = {
   params: Promise<{ suburb: string }>;
@@ -13,6 +13,11 @@ export default async function SuburbMapPage({ params }: SuburbMapPageProps) {
 
   if (whereSlug === NEARBY_WHERE_SLUG) {
     notFound();
+  }
+
+  const redirectPath = suburbMapRedirectPath(whereSlug);
+  if (redirectPath) {
+    redirect(redirectPath);
   }
 
   const suburb = await findSuburbByWhereSlug(whereSlug);

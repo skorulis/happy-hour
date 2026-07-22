@@ -186,7 +186,7 @@ struct VenueRepositoryTests {
         let store = SQLStore.inMemory()
         let repository = VenueRepository(store: store)
         let suburbId = try store.dbQueue.write { db -> Int64 in
-            var suburb = Suburb(name: "Sydney", postcode: "2000", state: "NSW")
+            var suburb = Suburb(name: "Sydney CBD", postcode: "2000", state: "NSW")
             try suburb.insert(db)
             return try #require(suburb.id)
         }

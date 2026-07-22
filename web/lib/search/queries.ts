@@ -30,6 +30,8 @@ import { parseWhatTokens } from "@/lib/search/url";
 import {
   parseSuburbWhereSlug,
   regionSlug,
+  resolveSuburbWhereSlug,
+  resolveVenueSuburbSlug,
   slugify,
   UNKNOWN_SUBURB_SLUG,
 } from "@/lib/search/slugs";
@@ -461,7 +463,8 @@ export async function findRegionBySlug(
 export async function findSuburbByWhereSlug(
   whereSlug: string,
 ): Promise<SuburbSearchResult | null> {
-  const { nameSlug, postcode } = parseSuburbWhereSlug(whereSlug);
+  const resolvedSlug = resolveSuburbWhereSlug(whereSlug);
+  const { nameSlug, postcode } = parseSuburbWhereSlug(resolvedSlug);
   if (!nameSlug) {
     return null;
   }
@@ -888,14 +891,15 @@ export async function getVenueDetailBySlug(
   suburbSlug: string,
   venueSlug: string,
 ): Promise<VenueDetailResult | null> {
+  const resolvedSuburbSlug = resolveVenueSuburbSlug(suburbSlug);
   let venueRows: Array<typeof venue.$inferSelect>;
 
-  if (suburbSlug === UNKNOWN_SUBURB_SLUG) {
+  if (resolvedSuburbSlug === UNKNOWN_SUBURB_SLUG) {
     venueRows = await db.select().from(venue).where(isNull(venue.suburbId));
   } else {
     const suburbs = await db.select().from(suburb);
     const matchingSuburbIds = suburbs
-      .filter((row) => slugify(row.name) === suburbSlug)
+      .filter((row) => slugify(row.name) === resolvedSuburbSlug)
       .map((row) => row.id);
 
     if (matchingSuburbIds.length === 0) {

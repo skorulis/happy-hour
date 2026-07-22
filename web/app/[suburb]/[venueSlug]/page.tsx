@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { VenuePageContent } from "@/components/VenuePageContent";
 import { canManageVenue } from "@/lib/admin";
 import { auth } from "@/lib/auth";
 import { getVenueDetailBySlug } from "@/lib/search/queries";
-import { venuePath } from "@/lib/search/slugs";
+import { venuePath, venueRedirectPath } from "@/lib/search/slugs";
 import { initialVenueDay, parseDaysParam } from "@/lib/search/url";
 
 type VenuePageProps = {
@@ -55,6 +55,14 @@ export async function generateMetadata({
 export default async function VenuePage({ params, searchParams }: VenuePageProps) {
   const { suburb, venueSlug } = await params;
   const { days: daysParam } = await searchParams;
+
+  const redirectPath = venueRedirectPath(suburb, venueSlug, {
+    days: daysParam,
+  });
+  if (redirectPath) {
+    redirect(redirectPath);
+  }
+
   const venue = await getVenueDetailBySlug(suburb, venueSlug);
 
   if (!venue) {

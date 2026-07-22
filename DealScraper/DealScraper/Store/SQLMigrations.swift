@@ -295,6 +295,16 @@ final class SQLMigrations {
                 arguments: [GeographicRegion.sydneyName, "Greater Sydney"]
             )
         }
+
+        migrator.registerMigration("v34_rename_sydney_suburb") { db in
+            try db.execute(
+                sql: """
+                UPDATE suburb
+                SET name = 'Sydney CBD'
+                WHERE name = 'Sydney' AND postcode = '2000' AND state = 'NSW'
+                """
+            )
+        }
     }
 }
 

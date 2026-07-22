@@ -3,8 +3,13 @@ import {
   parseSuburbWhereSlug,
   regionAllSuburbsPath,
   regionPath,
+  resolveSuburbWhereSlug,
+  resolveVenueSuburbSlug,
+  suburbMapRedirectPath,
   suburbWherePath,
+  suburbWhereRedirectPath,
   suburbWhereSlug,
+  venueRedirectPath,
 } from "./slugs";
 
 describe("suburbWhereSlug", () => {
@@ -70,5 +75,40 @@ describe("parseSuburbWhereSlug", () => {
       nameSlug: "area-12",
       postcode: null,
     });
+  });
+});
+
+describe("suburb slug aliases", () => {
+  it("resolves legacy suburb where slugs", () => {
+    expect(resolveSuburbWhereSlug("sydney-2000")).toBe("sydney-cbd-2000");
+    expect(resolveSuburbWhereSlug("surry-hills-2010")).toBe("surry-hills-2010");
+  });
+
+  it("resolves legacy venue suburb slugs", () => {
+    expect(resolveVenueSuburbSlug("sydney")).toBe("sydney-cbd");
+    expect(resolveVenueSuburbSlug("surry-hills")).toBe("surry-hills");
+  });
+
+  it("builds suburb where redirect paths", () => {
+    expect(suburbWhereRedirectPath("sydney-2000")).toBe("/sydney-cbd-2000");
+    expect(
+      suburbWhereRedirectPath("sydney-2000", { days: "5", q: "beer" }),
+    ).toBe("/sydney-cbd-2000?days=5&q=beer");
+    expect(suburbWhereRedirectPath("surry-hills-2010")).toBeNull();
+  });
+
+  it("builds suburb map redirect paths", () => {
+    expect(suburbMapRedirectPath("sydney-2000")).toBe("/sydney-cbd-2000/map");
+    expect(suburbMapRedirectPath("surry-hills-2010")).toBeNull();
+  });
+
+  it("builds venue redirect paths", () => {
+    expect(venueRedirectPath("sydney", "the-local")).toBe(
+      "/sydney-cbd/the-local",
+    );
+    expect(venueRedirectPath("sydney", "the-local", { days: "5" })).toBe(
+      "/sydney-cbd/the-local?days=5",
+    );
+    expect(venueRedirectPath("surry-hills", "the-local")).toBeNull();
   });
 });

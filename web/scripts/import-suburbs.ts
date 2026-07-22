@@ -8,6 +8,23 @@ import path from "node:path";
 
 const REQUIRED_REGION_NAMES = ["Sydney", "Sunshine Coast"] as const;
 
+type SuburbNameOverride = {
+  sourceName: string;
+  postcode: string;
+  state: string;
+  canonicalName: string;
+};
+
+// Distinguish the Sydney CBD suburb from the Sydney geographic region.
+const SUBURB_NAME_OVERRIDES: SuburbNameOverride[] = [
+  {
+    sourceName: "Sydney",
+    postcode: "2000",
+    state: "NSW",
+    canonicalName: "Sydney CBD",
+  },
+];
+
 type AustralianSuburb = {
   suburb: string;
   postcode: number;
@@ -91,6 +108,20 @@ function suburbKey(name: string, postcode: string | null): string {
   return `${name}\u0000${postcode ?? ""}`;
 }
 
+function canonicalSuburbName(
+  name: string,
+  postcode: string,
+  state: string,
+): string {
+  const override = SUBURB_NAME_OVERRIDES.find(
+    (entry) =>
+      entry.sourceName === name &&
+      entry.postcode === postcode &&
+      entry.state === state,
+  );
+  return override?.canonicalName ?? name;
+}
+
 function loadCatalog(jsonPath: string): {
   byKey: Map<string, AustralianSuburb>;
   duplicates: number;
@@ -162,6 +193,37 @@ function hasMissingFields(
   );
 }
 
+function findExistingSuburb(
+  findStmt: Database.Statement<
+    [string, string | null, string | null],
+    DbSuburb | undefined
+  >,
+  sourceName: string,
+  canonicalName: string,
+  postcode: string,
+): DbSuburb | undefined {
+  const byCanonical = findStmt.get(canonicalName, postcode, postcode);
+  if (byCanonical) {
+    return byCanonical;
+  }
+  if (canonicalName !== sourceName) {
+    return findStmt.get(sourceName, postcode, postcode);
+  }
+  return undefined;
+}
+
+function needsUpdate(
+  existing: DbSuburb,
+  entry: AustralianSuburb,
+  regionId: number | null,
+  canonicalName: string,
+): boolean {
+  return (
+    existing.name !== canonicalName ||
+    hasMissingFields(existing, entry, regionId)
+  );
+}
+
 function upsertCatalog(
   db: Database.Database,
   catalog: Map<string, AustralianSuburb>,
@@ -177,7 +239,10 @@ function upsertCatalog(
     regionsAssigned: 0,
   };
 
-  const findStmt = db.prepare<[string, string | null], DbSuburb | undefined>(
+  const findStmt = db.prepare<
+    [string, string | null, string | null],
+    DbSuburb | undefined
+  >(
     `
     SELECT id, name, postcode, state, lat, lng, sqkm, statistic_area, region_id
     FROM suburb
@@ -197,7 +262,8 @@ function upsertCatalog(
   const updateStmt = db.prepare(
     `
     UPDATE suburb
-    SET state = COALESCE(state, ?),
+    SET name = ?,
+        state = COALESCE(state, ?),
         lat = COALESCE(lat, ?),
         lng = COALESCE(lng, ?),
         sqkm = COALESCE(sqkm, ?),
@@ -207,6 +273,12 @@ function upsertCatalog(
     `,
   );
 
+  const renameSydneySuburbStmt = db.prepare(`
+    UPDATE suburb
+    SET name = 'Sydney CBD'
+    WHERE name = 'Sydney' AND postcode = '2000' AND state = 'NSW'
+  `);
+
   const run = (fn: () => void) => {
     if (!dryRun) {
       fn();
@@ -215,10 +287,20 @@ function upsertCatalog(
 
   const upsertAll = db.transaction(() => {
     for (const entry of catalog.values()) {
-      const name = entry.suburb.trim();
+      const sourceName = entry.suburb.trim();
       const postcode = String(entry.postcode);
+      const canonicalName = canonicalSuburbName(
+        sourceName,
+        postcode,
+        entry.state,
+      );
       const regionId = resolveRegionId(entry, regionIdsByName);
-      const existing = findStmt.get(name, postcode, postcode);
+      const existing = findExistingSuburb(
+        findStmt,
+        sourceName,
+        canonicalName,
+        postcode,
+      );
 
       if (!existing) {
         stats.inserted += 1;
@@ -227,7 +309,7 @@ function upsertCatalog(
         }
         run(() => {
           insertStmt.run(
-            name,
+            canonicalName,
             postcode,
             entry.state,
             entry.lat,
@@ -240,7 +322,7 @@ function upsertCatalog(
         continue;
       }
 
-      if (!hasMissingFields(existing, entry, regionId)) {
+      if (!needsUpdate(existing, entry, regionId, canonicalName)) {
         stats.unchanged += 1;
         continue;
       }
@@ -251,6 +333,7 @@ function upsertCatalog(
       }
       run(() => {
         updateStmt.run(
+          canonicalName,
           entry.state,
           entry.lat,
           entry.lng,
@@ -261,6 +344,10 @@ function upsertCatalog(
         );
       });
     }
+
+    run(() => {
+      renameSydneySuburbStmt.run();
+    });
   });
 
   upsertAll();

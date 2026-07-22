@@ -92,12 +92,13 @@ final class SuburbRepository {
     }
 
     static func resolve(name: String, postcode: String?, state: String?, in db: Database) throws -> Int64? {
+        let canonicalName = canonicalResolveName(name: name, postcode: postcode, state: state)
         let normalizedPostcode = normalized(postcode)
         let normalizedState = normalizedState(state)
 
         if let normalizedState, let normalizedPostcode,
            let id = try exactMatch(
-               name: name,
+               name: canonicalName,
                postcode: normalizedPostcode,
                state: normalizedState,
                in: db
@@ -107,7 +108,7 @@ final class SuburbRepository {
         }
 
         if let normalizedState,
-           let id = try firstMatch(name: name, state: normalizedState, in: db)
+           let id = try firstMatch(name: canonicalName, state: normalizedState, in: db)
         {
             return id
         }
@@ -118,7 +119,22 @@ final class SuburbRepository {
             return id
         }
 
-        return try firstByName(name, in: db)
+        return try firstByName(canonicalName, in: db)
+    }
+
+    /// Maps source-data suburb names to their canonical DB names.
+    private static func canonicalResolveName(
+        name: String,
+        postcode: String?,
+        state: String?
+    ) -> String {
+        if name == "Sydney",
+           normalized(postcode) == "2000",
+           normalizedState(state) == "NSW"
+        {
+            return "Sydney CBD"
+        }
+        return name
     }
 
     private static func exactMatch(

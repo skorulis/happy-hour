@@ -22,7 +22,7 @@ struct SuburbRepositoryTests {
         let store = SQLStore.inMemory()
         let repository = SuburbRepository(store: store)
         let expectedId = try insertSuburb(
-            Suburb(name: "Sydney", postcode: "2000", state: "NSW"),
+            Suburb(name: "Sydney CBD", postcode: "2000", state: "NSW"),
             store: store
         )
 
@@ -75,12 +75,12 @@ struct SuburbRepositoryTests {
         let store = SQLStore.inMemory()
         let repository = SuburbRepository(store: store)
         let expectedId = try insertSuburb(
-            Suburb(name: "Sydney", postcode: "2000", state: "NSW"),
+            Suburb(name: "Sydney CBD", postcode: "2000", state: "NSW"),
             store: store
         )
 
         let resolvedId = try #require(
-            try repository.resolve(name: "Sydney", postcode: nil, state: nil)
+            try repository.resolve(name: "Sydney CBD", postcode: nil, state: nil)
         )
 
         #expect(resolvedId == expectedId)

@@ -3,6 +3,73 @@ export const NEARBY_WHERE_SLUG = "nearby";
 
 const POSTCODE_SUFFIX_RE = /^(.+)-(\d{4})$/;
 
+export const SUBURB_WHERE_SLUG_ALIASES: Readonly<Record<string, string>> = {
+  "sydney-2000": "sydney-cbd-2000",
+};
+
+export const VENUE_SUBURB_SLUG_ALIASES: Readonly<Record<string, string>> = {
+  sydney: "sydney-cbd",
+};
+
+export function resolveSuburbWhereSlug(slug: string): string {
+  const normalized = slug.trim().toLowerCase();
+  return SUBURB_WHERE_SLUG_ALIASES[normalized] ?? normalized;
+}
+
+export function resolveVenueSuburbSlug(slug: string): string {
+  const normalized = slug.trim().toLowerCase();
+  return VENUE_SUBURB_SLUG_ALIASES[normalized] ?? normalized;
+}
+
+export function suburbWhereRedirectPath(
+  whereSlug: string,
+  searchParams?: { days?: string; q?: string },
+): string | null {
+  const normalized = whereSlug.trim().toLowerCase();
+  const canonical = SUBURB_WHERE_SLUG_ALIASES[normalized];
+  if (!canonical) {
+    return null;
+  }
+
+  const params = new URLSearchParams();
+  if (searchParams?.days) {
+    params.set("days", searchParams.days);
+  }
+  if (searchParams?.q) {
+    params.set("q", searchParams.q);
+  }
+  const query = params.toString();
+  return `/${canonical}${query ? `?${query}` : ""}`;
+}
+
+export function suburbMapRedirectPath(whereSlug: string): string | null {
+  const normalized = whereSlug.trim().toLowerCase();
+  const canonical = SUBURB_WHERE_SLUG_ALIASES[normalized];
+  if (!canonical) {
+    return null;
+  }
+  return `/${canonical}/map`;
+}
+
+export function venueRedirectPath(
+  suburbSlug: string,
+  venueSlug: string,
+  searchParams?: { days?: string },
+): string | null {
+  const normalized = suburbSlug.trim().toLowerCase();
+  const canonical = VENUE_SUBURB_SLUG_ALIASES[normalized];
+  if (!canonical) {
+    return null;
+  }
+
+  const params = new URLSearchParams();
+  if (searchParams?.days) {
+    params.set("days", searchParams.days);
+  }
+  const query = params.toString();
+  return `/${canonical}/${venueSlug}${query ? `?${query}` : ""}`;
+}
+
 export function slugify(value: string): string {
   return value
     .normalize("NFKD")
