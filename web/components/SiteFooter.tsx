@@ -7,7 +7,7 @@ export function SiteFooter() {
 
   return (
     <footer className="border-t border-border-subtle/80 bg-background/40 backdrop-blur-md">
-      <div className="mx-auto flex max-w-4xl items-center justify-center px-4 py-4 md:px-6">
+      <div className="mx-auto flex max-w-4xl flex-col items-center justify-center gap-1 px-4 py-4 md:px-6">
         <p className="text-sm text-muted">
           <Link
             href="/about"
@@ -36,7 +36,8 @@ export function SiteFooter() {
           >
             Contact
           </Link>
-          {" | "}
+        </p>
+        <p className="text-sm text-muted">
           <a
             href="https://skorulis.com"
             className="transition-colors hover:text-accent-soft"
