@@ -72,8 +72,36 @@ export function DealCard({
         activeNow ? "border-l-2 border-l-accent pl-[calc(1.25rem-2px)]" : ""
       }`}
     >
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-        <div className="min-w-0 flex-1 space-y-2">
+      <div className="flow-root">
+        {creativeImageUrl ? (
+          <>
+            <button
+              type="button"
+              onClick={() => setLightboxOpen(true)}
+              className="float-right ml-3 mb-2 shrink-0 cursor-zoom-in"
+              aria-label="View full-size deal image"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={creativeImageUrl}
+                alt={deal.title || "Deal image"}
+                className="max-h-[100px] max-w-[120px] rounded-lg object-contain sm:max-h-[120px] sm:max-w-[200px]"
+              />
+            </button>
+            <Lightbox
+              open={lightboxOpen}
+              close={() => setLightboxOpen(false)}
+              slides={[{ src: creativeImageUrl, alt: deal.title || "Deal image" }]}
+              carousel={{ finite: true }}
+              render={{ buttonPrev: () => null, buttonNext: () => null }}
+            />
+          </>
+        ) : (
+          <span className="float-right ml-3 mb-2 inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-accent-muted">
+            <DealProductIcon deal={deal} size={20} />
+          </span>
+        )}
+        <div className="space-y-2">
           <div className="space-y-2">
             <h3 className="text-lg font-semibold text-foreground">
               {deal.title || "Untitled deal"}
@@ -101,35 +129,6 @@ export function DealCard({
             </MarkdownText>
           ) : null}
         </div>
-
-        {creativeImageUrl ? (
-          <>
-            <button
-              type="button"
-              onClick={() => setLightboxOpen(true)}
-              className="shrink-0 cursor-zoom-in self-start"
-              aria-label="View full-size deal image"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={creativeImageUrl}
-                alt={deal.title || "Deal image"}
-                className="max-h-[120px] max-w-[200px] rounded-lg object-contain"
-              />
-            </button>
-            <Lightbox
-              open={lightboxOpen}
-              close={() => setLightboxOpen(false)}
-              slides={[{ src: creativeImageUrl, alt: deal.title || "Deal image" }]}
-              carousel={{ finite: true }}
-              render={{ buttonPrev: () => null, buttonNext: () => null }}
-            />
-          </>
-        ) : (
-          <span className="inline-flex h-14 w-14 shrink-0 items-center justify-center self-start rounded-lg bg-accent-muted">
-            <DealProductIcon deal={deal} size={20} />
-          </span>
-        )}
       </div>
       {showFooterActions ? (
         <div
