@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { type FormEvent, useState } from "react";
+import { FcGoogle } from "react-icons/fc";
 
 const inputClassName =
   "w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground outline-none ring-accent focus:ring-2";
@@ -119,6 +120,16 @@ export function AuthForm({
             minLength={8}
             className={inputClassName}
           />
+          {!isSignup ? (
+            <p className="pt-1 text-right text-sm">
+              <Link
+                href="/forgot-password"
+                className="font-medium text-accent-soft hover:text-foreground"
+              >
+                Forgot password?
+              </Link>
+            </p>
+          ) : null}
         </div>
 
         {error ? (
@@ -145,8 +156,9 @@ export function AuthForm({
         type="button"
         onClick={() => void handleGoogleSignIn()}
         disabled={loading || googleLoading}
-        className="w-full rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-60"
+        className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-60"
       >
+        {googleLoading ? null : <FcGoogle aria-hidden className="h-4 w-4 shrink-0" />}
         {googleLoading ? "Redirecting..." : "Continue with Google"}
       </button>
 

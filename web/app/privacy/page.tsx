@@ -117,8 +117,9 @@ export default function PrivacyPage() {
             </li>
           </ul>
           <p>
-            We use email for account verification (one-time codes and links). We
-            do not operate a marketing newsletter from this product today.
+            We use email for account verification (one-time codes and links) and
+            password reset links. We do not operate a marketing newsletter from
+            this product today.
           </p>
         </section>
 
@@ -162,7 +163,7 @@ export default function PrivacyPage() {
             </li>
             <li>
               <span className="text-foreground">Resend</span> — transactional
-              verification emails.
+              verification and password-reset emails.
             </li>
             <li>
               <span className="text-foreground">Amplitude</span> — product
