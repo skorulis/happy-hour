@@ -13,18 +13,29 @@ final class SuburbListViewModel {
         case failed(message: String)
     }
 
+    enum RegionFilter: Equatable, Hashable {
+        case any
+        case none
+        case region(Int64)
+    }
+
     private(set) var state: State = .idle
     private(set) var suburbs: [Suburb] = []
     private(set) var regions: [GeographicRegion] = []
     private(set) var venueCountsBySuburbId: [Int64: Int] = [:]
     var searchText = ""
-    var selectedRegionId: Int64?
+    var selectedRegionFilter: RegionFilter = .any
     var selectedSuburbId: Int64?
 
     var filteredSuburbs: [Suburb] {
         var result = suburbs
-        if let selectedRegionId {
-            result = result.filter { $0.regionId == selectedRegionId }
+        switch selectedRegionFilter {
+        case .any:
+            break
+        case .none:
+            result = result.filter { $0.regionId == nil }
+        case .region(let regionId):
+            result = result.filter { $0.regionId == regionId }
         }
         let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !query.isEmpty else { return result }

@@ -87,10 +87,13 @@ struct SuburbListView: View {
             TextField("Filter suburbs", text: $viewModel.searchText)
                 .textFieldStyle(.roundedBorder)
 
-            Picker("Region", selection: $viewModel.selectedRegionId) {
-                Text("Any region").tag(Optional<Int64>.none)
+            Picker("Region", selection: $viewModel.selectedRegionFilter) {
+                Text("Any region").tag(SuburbListViewModel.RegionFilter.any)
+                Text("No region").tag(SuburbListViewModel.RegionFilter.none)
                 ForEach(viewModel.regions, id: \.id) { region in
-                    Text(region.name).tag(region.id)
+                    if let regionId = region.id {
+                        Text(region.name).tag(SuburbListViewModel.RegionFilter.region(regionId))
+                    }
                 }
             }
             .pickerStyle(.menu)
@@ -104,7 +107,7 @@ struct SuburbListView: View {
         let total = viewModel.suburbs.count
         let filtered = viewModel.filteredSuburbs.count
         let hasSearch = !viewModel.searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        let isFiltering = hasSearch || viewModel.selectedRegionId != nil
+        let isFiltering = hasSearch || viewModel.selectedRegionFilter != .any
         if isFiltering {
             return "\(filtered) of \(total) suburb\(total == 1 ? "" : "s")"
         }
