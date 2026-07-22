@@ -18,13 +18,13 @@ describe("MarkdownText", () => {
     expect(screen.getByText("Tap Beer")).toBeInTheDocument();
   });
 
-  it("renders safe links with noopener noreferrer", () => {
+  it("renders safe links with noopener noreferrer nofollow", () => {
     render(<MarkdownText>[menu](https://example.com/menu)</MarkdownText>);
 
     const link = screen.getByRole("link", { name: "menu" });
     expect(link).toHaveAttribute("href", "https://example.com/menu");
     expect(link).toHaveAttribute("target", "_blank");
-    expect(link).toHaveAttribute("rel", "noopener noreferrer");
+    expect(link).toHaveAttribute("rel", "noopener noreferrer nofollow");
   });
 
   it("rejects javascript links", () => {

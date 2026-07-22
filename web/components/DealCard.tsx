@@ -139,7 +139,7 @@ export function DealCard({
             <a
               href={deal.sourceUrl}
               target="_blank"
-              rel="noreferrer"
+              rel="noopener nofollow"
               className="inline-flex items-center rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-accent-fg transition-colors hover:bg-accent-hover"
             >
               More info

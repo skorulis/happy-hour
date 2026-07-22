@@ -24,6 +24,13 @@ export function SiteFooter() {
           </Link>
           {" | "}
           <Link
+            href="/tos"
+            className="transition-colors hover:text-accent-soft"
+          >
+            Terms
+          </Link>
+          {" | "}
+          <Link
             href="/contact"
             className="transition-colors hover:text-accent-soft"
           >

@@ -26,7 +26,7 @@ function VenueExternalLink({
   icon: ReactNode;
 }) {
   return (
-    <a href={href} target="_blank" rel="noreferrer" className={linkClassName}>
+    <a href={href} target="_blank" rel="noopener nofollow" className={linkClassName}>
       {icon}
       {children}
     </a>

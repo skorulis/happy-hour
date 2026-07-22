@@ -30,6 +30,7 @@ export function GET() {
     urlEntry(`${base}/venue-search`, now, "daily", "0.7"),
     urlEntry(`${base}/about`, now, "monthly", "0.5"),
     urlEntry(`${base}/privacy`, now, "monthly", "0.4"),
+    urlEntry(`${base}/tos`, now, "monthly", "0.4"),
     urlEntry(`${base}/contact`, now, "monthly", "0.4"),
   ];
 

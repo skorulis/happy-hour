@@ -162,6 +162,13 @@ export function AuthForm({
       <p className="text-center text-xs text-muted">
         By continuing, you agree to our{" "}
         <Link
+          href="/tos"
+          className="font-medium text-accent-soft hover:text-foreground"
+        >
+          Terms of Service
+        </Link>{" "}
+        and{" "}
+        <Link
           href="/privacy"
           className="font-medium text-accent-soft hover:text-foreground"
         >

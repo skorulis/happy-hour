@@ -230,6 +230,17 @@ export default function PrivacyPage() {
             Retention and your choices
           </h2>
           <ul className="list-disc space-y-2 pl-5">
+            <li>
+              Creating an account or signing in shows a notice that by
+              continuing you agree to our{" "}
+              <Link
+                href="/tos"
+                className="text-accent-soft hover:text-foreground"
+              >
+                Terms of Service
+              </Link>{" "}
+              and this Privacy Policy.
+            </li>
             <li>You can sign out to end your current session.</li>
             <li>You can remove favorites at any time.</li>
             <li>
