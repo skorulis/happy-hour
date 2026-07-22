@@ -24,7 +24,7 @@ export function SearchPage({
   initialWhat,
   initialDeals,
   initialNearbyDeals,
-  popularSuburbs,
+  popularSuburbs: initialPopularSuburbs,
 }: SearchPageProps) {
   const {
     filters,
@@ -34,6 +34,8 @@ export function SearchPage({
     totalDeals,
     isEmpty,
     loadingDeals,
+    loadingPopularSuburbs,
+    popularSuburbs,
     locating,
     error,
     locationAccessError,
@@ -47,6 +49,7 @@ export function SearchPage({
     initialWhat,
     initialDeals,
     initialNearbyDeals,
+    initialPopularSuburbs,
   });
 
   const showPopularSuburbs =
@@ -73,10 +76,20 @@ export function SearchPage({
 
       {showPopularSuburbs ? (
         <section>
+          {error ? (
+            <p className="mb-4 rounded-lg border border-border bg-danger-muted px-4 py-3 text-sm text-danger">
+              {error}
+            </p>
+          ) : null}
           <PopularSuburbs
             suburbs={popularSuburbs}
             search={popularSearch}
             includeSpecialLinks
+            description={
+              loadingPopularSuburbs
+                ? "Loading..."
+                : "Pick a suburb to browse deals nearby."
+            }
           />
         </section>
       ) : (

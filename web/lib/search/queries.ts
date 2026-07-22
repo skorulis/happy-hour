@@ -295,11 +295,47 @@ export async function searchSuburbs(
     .limit(limit);
 }
 
+export type ListPopularSuburbsOptions = {
+  days?: number[];
+  startMinute?: number;
+  endMinute?: number;
+  query?: string;
+};
+
 export async function listPopularSuburbs(
   limit?: number,
+  options: ListPopularSuburbsOptions = {},
 ): Promise<PopularSuburb[]> {
   const dealCount = count(deal.id);
   const venueCount = countDistinct(venue.id);
+  const filters: SQL[] = [eq(deal.status, "approved")];
+
+  if (options.days !== undefined && options.days.length > 0) {
+    const timeFilter = scheduleTimeFilter(
+      options.days,
+      options.startMinute,
+      options.endMinute,
+    );
+    if (timeFilter) {
+      filters.push(timeFilter);
+    } else {
+      filters.push(daysScheduleFilter(options.days));
+    }
+  } else {
+    const timeFilter = scheduleTimeFilter(
+      undefined,
+      options.startMinute,
+      options.endMinute,
+    );
+    if (timeFilter) {
+      filters.push(timeFilter);
+    }
+  }
+
+  const trimmedQuery = options.query?.trim();
+  if (trimmedQuery) {
+    filters.push(textSearchFilterForWhatQuery(trimmedQuery));
+  }
 
   const query = db
     .select({
@@ -313,6 +349,7 @@ export async function listPopularSuburbs(
     .from(suburb)
     .innerJoin(venue, eq(venue.suburbId, suburb.id))
     .innerJoin(deal, eq(deal.venueId, venue.id))
+    .where(and(...filters))
     .groupBy(suburb.id, suburb.name, suburb.postcode, suburb.heroImage)
     .orderBy(desc(dealCount), suburb.name);
 

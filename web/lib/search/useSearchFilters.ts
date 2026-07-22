@@ -6,7 +6,11 @@ import type { SearchFilters } from "@/components/search/SearchBar";
 import type { TimeRange } from "@/components/search/DayPicker";
 import type { WhereFilter } from "@/components/search/SuburbSelect";
 import { track } from "@/lib/analytics/client";
-import type { DealSearchResult, SuburbSearchResult } from "@/lib/search/queries";
+import type {
+  DealSearchResult,
+  PopularSuburb,
+  SuburbSearchResult,
+} from "@/lib/search/queries";
 import {
   boundsFromCenterRadiusKm,
   boundsKey,
@@ -122,11 +126,14 @@ export function useSearchFilters(options?: {
   initialWhat?: string[];
   initialDeals?: DealSearchResult[];
   initialNearbyDeals?: DealSearchResult[];
+  initialPopularSuburbs?: PopularSuburb[];
 }) {
   const mapViewport = options?.mapViewport ?? false;
   const initialWhere = options?.initialWhere ?? { kind: "anywhere" as const };
   const initialDeals = options?.initialDeals ?? [];
   const initialNearbyDeals = options?.initialNearbyDeals ?? [];
+  const hasPopularSuburbs = options?.initialPopularSuburbs !== undefined;
+  const initialPopularSuburbs = options?.initialPopularSuburbs ?? [];
   const seededFilters = filtersFromSeed(
     initialWhere,
     options?.initialDays,
@@ -145,6 +152,8 @@ export function useSearchFilters(options?: {
   const skipLoadingOnceRef = useRef(
     initialDeals.length > 0 || initialNearbyDeals.length > 0,
   );
+  // Same for popular suburbs: keep SSR all-week list visible during today refine.
+  const skipPopularLoadingOnceRef = useRef(hasPopularSuburbs);
 
   const [filters, setFilters] = useState<SearchFilters>(seededFilters);
   const [debouncedWhat, setDebouncedWhat] = useState<string[]>(
@@ -153,7 +162,11 @@ export function useSearchFilters(options?: {
   const [deals, setDeals] = useState<DealSearchResult[]>(initialDeals);
   const [nearbyDeals, setNearbyDeals] =
     useState<DealSearchResult[]>(initialNearbyDeals);
+  const [popularSuburbs, setPopularSuburbs] = useState<PopularSuburb[]>(
+    initialPopularSuburbs,
+  );
   const [loadingDeals, setLoadingDeals] = useState(false);
+  const [loadingPopularSuburbs, setLoadingPopularSuburbs] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [viewportBounds, setViewportBoundsState] = useState<MapBounds | null>(
     () => (mapViewport ? readSeededMapBounds() : null),
@@ -562,6 +575,62 @@ export function useSearchFilters(options?: {
     viewportBounds,
   ]);
 
+  useEffect(() => {
+    if (mapViewport || !hasPopularSuburbs) {
+      return;
+    }
+
+    if (filters.where.kind !== "anywhere") {
+      return;
+    }
+
+    const controller = new AbortController();
+
+    async function loadPopularSuburbs() {
+      if (skipPopularLoadingOnceRef.current) {
+        // Keep seeded SSR list visible during the first refine (all-days → today).
+      } else {
+        setLoadingPopularSuburbs(true);
+      }
+      setError(null);
+
+      try {
+        const params = filtersToApiSearchParams(filters, debouncedWhat);
+        params.set("limit", "20");
+        const response = await fetch(
+          `/api/suburbs/popular?${params.toString()}`,
+          { signal: controller.signal },
+        );
+        if (!response.ok) {
+          throw new Error("Failed to load popular suburbs");
+        }
+        const data = (await response.json()) as { suburbs: PopularSuburb[] };
+        setPopularSuburbs(data.suburbs);
+        skipPopularLoadingOnceRef.current = false;
+      } catch (fetchError) {
+        if ((fetchError as Error).name !== "AbortError") {
+          setError("Could not load suburbs.");
+          skipPopularLoadingOnceRef.current = false;
+        }
+      } finally {
+        setLoadingPopularSuburbs(false);
+      }
+    }
+
+    void loadPopularSuburbs();
+
+    return () => controller.abort();
+  }, [
+    mapViewport,
+    hasPopularSuburbs,
+    daysKey,
+    scheduleKey,
+    debouncedWhatKey,
+    debouncedWhat,
+    filters,
+    whereKey,
+  ]);
+
   function handleDaysApply(days: number[], timeRange: TimeRange) {
     setFilters((current) => ({
       ...current,
@@ -624,6 +693,8 @@ export function useSearchFilters(options?: {
     userLocation,
     isEmpty,
     loadingDeals,
+    loadingPopularSuburbs,
+    popularSuburbs: hasPopularSuburbs ? popularSuburbs : undefined,
     locating,
     error: displayError,
     locationAccessError,
