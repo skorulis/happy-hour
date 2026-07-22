@@ -50,18 +50,29 @@ export function formatDaySelectionLabel(days: number[]): string {
   return `${sorted.length} days`;
 }
 
-export function formatSuburbDealsTitle(
-  suburbName: string,
+function formatSpecialsTitleBase(
   days: number[],
   what: string[] = [],
 ): string {
   const dayLabel = suburbTitleDayLabel(days);
   const productLabel = suburbTitleProductLabel(what);
   const specialsPhrase = productLabel ? `${productLabel} Specials` : "Specials";
-  if (dayLabel) {
-    return `${dayLabel} ${specialsPhrase} in ${suburbName}`;
-  }
-  return `${specialsPhrase} in ${suburbName}`;
+  return dayLabel ? `${dayLabel} ${specialsPhrase}` : specialsPhrase;
+}
+
+export function formatSuburbDealsTitle(
+  suburbName: string,
+  days: number[],
+  what: string[] = [],
+): string {
+  return `${formatSpecialsTitleBase(days, what)} in ${suburbName}`;
+}
+
+export function formatNearbyDealsTitle(
+  days: number[],
+  what: string[] = [],
+): string {
+  return `${formatSpecialsTitleBase(days, what)} Nearby`;
 }
 
 export function formatSuburbDealsMetadataTitle(

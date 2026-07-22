@@ -28,7 +28,10 @@ import {
   nearbySuburbRadiusKm,
 } from "@/lib/search/nearby-radius";
 import { suburbWhereSlug } from "@/lib/search/slugs";
-import { formatSuburbDealsTitle } from "@/lib/search/schedule";
+import {
+  formatNearbyDealsTitle,
+  formatSuburbDealsTitle,
+} from "@/lib/search/schedule";
 import {
   filtersToApiSearchParams,
   filtersToBrowserPath,
@@ -659,7 +662,9 @@ export function useSearchFilters(options?: {
   const venueGroups = groupDealsByVenue(deals);
   const nearbyVenueGroups = groupDealsByVenue(nearbyDeals);
   const allVenueGroups = [...venueGroups, ...nearbyVenueGroups];
-  const totalDeals = deals.length + nearbyDeals.length;
+  const dealCount = deals.length;
+  const nearbyDealCount = nearbyDeals.length;
+  const totalDeals = dealCount + nearbyDealCount;
   const userLocation =
     filters.where.kind === "nearMe" &&
     filters.where.lat !== undefined &&
@@ -683,12 +688,15 @@ export function useSearchFilters(options?: {
       : filters.where.kind === "nearMe"
         ? "Specials near you"
         : "Results";
+  const nearbyResultsTitle = formatNearbyDealsTitle(filters.days, filters.what);
 
   return {
     filters,
     venueGroups,
     nearbyVenueGroups,
     allVenueGroups,
+    dealCount,
+    nearbyDealCount,
     totalDeals,
     userLocation,
     isEmpty,
@@ -699,6 +707,7 @@ export function useSearchFilters(options?: {
     error: displayError,
     locationAccessError,
     resultsTitle,
+    nearbyResultsTitle,
     initialMapBounds,
     handleDaysApply,
     handleWhereChange,

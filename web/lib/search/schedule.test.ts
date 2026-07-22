@@ -8,6 +8,7 @@ import {
   formatDealDateRange,
   formatDealScheduleLine,
   formatDealTimeBadge,
+  formatNearbyDealsTitle,
   formatSuburbDealsMetadataTitle,
   formatSuburbDealsTitle,
   hasAnyDealActiveNow,
@@ -76,6 +77,33 @@ describe("formatSuburbDealsTitle", () => {
     expect(
       formatSuburbDealsTitle("Sydney", [1], ["happy hour", "beer", "wine"]),
     ).toBe("Sunday Specials in Sydney");
+  });
+});
+
+describe("formatNearbyDealsTitle", () => {
+  it("prefixes a single selected day", () => {
+    expect(formatNearbyDealsTitle([5])).toBe("Thursday Specials Nearby");
+  });
+
+  it("prefixes today when no day is selected", () => {
+    const today = DAY_LABELS[currentCalendarWeekday()];
+    expect(formatNearbyDealsTitle([])).toBe(`${today} Specials Nearby`);
+  });
+
+  it("omits the day for multiple selections", () => {
+    expect(formatNearbyDealsTitle([5, 6])).toBe("Specials Nearby");
+  });
+
+  it("includes a single selected product", () => {
+    expect(formatNearbyDealsTitle([1], ["happy hour"])).toBe(
+      "Sunday Happy Hour Specials Nearby",
+    );
+  });
+
+  it("joins two selected products with and", () => {
+    expect(formatNearbyDealsTitle([1], ["happy hour", "beer"])).toBe(
+      "Sunday Happy Hour and Beer Specials Nearby",
+    );
   });
 });
 

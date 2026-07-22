@@ -30,8 +30,8 @@ export function SearchPage({
     filters,
     venueGroups,
     nearbyVenueGroups,
-    allVenueGroups,
-    totalDeals,
+    dealCount,
+    nearbyDealCount,
     isEmpty,
     loadingDeals,
     loadingPopularSuburbs,
@@ -40,6 +40,7 @@ export function SearchPage({
     error,
     locationAccessError,
     resultsTitle,
+    nearbyResultsTitle,
     handleDaysApply,
     handleWhereChange,
     handleWhatChange,
@@ -58,6 +59,12 @@ export function SearchPage({
     filters,
     filters.what,
   ).toString();
+  const hasNearby = nearbyVenueGroups.length > 0;
+  const resultsCountLabel = locating
+    ? "Getting your location..."
+    : loadingDeals
+      ? "Loading..."
+      : `${venueGroups.length} venues · ${dealCount} deals`;
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-10">
@@ -99,13 +106,7 @@ export function SearchPage({
               {resultsTitle}
             </h2>
             {locationAccessError ? null : (
-              <p className="text-sm text-muted">
-                {locating
-                  ? "Getting your location..."
-                  : loadingDeals
-                    ? "Loading..."
-                    : `${allVenueGroups.length} venues · ${totalDeals} deals`}
-              </p>
+              <p className="text-sm text-muted">{resultsCountLabel}</p>
             )}
           </div>
 
@@ -157,11 +158,17 @@ export function SearchPage({
                 </div>
               ) : null}
 
-              {nearbyVenueGroups.length > 0 ? (
+              {hasNearby ? (
                 <div className="space-y-4 border-t border-border-subtle pt-8">
-                  <h2 className="text-xl font-semibold text-foreground">
-                    Nearby
-                  </h2>
+                  <div className="space-y-1">
+                    <h2 className="text-xl font-semibold text-foreground">
+                      {nearbyResultsTitle}
+                    </h2>
+                    <p className="text-sm text-muted">
+                      {nearbyVenueGroups.length} venues · {nearbyDealCount}{" "}
+                      deals
+                    </p>
+                  </div>
                   <div className="grid gap-4">
                     {nearbyVenueGroups.map((group) => (
                       <VenueSearchCard
