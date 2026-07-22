@@ -5,30 +5,36 @@
 import * as Sentry from "@sentry/nextjs";
 import { getAppVersion } from "@/lib/app-version";
 
-Sentry.init({
-  dsn: "https://0a387a1fd6e6bad6e0ccacf7a86726ea@o4511748559339520.ingest.de.sentry.io/4511748567924816",
-  release: getAppVersion(),
+const isDev = process.env.NODE_ENV === "development";
 
-  // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
-  tracesSampleRate: 1,
-  // Enable logs to be sent to Sentry
-  enableLogs: true,
+if (!isDev) {
+  Sentry.init({
+    dsn: "https://0a387a1fd6e6bad6e0ccacf7a86726ea@o4511748559339520.ingest.de.sentry.io/4511748567924816",
+    release: getAppVersion(),
 
-  // BrowserApiErrors wraps setTimeout/addEventListener and historically
-  // conflicts with the Google Maps JS API (async map.js / marker callbacks).
-  integrations: (integrations) =>
-    integrations.filter((integration) => integration.name !== "BrowserApiErrors"),
+    // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
+    tracesSampleRate: 1,
+    // Enable logs to be sent to Sentry
+    enableLogs: true,
 
-  // Drop uncaught noise originating inside the Maps CDN. Map failures that
-  // reach our React tree are still reported via MapErrorBoundary / error.tsx.
-  denyUrls: [/maps\.googleapis\.com/i, /maps-api-v3/i],
+    // BrowserApiErrors wraps setTimeout/addEventListener and historically
+    // conflicts with the Google Maps JS API (async map.js / marker callbacks).
+    integrations: (integrations) =>
+      integrations.filter((integration) => integration.name !== "BrowserApiErrors"),
 
-  dataCollection: {
-    // To disable sending user data and HTTP bodies, uncomment the lines below. For more info visit:
-    // https://docs.sentry.io/platforms/javascript/guides/nextjs/configuration/options/#dataCollection
-    // userInfo: false,
-    // httpBodies: [],
-  },
-});
+    // Drop uncaught noise originating inside the Maps CDN. Map failures that
+    // reach our React tree are still reported via MapErrorBoundary / error.tsx.
+    denyUrls: [/maps\.googleapis\.com/i, /maps-api-v3/i],
 
-export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
+    dataCollection: {
+      // To disable sending user data and HTTP bodies, uncomment the lines below. For more info visit:
+      // https://docs.sentry.io/platforms/javascript/guides/nextjs/configuration/options/#dataCollection
+      // userInfo: false,
+      // httpBodies: [],
+    },
+  });
+}
+
+export const onRouterTransitionStart = isDev
+  ? () => {}
+  : Sentry.captureRouterTransitionStart;
