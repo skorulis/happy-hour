@@ -1,9 +1,13 @@
 import Link from "next/link";
 import { AdminReportActions } from "@/components/AdminReportActions";
 import { AdminTabs } from "@/components/AdminTabs";
+import { EditDealsList } from "@/components/EditDealsList";
 import { PendingDealsList } from "@/components/PendingDealsList";
 import { VenueAdminAccounts } from "@/components/VenueAdminAccounts";
-import type { AdminPendingDeal } from "@/lib/deals/queries";
+import type {
+  AdminPendingDeal,
+  EditableVenueDeal,
+} from "@/lib/deals/queries";
 import type { AdminDealReport } from "@/lib/reports/queries";
 import { getDealReportCategoryLabel } from "@/lib/reports/categories";
 import { venuePath } from "@/lib/search/slugs";
@@ -11,9 +15,11 @@ import type { VenueOwner } from "@/lib/venue-ownership/queries";
 
 type VenueAdminPageContentProps = {
   venueName: string;
+  venueSuburbName: string | null;
   venueId: number;
   reports: AdminDealReport[];
   pendingDeals: AdminPendingDeal[];
+  editableDeals: EditableVenueDeal[];
   owners: VenueOwner[];
   currentUserId: string;
 };
@@ -69,15 +75,23 @@ function ReportsList({ reports }: { reports: AdminDealReport[] }) {
 
 export function VenueAdminPageContent({
   venueName,
+  venueSuburbName,
   venueId,
   reports,
   pendingDeals,
+  editableDeals,
   owners,
   currentUserId,
 }: VenueAdminPageContentProps) {
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-10">
       <header className="space-y-2">
+        <Link
+          href={venuePath(venueSuburbName, venueName)}
+          className="text-sm font-medium text-accent-soft hover:text-foreground"
+        >
+          ← Back to venue
+        </Link>
         <h1 className="text-3xl font-bold text-foreground">
           Admin · {venueName}
         </h1>
@@ -98,6 +112,11 @@ export function VenueAdminPageContent({
             label: "Pending deals",
             badgeCount: pendingDeals.length,
             content: <PendingDealsList pendingDeals={pendingDeals} />,
+          },
+          {
+            id: "edit-deals",
+            label: "Edit deals",
+            content: <EditDealsList deals={editableDeals} />,
           },
           {
             id: "accounts",

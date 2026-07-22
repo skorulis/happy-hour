@@ -115,6 +115,87 @@ export async function getPendingDealsForVenue(
   return queryPendingDeals(venueId);
 }
 
+export type EditableVenueDealSchedule = {
+  dayOfWeek: number;
+  startMinute: number;
+  endMinute: number;
+};
+
+export type EditableVenueDeal = {
+  id: number;
+  title: string | null;
+  details: string | null;
+  conditions: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  status: Extract<DealStatus, "approved" | "rejected">;
+  imageUrl: string | null;
+  schedules: EditableVenueDealSchedule[];
+};
+
+export async function getEditableDealsForVenue(
+  venueId: number,
+): Promise<EditableVenueDeal[]> {
+  const rows = await db
+    .select({
+      id: deal.id,
+      title: deal.title,
+      details: deal.details,
+      conditions: deal.conditions,
+      startDate: deal.startDate,
+      endDate: deal.endDate,
+      status: deal.status,
+      imageUrl: deal.imageUrl,
+    })
+    .from(deal)
+    .where(
+      and(
+        eq(deal.venueId, venueId),
+        inArray(deal.status, ["approved", "rejected"]),
+      ),
+    )
+    .orderBy(desc(deal.syncedAt));
+
+  if (rows.length === 0) {
+    return [];
+  }
+
+  const dealIds = rows.map((row) => row.id);
+  const schedules = await db
+    .select({
+      dealId: dealSchedule.dealId,
+      dayOfWeek: dealSchedule.dayOfWeek,
+      startMinute: dealSchedule.startMinute,
+      endMinute: dealSchedule.endMinute,
+    })
+    .from(dealSchedule)
+    .where(inArray(dealSchedule.dealId, dealIds))
+    .orderBy(dealSchedule.dayOfWeek, dealSchedule.startMinute);
+
+  const schedulesByDeal = new Map<number, EditableVenueDealSchedule[]>();
+  for (const schedule of schedules) {
+    const existing = schedulesByDeal.get(schedule.dealId) ?? [];
+    existing.push({
+      dayOfWeek: schedule.dayOfWeek,
+      startMinute: schedule.startMinute,
+      endMinute: schedule.endMinute,
+    });
+    schedulesByDeal.set(schedule.dealId, existing);
+  }
+
+  return rows.map((row) => ({
+    id: row.id,
+    title: row.title,
+    details: row.details,
+    conditions: row.conditions,
+    startDate: row.startDate,
+    endDate: row.endDate,
+    status: row.status as Extract<DealStatus, "approved" | "rejected">,
+    imageUrl: row.imageUrl,
+    schedules: schedulesByDeal.get(row.id) ?? [],
+  }));
+}
+
 export async function getContributionsForUser(
   userId: string,
 ): Promise<UserDealContribution[]> {

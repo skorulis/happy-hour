@@ -95,31 +95,33 @@ function parseSchedule(raw: unknown): UserDealScheduleInput {
   return { dayOfWeek, startMinute, endMinute };
 }
 
+export function parseUserDealInput(raw: unknown): UserDealInput {
+  if (!raw || typeof raw !== "object") {
+    throw new CreateUserDealsValidationError("Invalid deal");
+  }
+
+  const dealInput = raw as Record<string, unknown>;
+  const schedulesRaw = dealInput.schedules;
+  if (!Array.isArray(schedulesRaw)) {
+    throw new CreateUserDealsValidationError("Invalid deal schedules");
+  }
+
+  return {
+    title: asOptionalTrimmedString(dealInput.title),
+    details: asOptionalTrimmedString(dealInput.details),
+    conditions: asOptionalTrimmedString(dealInput.conditions),
+    startDate: asOptionalIsoDate(dealInput.startDate, "startDate"),
+    endDate: asOptionalIsoDate(dealInput.endDate, "endDate"),
+    schedules: schedulesRaw.map(parseSchedule),
+  };
+}
+
 export function parseUserDealInputs(rawDeals: unknown): UserDealInput[] {
   if (!Array.isArray(rawDeals) || rawDeals.length === 0) {
     throw new CreateUserDealsValidationError("At least one deal is required");
   }
 
-  return rawDeals.map((raw) => {
-    if (!raw || typeof raw !== "object") {
-      throw new CreateUserDealsValidationError("Invalid deal");
-    }
-
-    const dealInput = raw as Record<string, unknown>;
-    const schedulesRaw = dealInput.schedules;
-    if (!Array.isArray(schedulesRaw)) {
-      throw new CreateUserDealsValidationError("Invalid deal schedules");
-    }
-
-    return {
-      title: asOptionalTrimmedString(dealInput.title),
-      details: asOptionalTrimmedString(dealInput.details),
-      conditions: asOptionalTrimmedString(dealInput.conditions),
-      startDate: asOptionalIsoDate(dealInput.startDate, "startDate"),
-      endDate: asOptionalIsoDate(dealInput.endDate, "endDate"),
-      schedules: schedulesRaw.map(parseSchedule),
-    };
-  });
+  return rawDeals.map(parseUserDealInput);
 }
 
 export async function createUserDeals(

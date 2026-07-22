@@ -31,6 +31,8 @@ type EditableSchedule = ProcessedDealSchedule & { id: number };
 type EditDealContentProps = {
   deal: ProcessedDeal;
   onChange: (deal: ProcessedDeal) => void;
+  /** When false, hides discard/undo UI (admin edit). Defaults to true. */
+  showDiscard?: boolean;
 };
 
 function todayIsoDate(): string {
@@ -121,13 +123,17 @@ function OptionalDateRow({
   );
 }
 
-export function EditDealContent({ deal, onChange }: EditDealContentProps) {
+export function EditDealContent({
+  deal,
+  onChange,
+  showDiscard = true,
+}: EditDealContentProps) {
   const formId = useId();
   const nextScheduleIdRef = useRef(-(deal.schedules.length + 1));
   const [schedules, setSchedules] = useState(() =>
     withScheduleIds(deal.schedules),
   );
-  const isDiscarded = deal.status === "rejected";
+  const isDiscarded = showDiscard && deal.status === "rejected";
 
   function update(partial: Partial<ProcessedDeal>) {
     onChange({ ...deal, ...partial });
@@ -201,17 +207,19 @@ export function EditDealContent({ deal, onChange }: EditDealContentProps) {
             />
           </Field>
         </div>
-        <button
-          type="button"
-          className="mt-5 shrink-0 rounded-lg p-2 text-muted transition-colors hover:bg-danger-muted hover:text-danger"
-          aria-label="Discard deal"
-          title="Discard deal"
-          onClick={() => {
-            update({ status: "rejected" });
-          }}
-        >
-          <Trash2 className="size-4" aria-hidden />
-        </button>
+        {showDiscard ? (
+          <button
+            type="button"
+            className="mt-5 shrink-0 rounded-lg p-2 text-muted transition-colors hover:bg-danger-muted hover:text-danger"
+            aria-label="Discard deal"
+            title="Discard deal"
+            onClick={() => {
+              update({ status: "rejected" });
+            }}
+          >
+            <Trash2 className="size-4" aria-hidden />
+          </button>
+        ) : null}
       </div>
 
       <Field label="Details">
