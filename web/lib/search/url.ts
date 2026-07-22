@@ -2,7 +2,6 @@ import type { SearchFilters } from "@/components/search/SearchBar";
 import type { TimeRange } from "@/components/search/DayPicker";
 import type { WhereFilter } from "@/components/search/SuburbSelect";
 import { boundsToApiParams, type MapBounds } from "@/lib/search/bounds";
-import { currentCalendarWeekday } from "@/lib/search/schedule";
 import {
   NEARBY_WHERE_SLUG,
   suburbWherePath,
@@ -140,14 +139,12 @@ export function parseDaysParam(value: string | null): number[] {
   return days;
 }
 
-/** Empty day selection means implicit today for API fetches and venue links. */
-export function effectiveSearchDays(days: number[]): number[] {
-  return days.length === 0 ? [currentCalendarWeekday()] : days;
-}
-
+/** Append `?days=` only when a day filter is selected; empty means any day. */
 export function appendDaysParam(path: string, days: number[]): string {
-  const effective = effectiveSearchDays(days);
-  return `${path}?days=${effective.join(",")}`;
+  if (days.length === 0) {
+    return path;
+  }
+  return `${path}?days=${days.join(",")}`;
 }
 
 export function initialVenueDay(days: number[]): number | null {
@@ -313,7 +310,7 @@ export function searchParamsToFilters(
 
 /**
  * Filters for the main search page. Empty `days` stays empty in state/URL
- * (implicit today); API builders apply {@link effectiveSearchDays}.
+ * (any day — no day filter).
  */
 export function searchParamsToInitialFilters(
   params: URLSearchParams,
@@ -328,10 +325,6 @@ export function filtersToApiSearchParams(
   what: string[],
 ): URLSearchParams {
   const params = filtersToBrowserSearchParams(filters, what);
-
-  if (!params.has("days")) {
-    params.set("days", effectiveSearchDays(filters.days).join(","));
-  }
 
   if (filters.where.kind === "suburb") {
     params.set("suburbId", String(filters.where.id));
@@ -354,7 +347,9 @@ export function filtersToMapApiSearchParams(
 ): URLSearchParams {
   const params = new URLSearchParams();
 
-  params.set("days", effectiveSearchDays(filters.days).join(","));
+  if (filters.days.length > 0) {
+    params.set("days", filters.days.join(","));
+  }
   if (filters.timeRange) {
     if (filters.timeRange.startMinute !== undefined) {
       params.set("startMinute", String(filters.timeRange.startMinute));

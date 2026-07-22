@@ -1,9 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { SearchFilters } from "@/components/search/SearchBar";
-import { currentCalendarWeekday } from "./schedule";
 import {
   appendDaysParam,
-  effectiveSearchDays,
   filtersToApiSearchParams,
   filtersToBrowserPath,
   filtersToBrowserSearchParams,
@@ -96,16 +94,6 @@ describe("filtersToBrowserSearchParams", () => {
   });
 });
 
-describe("effectiveSearchDays", () => {
-  it("defaults empty selection to today", () => {
-    expect(effectiveSearchDays([])).toEqual([currentCalendarWeekday()]);
-  });
-
-  it("passes through an explicit selection", () => {
-    expect(effectiveSearchDays([5, 6])).toEqual([5, 6]);
-  });
-});
-
 describe("searchParamsToInitialFilters", () => {
   it("keeps empty days when the URL has no days param", () => {
     const filters = searchParamsToInitialFilters(new URLSearchParams());
@@ -121,10 +109,8 @@ describe("searchParamsToInitialFilters", () => {
 });
 
 describe("appendDaysParam", () => {
-  it("appends today when days are empty", () => {
-    expect(appendDaysParam("/venue/foo", [])).toBe(
-      `/venue/foo?days=${currentCalendarWeekday()}`,
-    );
+  it("leaves the path unchanged when days are empty", () => {
+    expect(appendDaysParam("/venue/foo", [])).toBe("/venue/foo");
   });
 
   it("appends an explicit selection", () => {
@@ -159,12 +145,12 @@ describe("filtersToApiSearchParams", () => {
     expect(params.get("lng")).toBeNull();
   });
 
-  it("sends today when days are empty", () => {
+  it("omits days when the selection is empty", () => {
     const params = filtersToApiSearchParams(
       { ...baseFilters, days: [] },
       [],
     );
-    expect(params.get("days")).toBe(String(currentCalendarWeekday()));
+    expect(params.get("days")).toBeNull();
   });
 });
 

@@ -29,11 +29,7 @@ export const DAY_ABBREVIATIONS: Record<number, string> = {
 export const ALL_WEEKDAYS = [1, 2, 3, 4, 5, 6, 7];
 
 export function formatDaySelectionLabel(days: number[]): string {
-  if (days.length === 0) {
-    return "Today";
-  }
-
-  if (days.length === ALL_WEEKDAYS.length) {
+  if (days.length === 0 || days.length === ALL_WEEKDAYS.length) {
     return "Any day";
   }
 
@@ -88,13 +84,12 @@ export function formatSuburbDealsMetadataTitle(
   return formatSuburbDealsTitle(suburbName, days, what);
 }
 
-/** Single selected day, or today when none selected (implicit today search). */
+/** Single selected day only; empty or multi-day selections omit a weekday prefix. */
 function suburbTitleDayLabel(days: number[]): string | null {
-  if (days.length > 1) {
+  if (days.length !== 1) {
     return null;
   }
-  const day = days.length === 0 ? currentCalendarWeekday() : days[0];
-  return DAY_LABELS[day] ?? null;
+  return DAY_LABELS[days[0]!] ?? null;
 }
 
 /** One or two product names for the title; 0 or 3+ falls back to generic Specials. */

@@ -150,12 +150,12 @@ export function useSearchFilters(options?: {
     filtersToBrowserSearchParams(seededFilters, seededFilters.what).toString(),
   );
   const syncedPathRef = useRef(pathname);
-  // First client fetch after SSR seed (all-days → today, or matching ?days=)
+  // First client fetch after SSR seed (matching filters / ?days=)
   // should not flash "Loading…" over already-rendered cards.
   const skipLoadingOnceRef = useRef(
     initialDeals.length > 0 || initialNearbyDeals.length > 0,
   );
-  // Same for popular suburbs: keep SSR all-week list visible during today refine.
+  // Same for popular suburbs: keep SSR list visible during the first client fetch.
   const skipPopularLoadingOnceRef = useRef(hasPopularSuburbs);
 
   const [filters, setFilters] = useState<SearchFilters>(seededFilters);
@@ -501,7 +501,7 @@ export function useSearchFilters(options?: {
       }
 
       if (skipLoadingOnceRef.current) {
-        // Keep seeded SSR cards visible during the first refine (all-days → today).
+        // Keep seeded SSR cards visible during the first client fetch.
       } else {
         setLoadingDeals(true);
       }
@@ -591,7 +591,7 @@ export function useSearchFilters(options?: {
 
     async function loadPopularSuburbs() {
       if (skipPopularLoadingOnceRef.current) {
-        // Keep seeded SSR list visible during the first refine (all-days → today).
+        // Keep seeded SSR list visible during the first client fetch.
       } else {
         setLoadingPopularSuburbs(true);
       }

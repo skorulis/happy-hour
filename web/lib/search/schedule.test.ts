@@ -1,8 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   ALL_WEEKDAYS,
-  currentCalendarWeekday,
-  DAY_LABELS,
   formatCompactTimeRange,
   formatDaySelectionLabel,
   formatDealDateRange,
@@ -29,8 +27,8 @@ function atLocalTime(
 }
 
 describe("formatDaySelectionLabel", () => {
-  it("labels empty selection as Today", () => {
-    expect(formatDaySelectionLabel([])).toBe("Today");
+  it("labels empty selection as Any day", () => {
+    expect(formatDaySelectionLabel([])).toBe("Any day");
   });
 
   it("labels all weekdays as Any day", () => {
@@ -50,11 +48,8 @@ describe("formatSuburbDealsTitle", () => {
     );
   });
 
-  it("prefixes today when no day is selected", () => {
-    const today = DAY_LABELS[currentCalendarWeekday()];
-    expect(formatSuburbDealsTitle("Sydney", [])).toBe(
-      `${today} Specials in Sydney`,
-    );
+  it("omits the day when no day is selected", () => {
+    expect(formatSuburbDealsTitle("Sydney", [])).toBe("Specials in Sydney");
   });
 
   it("omits the day for multiple selections", () => {
@@ -85,9 +80,8 @@ describe("formatNearbyDealsTitle", () => {
     expect(formatNearbyDealsTitle([5])).toBe("Thursday Specials Nearby");
   });
 
-  it("prefixes today when no day is selected", () => {
-    const today = DAY_LABELS[currentCalendarWeekday()];
-    expect(formatNearbyDealsTitle([])).toBe(`${today} Specials Nearby`);
+  it("omits the day when no day is selected", () => {
+    expect(formatNearbyDealsTitle([])).toBe("Specials Nearby");
   });
 
   it("omits the day for multiple selections", () => {
