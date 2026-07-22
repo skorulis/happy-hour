@@ -98,7 +98,7 @@ export function DealCard({
           </>
         ) : (
           <span className="float-right ml-3 mb-2 inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-accent-muted">
-            <DealProductIcon deal={deal} size={20} />
+            <DealProductIcon deal={deal} size={20} variant="plain" />
           </span>
         )}
         <div className="space-y-2">
