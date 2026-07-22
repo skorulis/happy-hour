@@ -6,7 +6,7 @@ import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import path from "node:path";
 
-const REQUIRED_REGION_NAMES = ["Greater Sydney", "Sunshine Coast"] as const;
+const REQUIRED_REGION_NAMES = ["Sydney", "Sunshine Coast"] as const;
 
 type AustralianSuburb = {
   suburb: string;
@@ -139,7 +139,7 @@ function resolveRegionId(
   regionIdsByName: Map<string, number>,
 ): number | null {
   if (entry.statistic_area === "Greater Sydney") {
-    return regionIdsByName.get("Greater Sydney") ?? null;
+    return regionIdsByName.get("Sydney") ?? null;
   }
   if (entry.local_goverment_area === "Sunshine Coast (Regional Council)") {
     return regionIdsByName.get("Sunshine Coast") ?? null;

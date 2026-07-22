@@ -75,7 +75,7 @@ final class JobQueueViewModel: CoordinatorViewModel {
 
     func crawlNextSuburb() {
         guard let suburbId = nextSuburbIdForCrawl() else {
-            actionMessage = "No eligible Greater Sydney suburbs found."
+            actionMessage = "No eligible Sydney suburbs found."
             return
         }
 

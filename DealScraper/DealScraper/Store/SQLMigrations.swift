@@ -284,6 +284,17 @@ final class SQLMigrations {
                     .references("geographic_region", onDelete: .setNull)
             }
         }
+
+        migrator.registerMigration("v33_rename_greater_sydney_region") { db in
+            try db.execute(
+                sql: """
+                UPDATE geographic_region
+                SET name = ?
+                WHERE name = ?
+                """,
+                arguments: [GeographicRegion.sydneyName, "Greater Sydney"]
+            )
+        }
     }
 }
 
