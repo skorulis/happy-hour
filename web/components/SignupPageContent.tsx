@@ -32,13 +32,20 @@ export function SignupPageContent() {
   async function handleSubmit({
     email,
     password,
+    name,
   }: {
     email: string;
     password: string;
+    name?: string;
   }) {
+    const trimmedName = name?.trim();
+    if (!trimmedName) {
+      throw new Error("Please enter your name.");
+    }
+
     const verifyUrl = buildVerifyEmailUrl(email, callbackUrl);
     const result = await signUp.email({
-      name: email.split("@")[0] ?? email,
+      name: trimmedName,
       email,
       password,
       callbackURL: verifyUrl,

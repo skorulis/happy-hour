@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
+import { useSearchParams } from "next/navigation";
 import { type FormEvent, useState } from "react";
 
 const inputClassName =
@@ -11,7 +12,10 @@ const buttonClassName =
   "w-full rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-fg transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60";
 
 export function ForgotPasswordPageContent() {
-  const [email, setEmail] = useState("");
+  const searchParams = useSearchParams();
+  const [email, setEmail] = useState(
+    () => searchParams.get("email")?.trim() ?? "",
+  );
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);

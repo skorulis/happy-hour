@@ -13,7 +13,11 @@ const buttonClassName =
 type AuthFormProps = {
   mode: "login" | "signup";
   callbackUrl?: string;
-  onSubmit: (values: { email: string; password: string }) => Promise<void>;
+  onSubmit: (values: {
+    email: string;
+    password: string;
+    name?: string;
+  }) => Promise<void>;
   onGoogleSignIn: () => Promise<void>;
 };
 
@@ -23,6 +27,7 @@ export function AuthForm({
   onSubmit,
   onGoogleSignIn,
 }: AuthFormProps) {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -48,6 +53,7 @@ export function AuthForm({
       await onSubmit({
         email,
         password,
+        ...(isSignup ? { name: name.trim() } : {}),
       });
     } catch (submitError) {
       setError(
@@ -116,6 +122,7 @@ export function AuthForm({
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             autoComplete={isSignup ? "new-password" : "current-password"}
+            placeholder={isSignup ? "At least 8 characters" : undefined}
             required
             minLength={8}
             className={inputClassName}
@@ -123,7 +130,11 @@ export function AuthForm({
           {!isSignup ? (
             <p className="pt-1 text-right text-sm">
               <Link
-                href="/forgot-password"
+                href={
+                  email.trim()
+                    ? `/forgot-password?email=${encodeURIComponent(email.trim())}`
+                    : "/forgot-password"
+                }
                 className="font-medium text-accent-soft hover:text-foreground"
               >
                 Forgot password?
@@ -131,6 +142,27 @@ export function AuthForm({
             </p>
           ) : null}
         </div>
+
+        {isSignup ? (
+          <div className="space-y-1">
+            <label
+              htmlFor="name"
+              className="block text-sm font-medium text-secondary"
+            >
+              Name
+            </label>
+            <input
+              id="name"
+              type="text"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              autoComplete="name"
+              placeholder="What should we call you"
+              required
+              className={inputClassName}
+            />
+          </div>
+        ) : null}
 
         {error ? (
           <p className="text-sm text-danger">{error}</p>
