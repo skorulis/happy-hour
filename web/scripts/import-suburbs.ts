@@ -6,6 +6,8 @@ import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import path from "node:path";
 
+const REQUIRED_REGION_NAMES = ["Greater Sydney", "Sunshine Coast"] as const;
+
 type AustralianSuburb = {
   suburb: string;
   postcode: number;
@@ -14,6 +16,7 @@ type AustralianSuburb = {
   lng: number;
   sqkm: number;
   statistic_area: string;
+  local_goverment_area: string;
 };
 
 type SuburbsFile = {
@@ -29,6 +32,7 @@ type DbSuburb = {
   lng: number | null;
   sqkm: number | null;
   statistic_area: string | null;
+  region_id: number | null;
 };
 
 type ImportStats = {
@@ -37,6 +41,7 @@ type ImportStats = {
   inserted: number;
   updated: number;
   unchanged: number;
+  regionsAssigned: number;
 };
 
 function parseArgs(argv: string[]): {
@@ -111,22 +116,56 @@ function loadCatalog(jsonPath: string): {
   return { byKey, duplicates };
 }
 
+function loadRegionIdsByName(db: Database.Database): Map<string, number> {
+  const rows = db
+    .prepare("SELECT id, name FROM geographic_region")
+    .all() as Array<{ id: number; name: string }>;
+
+  const byName = new Map(rows.map((row) => [row.name, row.id]));
+
+  for (const name of REQUIRED_REGION_NAMES) {
+    if (!byName.has(name)) {
+      throw new Error(
+        `Missing geographic region "${name}". Open DealScraper once so default regions are seeded.`,
+      );
+    }
+  }
+
+  return byName;
+}
+
+function resolveRegionId(
+  entry: AustralianSuburb,
+  regionIdsByName: Map<string, number>,
+): number | null {
+  if (entry.statistic_area === "Greater Sydney") {
+    return regionIdsByName.get("Greater Sydney") ?? null;
+  }
+  if (entry.local_goverment_area === "Sunshine Coast (Regional Council)") {
+    return regionIdsByName.get("Sunshine Coast") ?? null;
+  }
+  return null;
+}
+
 function hasMissingFields(
   existing: DbSuburb,
   entry: AustralianSuburb,
+  regionId: number | null,
 ): boolean {
   return (
     (existing.state == null && entry.state != null) ||
     (existing.lat == null && entry.lat != null) ||
     (existing.lng == null && entry.lng != null) ||
     (existing.sqkm == null && entry.sqkm != null) ||
-    (existing.statistic_area == null && entry.statistic_area != null)
+    (existing.statistic_area == null && entry.statistic_area != null) ||
+    (existing.region_id == null && regionId != null)
   );
 }
 
 function upsertCatalog(
   db: Database.Database,
   catalog: Map<string, AustralianSuburb>,
+  regionIdsByName: Map<string, number>,
   dryRun: boolean,
 ): ImportStats {
   const stats: ImportStats = {
@@ -135,11 +174,12 @@ function upsertCatalog(
     inserted: 0,
     updated: 0,
     unchanged: 0,
+    regionsAssigned: 0,
   };
 
   const findStmt = db.prepare<[string, string | null], DbSuburb | undefined>(
     `
-    SELECT id, name, postcode, state, lat, lng, sqkm, statistic_area
+    SELECT id, name, postcode, state, lat, lng, sqkm, statistic_area, region_id
     FROM suburb
     WHERE name = ? AND (
       (postcode IS NULL AND ? IS NULL) OR postcode = ?
@@ -149,8 +189,8 @@ function upsertCatalog(
 
   const insertStmt = db.prepare(
     `
-    INSERT INTO suburb (name, postcode, state, lat, lng, sqkm, statistic_area)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO suburb (name, postcode, state, lat, lng, sqkm, statistic_area, region_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `,
   );
 
@@ -161,7 +201,8 @@ function upsertCatalog(
         lat = COALESCE(lat, ?),
         lng = COALESCE(lng, ?),
         sqkm = COALESCE(sqkm, ?),
-        statistic_area = COALESCE(statistic_area, ?)
+        statistic_area = COALESCE(statistic_area, ?),
+        region_id = COALESCE(region_id, ?)
     WHERE id = ?
     `,
   );
@@ -176,10 +217,14 @@ function upsertCatalog(
     for (const entry of catalog.values()) {
       const name = entry.suburb.trim();
       const postcode = String(entry.postcode);
+      const regionId = resolveRegionId(entry, regionIdsByName);
       const existing = findStmt.get(name, postcode, postcode);
 
       if (!existing) {
         stats.inserted += 1;
+        if (regionId != null) {
+          stats.regionsAssigned += 1;
+        }
         run(() => {
           insertStmt.run(
             name,
@@ -189,17 +234,21 @@ function upsertCatalog(
             entry.lng,
             entry.sqkm,
             entry.statistic_area,
+            regionId,
           );
         });
         continue;
       }
 
-      if (!hasMissingFields(existing, entry)) {
+      if (!hasMissingFields(existing, entry, regionId)) {
         stats.unchanged += 1;
         continue;
       }
 
       stats.updated += 1;
+      if (existing.region_id == null && regionId != null) {
+        stats.regionsAssigned += 1;
+      }
       run(() => {
         updateStmt.run(
           entry.state,
@@ -207,6 +256,7 @@ function upsertCatalog(
           entry.lng,
           entry.sqkm,
           entry.statistic_area,
+          regionId,
           existing.id,
         );
       });
@@ -233,7 +283,8 @@ async function main() {
       }
     ).count;
 
-    const stats = upsertCatalog(db, byKey, dryRun);
+    const regionIdsByName = loadRegionIdsByName(db);
+    const stats = upsertCatalog(db, byKey, regionIdsByName, dryRun);
     stats.jsonDuplicates = duplicates;
 
     console.log(dryRun ? "Dry run complete" : "Suburb import complete");
@@ -249,6 +300,7 @@ async function main() {
     console.log(`  Inserted: ${stats.inserted}`);
     console.log(`  Updated: ${stats.updated}`);
     console.log(`  Unchanged: ${stats.unchanged}`);
+    console.log(`  Regions assigned: ${stats.regionsAssigned}`);
   } finally {
     db.close();
   }
