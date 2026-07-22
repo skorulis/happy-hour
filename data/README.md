@@ -2,24 +2,6 @@
 
 Shared keyword list used for search suggestions and query expansion. Defined in [`products.json`](products.json).
 
-## Region map boundaries
-
-The `/regions` page renders an SVG map from committed TopoJSON files in this directory (copied into `web/data` at build time).
-
-| File | Purpose |
-|------|---------|
-| [`region-boundaries.json`](region-boundaries.json) | Maps product region slugs to ABS ASGS boundary layers |
-| [`regions-australia.json`](regions-australia.json) | Clickable region polygons |
-| [`australia-outline.json`](australia-outline.json) | Muted Australia state background |
-
-Regenerate from the `web/` package:
-
-```bash
-cd web && npm run build:region-boundaries -- --fetch
-```
-
-See [`web/data/README.md`](../web/data/README.md) for full refresh instructions.
-
 ## Entry fields
 
 | Field | Required | Description |

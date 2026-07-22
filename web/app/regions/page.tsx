@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { PopularRegions } from "@/components/PopularRegions";
-import { RegionsMapLoader } from "@/components/RegionsMapLoader";
 import { listRegions } from "@/lib/search/queries";
 
 export const dynamic = "force-dynamic";
@@ -21,15 +20,6 @@ export default async function RegionsPage() {
           Browse pub and bar happy hour deals by area.
         </p>
       </header>
-
-      <section aria-labelledby="regions-map-heading">
-        <h2 id="regions-map-heading" className="sr-only">
-          Region map
-        </h2>
-        <div role="img" aria-labelledby="regions-map-heading">
-          <RegionsMapLoader regions={regions} />
-        </div>
-      </section>
 
       <section>
         <PopularRegions regions={regions} title="All regions" />
