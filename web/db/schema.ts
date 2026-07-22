@@ -13,10 +13,36 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
+export const country = pgTable("country", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  iso3: text("iso3").notNull().unique(),
+});
+
+export const geographicRegion = pgTable(
+  "geographic_region",
+  {
+    id: serial("id").primaryKey(),
+    countryId: integer("country_id")
+      .notNull()
+      .references(() => country.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+  },
+  (table) => [
+    uniqueIndex("geographic_region_country_name_idx").on(
+      table.countryId,
+      table.name,
+    ),
+  ],
+);
+
 export const suburb = pgTable(
   "suburb",
   {
     id: serial("id").primaryKey(),
+    regionId: integer("region_id").references(() => geographicRegion.id, {
+      onDelete: "set null",
+    }),
     name: text("name").notNull(),
     postcode: text("postcode"),
     state: text("state"),
@@ -218,7 +244,26 @@ export const venueRelations = relations(venue, ({ one, many }) => ({
   ownerships: many(venueOwnership),
 }));
 
-export const suburbRelations = relations(suburb, ({ many }) => ({
+export const countryRelations = relations(country, ({ many }) => ({
+  regions: many(geographicRegion),
+}));
+
+export const geographicRegionRelations = relations(
+  geographicRegion,
+  ({ one, many }) => ({
+    country: one(country, {
+      fields: [geographicRegion.countryId],
+      references: [country.id],
+    }),
+    suburbs: many(suburb),
+  }),
+);
+
+export const suburbRelations = relations(suburb, ({ one, many }) => ({
+  region: one(geographicRegion, {
+    fields: [suburb.regionId],
+    references: [geographicRegion.id],
+  }),
   venues: many(venue),
 }));
 
@@ -283,6 +328,8 @@ export const dealScheduleRelations = relations(dealSchedule, ({ one }) => ({
   }),
 }));
 
+export type Country = typeof country.$inferSelect;
+export type GeographicRegion = typeof geographicRegion.$inferSelect;
 export type Suburb = typeof suburb.$inferSelect;
 export type Venue = typeof venue.$inferSelect;
 export type VenueLinks = typeof venueLinks.$inferSelect;

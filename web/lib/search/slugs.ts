@@ -57,3 +57,15 @@ export function venuePath(
 export function dealAnchorId(dealId: number): string {
   return `deal-${dealId}`;
 }
+
+export function regionSlug(name: string): string {
+  return slugify(name);
+}
+
+export function regionPath(name: string): string {
+  return `/${regionSlug(name)}`;
+}
+
+export function regionAllSuburbsPath(name: string): string {
+  return `/${regionSlug(name)}/all-suburbs`;
+}

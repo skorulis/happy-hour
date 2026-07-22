@@ -1,12 +1,21 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { SearchPage } from "@/components/SearchPage";
+import { SearchUrlRedirect } from "@/components/SearchUrlRedirect";
 import {
+  findRegionBySlug,
   findSuburbByWhereSlug,
+  listPopularSuburbs,
   searchDealsForSuburb,
 } from "@/lib/search/queries";
 import { formatSuburbDealsMetadataTitle } from "@/lib/search/schedule";
-import { NEARBY_WHERE_SLUG, suburbWherePath } from "@/lib/search/slugs";
+import {
+  NEARBY_WHERE_SLUG,
+  regionAllSuburbsPath,
+  regionPath,
+  suburbWherePath,
+} from "@/lib/search/slugs";
 import { parseDaysParam, parseWhatTokens } from "@/lib/search/url";
 
 const SUBURB_SSR_DEAL_LIMIT = 200;
@@ -27,32 +36,55 @@ export async function generateMetadata({
   }
 
   const suburb = await findSuburbByWhereSlug(whereSlug);
-  if (!suburb) {
+  if (suburb) {
+    const days = parseDaysParam(daysParam ?? null);
+    const what = whatParam ? parseWhatTokens(whatParam) : [];
+    const title = formatSuburbDealsMetadataTitle(suburb.name, days, what);
+    const description = `Find pub and bar happy hour deals in ${suburb.name}${suburb.postcode ? ` (${suburb.postcode})` : ""}.`;
+    const ogImages = suburb.heroImage ? [{ url: suburb.heroImage }] : undefined;
+
+    return {
+      title,
+      description,
+      alternates: {
+        canonical: suburbWherePath(suburb.name, suburb.postcode),
+      },
+      openGraph: {
+        title,
+        description,
+        ...(ogImages ? { images: ogImages } : {}),
+      },
+      twitter: {
+        card: ogImages ? "summary_large_image" : "summary",
+        title,
+        description,
+        ...(ogImages ? { images: ogImages.map((image) => image.url) } : {}),
+      },
+    };
+  }
+
+  const region = await findRegionBySlug(whereSlug);
+  if (!region) {
     return {};
   }
 
-  const days = parseDaysParam(daysParam ?? null);
-  const what = whatParam ? parseWhatTokens(whatParam) : [];
-  const title = formatSuburbDealsMetadataTitle(suburb.name, days, what);
-  const description = `Find pub and bar happy hour deals in ${suburb.name}${suburb.postcode ? ` (${suburb.postcode})` : ""}.`;
-  const ogImages = suburb.heroImage ? [{ url: suburb.heroImage }] : undefined;
+  const title = `${region.name} happy hour deals`;
+  const description = `Find pub and bar happy hour deals in ${region.name}.`;
 
   return {
     title,
     description,
     alternates: {
-      canonical: suburbWherePath(suburb.name, suburb.postcode),
+      canonical: regionPath(region.name),
     },
     openGraph: {
       title,
       description,
-      ...(ogImages ? { images: ogImages } : {}),
     },
     twitter: {
-      card: ogImages ? "summary_large_image" : "summary",
+      card: "summary",
       title,
       description,
-      ...(ogImages ? { images: ogImages.map((image) => image.url) } : {}),
     },
   };
 }
@@ -68,37 +100,64 @@ export default async function SuburbSearchPage({
     notFound();
   }
 
+  const days = parseDaysParam(daysParam ?? null);
+  const what = whatParam ? parseWhatTokens(whatParam) : [];
+
   const suburb = await findSuburbByWhereSlug(whereSlug);
-  if (!suburb) {
+  if (suburb) {
+    const { deals: initialDeals, nearbyDeals: initialNearbyDeals } =
+      await searchDealsForSuburb({
+        suburbId: suburb.id,
+        ...(days.length > 0 ? { days } : {}),
+        ...(what.length > 0 ? { query: what.join(",") } : {}),
+        limit: SUBURB_SSR_DEAL_LIMIT,
+      });
+
+    const initialWhere = {
+      kind: "suburb" as const,
+      id: suburb.id,
+      suburb,
+    };
+
+    return (
+      <SearchPage
+        key={suburb.id}
+        initialWhere={initialWhere}
+        initialDays={days}
+        initialWhat={what}
+        initialDeals={initialDeals}
+        initialNearbyDeals={initialNearbyDeals}
+      />
+    );
+  }
+
+  const region = await findRegionBySlug(whereSlug);
+  if (!region) {
     notFound();
   }
 
-  const days = parseDaysParam(daysParam ?? null);
-  const what = whatParam ? parseWhatTokens(whatParam) : [];
-  // Empty days → omit day filter so SSR HTML includes the full week for crawlers.
-  // Explicit ?days= stays honest for deep links.
-  const { deals: initialDeals, nearbyDeals: initialNearbyDeals } =
-    await searchDealsForSuburb({
-      suburbId: suburb.id,
-      ...(days.length > 0 ? { days } : {}),
-      ...(what.length > 0 ? { query: what.join(",") } : {}),
-      limit: SUBURB_SSR_DEAL_LIMIT,
-    });
-
-  const initialWhere = {
-    kind: "suburb" as const,
-    id: suburb.id,
-    suburb,
-  };
+  const popularSuburbs = await listPopularSuburbs(20, {
+    regionId: region.id,
+    ...(days.length > 0 ? { days } : {}),
+    ...(what.length > 0 ? { query: what.join(",") } : {}),
+  });
 
   return (
-    <SearchPage
-      key={suburb.id}
-      initialWhere={initialWhere}
-      initialDays={days}
-      initialWhat={what}
-      initialDeals={initialDeals}
-      initialNearbyDeals={initialNearbyDeals}
-    />
+    <>
+      <Suspense fallback={null}>
+        <SearchUrlRedirect />
+      </Suspense>
+      <SearchPage
+        key={region.id}
+        popularSuburbs={popularSuburbs}
+        initialDays={days}
+        initialWhat={what}
+        pageTitle={region.name}
+        listBasePath={regionPath(region.name)}
+        regionId={region.id}
+        allSuburbsHref={regionAllSuburbsPath(region.name)}
+        includeNearbyLink={false}
+      />
+    </>
   );
 }

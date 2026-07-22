@@ -16,6 +16,11 @@ type SearchPageProps = {
   initialDeals?: DealSearchResult[];
   initialNearbyDeals?: DealSearchResult[];
   popularSuburbs?: PopularSuburb[];
+  pageTitle?: string;
+  listBasePath?: string;
+  regionId?: number;
+  allSuburbsHref?: string;
+  includeNearbyLink?: boolean;
 };
 
 export function SearchPage({
@@ -25,6 +30,11 @@ export function SearchPage({
   initialDeals,
   initialNearbyDeals,
   popularSuburbs: initialPopularSuburbs,
+  pageTitle,
+  listBasePath,
+  regionId,
+  allSuburbsHref,
+  includeNearbyLink = true,
 }: SearchPageProps) {
   const {
     filters,
@@ -51,10 +61,13 @@ export function SearchPage({
     initialDeals,
     initialNearbyDeals,
     initialPopularSuburbs,
+    listBasePath,
+    regionId,
   });
 
   const showPopularSuburbs =
-    filters.where.kind === "anywhere" && popularSuburbs !== undefined;
+    (filters.where.kind === "anywhere" || regionId !== undefined) &&
+    popularSuburbs !== undefined;
   const popularSearch = filtersToBrowserSearchParams(
     filters,
     filters.what,
@@ -70,7 +83,7 @@ export function SearchPage({
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-10">
       <header>
         <h1 className="text-3xl font-bold text-foreground">
-        Your evening starts here
+          {pageTitle ?? "Your evening starts here"}
         </h1>
       </header>
 
@@ -92,6 +105,8 @@ export function SearchPage({
             suburbs={popularSuburbs}
             search={popularSearch}
             includeSpecialLinks
+            includeNearbyLink={includeNearbyLink}
+            allSuburbsHref={allSuburbsHref}
             description={
               loadingPopularSuburbs
                 ? "Loading..."

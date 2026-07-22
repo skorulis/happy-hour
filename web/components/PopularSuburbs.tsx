@@ -10,6 +10,8 @@ type PopularSuburbsProps = {
   title?: string;
   description?: string;
   includeSpecialLinks?: boolean;
+  includeNearbyLink?: boolean;
+  allSuburbsHref?: string;
 };
 
 type SuburbListItem =
@@ -29,6 +31,8 @@ function buildListItems(
   suburbs: PopularSuburb[],
   search: string | undefined,
   includeSpecialLinks: boolean,
+  includeNearbyLink: boolean,
+  allSuburbsHref: string,
 ): SuburbListItem[] {
   const items: SuburbListItem[] = suburbs.map((suburb) => ({
     kind: "suburb",
@@ -42,21 +46,27 @@ function buildListItems(
   const nearbyPath = `/${NEARBY_WHERE_SLUG}`;
   const nearbyHref = search ? `${nearbyPath}?${search}` : nearbyPath;
 
-  return [
-    {
+  const result: SuburbListItem[] = [];
+
+  if (includeNearbyLink) {
+    result.push({
       kind: "special",
       id: "nearby",
       label: "Nearby",
       href: nearbyHref,
-    },
-    ...items,
-    {
-      kind: "special",
-      id: "all-suburbs",
-      label: "All suburbs",
-      href: "/all-suburbs",
-    },
-  ];
+    });
+  }
+
+  result.push(...items);
+
+  result.push({
+    kind: "special",
+    id: "all-suburbs",
+    label: "All suburbs",
+    href: allSuburbsHref,
+  });
+
+  return result;
 }
 
 export function PopularSuburbs({
@@ -65,8 +75,16 @@ export function PopularSuburbs({
   title = "Popular suburbs",
   description = "Pick a suburb to browse deals nearby.",
   includeSpecialLinks = false,
+  includeNearbyLink = true,
+  allSuburbsHref = "/all-suburbs",
 }: PopularSuburbsProps) {
-  const items = buildListItems(suburbs, search, includeSpecialLinks);
+  const items = buildListItems(
+    suburbs,
+    search,
+    includeSpecialLinks,
+    includeNearbyLink,
+    allSuburbsHref,
+  );
 
   if (items.length === 0) {
     return (

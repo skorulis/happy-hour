@@ -78,9 +78,16 @@ export function whereToMapPath(): string {
 export function filtersToBrowserPath(
   filters: SearchFilters,
   pathname: string,
+  options?: { anywhereBasePath?: string },
 ): string {
   const parsed = parseWherePath(pathname);
-  return parsed.map ? whereToMapPath() : whereToListPath(filters.where);
+  if (parsed.map) {
+    return whereToMapPath();
+  }
+  if (filters.where.kind === "anywhere" && options?.anywhereBasePath) {
+    return options.anywhereBasePath;
+  }
+  return whereToListPath(filters.where);
 }
 
 export function pathnameToMapHref(

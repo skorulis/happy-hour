@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   parseSuburbWhereSlug,
+  regionAllSuburbsPath,
+  regionPath,
   suburbWherePath,
   suburbWhereSlug,
 } from "./slugs";
@@ -28,6 +30,19 @@ describe("suburbWherePath", () => {
   });
 });
 
+describe("region slugs", () => {
+  it("slugifies region names", () => {
+    expect(regionPath("Sydney")).toBe("/sydney");
+    expect(regionPath("Sunshine Coast")).toBe("/sunshine-coast");
+  });
+
+  it("builds all-suburbs paths", () => {
+    expect(regionAllSuburbsPath("Sydney")).toBe("/sydney/all-suburbs");
+    expect(regionAllSuburbsPath("Sunshine Coast")).toBe(
+      "/sunshine-coast/all-suburbs",
+    );
+  });
+});
 describe("parseSuburbWhereSlug", () => {
   it("splits a trailing 4-digit postcode", () => {
     expect(parseSuburbWhereSlug("abbotsbury-2176")).toEqual({

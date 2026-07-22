@@ -23,11 +23,22 @@ type SqliteSuburb = {
   lng: number | null;
   sqkm: number | null;
   statistic_area: string | null;
+  region_id: number | null;
   hero_image: string | null;
   hero_r2_url: string | null;
 };
 
-const GREATER_SYDNEY_STATISTIC_AREA = "Greater Sydney";
+type SqliteCountry = {
+  id: number;
+  name: string;
+  iso3: string;
+};
+
+type SqliteGeographicRegion = {
+  id: number;
+  country_id: number;
+  name: string;
+};
 
 type SqliteVenue = {
   id: number;
@@ -207,11 +218,69 @@ async function main() {
       return `${name}\u0000${postcode ?? ""}`;
     }
 
+    const sqliteCountries = sqlite
+      .prepare("SELECT * FROM country ORDER BY id")
+      .all() as SqliteCountry[];
+
+    const countryIdBySqliteId = new Map<number, number>();
+    for (const countryRow of sqliteCountries) {
+      const [upsertedCountry] = await db
+        .insert(schema.country)
+        .values({
+          name: countryRow.name,
+          iso3: countryRow.iso3,
+        })
+        .onConflictDoUpdate({
+          target: schema.country.iso3,
+          set: {
+            name: countryRow.name,
+          },
+        })
+        .returning({ id: schema.country.id });
+      countryIdBySqliteId.set(countryRow.id, upsertedCountry.id);
+    }
+
+    const sqliteRegions = sqlite
+      .prepare("SELECT * FROM geographic_region ORDER BY id")
+      .all() as SqliteGeographicRegion[];
+
+    const regionIdBySqliteId = new Map<number, number>();
+    for (const regionRow of sqliteRegions) {
+      const pgCountryId = countryIdBySqliteId.get(regionRow.country_id);
+      if (pgCountryId == null) {
+        throw new Error(
+          `Geographic region "${regionRow.name}" references missing country id ${regionRow.country_id}`,
+        );
+      }
+
+      const [upsertedRegion] = await db
+        .insert(schema.geographicRegion)
+        .values({
+          countryId: pgCountryId,
+          name: regionRow.name,
+        })
+        .onConflictDoUpdate({
+          target: [
+            schema.geographicRegion.countryId,
+            schema.geographicRegion.name,
+          ],
+          set: {
+            name: regionRow.name,
+          },
+        })
+        .returning({ id: schema.geographicRegion.id });
+      regionIdBySqliteId.set(regionRow.id, upsertedRegion.id);
+    }
+
     async function upsertSuburb(
       tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
       suburbRow: SqliteSuburb,
     ): Promise<number> {
       const heroImage = suburbHeroImageForPostgres(suburbRow);
+      const regionId =
+        suburbRow.region_id != null
+          ? (regionIdBySqliteId.get(suburbRow.region_id) ?? null)
+          : null;
       const [upsertedSuburb] = await tx
         .insert(schema.suburb)
         .values({
@@ -222,6 +291,7 @@ async function main() {
           lng: suburbRow.lng,
           sqkm: suburbRow.sqkm,
           heroImage,
+          regionId,
         })
         .onConflictDoUpdate({
           target: [schema.suburb.name, schema.suburb.postcode],
@@ -233,6 +303,7 @@ async function main() {
             lng: suburbRow.lng,
             sqkm: suburbRow.sqkm,
             heroImage,
+            regionId,
           },
         })
         .returning({ id: schema.suburb.id });
@@ -240,13 +311,11 @@ async function main() {
       return upsertedSuburb.id;
     }
 
-    const greaterSydneySuburbs = sqlite
-      .prepare(
-        "SELECT * FROM suburb WHERE statistic_area = ? ORDER BY id",
-      )
-      .all(GREATER_SYDNEY_STATISTIC_AREA) as SqliteSuburb[];
+    const regionSuburbs = sqlite
+      .prepare("SELECT * FROM suburb WHERE region_id IS NOT NULL ORDER BY id")
+      .all() as SqliteSuburb[];
 
-    for (const suburbRow of greaterSydneySuburbs) {
+    for (const suburbRow of regionSuburbs) {
       await db.transaction(async (tx) => {
         await upsertSuburb(tx, suburbRow);
       });

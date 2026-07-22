@@ -31,6 +31,11 @@ export async function GET(request: Request) {
   const endMinuteParam = searchParams.get("endMinute");
   const query = searchParams.get("q") ?? undefined;
   const limit = Number(searchParams.get("limit") ?? "20");
+  const regionIdParam = searchParams.get("regionId");
+  const regionId =
+    regionIdParam !== null && regionIdParam !== ""
+      ? Number(regionIdParam)
+      : undefined;
 
   const days = parseDaysParam(daysParam);
   const startMinute =
@@ -60,6 +65,13 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Invalid endMinute" }, { status: 400 });
   }
 
+  if (
+    regionId !== undefined &&
+    (!Number.isFinite(regionId) || regionId < 1 || !Number.isInteger(regionId))
+  ) {
+    return NextResponse.json({ error: "Invalid regionId" }, { status: 400 });
+  }
+
   try {
     const suburbs = await listPopularSuburbs(
       Number.isFinite(limit) ? limit : 20,
@@ -68,6 +80,7 @@ export async function GET(request: Request) {
         startMinute,
         endMinute,
         query,
+        regionId,
       },
     );
     return NextResponse.json({ suburbs });

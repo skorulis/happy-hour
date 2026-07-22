@@ -166,6 +166,21 @@ describe("filtersToBrowserPath", () => {
       filtersToBrowserPath({ ...baseFilters, where: suburbWhere }, "/"),
     ).toBe("/abbotsbury-2176");
   });
+
+  it("preserves region base path for anywhere filters", () => {
+    expect(
+      filtersToBrowserPath(baseFilters, "/sydney", {
+        anywhereBasePath: "/sydney",
+      }),
+    ).toBe("/sydney");
+    expect(
+      filtersToBrowserPath(
+        { ...baseFilters, where: suburbWhere },
+        "/sydney",
+        { anywhereBasePath: "/sydney" },
+      ),
+    ).toBe("/abbotsbury-2176");
+  });
 });
 
 describe("pathname list/map hrefs", () => {

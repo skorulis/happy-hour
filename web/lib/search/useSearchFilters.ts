@@ -130,9 +130,13 @@ export function useSearchFilters(options?: {
   initialDeals?: DealSearchResult[];
   initialNearbyDeals?: DealSearchResult[];
   initialPopularSuburbs?: PopularSuburb[];
+  listBasePath?: string;
+  regionId?: number;
 }) {
   const mapViewport = options?.mapViewport ?? false;
   const initialWhere = options?.initialWhere ?? { kind: "anywhere" as const };
+  const listBasePath = options?.listBasePath;
+  const regionId = options?.regionId;
   const initialDeals = options?.initialDeals ?? [];
   const initialNearbyDeals = options?.initialNearbyDeals ?? [];
   const hasPopularSuburbs = options?.initialPopularSuburbs !== undefined;
@@ -448,7 +452,9 @@ export function useSearchFilters(options?: {
   }, [whereKey, nearMePending, geolocationUnavailable]);
 
   useEffect(() => {
-    const nextPath = filtersToBrowserPath(filters, pathname);
+    const nextPath = filtersToBrowserPath(filters, pathname, {
+      anywhereBasePath: listBasePath,
+    });
     const next = filtersToBrowserSearchParams(filters, debouncedWhat).toString();
 
     if (
@@ -477,6 +483,7 @@ export function useSearchFilters(options?: {
     pathname,
     filters,
     router,
+    listBasePath,
   ]);
 
   useEffect(() => {
@@ -583,7 +590,7 @@ export function useSearchFilters(options?: {
       return;
     }
 
-    if (filters.where.kind !== "anywhere") {
+    if (filters.where.kind !== "anywhere" && regionId === undefined) {
       return;
     }
 
@@ -600,6 +607,9 @@ export function useSearchFilters(options?: {
       try {
         const params = filtersToApiSearchParams(filters, debouncedWhat);
         params.set("limit", "20");
+        if (regionId !== undefined) {
+          params.set("regionId", String(regionId));
+        }
         const response = await fetch(
           `/api/suburbs/popular?${params.toString()}`,
           { signal: controller.signal },
@@ -632,6 +642,7 @@ export function useSearchFilters(options?: {
     debouncedWhat,
     filters,
     whereKey,
+    regionId,
   ]);
 
   function handleDaysApply(days: number[], timeRange: TimeRange) {

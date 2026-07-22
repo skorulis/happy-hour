@@ -29,10 +29,18 @@ import {
 import { parseWhatTokens } from "@/lib/search/url";
 import {
   parseSuburbWhereSlug,
+  regionSlug,
   slugify,
   UNKNOWN_SUBURB_SLUG,
 } from "@/lib/search/slugs";
-import { deal, dealSchedule, suburb, venue, venueLinks } from "@/db/schema";
+import {
+  deal,
+  dealSchedule,
+  geographicRegion,
+  suburb,
+  venue,
+  venueLinks,
+} from "@/db/schema";
 import { getDealIdsWithOpenReports } from "@/lib/reports/queries";
 
 export type SuburbSearchResult = {
@@ -295,11 +303,28 @@ export async function searchSuburbs(
     .limit(limit);
 }
 
+export type RegionWithCounts = {
+  id: number;
+  name: string;
+  dealCount: number;
+  venueCount: number;
+};
+
+export type RegionSearchResult = {
+  id: number;
+  name: string;
+};
+
 export type ListPopularSuburbsOptions = {
   days?: number[];
   startMinute?: number;
   endMinute?: number;
   query?: string;
+  regionId?: number;
+};
+
+export type ListAllSuburbsOptions = {
+  regionId?: number;
 };
 
 export async function listPopularSuburbs(
@@ -337,6 +362,10 @@ export async function listPopularSuburbs(
     filters.push(textSearchFilterForWhatQuery(trimmedQuery));
   }
 
+  if (options.regionId !== undefined) {
+    filters.push(eq(suburb.regionId, options.regionId));
+  }
+
   const query = db
     .select({
       id: suburb.id,
@@ -357,11 +386,13 @@ export async function listPopularSuburbs(
 }
 
 /** Every suburb, including those with no deals (dealCount may be 0). */
-export async function listAllSuburbs(): Promise<PopularSuburb[]> {
+export async function listAllSuburbs(
+  options: ListAllSuburbsOptions = {},
+): Promise<PopularSuburb[]> {
   const dealCount = count(deal.id);
   const venueCount = countDistinct(venue.id);
 
-  return db
+  let query = db
     .select({
       id: suburb.id,
       name: suburb.name,
@@ -373,8 +404,52 @@ export async function listAllSuburbs(): Promise<PopularSuburb[]> {
     .from(suburb)
     .leftJoin(venue, eq(venue.suburbId, suburb.id))
     .leftJoin(deal, eq(deal.venueId, venue.id))
+    .$dynamic();
+
+  if (options.regionId !== undefined) {
+    query = query.where(eq(suburb.regionId, options.regionId));
+  }
+
+  return query
     .groupBy(suburb.id, suburb.name, suburb.postcode, suburb.heroImage)
     .orderBy(desc(dealCount), suburb.name);
+}
+
+export async function listRegions(): Promise<RegionWithCounts[]> {
+  const dealCount = count(deal.id);
+  const venueCount = countDistinct(venue.id);
+
+  return db
+    .select({
+      id: geographicRegion.id,
+      name: geographicRegion.name,
+      dealCount,
+      venueCount,
+    })
+    .from(geographicRegion)
+    .leftJoin(suburb, eq(suburb.regionId, geographicRegion.id))
+    .leftJoin(venue, eq(venue.suburbId, suburb.id))
+    .leftJoin(
+      deal,
+      and(eq(deal.venueId, venue.id), eq(deal.status, "approved")),
+    )
+    .groupBy(geographicRegion.id, geographicRegion.name)
+    .orderBy(desc(dealCount), geographicRegion.name);
+}
+
+export async function findRegionBySlug(
+  slug: string,
+): Promise<RegionSearchResult | null> {
+  const normalized = slug.trim().toLowerCase();
+  if (!normalized) {
+    return null;
+  }
+
+  const regions = await db
+    .select({ id: geographicRegion.id, name: geographicRegion.name })
+    .from(geographicRegion);
+
+  return regions.find((region) => regionSlug(region.name) === normalized) ?? null;
 }
 
 export async function findSuburbByWhereSlug(
