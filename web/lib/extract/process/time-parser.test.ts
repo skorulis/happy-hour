@@ -236,6 +236,12 @@ describe("parseTimes", () => {
     ]);
   });
 
+  it("parses rego-for-start as evening through midnight", () => {
+    expect(parseTimes(["6PM REGO FOR 6:30PM START"])).toEqual([
+      between(18 * 60, 24 * 60),
+    ]);
+  });
+
   it("parses hyphen-continued split time range", () => {
     expect(parseTimes(["7.30 pm", "-10.30 pm"])).toEqual([
       between(19 * 60 + 30, 22 * 60 + 30),

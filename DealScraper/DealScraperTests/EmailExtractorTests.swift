@@ -44,4 +44,15 @@ struct EmailExtractorTests {
 
         #expect(extractor.extract(from: text) == ["hello@venue.com"])
     }
+
+    @Test func ignoresWixSentryTelemetryEmails() {
+        let text = """
+        18d2f96d279149989b95faf0a4b41882@sentry-next.wixpress.com
+        dd0a55ccb8124b9c9d938e3acf41f8aa@sentry.wixpress.com
+        8c4075d5481d476e945486754f783364@sentry.io
+        Contact hello@venue.com
+        """
+
+        #expect(extractor.extract(from: text) == ["hello@venue.com"])
+    }
 }

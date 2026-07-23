@@ -11,6 +11,7 @@ const MIN_MINUTES = 420; // 7 AM
 const MAX_MINUTES = 1260; // 9 PM
 const MORNING_CUTOFF_MINUTE = 10 * 60;
 const MINUTES_PER_DAY = 24 * 60;
+const TIME_TOKEN = String.raw`\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?`;
 
 export function makeBetween(start: number, end: number): DealHours {
   return { kind: "between", start, end: adjustedEndMinute(start, end) };
@@ -131,6 +132,20 @@ export function parseDealHours(str: string): DealHours | null {
   // Default lunch window when the time string is just a meal name.
   if (normalized === "lunch") {
     return makeBetween(12 * 60, 14 * 60);
+  }
+
+  // "6PM REGO FOR 6:30PM START" → from registration through midnight.
+  {
+    const regoMatch = new RegExp(
+      `^(${TIME_TOKEN})\\s+rego(?:\\s+for\\s+${TIME_TOKEN}\\s+start)?$`,
+      "i",
+    ).exec(normalized);
+    if (regoMatch) {
+      const start = toMinutes(regoMatch[1]!);
+      if (start !== null) {
+        return makeBetween(start, 0);
+      }
+    }
   }
 
   const rangeSeparators = [" - ", "-", " to "];
