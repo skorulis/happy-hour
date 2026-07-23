@@ -6,7 +6,26 @@ import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import path from "node:path";
 
-const REQUIRED_REGION_NAMES = ["Sydney", "Sunshine Coast", "Regional NSW"] as const;
+const REQUIRED_REGION_NAMES = [
+  "Sydney",
+  "Melbourne",
+  "Brisbane",
+  "Perth",
+  "Adelaide",
+  "Darwin",
+  "Sunshine Coast",
+  "Regional NSW",
+] as const;
+
+/** ABS Greater Capital City Statistical Areas → region name. */
+const GREATER_STATISTIC_AREA_REGIONS: Record<string, string> = {
+  "Greater Sydney": "Sydney",
+  "Greater Melbourne": "Melbourne",
+  "Greater Brisbane": "Brisbane",
+  "Greater Perth": "Perth",
+  "Greater Adelaide": "Adelaide",
+  "Greater Darwin": "Darwin",
+};
 
 type SuburbNameOverride = {
   sourceName: string;
@@ -181,11 +200,13 @@ function resolveRegionId(
   entry: AustralianSuburb,
   regionIdsByName: Map<string, number>,
 ): number | null {
-  if (entry.statistic_area === "Greater Sydney") {
-    return regionIdsByName.get("Sydney") ?? null;
-  }
+  // Prefer Sunshine Coast LGA over Greater Brisbane for the rare overlap.
   if (entry.local_goverment_area === "Sunshine Coast (Regional Council)") {
     return regionIdsByName.get("Sunshine Coast") ?? null;
+  }
+  const greaterRegion = GREATER_STATISTIC_AREA_REGIONS[entry.statistic_area];
+  if (greaterRegion) {
+    return regionIdsByName.get(greaterRegion) ?? null;
   }
   if (entry.state === "NSW") {
     return regionIdsByName.get("Regional NSW") ?? null;

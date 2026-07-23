@@ -43,7 +43,21 @@ nonisolated extension GeographicRegion: FetchableRecord, MutablePersistableRecor
 
 extension GeographicRegion {
     static let sydneyName = "Sydney"
+    static let melbourneName = "Melbourne"
+    static let brisbaneName = "Brisbane"
+    static let perthName = "Perth"
+    static let adelaideName = "Adelaide"
+    static let darwinName = "Darwin"
     static let sunshineCoastName = "Sunshine Coast"
     static let regionalNSWName = "Regional NSW"
-    static let australiaRegionNames = [sydneyName, sunshineCoastName, regionalNSWName]
+    static let australiaRegionNames = [
+        sydneyName,
+        melbourneName,
+        brisbaneName,
+        perthName,
+        adelaideName,
+        darwinName,
+        sunshineCoastName,
+        regionalNSWName,
+    ]
 }
