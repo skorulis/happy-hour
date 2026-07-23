@@ -108,6 +108,52 @@ struct GooglePlacesClientTests {
         #expect(GooglePlacesAPI.nearbySearchFieldMask.contains("places.rating"))
     }
 
+    @Test func placeDetailsSummariesFieldMask() {
+        #expect(
+            GooglePlacesAPI.placeDetailsSummariesFieldMask
+                == "id,editorialSummary,reviewSummary,generativeSummary"
+        )
+    }
+
+    @Test func getPlaceSummariesSendsGetWithApiKeyAndFieldMask() async throws {
+        let captured = RequestCapture()
+
+        let client = GooglePlacesClient(placeSummariesRequestHandler: { request in
+            captured.request = request
+            return GooglePlaceSummaries(
+                id: "ChIJTest123",
+                editorialSummary: .init(text: "A lively neighbourhood pub.", languageCode: "en"),
+                reviewSummary: .init(
+                    text: .init(text: "Guests praise the beer garden.", languageCode: "en"),
+                    flagContentUri: nil,
+                    disclosureText: .init(text: "Summarized with Gemini", languageCode: "en"),
+                    reviewsUri: nil
+                ),
+                generativeSummary: .init(
+                    overview: .init(text: "A classic local with solid food and drinks.", languageCode: "en"),
+                    overviewFlagContentUri: nil,
+                    disclosureText: .init(text: "Summarized with Gemini", languageCode: "en")
+                )
+            )
+        })
+
+        let summaries = try await client.getPlaceSummaries(
+            apiKey: "google-test-key",
+            placeId: "places/ChIJTest123"
+        )
+
+        let request = try #require(captured.request as? HTTPJSONRequest<GooglePlaceSummaries>)
+        #expect(request.endpoint == "https://places.googleapis.com/v1/places/ChIJTest123")
+        #expect(request.method == "GET")
+        #expect(request.headers["X-Goog-Api-Key"] == "google-test-key")
+        #expect(request.headers["X-Goog-FieldMask"] == GooglePlacesAPI.placeDetailsSummariesFieldMask)
+        #expect(request.body == nil)
+
+        #expect(summaries.editorialSummary?.text == "A lively neighbourhood pub.")
+        #expect(summaries.reviewSummary?.text?.text == "Guests praise the beer garden.")
+        #expect(summaries.generativeSummary?.overview?.text == "A classic local with solid food and drinks.")
+    }
+
     @Test func searchTextAllPagesFetchesSubsequentPages() async throws {
         var capturedRequests: [any HTTPRequest] = []
 
@@ -206,9 +252,9 @@ struct GooglePlacesClientTests {
     }
 
     @Test func throwsAPIErrorOnNonSuccessStatus() async throws {
-        let client = GooglePlacesClient { _ in
+        let client = GooglePlacesClient(requestHandler: { _ in
             throw GooglePlacesAPI.Error.apiError(statusCode: 403, message: "API key not valid")
-        }
+        })
 
         do {
             _ = try await client.searchText(

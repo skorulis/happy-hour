@@ -7,6 +7,26 @@ nonisolated struct GooglePlacesSearchResponse: Decodable, Sendable {
     let nextPageToken: String?
 }
 
+nonisolated struct GooglePlaceSummaries: Decodable, Sendable {
+    let id: String?
+    let editorialSummary: GooglePlace.LocalizedText?
+    let reviewSummary: ReviewSummary?
+    let generativeSummary: GenerativeSummary?
+
+    struct ReviewSummary: Decodable, Sendable {
+        let text: GooglePlace.LocalizedText?
+        let flagContentUri: String?
+        let disclosureText: GooglePlace.LocalizedText?
+        let reviewsUri: String?
+    }
+
+    struct GenerativeSummary: Decodable, Sendable {
+        let overview: GooglePlace.LocalizedText?
+        let overviewFlagContentUri: String?
+        let disclosureText: GooglePlace.LocalizedText?
+    }
+}
+
 nonisolated enum GooglePlaceBusinessStatus: String, Codable, Sendable {
     case operational = "OPERATIONAL"
     case closedTemporarily = "CLOSED_TEMPORARILY"

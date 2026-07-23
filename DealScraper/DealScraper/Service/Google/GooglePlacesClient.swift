@@ -10,10 +10,12 @@ final class GooglePlacesClient: HTTPService {
 
     private let session: URLSession
     private let requestHandler: ((any HTTPRequest) async throws -> GooglePlacesSearchResponse)?
+    private let placeSummariesRequestHandler: ((any HTTPRequest) async throws -> GooglePlaceSummaries)?
 
     init(session: URLSession = .shared, logger: HTTPLogger? = .init(level: .full)) {
         self.session = session
         self.requestHandler = nil
+        self.placeSummariesRequestHandler = nil
         super.init(baseURL: nil, logger: logger)
     }
 
@@ -22,6 +24,16 @@ final class GooglePlacesClient: HTTPService {
     ) {
         self.session = URLSession.shared
         self.requestHandler = requestHandler
+        self.placeSummariesRequestHandler = nil
+        super.init(baseURL: nil, logger: nil)
+    }
+
+    init(
+        placeSummariesRequestHandler: @escaping (any HTTPRequest) async throws -> GooglePlaceSummaries
+    ) {
+        self.session = URLSession.shared
+        self.requestHandler = nil
+        self.placeSummariesRequestHandler = placeSummariesRequestHandler
         super.init(baseURL: nil, logger: nil)
     }
 
@@ -168,13 +180,32 @@ final class GooglePlacesClient: HTTPService {
         )
     }
 
+    func getPlaceSummaries(
+        apiKey: String,
+        placeId: String
+    ) async throws -> GooglePlaceSummaries {
+        try await performPlaceSummaries(
+            GooglePlacesAPI.placeDetailsRequest(apiKey: apiKey, placeId: placeId)
+        )
+    }
+
     private func perform<R: HTTPRequest>(
         _ request: R
     ) async throws -> R.ResponseType where R.ResponseType == GooglePlacesSearchResponse {
         if let requestHandler {
             return try await requestHandler(request)
         }
-        
+
+        return try await super.execute(request: request)
+    }
+
+    private func performPlaceSummaries<R: HTTPRequest>(
+        _ request: R
+    ) async throws -> R.ResponseType where R.ResponseType == GooglePlaceSummaries {
+        if let placeSummariesRequestHandler {
+            return try await placeSummariesRequestHandler(request)
+        }
+
         return try await super.execute(request: request)
     }
 }

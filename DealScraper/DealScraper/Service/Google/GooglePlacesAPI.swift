@@ -15,6 +15,27 @@ enum GooglePlacesAPI {
         "places.id,places.displayName,places.location,places.formattedAddress,places.websiteUri,places.types,places.regularOpeningHours,places.businessStatus,places.rating"
     nonisolated static let textSearchFieldMask = "\(placeFieldMask),nextPageToken"
     nonisolated static let nearbySearchFieldMask = placeFieldMask
+    nonisolated static let placeDetailsSummariesFieldMask =
+        "id,editorialSummary,reviewSummary,generativeSummary"
+
+    nonisolated static func normalizedPlaceID(_ placeId: String) -> String {
+        placeId.hasPrefix("places/")
+            ? String(placeId.dropFirst("places/".count))
+            : placeId
+    }
+
+    nonisolated static func placeDetailsRequest(
+        apiKey: String,
+        placeId: String
+    ) -> HTTPJSONRequest<GooglePlaceSummaries> {
+        let id = normalizedPlaceID(placeId)
+        var request = HTTPJSONRequest<GooglePlaceSummaries>(
+            endpoint: "https://places.googleapis.com/v1/places/\(id)"
+        )
+        request.headers["X-Goog-Api-Key"] = apiKey
+        request.headers["X-Goog-FieldMask"] = placeDetailsSummariesFieldMask
+        return request
+    }
 
     nonisolated static func searchTextRequest(
         apiKey: String,

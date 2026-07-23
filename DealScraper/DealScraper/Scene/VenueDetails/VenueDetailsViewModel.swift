@@ -50,6 +50,12 @@ final class VenueDetailsViewModel {
         case failed(message: String)
     }
 
+    enum FetchPlacesSummariesState: Equatable {
+        case idle
+        case fetching
+        case failed(message: String)
+    }
+
     let googleMapId: String
     private(set) var venue: Venue?
     private(set) var venueLinks: VenueLinks?
@@ -61,6 +67,10 @@ final class VenueDetailsViewModel {
     private(set) var deleteVenueState: DeleteVenueState = .idle
     private(set) var generateBlurbState: GenerateBlurbState = .idle
     private(set) var saveBlurbState: SaveBlurbState = .idle
+    private(set) var fetchPlacesSummariesState: FetchPlacesSummariesState = .idle
+    private(set) var fetchedEditorialSummary: String?
+    private(set) var fetchedReviewSummary: String?
+    private(set) var fetchedGenerativeSummary: String?
 
     var newDealSourceURLString = ""
     var newDealSourcePageString = ""
@@ -85,6 +95,8 @@ final class VenueDetailsViewModel {
     private let jobQueue: JobQueue
     private let llmModelStore: LLMModelStore
     private let venueBlurbGenerator: VenueBlurbGenerator
+    private let googlePlacesClient: GooglePlacesClient
+    private let apiKeyStore: APIKeyStore
 
     @Resolvable<Resolver>
     init(
@@ -97,7 +109,9 @@ final class VenueDetailsViewModel {
         heroImageStore: VenueHeroImageStore,
         jobQueue: JobQueue,
         llmModelStore: LLMModelStore,
-        venueBlurbGenerator: VenueBlurbGenerator
+        venueBlurbGenerator: VenueBlurbGenerator,
+        googlePlacesClient: GooglePlacesClient,
+        apiKeyStore: APIKeyStore
     ) {
         self.googleMapId = googleMapId
         self.venueRepository = venueRepository
@@ -109,6 +123,8 @@ final class VenueDetailsViewModel {
         self.jobQueue = jobQueue
         self.llmModelStore = llmModelStore
         self.venueBlurbGenerator = venueBlurbGenerator
+        self.googlePlacesClient = googlePlacesClient
+        self.apiKeyStore = apiKeyStore
         openRouterModel = llmModelStore.openRouterModel
         load()
     }
@@ -198,6 +214,20 @@ final class VenueDetailsViewModel {
         return draft != saved
     }
 
+    var canFetchPlacesSummaries: Bool {
+        venue != nil
+            && !apiKeyStore.googlePlacesAPIKey.isEmpty
+            && fetchPlacesSummariesState != .fetching
+    }
+
+    var isPlacesAPIKeyMissing: Bool {
+        apiKeyStore.googlePlacesAPIKey.isEmpty
+    }
+
+    var hasFetchedPlacesSummaries: Bool {
+        fetchedEditorialSummary != nil
+    }
+
     func generateBlurb() async {
         guard let venue, let venueId = venue.id, let suburb = suburbName else { return }
         guard let website = venue.websiteUri else { return }
@@ -229,6 +259,33 @@ final class VenueDetailsViewModel {
             saveBlurbState = .completed
         } catch {
             saveBlurbState = .failed(message: error.localizedDescription)
+        }
+    }
+
+    func fetchPlacesSummaries() async {
+        guard canFetchPlacesSummaries else { return }
+
+        let apiKey = apiKeyStore.googlePlacesAPIKey
+        guard !apiKey.isEmpty else {
+            fetchPlacesSummariesState = .failed(
+                message: "Google Places API key is not configured. Add it in Settings."
+            )
+            return
+        }
+
+        fetchPlacesSummariesState = .fetching
+
+        do {
+            let summaries = try await googlePlacesClient.getPlaceSummaries(
+                apiKey: apiKey,
+                placeId: googleMapId
+            )
+            fetchedEditorialSummary = summaries.editorialSummary?.text ?? ""
+            fetchedReviewSummary = summaries.reviewSummary?.text?.text ?? ""
+            fetchedGenerativeSummary = summaries.generativeSummary?.overview?.text ?? ""
+            fetchPlacesSummariesState = .idle
+        } catch {
+            fetchPlacesSummariesState = .failed(message: error.localizedDescription)
         }
     }
 
