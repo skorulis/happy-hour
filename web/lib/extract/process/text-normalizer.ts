@@ -48,7 +48,7 @@ export function isPriceLine(line: string): boolean {
 }
 
 const UNITS_AFTER_NUMBER_PATTERN =
-  /(\d+(?:\.\d+)?)(\s*)(kg|ml|mg|lbs|lb|oz|cl|g|l|am|pm|pp)\b/gi;
+  /(\d+(?:\.\d+)?)(\s*)(kg|ml|mg|lbs|lb|oz|cl|gm|g|l|am|pm|pp)\b/gi;
 
 function lowercaseUnitsAfterNumbers(title: string): string {
   return title.replace(

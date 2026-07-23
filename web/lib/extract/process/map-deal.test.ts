@@ -724,6 +724,20 @@ describe("mapDeals", () => {
     expect(deal.title).toBe("1kg Wingsday");
   });
 
+  it("lowercases gm after numbers in title", () => {
+    const deal = first(
+      mapDeals([
+        raw({
+          title: "200GM SCHNITZEL",
+          details: [],
+          days: ["MONDAY"],
+          times: ["all day"],
+        }),
+      ]),
+    );
+    expect(deal.title).toBe("200gm Schnitzel");
+  });
+
   it("lowercases measurement units with space after numbers in title (ported source behavior)", () => {
     // NOTE: the Swift test asserts "500ml Pint Special", but the Swift source
     // preserves the space between the number and unit. We assert the ported
