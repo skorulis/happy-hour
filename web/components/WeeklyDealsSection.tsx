@@ -28,7 +28,7 @@ const defaultHeading = (count: number, selectedDay: number | null) => {
   return `${dayLabel} Deals (${count})`;
 };
 const defaultEmptyMessage =
-  "No approved deals have been synced for this venue yet.";
+  "This venue doesn't have any deals. If you know of one, please add it";
 const defaultEmptyDayMessage = (dayLabel: string) => `No deals on ${dayLabel}.`;
 
 export function WeeklyDealsSection({

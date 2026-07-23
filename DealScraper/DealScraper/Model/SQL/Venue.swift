@@ -19,6 +19,7 @@ nonisolated struct Venue: Codable, Sendable {
     let heroImage: String?
     let heroR2Url: String?
     let blurb: String?
+    let contactEmail: String?
     let googleRating: Double?
     let lastCrawlDate: Date?
     let lastCrawlUrl: String?
@@ -38,6 +39,7 @@ nonisolated struct Venue: Codable, Sendable {
         case heroImage = "hero_image"
         case heroR2Url = "hero_r2_url"
         case blurb
+        case contactEmail = "contact_email"
         case googleRating = "google_rating"
         case lastCrawlDate = "last_crawl_date"
         case lastCrawlUrl = "last_crawl_url"
@@ -58,6 +60,7 @@ nonisolated struct Venue: Codable, Sendable {
         heroImage: String? = nil,
         heroR2Url: String? = nil,
         blurb: String? = nil,
+        contactEmail: String? = nil,
         googleRating: Double? = nil,
         lastCrawlDate: Date? = nil,
         lastCrawlUrl: String? = nil,
@@ -76,6 +79,7 @@ nonisolated struct Venue: Codable, Sendable {
         self.heroImage = heroImage
         self.heroR2Url = heroR2Url
         self.blurb = blurb
+        self.contactEmail = contactEmail
         self.googleRating = googleRating
         self.lastCrawlDate = lastCrawlDate
         self.lastCrawlUrl = lastCrawlUrl

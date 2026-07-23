@@ -312,6 +312,12 @@ final class SQLMigrations {
                 t.add(column: "hero_r2_url", .text)
             }
         }
+
+        migrator.registerMigration("v36_venue_contact_email") { db in
+            try db.alter(table: "venue") { t in
+                t.add(column: "contact_email", .text)
+            }
+        }
     }
 }
 
