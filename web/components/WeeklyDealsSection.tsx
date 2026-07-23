@@ -65,6 +65,13 @@ export function WeeklyDealsSection({
     }
     return initialSelectedDay ?? null;
   });
+  // Soft nav updates the hash without remounting; adjust during render instead of
+  // setState-in-effect (https://react.dev/learn/you-might-not-need-an-effect).
+  const [hashPathname, setHashPathname] = useState(pathname);
+  if (syncDayHash && pathname !== hashPathname) {
+    setHashPathname(pathname);
+    setSelectedDay(dayFromLocationHash() ?? initialSelectedDay ?? null);
+  }
   const favorites = useFavorites();
   const isFavorite = isFavoriteProp ?? favorites.isFavorite;
   const toggleFavorite = onToggleFavoriteProp ?? favorites.toggleFavorite;
@@ -77,8 +84,7 @@ export function WeeklyDealsSection({
     }
 
     // Soft nav can leave `#sunday#saturday`; rewrite to a single canonical hash.
-    const fromHash = canonicalizeDayHash();
-    setSelectedDay(fromHash);
+    canonicalizeDayHash();
 
     function onHashChange() {
       setSelectedDay(canonicalizeDayHash());
