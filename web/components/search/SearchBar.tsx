@@ -35,6 +35,7 @@ type SearchBarProps = {
   segments?: SearchBarSegment[];
   className?: string;
   embedded?: boolean;
+  regionId?: number;
 };
 
 type ActiveSegment = SearchBarSegment | null;
@@ -129,6 +130,7 @@ function ActivePanel({
   onWhatChange,
   onInputBlur,
   onClose,
+  regionId,
 }: {
   segment: ActiveSegment;
   filters: SearchFilters;
@@ -137,6 +139,7 @@ function ActivePanel({
   onWhatChange: (what: string[]) => void;
   onInputBlur?: () => void;
   onClose: () => void;
+  regionId?: number;
 }) {
   if (!segment) {
     return null;
@@ -164,6 +167,7 @@ function ActivePanel({
         onClose={onClose}
         onInputBlur={onInputBlur}
         open={open}
+        regionId={regionId}
       />
     );
   }
@@ -256,6 +260,7 @@ export function SearchBar({
   segments = DEFAULT_SEGMENTS,
   className = "",
   embedded = false,
+  regionId,
 }: SearchBarProps) {
   const [activeSegment, setActiveSegment] = useState<ActiveSegment>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -432,6 +437,7 @@ export function SearchBar({
                       onWhatChange={onWhatChange}
                       onInputBlur={scheduleInputPanelClose}
                       onClose={closePanel}
+                      regionId={regionId}
                     />
                   </div>
                 ) : null}
@@ -453,6 +459,7 @@ export function SearchBar({
               onWhatChange={onWhatChange}
               onInputBlur={scheduleInputPanelClose}
               onClose={closePanel}
+              regionId={regionId}
             />
           </div>
         ) : null}

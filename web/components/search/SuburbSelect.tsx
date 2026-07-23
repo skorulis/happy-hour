@@ -15,6 +15,7 @@ type SuburbSelectPanelProps = {
   onClose: () => void;
   onInputBlur?: () => void;
   open: boolean;
+  regionId?: number;
 };
 
 function formatSuburbLabel(suburb: SuburbSearchResult): string {
@@ -37,6 +38,7 @@ export function SuburbSelectPanel({
   onClose,
   onInputBlur,
   open,
+  regionId,
 }: SuburbSelectPanelProps) {
   const [query, setQuery] = useState("");
   const [suburbs, setSuburbs] = useState<SuburbSearchResult[]>([]);
@@ -44,6 +46,8 @@ export function SuburbSelectPanel({
   const inputRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const selectedSuburbId = where.kind === "suburb" ? where.id : null;
+  const nearMeLat = where.kind === "nearMe" ? where.lat : undefined;
+  const nearMeLng = where.kind === "nearMe" ? where.lng : undefined;
 
   useEffect(() => {
     if (!open) {
@@ -63,8 +67,14 @@ export function SuburbSelectPanel({
       setLoading(true);
       try {
         const params = new URLSearchParams();
-        if (query.trim()) {
-          params.set("q", query.trim());
+        const trimmed = query.trim();
+        if (trimmed) {
+          params.set("q", trimmed);
+        } else if (regionId !== undefined) {
+          params.set("regionId", String(regionId));
+        } else if (nearMeLat !== undefined && nearMeLng !== undefined) {
+          params.set("lat", String(nearMeLat));
+          params.set("lng", String(nearMeLng));
         }
         params.set("limit", "20");
 
@@ -91,7 +101,7 @@ export function SuburbSelectPanel({
       controller.abort();
       clearTimeout(timeout);
     };
-  }, [open, query]);
+  }, [open, query, regionId, nearMeLat, nearMeLng]);
 
   function handleSelect(suburb: SuburbSearchResult) {
     onChange({ kind: "suburb", id: suburb.id, suburb });

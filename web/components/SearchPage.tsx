@@ -92,6 +92,7 @@ export function SearchPage({
         onDaysApply={handleDaysApply}
         onWhereChange={handleWhereChange}
         onWhatChange={handleWhatChange}
+        regionId={regionId}
       />
 
       {showPopularSuburbs ? (

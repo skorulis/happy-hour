@@ -8,6 +8,7 @@ import {
   gte,
   ilike,
   inArray,
+  isNotNull,
   isNull,
   lte,
   ne,
@@ -269,6 +270,18 @@ function distanceKmExpression(lat: number, lng: number): SQL {
   )`;
 }
 
+function suburbDistanceKmExpression(lat: number, lng: number): SQL {
+  return sql`(
+    6371 * acos(
+      least(1.0, greatest(-1.0,
+        cos(radians(${lat})) * cos(radians(${suburb.lat})) *
+        cos(radians(${suburb.lng}) - radians(${lng})) +
+        sin(radians(${lat})) * sin(radians(${suburb.lat}))
+      ))
+    )
+  )`;
+}
+
 function nearLocationFilter(lat: number, lng: number, radiusKm: number): SQL {
   return sql`${distanceKmExpression(lat, lng)} <= ${radiusKm}`;
 }
@@ -282,11 +295,51 @@ function boundsFilter(bounds: MapBounds): SQL {
   )!;
 }
 
+export type SearchSuburbsOptions = {
+  regionId?: number;
+  lat?: number;
+  lng?: number;
+};
+
 export async function searchSuburbs(
   query: string,
   limit = 20,
+  options: SearchSuburbsOptions = {},
 ): Promise<SuburbSearchResult[]> {
   const trimmed = query.trim();
+  const useNearby =
+    !trimmed &&
+    options.regionId === undefined &&
+    options.lat !== undefined &&
+    options.lng !== undefined;
+
+  if (useNearby) {
+    return db
+      .select({
+        id: suburb.id,
+        name: suburb.name,
+        postcode: suburb.postcode,
+      })
+      .from(suburb)
+      .where(and(isNotNull(suburb.lat), isNotNull(suburb.lng)))
+      .orderBy(
+        suburbDistanceKmExpression(options.lat!, options.lng!),
+        suburb.name,
+      )
+      .limit(limit);
+  }
+
+  const filters: SQL[] = [];
+  if (trimmed) {
+    filters.push(
+      or(
+        ilike(suburb.name, `%${trimmed}%`),
+        ilike(suburb.postcode, `%${trimmed}%`),
+      )!,
+    );
+  } else if (options.regionId !== undefined) {
+    filters.push(eq(suburb.regionId, options.regionId));
+  }
 
   const baseQuery = db
     .select({
@@ -299,14 +352,8 @@ export async function searchSuburbs(
     .leftJoin(deal, eq(deal.venueId, venue.id))
     .$dynamic();
 
-  const filtered = trimmed
-    ? baseQuery.where(
-        or(
-          ilike(suburb.name, `%${trimmed}%`),
-          ilike(suburb.postcode, `%${trimmed}%`),
-        ),
-      )
-    : baseQuery;
+  const filtered =
+    filters.length > 0 ? baseQuery.where(and(...filters)) : baseQuery;
 
   return filtered
     .groupBy(suburb.id, suburb.name, suburb.postcode)
