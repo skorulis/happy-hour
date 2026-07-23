@@ -165,7 +165,6 @@ export default async function SuburbSearchPage({
         listBasePath={regionPath(region.name)}
         regionId={region.id}
         allSuburbsHref={regionAllSuburbsPath(region.name)}
-        includeNearbyLink={false}
       />
     </>
   );
