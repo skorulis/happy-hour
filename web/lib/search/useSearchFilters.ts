@@ -697,7 +697,7 @@ export function useSearchFilters(options?: {
           filters.what,
         )
       : filters.where.kind === "nearMe"
-        ? "Specials near you"
+        ? "Pub Specials near you"
         : "Results";
   const nearbyResultsTitle = formatNearbyDealsTitle(filters.days, filters.what);
 

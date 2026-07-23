@@ -52,7 +52,9 @@ function formatSpecialsTitleBase(
 ): string {
   const dayLabel = suburbTitleDayLabel(days);
   const productLabel = suburbTitleProductLabel(what);
-  const specialsPhrase = productLabel ? `${productLabel} Specials` : "Specials";
+  const specialsPhrase = productLabel
+    ? `${productLabel} Specials`
+    : "Pub Specials";
   return dayLabel ? `${dayLabel} ${specialsPhrase}` : specialsPhrase;
 }
 

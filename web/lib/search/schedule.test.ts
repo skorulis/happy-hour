@@ -44,16 +44,18 @@ describe("formatDaySelectionLabel", () => {
 describe("formatSuburbDealsTitle", () => {
   it("prefixes a single selected day", () => {
     expect(formatSuburbDealsTitle("Sydney", [5])).toBe(
-      "Thursday Specials in Sydney",
+      "Thursday Pub Specials in Sydney",
     );
   });
 
   it("omits the day when no day is selected", () => {
-    expect(formatSuburbDealsTitle("Sydney", [])).toBe("Specials in Sydney");
+    expect(formatSuburbDealsTitle("Sydney", [])).toBe("Pub Specials in Sydney");
   });
 
   it("omits the day for multiple selections", () => {
-    expect(formatSuburbDealsTitle("Sydney", [5, 6])).toBe("Specials in Sydney");
+    expect(formatSuburbDealsTitle("Sydney", [5, 6])).toBe(
+      "Pub Specials in Sydney",
+    );
   });
 
   it("includes a single selected product", () => {
@@ -71,21 +73,21 @@ describe("formatSuburbDealsTitle", () => {
   it("omits products when more than two are selected", () => {
     expect(
       formatSuburbDealsTitle("Sydney", [1], ["happy hour", "beer", "wine"]),
-    ).toBe("Sunday Specials in Sydney");
+    ).toBe("Sunday Pub Specials in Sydney");
   });
 });
 
 describe("formatNearbyDealsTitle", () => {
   it("prefixes a single selected day", () => {
-    expect(formatNearbyDealsTitle([5])).toBe("Thursday Specials Nearby");
+    expect(formatNearbyDealsTitle([5])).toBe("Thursday Pub Specials Nearby");
   });
 
   it("omits the day when no day is selected", () => {
-    expect(formatNearbyDealsTitle([])).toBe("Specials Nearby");
+    expect(formatNearbyDealsTitle([])).toBe("Pub Specials Nearby");
   });
 
   it("omits the day for multiple selections", () => {
-    expect(formatNearbyDealsTitle([5, 6])).toBe("Specials Nearby");
+    expect(formatNearbyDealsTitle([5, 6])).toBe("Pub Specials Nearby");
   });
 
   it("includes a single selected product", () => {
@@ -110,19 +112,19 @@ describe("formatSuburbDealsMetadataTitle", () => {
 
   it("omits the day when no day is selected (SSR all-days body)", () => {
     expect(formatSuburbDealsMetadataTitle("Sydney", [])).toBe(
-      "Specials in Sydney",
+      "Pub Specials in Sydney",
     );
   });
 
   it("omits the day for multiple selections", () => {
     expect(formatSuburbDealsMetadataTitle("Sydney", [5, 6])).toBe(
-      "Specials in Sydney",
+      "Pub Specials in Sydney",
     );
   });
 
   it("keeps a single explicit day in the metadata title", () => {
     expect(formatSuburbDealsMetadataTitle("Sydney", [5])).toBe(
-      "Thursday Specials in Sydney",
+      "Thursday Pub Specials in Sydney",
     );
   });
 });

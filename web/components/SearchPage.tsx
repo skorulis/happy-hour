@@ -83,7 +83,7 @@ export function SearchPage({
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-4 py-10 md:px-6">
       <header>
         <h1 className="text-3xl font-bold text-foreground">
-          {pageTitle ?? "Your evening starts here"}
+          {pageTitle ?? resultsTitle}
         </h1>
       </header>
 
@@ -117,14 +117,9 @@ export function SearchPage({
         </section>
       ) : (
         <section className="space-y-4">
-          <div className="space-y-1">
-            <h2 className="text-xl font-semibold text-foreground">
-              {resultsTitle}
-            </h2>
-            {locationAccessError ? null : (
-              <p className="text-sm text-muted">{resultsCountLabel}</p>
-            )}
-          </div>
+          {locationAccessError ? null : (
+            <p className="text-sm text-muted">{resultsCountLabel}</p>
+          )}
 
           {locationAccessError ? (
             <div className="flex flex-col items-center gap-4 px-4 py-12 text-center">
