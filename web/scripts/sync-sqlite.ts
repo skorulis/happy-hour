@@ -39,6 +39,8 @@ type SqliteGeographicRegion = {
   id: number;
   country_id: number;
   name: string;
+  hero_image: string | null;
+  hero_r2_url: string | null;
 };
 
 type SqliteVenue = {
@@ -75,6 +77,18 @@ function suburbHeroImageForPostgres(suburbRow: SqliteSuburb): string | null {
     return r2;
   }
   const source = suburbRow.hero_image?.trim();
+  return source || null;
+}
+
+/** Public CDN URL for the website; falls back to source URL if R2 upload is missing. */
+function regionHeroImageForPostgres(
+  regionRow: SqliteGeographicRegion,
+): string | null {
+  const r2 = regionRow.hero_r2_url?.trim();
+  if (r2) {
+    return r2;
+  }
+  const source = regionRow.hero_image?.trim();
   return source || null;
 }
 
@@ -259,6 +273,7 @@ async function main() {
         .values({
           countryId: pgCountryId,
           name: regionRow.name,
+          heroImage: regionHeroImageForPostgres(regionRow),
         })
         .onConflictDoUpdate({
           target: [
@@ -267,6 +282,7 @@ async function main() {
           ],
           set: {
             name: regionRow.name,
+            heroImage: regionHeroImageForPostgres(regionRow),
           },
         })
         .returning({ id: schema.geographicRegion.id });

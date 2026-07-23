@@ -1,0 +1,1 @@
+ALTER TABLE "geographic_region" ADD COLUMN "hero_image" text;

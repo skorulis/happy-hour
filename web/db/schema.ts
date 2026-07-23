@@ -27,6 +27,7 @@ export const geographicRegion = pgTable(
       .notNull()
       .references(() => country.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
+    heroImage: text("hero_image"),
   },
   (table) => [
     uniqueIndex("geographic_region_country_name_idx").on(

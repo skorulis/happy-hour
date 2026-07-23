@@ -305,6 +305,13 @@ final class SQLMigrations {
                 """
             )
         }
+
+        migrator.registerMigration("v35_geographic_region_hero_image") { db in
+            try db.alter(table: "geographic_region") { t in
+                t.add(column: "hero_image", .text)
+                t.add(column: "hero_r2_url", .text)
+            }
+        }
     }
 }
 

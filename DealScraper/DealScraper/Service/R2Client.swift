@@ -23,6 +23,7 @@ enum R2ClientError: LocalizedError {
 enum HeroImageFolder: String, Sendable {
     case venues
     case suburbs
+    case regions
 }
 
 @MainActor
