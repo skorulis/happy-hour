@@ -9,16 +9,25 @@ import KnitMacros
 @Observable
 final class JobQueueViewModel: CoordinatorViewModel {
     weak var coordinator: ASKCoordinator.Coordinator?
-    
+
+    enum RegionFilter: Equatable, Hashable {
+        case any
+        case none
+        case region(Int64)
+    }
+
     private let jobQueue: JobQueue
     private let venueRepository: VenueRepository
     private let suburbRepository: SuburbRepository
+    private let geographicRegionRepository: GeographicRegionRepository
     private let dealSourceRepository: DealSourceRepository
     private let dealRepository: DealRepository
     private var venueNames: [Int64: String] = [:]
     private var venueGoogleMapIds: [Int64: String] = [:]
     private var suburbNames: [Int64: String] = [:]
 
+    private(set) var regions: [GeographicRegion] = []
+    var selectedRegionFilter: RegionFilter = .any
     var actionMessage: String?
 
     var jobs: [JobItem] {
@@ -35,19 +44,25 @@ final class JobQueueViewModel: CoordinatorViewModel {
         jobQueue: JobQueue,
         venueRepository: VenueRepository,
         suburbRepository: SuburbRepository,
+        geographicRegionRepository: GeographicRegionRepository,
         dealSourceRepository: DealSourceRepository,
         dealRepository: DealRepository
     ) {
         self.jobQueue = jobQueue
         self.venueRepository = venueRepository
         self.suburbRepository = suburbRepository
+        self.geographicRegionRepository = geographicRegionRepository
         self.dealSourceRepository = dealSourceRepository
         self.dealRepository = dealRepository
     }
 
+    func loadRegions() {
+        regions = (try? geographicRegionRepository.all()) ?? []
+    }
+
     func crawlNext() {
         guard let venueId = nextVenueIdForCrawl() else {
-            actionMessage = "No venues without sources found."
+            actionMessage = "No venues without sources found\(regionFilterSuffix)."
             return
         }
 
@@ -61,7 +76,7 @@ final class JobQueueViewModel: CoordinatorViewModel {
 
     func extractNext() {
         guard let venueId = nextVenueIdForExtraction() else {
-            actionMessage = "No venues ready for extraction found."
+            actionMessage = "No venues ready for extraction found\(regionFilterSuffix)."
             return
         }
 
@@ -75,7 +90,7 @@ final class JobQueueViewModel: CoordinatorViewModel {
 
     func crawlNextSuburb() {
         guard let suburbId = nextSuburbIdForCrawl() else {
-            actionMessage = "No eligible Sydney suburbs found."
+            actionMessage = "No eligible suburbs found\(regionFilterSuffix)."
             return
         }
 
@@ -222,17 +237,59 @@ final class JobQueueViewModel: CoordinatorViewModel {
         }
     }
 
+    private var regionFilterSuffix: String {
+        switch selectedRegionFilter {
+        case .any:
+            return ""
+        case .none:
+            return " in unassigned region"
+        case .region(let regionId):
+            let name = regions.first { $0.id == regionId }?.name ?? "selected region"
+            return " in \(name)"
+        }
+    }
+
+    /// Maps suburb id → geographic region id (absent key means suburb has no region).
+    private func regionIdBySuburbId() -> [Int64: Int64] {
+        guard let suburbs = try? suburbRepository.all() else { return [:] }
+        var result: [Int64: Int64] = [:]
+        for suburb in suburbs {
+            guard let suburbId = suburb.id, let regionId = suburb.regionId else { continue }
+            result[suburbId] = regionId
+        }
+        return result
+    }
+
+    private func matchesRegionFilter(suburbRegionId: Int64?) -> Bool {
+        switch selectedRegionFilter {
+        case .any:
+            return true
+        case .none:
+            return suburbRegionId == nil
+        case .region(let regionId):
+            return suburbRegionId == regionId
+        }
+    }
+
+    private func matchesRegionFilter(venue: Venue, regionIdBySuburbId: [Int64: Int64]) -> Bool {
+        let suburbRegionId = venue.suburbId.flatMap { regionIdBySuburbId[$0] }
+        return matchesRegionFilter(suburbRegionId: suburbRegionId)
+    }
+
     private func nextVenueIdForCrawl() -> Int64? {
         guard let venues = try? venueRepository.all(),
               let sourceCounts = try? dealSourceRepository.countsByVenueId()
         else { return nil }
+
+        let regionIdBySuburbId = regionIdBySuburbId()
 
         return venues
             .sorted(by: Self.crawlPrioritySort)
             .first { venue in
                 guard let venueId = venue.id,
                       venue.status != .broken,
-                      venue.websiteUri != nil
+                      venue.websiteUri != nil,
+                      matchesRegionFilter(venue: venue, regionIdBySuburbId: regionIdBySuburbId)
                 else { return false }
 
                 let sourceCount = sourceCounts[venueId] ?? 0
@@ -247,11 +304,14 @@ final class JobQueueViewModel: CoordinatorViewModel {
               let dealCounts = try? dealRepository.countsByVenueId()
         else { return nil }
 
+        let regionIdBySuburbId = regionIdBySuburbId()
+
         return venues
             .sorted(by: Self.extractionPrioritySort)
             .first { venue in
                 guard let venueId = venue.id else { return false }
                 guard venue.status != .broken else { return false }
+                guard matchesRegionFilter(venue: venue, regionIdBySuburbId: regionIdBySuburbId) else { return false }
                 guard (dealCounts[venueId] ?? 0) == 0 else { return false }
                 guard !jobQueue.isJobActive(venueId: venueId, type: .extractDeals) else { return false }
 
@@ -269,14 +329,32 @@ final class JobQueueViewModel: CoordinatorViewModel {
     }
 
     private func nextSuburbIdForCrawl() -> Int64? {
-        guard let suburbs = try? suburbRepository.allEligibleForCrawl() else { return nil }
+        guard let allSuburbs = try? suburbRepository.all() else { return nil }
 
-        return suburbs
+        let candidates: [Suburb]
+        switch selectedRegionFilter {
+        case .any:
+            // Preserve Greater Sydney eligibility when no region is selected.
+            candidates = allSuburbs.filter(SuburbRepository.isEligibleForCrawl)
+        case .none, .region:
+            candidates = allSuburbs.filter { suburb in
+                guard Self.hasCrawlablePostcode(suburb) else { return false }
+                guard !SuburbRepository.isExcludedFromCrawl(suburb) else { return false }
+                return matchesRegionFilter(suburbRegionId: suburb.regionId)
+            }
+        }
+
+        return candidates
             .sorted(by: Self.suburbCrawlPrioritySort)
             .first { suburb in
                 guard let suburbId = suburb.id else { return false }
                 return !jobQueue.isJobActive(suburbId: suburbId, type: .crawlSuburb)
             }?
             .id
+    }
+
+    private static func hasCrawlablePostcode(_ suburb: Suburb) -> Bool {
+        guard let postcode = suburb.postcode else { return false }
+        return !postcode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 }

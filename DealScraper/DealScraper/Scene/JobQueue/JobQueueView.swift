@@ -16,6 +16,9 @@ struct JobQueueView: View {
             jobList
         }
         .navigationTitle("Jobs")
+        .onAppear {
+            viewModel.loadRegions()
+        }
     }
 
     private var actionBar: some View {
@@ -32,6 +35,10 @@ struct JobQueueView: View {
                 Button("Crawl Next Suburb") {
                     viewModel.crawlNextSuburb()
                 }
+
+                Spacer()
+
+                regionPicker
             }
 
             if let message = viewModel.actionMessage {
@@ -45,15 +52,32 @@ struct JobQueueView: View {
         .background(.bar)
     }
 
+    private var regionPicker: some View {
+        Picker("Region", selection: $viewModel.selectedRegionFilter) {
+            Text("Any region").tag(JobQueueViewModel.RegionFilter.any)
+            Text("No region").tag(JobQueueViewModel.RegionFilter.none)
+            ForEach(viewModel.regions, id: \.id) { region in
+                if let regionId = region.id {
+                    Text(region.name).tag(JobQueueViewModel.RegionFilter.region(regionId))
+                }
+            }
+        }
+        .pickerStyle(.menu)
+        .fixedSize()
+    }
+
     @ViewBuilder
     private var jobList: some View {
         Group {
             if viewModel.jobs.isEmpty {
-                ContentUnavailableView(
-                    "No Jobs",
-                    systemImage: "list.bullet.rectangle",
-                    description: Text("Queued crawl and extraction jobs will appear here.")
-                )
+                VStack {
+                    ContentUnavailableView(
+                        "No Jobs",
+                        systemImage: "list.bullet.rectangle",
+                        description: Text("Queued crawl and extraction jobs will appear here.")
+                    )
+                    Spacer()
+                }
             } else {
                 List {
                     if !currentJobs.isEmpty {
