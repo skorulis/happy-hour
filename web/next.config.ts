@@ -10,6 +10,15 @@ const nextConfig: NextConfig = {
     // entries and crashes with "Map maximum size exceeded" after a few minutes.
     root: __dirname,
   },
+  async redirects() {
+    return [
+      {
+        source: "/regions",
+        destination: "/",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 const isDev = process.env.NODE_ENV === "development";
