@@ -24,6 +24,15 @@ final class SuburbDetailViewModel: CoordinatorViewModel {
         return suburb.heroImage?.isEmpty == false
     }
 
+    var venuesWithHeroImages: [Venue] {
+        venues.filter { venue in
+            guard let hero = venue.heroImage?.trimmingCharacters(in: .whitespacesAndNewlines) else {
+                return false
+            }
+            return !hero.isEmpty
+        }
+    }
+
     private let suburbRepository: SuburbRepository
     private let venueRepository: VenueRepository
     private let countryRepository: CountryRepository

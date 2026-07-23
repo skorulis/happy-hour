@@ -5,6 +5,7 @@ import SwiftUI
 struct SuburbDetailView: View {
 
     @State var viewModel: SuburbDetailViewModel
+    @State private var showVenueHeroPicker = false
 
     var body: some View {
         Group {
@@ -16,6 +17,12 @@ struct SuburbDetailView: View {
                     systemImage: "building.2",
                     description: Text("This suburb is no longer saved locally.")
                 )
+            }
+        }
+        .sheet(isPresented: $showVenueHeroPicker) {
+            SuburbVenueHeroPickerView(venues: viewModel.venues) { venue in
+                guard let url = venue.heroImage else { return }
+                await viewModel.setHeroImage(urlString: url)
             }
         }
     }
@@ -60,15 +67,22 @@ struct SuburbDetailView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .zIndex(1)
 
-                HeroImagePickerView(
-                    imageURL: suburb.heroImage,
-                    canClear: viewModel.canClearHeroImage,
-                    onClear: { viewModel.clearHeroImage() },
-                    onSetURL: { urlString in
-                        await viewModel.setHeroImage(urlString: urlString)
+                VStack(alignment: .trailing, spacing: 8) {
+                    HeroImagePickerView(
+                        imageURL: suburb.heroImage,
+                        canClear: viewModel.canClearHeroImage,
+                        onClear: { viewModel.clearHeroImage() },
+                        onSetURL: { urlString in
+                            await viewModel.setHeroImage(urlString: urlString)
+                        }
+                    )
+                    .frame(maxHeight: 200)
+
+                    Button("Select from venues") {
+                        showVenueHeroPicker = true
                     }
-                )
-                .frame(maxHeight: 200)
+                    .disabled(viewModel.venuesWithHeroImages.isEmpty)
+                }
             }
         }
         .padding()
