@@ -132,14 +132,24 @@ export function dayNumberToHash(day: number): string | null {
   return slug ? `#${slug}` : null;
 }
 
-/** Parse `#monday` or `monday` into a calendar weekday number. */
+/** Parse `#monday` or `monday` into a calendar weekday number.
+ * If the hash is malformed (`#sunday#saturday`), the last valid day wins.
+ */
 export function hashToDayNumber(hash: string): number | null {
   const trimmed = hash.trim().toLowerCase();
-  const slug = trimmed.startsWith("#") ? trimmed.slice(1) : trimmed;
-  if (!slug) {
+  if (!trimmed) {
     return null;
   }
-  return pathSlugToDayNumber(slug);
+  // location.hash is everything after the first `#`, so multi-hashes look like
+  // `#sunday#saturday` → parts ["sunday", "saturday"] after splitting.
+  const parts = trimmed.split("#").filter((part) => part.length > 0);
+  for (let index = parts.length - 1; index >= 0; index--) {
+    const day = pathSlugToDayNumber(parts[index]!);
+    if (day !== null) {
+      return day;
+    }
+  }
+  return null;
 }
 
 /**
@@ -181,16 +191,53 @@ export function replaceDayHash(day: number | null): void {
   if (typeof window === "undefined") {
     return;
   }
-  const { pathname, search } = window.location;
-  const next =
-    day === null
-      ? `${pathname}${search}`
-      : (() => {
-          const hash = dayNumberToHash(day);
-          return hash ? `${pathname}${search}${hash}` : `${pathname}${search}`;
-        })();
-  if (`${pathname}${search}${window.location.hash}` === next) {
+  const url = new URL(window.location.href);
+  if (day === null) {
+    url.hash = "";
+  } else {
+    const hash = dayNumberToHash(day);
+    if (!hash) {
+      return;
+    }
+    // URL.hash setter replaces the entire fragment (never appends).
+    url.hash = hash;
+  }
+  const next = `${url.pathname}${url.search}${url.hash}`;
+  const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  if (current === next) {
     return;
   }
   window.history.replaceState(window.history.state, "", next);
+}
+
+/**
+ * Fix doubled/stale day hashes left by App Router soft navigation
+ * (e.g. `#sunday#saturday` → `#saturday`).
+ */
+export function canonicalizeDayHash(): number | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  const day = hashToDayNumber(window.location.hash);
+  replaceDayHash(day);
+  return day;
+}
+
+/**
+ * Drop the current hash without a navigation. Call before soft-navigating to a
+ * hash URL so the App Router cannot concatenate fragments
+ * (`#sunday` + `#saturday` → `#sunday#saturday`).
+ */
+export function clearLocationHash(): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+  if (!window.location.hash) {
+    return;
+  }
+  window.history.replaceState(
+    window.history.state,
+    "",
+    `${window.location.pathname}${window.location.search}`,
+  );
 }

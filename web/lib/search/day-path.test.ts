@@ -113,6 +113,11 @@ describe("dayNumberToHash / hashToDayNumber", () => {
     expect(hashToDayNumber("#deal-12")).toBeNull();
     expect(dayNumberToHash(9)).toBeNull();
   });
+
+  it("uses the last valid day when the hash was concatenated", () => {
+    expect(hashToDayNumber("#sunday#saturday")).toBe(7);
+    expect(hashToDayNumber("#monday#deal-1#friday")).toBe(6);
+  });
 });
 
 describe("daysFromBrowserUrl", () => {

@@ -15,7 +15,7 @@ import {
   sortDealsActiveFirst,
 } from "@/lib/search/schedule";
 import { slugify, venuePath } from "@/lib/search/slugs";
-import { appendDayHash } from "@/lib/search/day-path";
+import { appendDayHash, clearLocationHash } from "@/lib/search/day-path";
 import { venueHeroThumbUrl } from "@/lib/search/venue-hero-url";
 
 type VenueMapPopupProps = {
@@ -137,6 +137,7 @@ export function VenueMapPopup({
           href={venueHref}
           className="mt-auto block rounded-lg bg-gradient-to-b from-accent to-accent-hover px-3 py-2 text-center text-sm font-semibold text-accent-fg"
           onClick={() => {
+            clearLocationHash();
             track("venue_opened", {
               venue_id: group.venue.id,
               source: "map",

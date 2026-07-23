@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { DealCard } from "@/components/DealCard";
 import { DealDayFilter } from "@/components/DealDayFilter";
 import { useFavorites } from "@/lib/favorites/useFavorites";
 import type { DealSearchResult } from "@/lib/search/queries";
 import {
+  canonicalizeDayHash,
   hashToDayNumber,
   replaceDayHash,
 } from "@/lib/search/day-path";
@@ -56,6 +58,7 @@ export function WeeklyDealsSection({
   showReportButton = false,
   syncDayHash = false,
 }: WeeklyDealsSectionProps) {
+  const pathname = usePathname();
   const [selectedDay, setSelectedDay] = useState<number | null>(() => {
     if (syncDayHash) {
       return dayFromLocationHash() ?? initialSelectedDay ?? null;
@@ -73,19 +76,17 @@ export function WeeklyDealsSection({
       return;
     }
 
-    // Prefer hash on mount (covers hydration when SSR had no hash).
-    const fromHash = dayFromLocationHash();
-    if (fromHash !== null) {
-      setSelectedDay(fromHash);
-    }
+    // Soft nav can leave `#sunday#saturday`; rewrite to a single canonical hash.
+    const fromHash = canonicalizeDayHash();
+    setSelectedDay(fromHash);
 
     function onHashChange() {
-      setSelectedDay(dayFromLocationHash());
+      setSelectedDay(canonicalizeDayHash());
     }
 
     window.addEventListener("hashchange", onHashChange);
     return () => window.removeEventListener("hashchange", onHashChange);
-  }, [syncDayHash]);
+  }, [syncDayHash, pathname]);
 
   function handleSelectedDayChange(day: number | null) {
     setSelectedDay(day);

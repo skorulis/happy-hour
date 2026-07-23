@@ -9,7 +9,7 @@ import { formatDistanceKm } from "@/lib/search/distance";
 import type { DealSearchResult } from "@/lib/search/queries";
 import { formatDealScheduleLine } from "@/lib/search/schedule";
 import { slugify, venuePath } from "@/lib/search/slugs";
-import { appendDayHash } from "@/lib/search/day-path";
+import { appendDayHash, clearLocationHash } from "@/lib/search/day-path";
 import { venueHeroThumbUrl } from "@/lib/search/venue-hero-url";
 
 export type VenueGroupedDeals = {
@@ -63,6 +63,8 @@ export function VenueSearchCard({
       href={venueHref}
       className="block rounded-xl border border-border-subtle bg-surface p-5 shadow-card transition-shadow hover:shadow-card-hover"
       onClick={() => {
+        // Avoid App Router concatenating the previous page hash onto the next.
+        clearLocationHash();
         track("venue_opened", {
           venue_id: group.venue.id,
           source: "list",
