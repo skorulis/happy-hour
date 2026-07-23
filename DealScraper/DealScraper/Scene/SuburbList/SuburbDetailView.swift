@@ -137,7 +137,7 @@ struct SuburbDetailView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
             List {
-                Section("\(viewModel.venues.count) venue\(viewModel.venues.count == 1 ? "" : "s")") {
+                Section(venueListSectionTitle) {
                     ForEach(viewModel.venues, id: \.googleMapId) { venue in
                         Button {
                             viewModel.openVenueDetails(googleMapId: venue.googleMapId)
@@ -153,5 +153,15 @@ struct SuburbDetailView: View {
                 }
             }
         }
+    }
+
+    private var venueListSectionTitle: String {
+        let venueCount = viewModel.venues.count
+        let sourceCount = viewModel.totalSourceCount
+        let dealCount = viewModel.totalDealCount
+        let venues = "\(venueCount) venue\(venueCount == 1 ? "" : "s")"
+        let sources = "\(sourceCount) source\(sourceCount == 1 ? "" : "s")"
+        let deals = "\(dealCount) deal\(dealCount == 1 ? "" : "s")"
+        return "\(venues) · \(sources) · \(deals)"
     }
 }

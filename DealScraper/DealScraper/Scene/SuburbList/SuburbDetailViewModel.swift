@@ -33,6 +33,14 @@ final class SuburbDetailViewModel: CoordinatorViewModel {
         }
     }
 
+    var totalSourceCount: Int {
+        venues.reduce(0) { $0 + sourceCount(for: $1) }
+    }
+
+    var totalDealCount: Int {
+        venues.reduce(0) { $0 + dealCount(for: $1) }
+    }
+
     private let suburbRepository: SuburbRepository
     private let venueRepository: VenueRepository
     private let countryRepository: CountryRepository

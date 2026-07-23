@@ -38,6 +38,10 @@ struct GeographicRegionDetailView: View {
                     Text("\(viewModel.suburbCount) suburb\(viewModel.suburbCount == 1 ? "" : "s")")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
+
+                    Text(countsLabel)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .zIndex(1)
@@ -56,5 +60,15 @@ struct GeographicRegionDetailView: View {
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.bar)
+    }
+
+    private var countsLabel: String {
+        let venueCount = viewModel.venueCount
+        let sourceCount = viewModel.sourceCount
+        let dealCount = viewModel.dealCount
+        let venues = "\(venueCount) venue\(venueCount == 1 ? "" : "s")"
+        let sources = "\(sourceCount) source\(sourceCount == 1 ? "" : "s")"
+        let deals = "\(dealCount) deal\(dealCount == 1 ? "" : "s")"
+        return "\(venues) · \(sources) · \(deals)"
     }
 }

@@ -13,6 +13,7 @@ struct ContactEmailSelector {
     
     private static let rankedPrefixes: [String: Int] = [
         "admin": 10,
+        "manager": 7,
         "info": 5,
         "contact": 5,
     ]

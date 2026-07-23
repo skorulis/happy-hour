@@ -33,6 +33,41 @@ final class GeographicRegionRepository {
         }
     }
 
+    func venueCount(regionId: Int64) throws -> Int {
+        try store.dbQueue.read { db in
+            try Int.fetchOne(db, sql: """
+                SELECT COUNT(*)
+                FROM venue v
+                INNER JOIN suburb s ON s.id = v.suburb_id
+                WHERE s.region_id = ?
+                """, arguments: [regionId]) ?? 0
+        }
+    }
+
+    func dealSourceCount(regionId: Int64) throws -> Int {
+        try store.dbQueue.read { db in
+            try Int.fetchOne(db, sql: """
+                SELECT COUNT(*)
+                FROM deal_source ds
+                INNER JOIN venue v ON v.id = ds.venue_id
+                INNER JOIN suburb s ON s.id = v.suburb_id
+                WHERE s.region_id = ?
+                """, arguments: [regionId]) ?? 0
+        }
+    }
+
+    func dealCount(regionId: Int64) throws -> Int {
+        try store.dbQueue.read { db in
+            try Int.fetchOne(db, sql: """
+                SELECT COUNT(*)
+                FROM deal d
+                INNER JOIN venue v ON v.id = d.venue_id
+                INNER JOIN suburb s ON s.id = v.suburb_id
+                WHERE s.region_id = ?
+                """, arguments: [regionId]) ?? 0
+        }
+    }
+
     func updateHeroImage(regionId: Int64, url: String?) throws {
         try store.dbQueue.write { db in
             try db.execute(

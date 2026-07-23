@@ -14,6 +14,9 @@ final class GeographicRegionDetailViewModel: CoordinatorViewModel {
     let regionId: Int64
     private(set) var region: GeographicRegion?
     private(set) var suburbCount: Int = 0
+    private(set) var venueCount: Int = 0
+    private(set) var sourceCount: Int = 0
+    private(set) var dealCount: Int = 0
 
     var canClearHeroImage: Bool {
         guard let region, region.id != nil else { return false }
@@ -67,9 +70,15 @@ final class GeographicRegionDetailViewModel: CoordinatorViewModel {
         do {
             region = try geographicRegionRepository.find(id: regionId)
             suburbCount = try geographicRegionRepository.suburbCount(regionId: regionId)
+            venueCount = try geographicRegionRepository.venueCount(regionId: regionId)
+            sourceCount = try geographicRegionRepository.dealSourceCount(regionId: regionId)
+            dealCount = try geographicRegionRepository.dealCount(regionId: regionId)
         } catch {
             region = nil
             suburbCount = 0
+            venueCount = 0
+            sourceCount = 0
+            dealCount = 0
         }
     }
 
