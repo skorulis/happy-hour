@@ -69,7 +69,7 @@ export async function generateMetadata({
     return {};
   }
 
-  const title = `${region.name} happy hour deals`;
+  const title = `Pub Specials in ${region.name}`;
   const description = `Find pub and bar happy hour deals in ${region.name}.`;
 
   return {
@@ -161,7 +161,7 @@ export default async function SuburbSearchPage({
         popularSuburbs={popularSuburbs}
         initialDays={days}
         initialWhat={what}
-        pageTitle={region.name}
+        pageTitle={`Pub Specials in ${region.name}`}
         listBasePath={regionPath(region.name)}
         regionId={region.id}
         allSuburbsHref={regionAllSuburbsPath(region.name)}
