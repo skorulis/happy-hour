@@ -157,7 +157,11 @@ function resolveRegionsCatalogPath(): string {
   );
 }
 
-/** Region names with status "live" get full suburb + venue catalogs synced to Postgres. */
+/**
+ * Region names with status "live" get a full suburb catalog and every non-broken
+ * venue (with or without deals). Other regions only sync venues that have at
+ * least one approved deal — and those venues' suburbs — not every suburb.
+ */
 function loadLiveRegionNames(): Set<string> {
   const catalogPath = resolveRegionsCatalogPath();
   const entries = JSON.parse(
@@ -318,54 +322,100 @@ async function main() {
         ? ""
         : liveSqliteRegionIds.map(() => "?").join(", ");
 
-    // Non-broken venues in live regions (including venues with no approved deals).
-    const venueRows = (
+    const incrementalClause = useIncremental
+      ? "AND datetime(v.last_update) > datetime(?)"
+      : "";
+    const incrementalParams = useIncremental
+      ? [watermark!.toISOString()]
+      : [];
+
+    // Live regions: every non-broken venue (including venues with no approved deals).
+    const liveVenueRows =
       liveSqliteRegionIds.length === 0
         ? []
-        : useIncremental
-          ? sqlite
-              .prepare(
-                `
-                SELECT v.*
-                FROM venue v
-                INNER JOIN suburb s ON s.id = v.suburb_id
-                WHERE v.status != 'broken'
-                  AND s.region_id IN (${liveRegionPlaceholders})
-                  AND datetime(v.last_update) > datetime(?)
-                ORDER BY v.id
-                `,
-              )
-              .all(...liveSqliteRegionIds, watermark!.toISOString())
-          : sqlite
-              .prepare(
-                `
-                SELECT v.*
-                FROM venue v
-                INNER JOIN suburb s ON s.id = v.suburb_id
-                WHERE v.status != 'broken'
-                  AND s.region_id IN (${liveRegionPlaceholders})
-                ORDER BY v.id
-                `,
-              )
-              .all(...liveSqliteRegionIds)
-    ) as SqliteVenue[];
+        : (sqlite
+            .prepare(
+              `
+              SELECT v.*
+              FROM venue v
+              INNER JOIN suburb s ON s.id = v.suburb_id
+              WHERE v.status != 'broken'
+                AND s.region_id IN (${liveRegionPlaceholders})
+                ${incrementalClause}
+              ORDER BY v.id
+              `,
+            )
+            .all(
+              ...liveSqliteRegionIds,
+              ...incrementalParams,
+            ) as SqliteVenue[]);
+
+    // Non-live / unassigned regions: only venues with at least one approved deal.
+    const nonLiveRegionClause =
+      liveSqliteRegionIds.length === 0
+        ? ""
+        : `AND (s.region_id IS NULL OR s.region_id NOT IN (${liveRegionPlaceholders}))`;
+    const nonLiveVenueRows = sqlite
+      .prepare(
+        `
+        SELECT DISTINCT v.*
+        FROM venue v
+        INNER JOIN suburb s ON s.id = v.suburb_id
+        INNER JOIN deal d ON d.venue_id = v.id
+        WHERE v.status != 'broken'
+          AND d.status = 'approved'
+          ${nonLiveRegionClause}
+          ${incrementalClause}
+        ORDER BY v.id
+        `,
+      )
+      .all(
+        ...liveSqliteRegionIds,
+        ...incrementalParams,
+      ) as SqliteVenue[];
+
+    const venueRowsById = new Map<number, SqliteVenue>();
+    for (const row of liveVenueRows) {
+      venueRowsById.set(row.id, row);
+    }
+    for (const row of nonLiveVenueRows) {
+      venueRowsById.set(row.id, row);
+    }
+    const venueRows = [...venueRowsById.values()].sort((a, b) => a.id - b.id);
+
+    const liveEligibleIds =
+      liveSqliteRegionIds.length === 0
+        ? []
+        : (sqlite
+            .prepare(
+              `
+              SELECT v.google_map_id
+              FROM venue v
+              INNER JOIN suburb s ON s.id = v.suburb_id
+              WHERE v.status != 'broken'
+                AND s.region_id IN (${liveRegionPlaceholders})
+              `,
+            )
+            .all(...liveSqliteRegionIds) as { google_map_id: string }[]);
+
+    const nonLiveEligibleIds = sqlite
+      .prepare(
+        `
+        SELECT DISTINCT v.google_map_id
+        FROM venue v
+        INNER JOIN suburb s ON s.id = v.suburb_id
+        INNER JOIN deal d ON d.venue_id = v.id
+        WHERE v.status != 'broken'
+          AND d.status = 'approved'
+          ${nonLiveRegionClause}
+        `,
+      )
+      .all(...liveSqliteRegionIds) as { google_map_id: string }[];
 
     const eligibleGoogleMapIds = new Set(
-      (
-        liveSqliteRegionIds.length === 0
-          ? []
-          : (sqlite
-              .prepare(
-                `
-                SELECT v.google_map_id
-                FROM venue v
-                INNER JOIN suburb s ON s.id = v.suburb_id
-                WHERE v.status != 'broken'
-                  AND s.region_id IN (${liveRegionPlaceholders})
-                `,
-              )
-              .all(...liveSqliteRegionIds) as { google_map_id: string }[])
-      ).map((row) => row.google_map_id),
+      [...liveEligibleIds, ...nonLiveEligibleIds].map(
+        (row) => row.google_map_id,
+      ),
     );
 
     async function upsertSuburb(

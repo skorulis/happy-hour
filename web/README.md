@@ -61,7 +61,7 @@ Sync venues and approved deals from DealScraper (set `SQLITE_PATH` in `.env.loca
 npm run sync
 ```
 
-Syncs non-broken venues in regions marked `"live"` in `data/regions.json` (including venues with no deals yet), plus their approved deals. By default, only venues with `last_update` after the last successful `sync_run` are synced. Use `--all` to sync every eligible venue and prune venues that are broken or outside live regions:
+For regions marked `"live"` in `data/regions.json`, syncs the full suburb catalog and every non-broken venue (including venues with no deals yet). For other regions, syncs only venues that have at least one approved deal — and those venues' suburbs — not every suburb. By default, only venues with `last_update` after the last successful `sync_run` are synced. Use `--all` to sync every eligible venue and prune venues that are broken, deal-less outside live regions, or otherwise ineligible:
 
 ```bash
 npm run sync -- --all
@@ -217,7 +217,7 @@ npm run sync:prod
 npm run sync:prod -- --all
 ```
 
-Default sync is incremental (venues updated since the last successful `sync_run`); pass `--all` to sync every eligible live-region venue and prune ineligible ones.
+Default sync is incremental (venues updated since the last successful `sync_run`); pass `--all` to sync every eligible venue and prune ineligible ones.
 
 ### Venue hero images (Cloudflare R2)
 
