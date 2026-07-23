@@ -48,7 +48,7 @@ extension GeographicRegion {
     static let perthName = "Perth"
     static let adelaideName = "Adelaide"
     static let darwinName = "Darwin"
-    static let sunshineCoastName = "Sunshine Coast"
+    static let sunshineCoastName = "The Sunshine Coast"
     static let regionalNSWName = "Regional NSW"
     static let australiaRegionNames = [
         sydneyName,

@@ -13,7 +13,7 @@ const REQUIRED_REGION_NAMES = [
   "Perth",
   "Adelaide",
   "Darwin",
-  "Sunshine Coast",
+  "The Sunshine Coast",
   "Regional NSW",
 ] as const;
 
@@ -202,7 +202,7 @@ function resolveRegionId(
 ): number | null {
   // Prefer Sunshine Coast LGA over Greater Brisbane for the rare overlap.
   if (entry.local_goverment_area === "Sunshine Coast (Regional Council)") {
-    return regionIdsByName.get("Sunshine Coast") ?? null;
+    return regionIdsByName.get("The Sunshine Coast") ?? null;
   }
   const greaterRegion = GREATER_STATISTIC_AREA_REGIONS[entry.statistic_area];
   if (greaterRegion) {
