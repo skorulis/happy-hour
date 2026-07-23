@@ -84,6 +84,11 @@ struct DealHoursTests {
         #expect(DealHours.parse("all-day") == .allDay)
     }
 
+    @Test func parseLunchAsDefaultMiddayRange() {
+        #expect(DealHours.parse("lunch") == .between(12 * 60, 14 * 60))
+        #expect(DealHours.parse("LUNCH") == .between(12 * 60, 14 * 60))
+    }
+
     @Test func parseReturnsNilForUnparseableInput() {
         #expect(DealHours.parse("") == nil)
         #expect(DealHours.parse("not a time") == nil)

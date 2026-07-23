@@ -93,7 +93,28 @@ export function timesInText(text: string): DealHours[] {
     const parsed = parseDealHours(match[1]!);
     if (parsed !== null) result.push(parsed);
   }
-  return result;
+  if (result.length > 0) return result;
+
+  const meal = parseMealPeriod(text);
+  return meal !== null ? [meal] : [];
+}
+
+/**
+ * Named meal periods used when no clock times are present, e.g. "MON TO FRI LUNCH".
+ * Default lunch window matches the meal-time adjustment in `to-processed-deal`.
+ */
+function parseMealPeriod(text: string): DealHours | null {
+  const lowercased = text.toLowerCase();
+  const hasLunch = /\blunch\b/.test(lowercased);
+  const hasNightString =
+    /\bdinner\b/.test(lowercased) ||
+    /\bevening\b/.test(lowercased) ||
+    /\bnight\b/.test(lowercased);
+
+  if (hasLunch && !hasNightString) {
+    return makeBetween(12 * 60, 14 * 60);
+  }
+  return null;
 }
 
 function stripTimeLabelPrefix(str: string): string {

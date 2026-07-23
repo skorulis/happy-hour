@@ -142,6 +142,11 @@ nonisolated enum DealHours: Equatable, Hashable {
             return .allDay
         }
 
+        // Default lunch window when the time string is just a meal name.
+        if normalized == "lunch" {
+            return makeBetween(start: 12 * 60, end: 14 * 60)
+        }
+
         let rangeSeparators = [" - ", "-", " to "]
         for separator in rangeSeparators {
             let parts = normalized.components(separatedBy: separator)

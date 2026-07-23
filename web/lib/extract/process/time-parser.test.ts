@@ -69,6 +69,28 @@ describe("parseTimes", () => {
     expect(parseTimes(["ALL DAY", "all-day"])).toEqual([allDay]);
   });
 
+  it("parses lunch as default midday range", () => {
+    expect(parseTimes(["LUNCH"])).toEqual([between(12 * 60, 14 * 60)]);
+    expect(parseTimes(["lunch"])).toEqual([between(12 * 60, 14 * 60)]);
+  });
+
+  it("parses lunch meal period when mixed with day range", () => {
+    expect(parseTimes(["MON TO FRI LUNCH"])).toEqual([
+      between(12 * 60, 14 * 60),
+    ]);
+  });
+
+  it("prefers explicit clock times over lunch meal period", () => {
+    expect(parseTimes(["LUNCH 11AM-3PM"])).toEqual([
+      between(11 * 60, 15 * 60),
+    ]);
+    expect(parseTimes(["LUNCH FROM 12PM"])).toEqual([from(12 * 60)]);
+  });
+
+  it("does not treat lunch-and-dinner as lunch meal period", () => {
+    expect(parseTimes(["LUNCH AND DINNER"])).toEqual([]);
+  });
+
   it("returns empty for missing times", () => {
     expect(parseTimes([])).toEqual([]);
   });

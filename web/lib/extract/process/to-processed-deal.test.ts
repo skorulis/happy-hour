@@ -301,6 +301,21 @@ describe("toProcessedDeal", () => {
     expect(deal.schedules[0]!.endMinute).toBe(22 * 60);
   });
 
+  it("resolves lunch time string to 12PM-2PM", () => {
+    const deal = toProcessedDeal(
+      raw({
+        title: "Special",
+        details: ["$15 burgers"],
+        days: ["MON TO FRI"],
+        times: ["MON TO FRI LUNCH"],
+      }),
+      webpageSource,
+    )!;
+    expect(deal.schedules).toHaveLength(5);
+    expect(deal.schedules[0]!.startMinute).toBe(12 * 60);
+    expect(deal.schedules[0]!.endMinute).toBe(14 * 60);
+  });
+
   it("does not adjust dinner start when lunch is mentioned", () => {
     const deal = toProcessedDeal(
       raw({

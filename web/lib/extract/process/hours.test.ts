@@ -99,6 +99,11 @@ describe("parseDealHours", () => {
     expect(parseDealHours("all-day")).toEqual(allDay);
   });
 
+  it("parses lunch as default midday range", () => {
+    expect(parseDealHours("lunch")).toEqual(between(12 * 60, 14 * 60));
+    expect(parseDealHours("LUNCH")).toEqual(between(12 * 60, 14 * 60));
+  });
+
   it("parses open-to-end time range", () => {
     expect(parseDealHours("Open - 6pm")).toEqual(between(0, 18 * 60));
     expect(parseDealHours("Open-6pm")).toEqual(between(0, 18 * 60));

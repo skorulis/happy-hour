@@ -125,6 +125,11 @@ export function parseDealHours(str: string): DealHours | null {
     return { kind: "allDay" };
   }
 
+  // Default lunch window when the time string is just a meal name.
+  if (normalized === "lunch") {
+    return makeBetween(12 * 60, 14 * 60);
+  }
+
   const rangeSeparators = [" - ", "-", " to "];
   for (const separator of rangeSeparators) {
     const parts = normalized
