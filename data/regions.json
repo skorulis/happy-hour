@@ -1,10 +1,10 @@
 [
     { "name": "Sydney", "status": "live" },
-    { "name": "Melbourne", "status": "in-progress" },
-    { "name": "Brisbane", "status": "in-progress" },
-    { "name": "Perth", "status": "in-progress" },
-    { "name": "Adelaide", "status": "in-progress" },
-    { "name": "Darwin", "status": "in-progress" },
+    { "name": "Melbourne", "status": "future" },
+    { "name": "Brisbane", "status": "future" },
+    { "name": "Perth", "status": "future" },
+    { "name": "Adelaide", "status": "future" },
+    { "name": "Darwin", "status": "future" },
     { "name": "The Sunshine Coast", "status": "in-progress" },
-    { "name": "Regional NSW", "status": "in-progress" }
+    { "name": "Regional NSW", "status": "future" }
 ]

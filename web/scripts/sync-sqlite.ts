@@ -2,8 +2,9 @@ import { loadScriptEnv } from "../load-script-env";
 
 loadScriptEnv();
 import Database from "better-sqlite3";
-import { desc, eq, isNotNull } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull, notExists, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
+import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import path from "node:path";
 import postgres from "postgres";
@@ -13,6 +14,11 @@ import {
   type SqliteDealSchedule,
   syncVenueDeals,
 } from "./sync-deals";
+
+type RegionCatalogEntry = {
+  name: string;
+  status: string;
+};
 
 type SqliteSuburb = {
   id: number;
@@ -135,6 +141,37 @@ function resolveSqlitePath(rawPath: string | undefined): string {
   return expanded;
 }
 
+function resolveRegionsCatalogPath(): string {
+  const candidates = [
+    path.resolve(process.cwd(), "data", "regions.json"),
+    path.resolve(process.cwd(), "..", "data", "regions.json"),
+  ];
+  for (const candidate of candidates) {
+    if (existsSync(candidate)) {
+      return candidate;
+    }
+  }
+  throw new Error(
+    `regions.json not found. Tried:\n${candidates.map((p) => `  ${p}`).join("\n")}`,
+  );
+}
+
+/** Region names with status "live" get a full suburb catalog synced to Postgres. */
+function loadLiveRegionNames(): Set<string> {
+  const catalogPath = resolveRegionsCatalogPath();
+  const entries = JSON.parse(
+    readFileSync(catalogPath, "utf8"),
+  ) as RegionCatalogEntry[];
+  if (!Array.isArray(entries)) {
+    throw new Error(`Invalid regions catalog at ${catalogPath}`);
+  }
+  return new Set(
+    entries
+      .filter((entry) => entry.status === "live")
+      .map((entry) => entry.name),
+  );
+}
+
 function parseJsonColumn(raw: string): unknown {
   try {
     return JSON.parse(raw);
@@ -198,8 +235,12 @@ async function main() {
 
   let venuesSynced = 0;
   let dealsSynced = 0;
+  let bulkSuburbsSynced = 0;
+  let venueSuburbsSynced = 0;
+  let prunedEmptySuburbs = 0;
   const syncedSuburbKeys = new Set<string>();
   const today = sydneyToday();
+  const liveRegionNames = loadLiveRegionNames();
 
   try {
     const venueRows = (
@@ -260,6 +301,7 @@ async function main() {
       .all() as SqliteGeographicRegion[];
 
     const regionIdBySqliteId = new Map<number, number>();
+    const nonLivePgRegionIds: number[] = [];
     for (const regionRow of sqliteRegions) {
       const pgCountryId = countryIdBySqliteId.get(regionRow.country_id);
       if (pgCountryId == null) {
@@ -287,6 +329,9 @@ async function main() {
         })
         .returning({ id: schema.geographicRegion.id });
       regionIdBySqliteId.set(regionRow.id, upsertedRegion.id);
+      if (!liveRegionNames.has(regionRow.name)) {
+        nonLivePgRegionIds.push(upsertedRegion.id);
+      }
     }
 
     async function upsertSuburb(
@@ -330,15 +375,27 @@ async function main() {
       return upsertedSuburb.id;
     }
 
-    const regionSuburbs = sqlite
-      .prepare("SELECT * FROM suburb WHERE region_id IS NOT NULL ORDER BY id")
-      .all() as SqliteSuburb[];
+    const liveSqliteRegionIds = sqliteRegions
+      .filter((region) => liveRegionNames.has(region.name))
+      .map((region) => region.id);
+
+    const regionSuburbs =
+      liveSqliteRegionIds.length === 0
+        ? []
+        : (sqlite
+            .prepare(
+              `SELECT * FROM suburb WHERE region_id IN (${liveSqliteRegionIds
+                .map(() => "?")
+                .join(", ")}) ORDER BY id`,
+            )
+            .all(...liveSqliteRegionIds) as SqliteSuburb[]);
 
     for (const suburbRow of regionSuburbs) {
       await db.transaction(async (tx) => {
         await upsertSuburb(tx, suburbRow);
       });
       syncedSuburbKeys.add(suburbKey(suburbRow.name, suburbRow.postcode));
+      bulkSuburbsSynced += 1;
     }
 
     for (const venueRow of venueRows) {
@@ -352,7 +409,11 @@ async function main() {
 
           if (suburbRow) {
             suburbId = await upsertSuburb(tx, suburbRow);
-            syncedSuburbKeys.add(suburbKey(suburbRow.name, suburbRow.postcode));
+            const key = suburbKey(suburbRow.name, suburbRow.postcode);
+            if (!syncedSuburbKeys.has(key)) {
+              venueSuburbsSynced += 1;
+            }
+            syncedSuburbKeys.add(key);
           }
         }
 
@@ -447,6 +508,24 @@ async function main() {
       });
     }
 
+    if (nonLivePgRegionIds.length > 0) {
+      const pruned = await db
+        .delete(schema.suburb)
+        .where(
+          and(
+            inArray(schema.suburb.regionId, nonLivePgRegionIds),
+            notExists(
+              db
+                .select({ one: sql`1` })
+                .from(schema.venue)
+                .where(eq(schema.venue.suburbId, schema.suburb.id)),
+            ),
+          ),
+        )
+        .returning({ id: schema.suburb.id });
+      prunedEmptySuburbs = pruned.length;
+    }
+
     await db
       .update(schema.syncRun)
       .set({
@@ -469,7 +548,13 @@ async function main() {
   } else if (!syncAll && watermark == null) {
     console.log("  Watermark: none (first sync — synced all venues)");
   }
+  console.log(
+    `  Live regions: ${[...liveRegionNames].sort().join(", ") || "(none)"}`,
+  );
   console.log(`  Suburbs synced: ${syncedSuburbKeys.size}`);
+  console.log(`    Bulk (live regions): ${bulkSuburbsSynced}`);
+  console.log(`    Via venues (non-bulk): ${venueSuburbsSynced}`);
+  console.log(`  Empty non-live suburbs pruned: ${prunedEmptySuburbs}`);
   console.log(`  Venues synced: ${venuesSynced}`);
   console.log(`  Deals synced: ${dealsSynced}`);
 }
