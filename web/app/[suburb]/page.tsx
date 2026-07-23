@@ -164,6 +164,7 @@ export default async function SuburbSearchPage({
         pageTitle={`Pub Specials in ${region.name}`}
         listBasePath={regionPath(region.name)}
         regionId={region.id}
+        regionName={region.name}
         allSuburbsHref={regionAllSuburbsPath(region.name)}
       />
     </>

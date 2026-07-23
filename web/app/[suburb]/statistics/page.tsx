@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { RegionFocusNotice } from "@/components/RegionFocusNotice";
 import { RegionStatisticsView } from "@/components/RegionStatisticsView";
 import { findRegionBySlug, listSuburbStatistics } from "@/lib/search/queries";
 import { regionStatisticsPath } from "@/lib/search/slugs";
@@ -44,10 +45,11 @@ export default async function RegionStatisticsPage({
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-4 py-10 md:px-6">
-      <header>
+      <header className="flex flex-col gap-4">
         <h1 className="text-3xl font-bold text-foreground">
           Statistics for {region.name}
         </h1>
+        <RegionFocusNotice regionName={region.name} />
       </header>
 
       <section>

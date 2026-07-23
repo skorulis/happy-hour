@@ -2,6 +2,7 @@
 
 import { MapPinCheckInside } from "lucide-react";
 import { PopularSuburbs } from "@/components/PopularSuburbs";
+import { RegionFocusNotice } from "@/components/RegionFocusNotice";
 import { VenueSearchCard } from "@/components/VenueSearchCard";
 import { SearchBar } from "@/components/search/SearchBar";
 import type { WhereFilter } from "@/components/search/SuburbSelect";
@@ -19,6 +20,7 @@ type SearchPageProps = {
   pageTitle?: string;
   listBasePath?: string;
   regionId?: number;
+  regionName?: string;
   allSuburbsHref?: string;
   includeNearbyLink?: boolean;
 };
@@ -33,6 +35,7 @@ export function SearchPage({
   pageTitle,
   listBasePath,
   regionId,
+  regionName,
   allSuburbsHref,
   includeNearbyLink = true,
 }: SearchPageProps) {
@@ -81,10 +84,11 @@ export function SearchPage({
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-4 py-10 md:px-6">
-      <header>
+      <header className="flex flex-col gap-4">
         <h1 className="text-3xl font-bold text-foreground">
           {pageTitle ?? resultsTitle}
         </h1>
+        {regionName ? <RegionFocusNotice regionName={regionName} /> : null}
       </header>
 
       <SearchBar
