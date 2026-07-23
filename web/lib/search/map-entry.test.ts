@@ -35,9 +35,25 @@ describe("mapEntryFromListPathname", () => {
     });
   });
 
+  it("keeps the day suffix on the list path and strips it from the source slug", () => {
+    expect(mapEntryFromListPathname("/abbotsbury-2176-monday")).toEqual({
+      listPath: "/abbotsbury-2176-monday",
+      source: { kind: "suburb", slug: "abbotsbury-2176" },
+      cameraPending: true,
+    });
+  });
+
   it("builds a nearby entry from /nearby", () => {
     expect(mapEntryFromListPathname("/nearby")).toEqual({
       listPath: "/nearby",
+      source: { kind: "nearby" },
+      cameraPending: true,
+    });
+  });
+
+  it("builds a nearby entry with a day suffix", () => {
+    expect(mapEntryFromListPathname("/nearby-monday")).toEqual({
+      listPath: "/nearby-monday",
       source: { kind: "nearby" },
       cameraPending: true,
     });
@@ -97,28 +113,28 @@ describe("mapEntryFromVenue", () => {
 });
 
 describe("listHrefFromMapEntry", () => {
-  it("restores the suburb list path with filter params", () => {
+  it("restores the suburb list path with the current map day", () => {
     const entry: MapEntry = {
       listPath: "/abbotsbury-2176",
       source: { kind: "suburb", slug: "abbotsbury-2176" },
       cameraPending: false,
     };
 
-    expect(listHrefFromMapEntry(entry, new URLSearchParams("days=5"))).toBe(
-      "/abbotsbury-2176?days=5",
-    );
+    expect(
+      listHrefFromMapEntry(entry, new URLSearchParams(), "/map-thursday"),
+    ).toBe("/abbotsbury-2176-thursday");
   });
 
-  it("restores the venue path with filter params", () => {
+  it("restores the venue path with the current map day", () => {
     const entry: MapEntry = {
       listPath: "/surry-hills/the-local",
       source: { kind: "venue", lat: -33.88, lng: 151.21 },
       cameraPending: false,
     };
 
-    expect(listHrefFromMapEntry(entry, new URLSearchParams("days=5"))).toBe(
-      "/surry-hills/the-local?days=5",
-    );
+    expect(
+      listHrefFromMapEntry(entry, new URLSearchParams(), "/map-thursday"),
+    ).toBe("/surry-hills/the-local-thursday");
   });
 
   it("falls back to / when no entry is stored", () => {
@@ -127,7 +143,7 @@ describe("listHrefFromMapEntry", () => {
     );
   });
 
-  it("strips legacy location params", () => {
+  it("strips legacy location params and migrates days into the path", () => {
     const entry: MapEntry = {
       listPath: "/nearby",
       source: { kind: "nearby" },
@@ -135,7 +151,7 @@ describe("listHrefFromMapEntry", () => {
     };
     const params = new URLSearchParams("days=1&lat=-33.8&lng=151.2");
 
-    expect(listHrefFromMapEntry(entry, params)).toBe("/nearby?days=1");
+    expect(listHrefFromMapEntry(entry, params)).toBe("/nearby-sunday");
   });
 });
 

@@ -1,4 +1,9 @@
 import type { MapBounds } from "@/lib/search/bounds";
+import {
+  appendDayToPath,
+  daysFromBrowserUrl,
+  stripDaySuffix,
+} from "@/lib/search/day-path";
 import { parseWherePath, stripLocationParams } from "@/lib/search/url";
 
 export const MAP_ENTRY_STORAGE_KEY = "happy-hour:map-entry";
@@ -139,10 +144,11 @@ export function mapEntryFromListPathname(pathname: string): MapEntry {
   }
 
   const parsed = parseWherePath(pathname);
+  const day = parsed.day !== undefined ? [parsed.day] : [];
 
   if (parsed.kind === "nearby") {
     return {
-      listPath: "/nearby",
+      listPath: appendDayToPath("/nearby", day),
       source: { kind: "nearby" },
       cameraPending: true,
     };
@@ -150,24 +156,36 @@ export function mapEntryFromListPathname(pathname: string): MapEntry {
 
   if (parsed.kind === "suburb") {
     return {
-      listPath: `/${parsed.slug}`,
+      listPath: appendDayToPath(`/${parsed.slug}`, day),
       source: { kind: "suburb", slug: parsed.slug },
       cameraPending: true,
     };
   }
 
   return {
-    listPath: "/",
+    listPath: appendDayToPath("/", day),
     source: { kind: "anywhere" },
     cameraPending: true,
   };
 }
 
+function baseListPath(path: string): string {
+  const segments = path.split("/").filter(Boolean);
+  if (segments.length === 0) {
+    return "/";
+  }
+  const rewritten = segments.map((segment) => stripDaySuffix(segment).base);
+  return `/${rewritten.join("/")}`;
+}
+
 export function listHrefFromMapEntry(
   entry: MapEntry | null,
   params: URLSearchParams,
+  mapPathname?: string,
 ): string {
-  const path = entry?.listPath ?? "/";
+  const stored = entry?.listPath ?? "/";
+  const day = daysFromBrowserUrl(mapPathname ?? stored, params);
+  const path = appendDayToPath(baseListPath(stored), day);
   const qs = stripLocationParams(params).toString();
   return qs ? `${path}?${qs}` : path;
 }

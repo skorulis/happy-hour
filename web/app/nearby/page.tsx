@@ -1,7 +1,27 @@
 import { Suspense } from "react";
+import { permanentRedirect } from "next/navigation";
 import { SearchPage } from "@/components/SearchPage";
+import { legacyDaysRedirectHref } from "@/lib/search/url";
 
-export default function NearbyPage() {
+type NearbyPageProps = {
+  searchParams: Promise<{ days?: string; q?: string }>;
+};
+
+export default async function NearbyPage({ searchParams }: NearbyPageProps) {
+  const resolved = await searchParams;
+  const search = new URLSearchParams();
+  if (resolved.days) {
+    search.set("days", resolved.days);
+  }
+  if (resolved.q) {
+    search.set("q", resolved.q);
+  }
+
+  const daysRedirect = legacyDaysRedirectHref("/nearby", search);
+  if (daysRedirect) {
+    permanentRedirect(daysRedirect);
+  }
+
   return (
     <Suspense
       fallback={

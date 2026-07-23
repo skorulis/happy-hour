@@ -158,7 +158,7 @@ export function useSearchFilters(options?: {
     filtersToBrowserSearchParams(seededFilters, seededFilters.what).toString(),
   );
   const syncedPathRef = useRef(pathname);
-  // First client fetch after SSR seed (matching filters / ?days=)
+  // First client fetch after SSR seed (matching filters / day path)
   // should not flash "Loading…" over already-rendered cards.
   const skipLoadingOnceRef = useRef(
     initialDeals.length > 0 ||
@@ -348,6 +348,7 @@ export function useSearchFilters(options?: {
 
       const params = new URLSearchParams(current);
       const parsed = parseWherePath(path);
+      const days = parsed.day !== undefined ? [parsed.day] : [];
 
       if (parsed.kind === "nearby") {
         setFilters((currentFilters) => {
@@ -355,9 +356,11 @@ export function useSearchFilters(options?: {
             currentFilters.where.kind === "nearMe"
               ? currentFilters.where
               : { kind: "nearMe" as const };
-          return searchParamsToInitialFilters(params, existingNearMe);
+          return searchParamsToInitialFilters(params, existingNearMe, days);
         });
-        setDebouncedWhat(searchParamsToInitialFilters(params).what);
+        setDebouncedWhat(
+          searchParamsToInitialFilters(params, { kind: "anywhere" }, days).what,
+        );
         return;
       }
 
@@ -377,7 +380,7 @@ export function useSearchFilters(options?: {
               id: suburb.id,
               suburb,
             };
-            const fromUrl = searchParamsToInitialFilters(params, where);
+            const fromUrl = searchParamsToInitialFilters(params, where, days);
             setFilters(fromUrl);
             setDebouncedWhat(fromUrl.what);
           } catch {
@@ -387,9 +390,11 @@ export function useSearchFilters(options?: {
         return;
       }
 
-      const fromUrl = searchParamsToInitialFilters(params, {
-        kind: "anywhere",
-      });
+      const fromUrl = searchParamsToInitialFilters(
+        params,
+        { kind: "anywhere" },
+        days,
+      );
       setFilters(fromUrl);
       setDebouncedWhat(fromUrl.what);
     }

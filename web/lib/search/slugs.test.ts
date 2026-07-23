@@ -101,7 +101,10 @@ describe("suburb slug aliases", () => {
     expect(suburbWhereRedirectPath("sydney-2000")).toBe("/sydney-cbd-2000");
     expect(
       suburbWhereRedirectPath("sydney-2000", { days: "5", q: "beer" }),
-    ).toBe("/sydney-cbd-2000?days=5&q=beer");
+    ).toBe("/sydney-cbd-2000-thursday?q=beer");
+    expect(
+      suburbWhereRedirectPath("sydney-2000", { day: 2, q: "beer" }),
+    ).toBe("/sydney-cbd-2000-monday?q=beer");
     expect(suburbWhereRedirectPath("surry-hills-2010")).toBeNull();
   });
 
@@ -115,7 +118,10 @@ describe("suburb slug aliases", () => {
       "/sydney-cbd/the-local",
     );
     expect(venueRedirectPath("sydney", "the-local", { days: "5" })).toBe(
-      "/sydney-cbd/the-local?days=5",
+      "/sydney-cbd/the-local-thursday",
+    );
+    expect(venueRedirectPath("sydney", "the-local", { day: 2 })).toBe(
+      "/sydney-cbd/the-local-monday",
     );
     expect(venueRedirectPath("surry-hills", "the-local")).toBeNull();
   });

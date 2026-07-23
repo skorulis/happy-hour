@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import { notFound, redirect } from "next/navigation";
+import { notFound, permanentRedirect, redirect } from "next/navigation";
 import { VenuePageContent } from "@/components/VenuePageContent";
 import { canManageVenue } from "@/lib/admin";
 import { auth } from "@/lib/auth";
+import { stripDaySuffix } from "@/lib/search/day-path";
 import { getVenueDetailBySlug } from "@/lib/search/queries";
 import { venuePath, venueRedirectPath } from "@/lib/search/slugs";
-import { initialVenueDay, parseDaysParam } from "@/lib/search/url";
+import { initialVenueDay, legacyDaysRedirectHref } from "@/lib/search/url";
 
 type VenuePageProps = {
   params: Promise<{ suburb: string; venueSlug: string }>;
@@ -16,7 +17,8 @@ type VenuePageProps = {
 export async function generateMetadata({
   params,
 }: VenuePageProps): Promise<Metadata> {
-  const { suburb, venueSlug } = await params;
+  const { suburb, venueSlug: rawVenueSlug } = await params;
+  const { base: venueSlug } = stripDaySuffix(rawVenueSlug);
   const venue = await getVenueDetailBySlug(suburb, venueSlug);
 
   if (!venue) {
@@ -53,11 +55,24 @@ export async function generateMetadata({
 }
 
 export default async function VenuePage({ params, searchParams }: VenuePageProps) {
-  const { suburb, venueSlug } = await params;
+  const { suburb, venueSlug: rawVenueSlug } = await params;
   const { days: daysParam } = await searchParams;
+  const { base: venueSlug, day: pathDay } = stripDaySuffix(rawVenueSlug);
+
+  const search = new URLSearchParams();
+  if (daysParam) {
+    search.set("days", daysParam);
+  }
+  const daysRedirect = legacyDaysRedirectHref(
+    `/${suburb}/${rawVenueSlug}`,
+    search,
+  );
+  if (daysRedirect) {
+    permanentRedirect(daysRedirect);
+  }
 
   const redirectPath = venueRedirectPath(suburb, venueSlug, {
-    days: daysParam,
+    day: pathDay ?? undefined,
   });
   if (redirectPath) {
     redirect(redirectPath);
@@ -69,7 +84,9 @@ export default async function VenuePage({ params, searchParams }: VenuePageProps
     notFound();
   }
 
-  const initialSelectedDay = initialVenueDay(parseDaysParam(daysParam ?? null));
+  const initialSelectedDay = initialVenueDay(
+    pathDay !== null ? [pathDay] : [],
+  );
 
   const session = await auth.api.getSession({
     headers: await headers(),

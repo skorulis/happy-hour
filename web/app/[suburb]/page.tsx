@@ -1,15 +1,20 @@
 import { Suspense } from "react";
-import { notFound, redirect } from "next/navigation";
+import { notFound, permanentRedirect, redirect } from "next/navigation";
 import type { Metadata } from "next";
+import { MapPage } from "@/components/MapPage";
 import { SearchPage } from "@/components/SearchPage";
 import { SearchUrlRedirect } from "@/components/SearchUrlRedirect";
+import { stripDaySuffix } from "@/lib/search/day-path";
 import {
   findRegionBySlug,
   findSuburbByWhereSlug,
   listPopularSuburbs,
   searchDealsForSuburb,
 } from "@/lib/search/queries";
-import { formatSuburbDealsMetadataTitle } from "@/lib/search/schedule";
+import {
+  formatNearbyDealsTitle,
+  formatSuburbDealsMetadataTitle,
+} from "@/lib/search/schedule";
 import {
   NEARBY_WHERE_SLUG,
   regionAllSuburbsPath,
@@ -17,7 +22,7 @@ import {
   suburbWherePath,
   suburbWhereRedirectPath,
 } from "@/lib/search/slugs";
-import { parseDaysParam, parseWhatTokens } from "@/lib/search/url";
+import { legacyDaysRedirectHref, parseWhatTokens } from "@/lib/search/url";
 
 const SUBURB_SSR_DEAL_LIMIT = 200;
 
@@ -30,16 +35,29 @@ export async function generateMetadata({
   params,
   searchParams,
 }: SuburbSearchPageProps): Promise<Metadata> {
-  const { suburb: whereSlug } = await params;
-  const { days: daysParam, q: whatParam } = await searchParams;
+  const { suburb: rawWhereSlug } = await params;
+  const { q: whatParam } = await searchParams;
+  const { base: whereSlug, day } = stripDaySuffix(rawWhereSlug);
+  const days = day !== null ? [day] : [];
+  const what = whatParam ? parseWhatTokens(whatParam) : [];
+
   if (whereSlug === NEARBY_WHERE_SLUG) {
+    const title = formatNearbyDealsTitle(days, what);
+    return {
+      title,
+      description: "Find pub and bar happy hour deals near you.",
+      alternates: {
+        canonical: `/${NEARBY_WHERE_SLUG}`,
+      },
+    };
+  }
+
+  if (whereSlug === "map") {
     return {};
   }
 
   const suburb = await findSuburbByWhereSlug(whereSlug);
   if (suburb) {
-    const days = parseDaysParam(daysParam ?? null);
-    const what = whatParam ? parseWhatTokens(whatParam) : [];
     const title = formatSuburbDealsMetadataTitle(suburb.name, days, what);
     const description = `Find pub and bar happy hour deals in ${suburb.name}${suburb.postcode ? ` (${suburb.postcode})` : ""}.`;
     const ogImages = suburb.heroImage ? [{ url: suburb.heroImage }] : undefined;
@@ -94,23 +112,77 @@ export default async function SuburbSearchPage({
   params,
   searchParams,
 }: SuburbSearchPageProps) {
-  const { suburb: whereSlug } = await params;
-  const { days: daysParam, q: whatParam } = await searchParams;
+  const { suburb: rawWhereSlug } = await params;
+  const resolvedSearchParams = await searchParams;
+  const { days: daysParam, q: whatParam } = resolvedSearchParams;
+  const { base: whereSlug, day: pathDay } = stripDaySuffix(rawWhereSlug);
 
-  if (whereSlug === NEARBY_WHERE_SLUG) {
+  const search = new URLSearchParams();
+  if (daysParam) {
+    search.set("days", daysParam);
+  }
+  if (whatParam) {
+    search.set("q", whatParam);
+  }
+
+  const daysRedirect = legacyDaysRedirectHref(`/${rawWhereSlug}`, search);
+  if (daysRedirect) {
+    permanentRedirect(daysRedirect);
+  }
+
+  // Exact `/nearby` is a dedicated route; day-suffixed nearby lands here.
+  if (whereSlug === NEARBY_WHERE_SLUG && pathDay === null) {
     notFound();
   }
 
   const redirectPath = suburbWhereRedirectPath(whereSlug, {
-    days: daysParam,
+    day: pathDay ?? undefined,
     q: whatParam,
   });
   if (redirectPath) {
     redirect(redirectPath);
   }
 
-  const days = parseDaysParam(daysParam ?? null);
+  const days = pathDay !== null ? [pathDay] : [];
   const what = whatParam ? parseWhatTokens(whatParam) : [];
+
+  if (whereSlug === NEARBY_WHERE_SLUG) {
+    return (
+      <Suspense
+        fallback={
+          <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-4 py-10 md:px-6">
+            <header>
+              <h1 className="text-3xl font-bold text-foreground">
+                Pub Specials near you
+              </h1>
+            </header>
+          </div>
+        }
+      >
+        <SearchPage
+          initialWhere={{ kind: "nearMe" }}
+          initialDays={days}
+          initialWhat={what}
+        />
+      </Suspense>
+    );
+  }
+
+  if (whereSlug === "map") {
+    return (
+      <Suspense
+        fallback={
+          <div className="relative flex min-h-0 flex-1 flex-col">
+            <div className="absolute inset-0 flex items-center justify-center bg-background text-sm text-muted">
+              Loading map...
+            </div>
+          </div>
+        }
+      >
+        <MapPage initialDays={days} />
+      </Suspense>
+    );
+  }
 
   const suburb = await findSuburbByWhereSlug(whereSlug);
   if (suburb) {

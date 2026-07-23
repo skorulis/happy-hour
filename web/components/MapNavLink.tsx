@@ -19,7 +19,8 @@ const subscribeNoop = () => () => {};
 export function MapNavLink() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const isMapOpen = pathname === "/map" || pathname.endsWith("/map");
+  const parsed = parseWherePath(pathname);
+  const isMapOpen = parsed.map;
   // The stored map entry lives in sessionStorage and can only be read on the
   // client, so gate that read behind hydration to keep SSR output stable.
   const isHydrated = useSyncExternalStore(
@@ -28,7 +29,11 @@ export function MapNavLink() {
     () => false,
   );
   const href = isMapOpen
-    ? listHrefFromMapEntry(isHydrated ? readMapEntry() : null, searchParams)
+    ? listHrefFromMapEntry(
+        isHydrated ? readMapEntry() : null,
+        searchParams,
+        pathname,
+      )
     : pathnameToMapHref(pathname, searchParams);
   const label = isMapOpen ? "List" : "Map";
   const Icon = isMapOpen ? List : MapPin;
@@ -38,11 +43,10 @@ export function MapNavLink() {
       writeMapEntry(mapEntryFromListPathname(pathname));
     }
 
-    const where = parseWherePath(pathname);
     track("view_mode_toggled", {
       from: isMapOpen ? "map" : "list",
       to: isMapOpen ? "list" : "map",
-      where_kind: where.kind,
+      where_kind: parsed.kind,
     });
   }
 

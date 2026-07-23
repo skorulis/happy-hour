@@ -9,7 +9,7 @@ import { formatDistanceKm } from "@/lib/search/distance";
 import type { DealSearchResult } from "@/lib/search/queries";
 import { formatDealScheduleLine } from "@/lib/search/schedule";
 import { slugify, venuePath } from "@/lib/search/slugs";
-import { appendDaysParam } from "@/lib/search/url";
+import { appendDayToPath } from "@/lib/search/day-path";
 import { venueHeroThumbUrl } from "@/lib/search/venue-hero-url";
 
 export type VenueGroupedDeals = {
@@ -49,7 +49,7 @@ export function VenueSearchCard({
 }: VenueSearchCardProps) {
   const venueHref = omitDaysParam
     ? venuePath(group.venue.suburbName, group.venue.name)
-    : appendDaysParam(
+    : appendDayToPath(
         venuePath(group.venue.suburbName, group.venue.name),
         searchDays,
       );

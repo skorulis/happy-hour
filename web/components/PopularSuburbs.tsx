@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { List, LocateFixed } from "lucide-react";
 import type { PopularSuburb, SuburbStatistics } from "@/lib/search/queries";
+import { appendDayToPath } from "@/lib/search/day-path";
 import { NEARBY_WHERE_SLUG, suburbWherePath } from "@/lib/search/slugs";
 import { suburbHeroThumbUrl } from "@/lib/search/venue-hero-url";
 
 type PopularSuburbsProps = {
   suburbs: PopularSuburb[] | SuburbStatistics[];
   search?: string;
+  days?: number[];
   title?: string;
   description?: string;
   includeSpecialLinks?: boolean;
@@ -45,9 +47,14 @@ function isSuburbStatistics(suburb: PopularSuburb): suburb is SuburbStatistics {
   );
 }
 
+function hrefWithSearch(path: string, search: string | undefined): string {
+  return search ? `${path}?${search}` : path;
+}
+
 function buildListItems(
   suburbs: PopularSuburb[],
   search: string | undefined,
+  days: number[],
   includeSpecialLinks: boolean,
   includeNearbyLink: boolean,
   allSuburbsHref: string,
@@ -61,8 +68,8 @@ function buildListItems(
     return items;
   }
 
-  const nearbyPath = `/${NEARBY_WHERE_SLUG}`;
-  const nearbyHref = search ? `${nearbyPath}?${search}` : nearbyPath;
+  const nearbyPath = appendDayToPath(`/${NEARBY_WHERE_SLUG}`, days);
+  const nearbyHref = hrefWithSearch(nearbyPath, search);
 
   const result: SuburbListItem[] = [];
 
@@ -90,6 +97,7 @@ function buildListItems(
 export function PopularSuburbs({
   suburbs,
   search,
+  days = [],
   title = "Popular suburbs",
   description = "Pick a suburb to browse deals nearby.",
   includeSpecialLinks = false,
@@ -100,6 +108,7 @@ export function PopularSuburbs({
   const items = buildListItems(
     suburbs,
     search,
+    days,
     includeSpecialLinks,
     includeNearbyLink,
     allSuburbsHref,
@@ -155,8 +164,11 @@ export function PopularSuburbs({
           }
 
           const { suburb } = item;
-          const path = suburbWherePath(suburb.name, suburb.postcode);
-          const href = search ? `${path}?${search}` : path;
+          const path = appendDayToPath(
+            suburbWherePath(suburb.name, suburb.postcode),
+            days,
+          );
+          const href = hrefWithSearch(path, search);
           const thumbUrl = suburbHeroThumbUrl(suburb.heroImage);
 
           return (

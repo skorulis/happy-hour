@@ -52,9 +52,10 @@ function useIsMobile() {
 
 type MapPageProps = {
   initialWhere?: WhereFilter;
+  initialDays?: number[];
 };
 
-export function MapPage({ initialWhere }: MapPageProps) {
+export function MapPage({ initialWhere, initialDays }: MapPageProps) {
   const {
     filters,
     allVenueGroups,
@@ -63,7 +64,11 @@ export function MapPage({ initialWhere }: MapPageProps) {
     handleDaysApply,
     handleWhatChange,
     setViewportBounds,
-  } = useSearchFilters({ mapViewport: true, initialWhere });
+  } = useSearchFilters({
+    mapViewport: true,
+    initialWhere,
+    initialDays,
+  });
 
   const isMobile = useIsMobile();
   const [filtersExpanded, setFiltersExpanded] = useState(true);
