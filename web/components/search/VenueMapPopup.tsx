@@ -15,7 +15,7 @@ import {
   sortDealsActiveFirst,
 } from "@/lib/search/schedule";
 import { slugify, venuePath } from "@/lib/search/slugs";
-import { appendDayToPath } from "@/lib/search/day-path";
+import { appendDayHash } from "@/lib/search/day-path";
 import { venueHeroThumbUrl } from "@/lib/search/venue-hero-url";
 
 type VenueMapPopupProps = {
@@ -80,7 +80,7 @@ export function VenueMapPopup({
   onClose,
 }: VenueMapPopupProps) {
   const previewDeals = sortDealsActiveFirst(group.deals, now).slice(0, 2);
-  const venueHref = appendDayToPath(
+  const venueHref = appendDayHash(
     venuePath(group.venue.suburbName, group.venue.name),
     searchDays,
   );

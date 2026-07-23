@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  appendDayHash,
   appendDayToPath,
+  dayNumberToHash,
   dayNumberToPathSlug,
   daysFromBrowserUrl,
+  hashToDayNumber,
   pathSlugToDayNumber,
   stripDaySuffix,
 } from "./day-path";
@@ -72,6 +75,43 @@ describe("appendDayToPath", () => {
     expect(appendDayToPath("/nearby?q=beer", [2])).toBe(
       "/nearby-monday?q=beer",
     );
+  });
+});
+
+describe("appendDayHash", () => {
+  it("appends a day hash for venue paths", () => {
+    expect(appendDayHash("/newtown/the-venue", [2])).toBe(
+      "/newtown/the-venue#monday",
+    );
+    expect(appendDayHash("/venue/foo", [5])).toBe("/venue/foo#thursday");
+  });
+
+  it("clears the hash when days are empty", () => {
+    expect(appendDayHash("/newtown/the-venue#monday", [])).toBe(
+      "/newtown/the-venue",
+    );
+  });
+
+  it("strips a legacy path-day suffix when applying a hash", () => {
+    expect(appendDayHash("/newtown/the-venue-monday", [5])).toBe(
+      "/newtown/the-venue#thursday",
+    );
+  });
+
+  it("preserves query strings before the hash", () => {
+    expect(appendDayHash("/newtown/the-venue?x=1", [2])).toBe(
+      "/newtown/the-venue?x=1#monday",
+    );
+  });
+});
+
+describe("dayNumberToHash / hashToDayNumber", () => {
+  it("round-trips weekday hashes", () => {
+    expect(dayNumberToHash(2)).toBe("#monday");
+    expect(hashToDayNumber("#monday")).toBe(2);
+    expect(hashToDayNumber("thursday")).toBe(5);
+    expect(hashToDayNumber("#deal-12")).toBeNull();
+    expect(dayNumberToHash(9)).toBeNull();
   });
 });
 

@@ -1,4 +1,4 @@
-import { appendDayToPath } from "@/lib/search/day-path";
+import { appendDayHash, appendDayToPath } from "@/lib/search/day-path";
 
 export const UNKNOWN_SUBURB_SLUG = "unknown";
 export const NEARBY_WHERE_SLUG = "nearby";
@@ -88,7 +88,7 @@ export function venueRedirectPath(
 
   const day =
     searchParams?.day ?? singleDayFromLegacyParam(searchParams?.days) ?? null;
-  return appendDayToPath(
+  return appendDayHash(
     `/${canonical}/${venueSlug}`,
     day !== null ? [day] : [],
   );

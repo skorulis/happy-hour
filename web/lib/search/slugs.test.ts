@@ -113,15 +113,15 @@ describe("suburb slug aliases", () => {
     expect(suburbMapRedirectPath("surry-hills-2010")).toBeNull();
   });
 
-  it("builds venue redirect paths", () => {
+  it("builds venue redirect paths with day hash", () => {
     expect(venueRedirectPath("sydney", "the-local")).toBe(
       "/sydney-cbd/the-local",
     );
     expect(venueRedirectPath("sydney", "the-local", { days: "5" })).toBe(
-      "/sydney-cbd/the-local-thursday",
+      "/sydney-cbd/the-local#thursday",
     );
     expect(venueRedirectPath("sydney", "the-local", { day: 2 })).toBe(
-      "/sydney-cbd/the-local-monday",
+      "/sydney-cbd/the-local#monday",
     );
     expect(venueRedirectPath("surry-hills", "the-local")).toBeNull();
   });

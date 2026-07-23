@@ -4,10 +4,10 @@ import { notFound, permanentRedirect, redirect } from "next/navigation";
 import { VenuePageContent } from "@/components/VenuePageContent";
 import { canManageVenue } from "@/lib/admin";
 import { auth } from "@/lib/auth";
-import { stripDaySuffix } from "@/lib/search/day-path";
+import { dayNumberToHash, stripDaySuffix } from "@/lib/search/day-path";
 import { getVenueDetailBySlug } from "@/lib/search/queries";
 import { venuePath, venueRedirectPath } from "@/lib/search/slugs";
-import { initialVenueDay, legacyDaysRedirectHref } from "@/lib/search/url";
+import { parseDaysParam } from "@/lib/search/url";
 
 type VenuePageProps = {
   params: Promise<{ suburb: string; venueSlug: string }>;
@@ -19,7 +19,9 @@ export async function generateMetadata({
 }: VenuePageProps): Promise<Metadata> {
   const { suburb, venueSlug: rawVenueSlug } = await params;
   const { base: venueSlug } = stripDaySuffix(rawVenueSlug);
-  const venue = await getVenueDetailBySlug(suburb, venueSlug);
+  const venue =
+    (await getVenueDetailBySlug(suburb, rawVenueSlug)) ??
+    (await getVenueDetailBySlug(suburb, venueSlug));
 
   if (!venue) {
     return {};
@@ -57,36 +59,35 @@ export async function generateMetadata({
 export default async function VenuePage({ params, searchParams }: VenuePageProps) {
   const { suburb, venueSlug: rawVenueSlug } = await params;
   const { days: daysParam } = await searchParams;
-  const { base: venueSlug, day: pathDay } = stripDaySuffix(rawVenueSlug);
+  const { base: pathBase, day: pathDay } = stripDaySuffix(rawVenueSlug);
 
-  const search = new URLSearchParams();
-  if (daysParam) {
-    search.set("days", daysParam);
-  }
-  const daysRedirect = legacyDaysRedirectHref(
-    `/${suburb}/${rawVenueSlug}`,
-    search,
-  );
-  if (daysRedirect) {
-    permanentRedirect(daysRedirect);
+  // Legacy path-suffixed venue URLs → canonical path + day hash.
+  if (pathDay !== null) {
+    const venue = await getVenueDetailBySlug(suburb, pathBase);
+    if (venue) {
+      const hash = dayNumberToHash(pathDay) ?? "";
+      permanentRedirect(`/${suburb}/${pathBase}${hash}`);
+    }
   }
 
-  const redirectPath = venueRedirectPath(suburb, venueSlug, {
-    day: pathDay ?? undefined,
-  });
+  // Legacy ?days= query → day hash (or bare path for multi-day).
+  if (daysParam !== undefined) {
+    const days = parseDaysParam(daysParam);
+    const hash =
+      days.length === 1 ? (dayNumberToHash(days[0]!) ?? "") : "";
+    permanentRedirect(`/${suburb}/${rawVenueSlug}${hash}`);
+  }
+
+  const redirectPath = venueRedirectPath(suburb, rawVenueSlug);
   if (redirectPath) {
     redirect(redirectPath);
   }
 
-  const venue = await getVenueDetailBySlug(suburb, venueSlug);
+  const venue = await getVenueDetailBySlug(suburb, rawVenueSlug);
 
   if (!venue) {
     notFound();
   }
-
-  const initialSelectedDay = initialVenueDay(
-    pathDay !== null ? [pathDay] : [],
-  );
 
   const session = await auth.api.getSession({
     headers: await headers(),
@@ -96,10 +97,6 @@ export default async function VenuePage({ params, searchParams }: VenuePageProps
     : false;
 
   return (
-    <VenuePageContent
-      venue={venue}
-      initialSelectedDay={initialSelectedDay}
-      showAdminLink={showAdminLink}
-    />
+    <VenuePageContent venue={venue} showAdminLink={showAdminLink} />
   );
 }

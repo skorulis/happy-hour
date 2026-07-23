@@ -1,5 +1,6 @@
 import type { MapBounds } from "@/lib/search/bounds";
 import {
+  appendDayHash,
   appendDayToPath,
   daysFromBrowserUrl,
   stripDaySuffix,
@@ -185,9 +186,21 @@ export function listHrefFromMapEntry(
 ): string {
   const stored = entry?.listPath ?? "/";
   const day = daysFromBrowserUrl(mapPathname ?? stored, params);
-  const path = appendDayToPath(baseListPath(stored), day);
+  const base = baseListPath(stored);
+  const path =
+    entry?.source.kind === "venue"
+      ? appendDayHash(base, day)
+      : appendDayToPath(base, day);
   const qs = stripLocationParams(params).toString();
-  return qs ? `${path}?${qs}` : path;
+  // Hash must come after query if both exist; appendDayHash already places hash last.
+  if (!qs) {
+    return path;
+  }
+  const hashIndex = path.indexOf("#");
+  if (hashIndex >= 0) {
+    return `${path.slice(0, hashIndex)}?${qs}${path.slice(hashIndex)}`;
+  }
+  return `${path}?${qs}`;
 }
 
 export function readMapEntry(

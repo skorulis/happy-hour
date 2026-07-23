@@ -125,3 +125,72 @@ export function daysFromBrowserUrl(
   }
   return parseLegacySingleDayParam(searchParams.get("days"));
 }
+
+/** `#monday` for a calendar weekday, or null when invalid. */
+export function dayNumberToHash(day: number): string | null {
+  const slug = dayNumberToPathSlug(day);
+  return slug ? `#${slug}` : null;
+}
+
+/** Parse `#monday` or `monday` into a calendar weekday number. */
+export function hashToDayNumber(hash: string): number | null {
+  const trimmed = hash.trim().toLowerCase();
+  const slug = trimmed.startsWith("#") ? trimmed.slice(1) : trimmed;
+  if (!slug) {
+    return null;
+  }
+  return pathSlugToDayNumber(slug);
+}
+
+/**
+ * Appends `#monday` when exactly one day is selected.
+ * Strips any existing hash and any day path suffix on the last segment first.
+ */
+export function appendDayHash(path: string, days: number[]): string {
+  const hashIndex = path.indexOf("#");
+  const pathWithoutHash = hashIndex >= 0 ? path.slice(0, hashIndex) : path;
+
+  // Venue pages use hash for day; strip any accidental path-day suffix.
+  const queryIndex = pathWithoutHash.indexOf("?");
+  const pathOnly =
+    queryIndex >= 0 ? pathWithoutHash.slice(0, queryIndex) : pathWithoutHash;
+  const query =
+    queryIndex >= 0 ? pathWithoutHash.slice(queryIndex) : "";
+
+  let cleanedPath = pathOnly;
+  if (pathOnly !== "/" && pathOnly !== "") {
+    const segments = pathOnly.split("/");
+    const lastIndex = segments.length - 1;
+    const last = segments[lastIndex] ?? "";
+    if (last) {
+      segments[lastIndex] = stripDaySuffix(last).base;
+      cleanedPath = segments.join("/");
+    }
+  }
+
+  const base = `${cleanedPath}${query}`;
+  if (days.length !== 1) {
+    return base;
+  }
+  const hash = dayNumberToHash(days[0]!);
+  return hash ? `${base}${hash}` : base;
+}
+
+/** Replace or clear the day hash on the current URL (client-only). */
+export function replaceDayHash(day: number | null): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+  const { pathname, search } = window.location;
+  const next =
+    day === null
+      ? `${pathname}${search}`
+      : (() => {
+          const hash = dayNumberToHash(day);
+          return hash ? `${pathname}${search}${hash}` : `${pathname}${search}`;
+        })();
+  if (`${pathname}${search}${window.location.hash}` === next) {
+    return;
+  }
+  window.history.replaceState(window.history.state, "", next);
+}

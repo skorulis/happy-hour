@@ -1,10 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DealCard } from "@/components/DealCard";
 import { DealDayFilter } from "@/components/DealDayFilter";
 import { useFavorites } from "@/lib/favorites/useFavorites";
 import type { DealSearchResult } from "@/lib/search/queries";
+import {
+  hashToDayNumber,
+  replaceDayHash,
+} from "@/lib/search/day-path";
 import { DAY_LABELS, groupDealsByDay } from "@/lib/search/schedule";
 import { dealAnchorId } from "@/lib/search/slugs";
 
@@ -18,6 +22,8 @@ type WeeklyDealsSectionProps = {
   isFavorite?: (dealId: number) => boolean;
   onToggleFavorite?: (dealId: number) => void;
   showReportButton?: boolean;
+  /** When true, sync selected day with `#monday`-style URL hash. */
+  syncDayHash?: boolean;
 };
 
 const defaultHeading = (count: number, selectedDay: number | null) => {
@@ -31,6 +37,13 @@ const defaultEmptyMessage =
   "This venue doesn't have any deals. If you know of one, please add it";
 const defaultEmptyDayMessage = (dayLabel: string) => `No deals on ${dayLabel}.`;
 
+function dayFromLocationHash(): number | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  return hashToDayNumber(window.location.hash);
+}
+
 export function WeeklyDealsSection({
   deals,
   initialSelectedDay,
@@ -41,15 +54,45 @@ export function WeeklyDealsSection({
   isFavorite: isFavoriteProp,
   onToggleFavorite: onToggleFavoriteProp,
   showReportButton = false,
+  syncDayHash = false,
 }: WeeklyDealsSectionProps) {
-  const [selectedDay, setSelectedDay] = useState<number | null>(
-    initialSelectedDay ?? null,
-  );
+  const [selectedDay, setSelectedDay] = useState<number | null>(() => {
+    if (syncDayHash) {
+      return dayFromLocationHash() ?? initialSelectedDay ?? null;
+    }
+    return initialSelectedDay ?? null;
+  });
   const favorites = useFavorites();
   const isFavorite = isFavoriteProp ?? favorites.isFavorite;
   const toggleFavorite = onToggleFavoriteProp ?? favorites.toggleFavorite;
   const dealsByDay = groupDealsByDay(deals);
   const anchoredDealIds = new Set<number>();
+
+  useEffect(() => {
+    if (!syncDayHash) {
+      return;
+    }
+
+    // Prefer hash on mount (covers hydration when SSR had no hash).
+    const fromHash = dayFromLocationHash();
+    if (fromHash !== null) {
+      setSelectedDay(fromHash);
+    }
+
+    function onHashChange() {
+      setSelectedDay(dayFromLocationHash());
+    }
+
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, [syncDayHash]);
+
+  function handleSelectedDayChange(day: number | null) {
+    setSelectedDay(day);
+    if (syncDayHash) {
+      replaceDayHash(day);
+    }
+  }
 
   const filteredDeals =
     selectedDay === null
@@ -75,7 +118,7 @@ export function WeeklyDealsSection({
         <>
           <DealDayFilter
             selectedDay={selectedDay}
-            onSelectedDayChange={setSelectedDay}
+            onSelectedDayChange={handleSelectedDayChange}
           />
 
           {selectedDay !== null && filteredDeals!.length === 0 ? (

@@ -10,7 +10,6 @@ import { SiFacebook, SiInstagram } from "react-icons/si";
 
 type VenuePageContentProps = {
   venue: VenueDetailResult;
-  initialSelectedDay?: number | null;
   showAdminLink?: boolean;
 };
 
@@ -36,7 +35,6 @@ function VenueExternalLink({
 
 export function VenuePageContent({
   venue,
-  initialSelectedDay,
   showAdminLink = false,
 }: VenuePageContentProps) {
   const mapsUrl = googleMapsPlaceUrl(venue.name, venue.googleMapId);
@@ -140,7 +138,7 @@ export function VenuePageContent({
 
       <WeeklyDealsSection
         deals={venue.deals}
-        initialSelectedDay={initialSelectedDay}
+        syncDayHash
         showReportButton
       />
 

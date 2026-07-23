@@ -125,7 +125,7 @@ describe("listHrefFromMapEntry", () => {
     ).toBe("/abbotsbury-2176-thursday");
   });
 
-  it("restores the venue path with the current map day", () => {
+  it("restores the venue path with a day hash", () => {
     const entry: MapEntry = {
       listPath: "/surry-hills/the-local",
       source: { kind: "venue", lat: -33.88, lng: 151.21 },
@@ -134,7 +134,7 @@ describe("listHrefFromMapEntry", () => {
 
     expect(
       listHrefFromMapEntry(entry, new URLSearchParams(), "/map-thursday"),
-    ).toBe("/surry-hills/the-local-thursday");
+    ).toBe("/surry-hills/the-local#thursday");
   });
 
   it("falls back to / when no entry is stored", () => {
