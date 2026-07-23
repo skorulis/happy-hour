@@ -104,7 +104,10 @@ function minutesFrom(hour: number, minute: number, isPM: boolean): number {
 
 /** Swift `DealHours.parse` / `fromString`. */
 export function parseDealHours(str: string): DealHours | null {
-  let normalized = normalizeTimeComponent(str.trim().replace(/\u2013/g, "-"));
+  // Normalize en dash (–) and em dash (—) to ASCII hyphen so range splits match.
+  let normalized = normalizeTimeComponent(
+    str.trim().replace(/[\u2013\u2014]/g, "-"),
+  );
   if (normalized.length === 0) return null;
 
   const lowercased = normalized.toLowerCase();

@@ -111,6 +111,12 @@ describe("parseDealHours", () => {
     expect(parseDealHours("Open – 6:00pm")).toEqual(between(0, 18 * 60));
   });
 
+  it("parses en-dash and em-dash time ranges", () => {
+    expect(parseDealHours("5PM – 8PM")).toEqual(between(17 * 60, 20 * 60));
+    expect(parseDealHours("5PM — 8PM")).toEqual(between(17 * 60, 20 * 60));
+    expect(parseDealHours("5PM\u20148PM")).toEqual(between(17 * 60, 20 * 60));
+  });
+
   it("returns null for unparseable input", () => {
     expect(parseDealHours("")).toBeNull();
     expect(parseDealHours("not a time")).toBeNull();

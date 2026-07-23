@@ -87,6 +87,7 @@ struct ExperimentView: View {
                 if let markdown = page.markdown {
                     markdownSection(markdown)
                 }
+                emailsSection(page.emails)
                 linksSection(page.links)
                 imagesSection(page)
                 contentBlocksSection(page)
@@ -319,6 +320,23 @@ struct ExperimentView: View {
         .onChange(of: url) {
             pdfMarkdownDisplayMode = .filtered
             isPDFMarkdownExpanded = false
+        }
+    }
+
+    private func emailsSection(_ emails: Set<String>) -> some View {
+        let sortedEmails = emails.sorted()
+
+        return detailSection(title: "Emails (\(sortedEmails.count))") {
+            if sortedEmails.isEmpty {
+                Text("No emails found.")
+                    .foregroundStyle(.secondary)
+            } else {
+                ForEach(sortedEmails, id: \.self) { email in
+                    Text(email)
+                        .font(.system(.body, design: .monospaced))
+                        .textSelection(.enabled)
+                }
+            }
         }
     }
 

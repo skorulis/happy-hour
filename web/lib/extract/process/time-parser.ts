@@ -298,7 +298,7 @@ function parseHyphenContinuedRange(strings: string[]): DealHours | null {
   // `range(at: 1)` throw at runtime. The corresponding test expects a parsed
   // range, so we add the capture group the test intends.
   const timeOnlyPattern = new RegExp(`^(${TIME})$`, "i");
-  const hyphenEndPattern = new RegExp(`^[-\u2013]\\s*(${TIME})$`, "i");
+  const hyphenEndPattern = new RegExp(`^[-\u2013\u2014]\\s*(${TIME})$`, "i");
 
   for (let index = 1; index < strings.length; index++) {
     const end = firstCaptureMinutes(strings[index]!, hyphenEndPattern);
@@ -352,7 +352,7 @@ function parseBetweenTime(text: string): DealHours | null {
   if (trimmed.length === 0) return null;
 
   const betweenPattern = new RegExp(
-    `between\\s+(${TIME})\\s*(?:-|\u2013|to)\\s*(${TIME})`,
+    `between\\s+(${TIME})\\s*(?:-|\u2013|\u2014|to)\\s*(${TIME})`,
     "i",
   );
   const match = betweenPattern.exec(trimmed);
@@ -369,7 +369,7 @@ function parseEmbeddedTimeRange(text: string): DealHours | null {
   if (trimmed.length === 0) return null;
 
   const pattern = new RegExp(
-    `(?<!\\d)(${TIME})\\s*(?:-|\u2013|to)\\s*(${TIME})(?!\\d)`,
+    `(?<!\\d)(${TIME})\\s*(?:-|\u2013|\u2014|to)\\s*(${TIME})(?!\\d)`,
     "i",
   );
   const match = pattern.exec(trimmed);

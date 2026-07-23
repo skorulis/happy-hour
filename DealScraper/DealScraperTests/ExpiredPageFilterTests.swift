@@ -40,7 +40,8 @@ struct ExpiredPageFilterTests {
                     links: []
                 ),
             ],
-            links: []
+            links: [],
+            emails: []
         )
         #expect(DealTextFilter.isExpiredPage(page.html))
         #expect(page.dealContentBlocks.isEmpty)

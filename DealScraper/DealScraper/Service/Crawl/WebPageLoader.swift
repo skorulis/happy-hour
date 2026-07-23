@@ -12,6 +12,7 @@ struct LoadedPage: Sendable {
     let imageURLs: [URL]
     let contentBlocks: [ContentBlock]
     let links: [ContentBlockLink]
+    let emails: Set<String>
     
     var normalizedURL: URL {
         URLNormalizer.normalize(url) ?? url
@@ -231,6 +232,7 @@ final class WebPageLoader: NSObject {
         let contentBlocks = (try? contentBlockGrouper.group(html: resolvedHTML, pageURL: effectiveURL)) ?? []
         let links = (try? pageLinkExtractor.extract(html: resolvedHTML, pageURL: effectiveURL)) ?? []
         let markdown = try? await webMarkdownGenerator.markdown(from: resolvedHTML)
+        let emails = EmailExtractor().extract(from: resolvedHTML)
 
         return LoadedPage(
             url: effectiveURL,
@@ -238,7 +240,8 @@ final class WebPageLoader: NSObject {
             markdown: markdown,
             imageURLs: imageURLs,
             contentBlocks: contentBlocks,
-            links: links
+            links: links,
+            emails: emails
         )
     }
 

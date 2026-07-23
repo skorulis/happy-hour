@@ -123,6 +123,11 @@ describe("parseTimes", () => {
     ]);
   });
 
+  it("parses em-dash time range", () => {
+    expect(parseTimes(["5PM — 8PM"])).toEqual([between(17 * 60, 20 * 60)]);
+    expect(parseTimes(["5PM\u20148PM"])).toEqual([between(17 * 60, 20 * 60)]);
+  });
+
   it("parses markdown bold wrapped till-close time", () => {
     expect(parseTimes(["**9PM till close**"])).toEqual([from(21 * 60)]);
   });
