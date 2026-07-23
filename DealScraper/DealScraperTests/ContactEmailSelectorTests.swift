@@ -70,4 +70,40 @@ struct ContactEmailSelectorTests {
             ]) == "alpha@venue.com"
         )
     }
+
+    @Test func prefersHigherRankedPrefixOverHigherCount() {
+        #expect(
+            selector.select(from: [
+                "hello@venue.com": 10,
+                "admin@venue.com": 1,
+            ]) == "admin@venue.com"
+        )
+    }
+
+    @Test func prefersHigherRankedPrefixCaseInsensitively() {
+        #expect(
+            selector.select(from: [
+                "info@venue.com": 5,
+                "Admin@venue.com": 1,
+            ]) == "Admin@venue.com"
+        )
+    }
+
+    @Test func prefersRankedPrefixOverUnranked() {
+        #expect(
+            selector.select(from: [
+                "hello@venue.com": 3,
+                "contact@venue.com": 1,
+            ]) == "contact@venue.com"
+        )
+    }
+
+    @Test func breaksEqualRankByCount() {
+        #expect(
+            selector.select(from: [
+                "info@venue.com": 1,
+                "contact@venue.com": 3,
+            ]) == "contact@venue.com"
+        )
+    }
 }

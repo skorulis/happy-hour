@@ -232,7 +232,7 @@ final class WebPageLoader: NSObject {
         let contentBlocks = (try? contentBlockGrouper.group(html: resolvedHTML, pageURL: effectiveURL)) ?? []
         let links = (try? pageLinkExtractor.extract(html: resolvedHTML, pageURL: effectiveURL)) ?? []
         let markdown = try? await webMarkdownGenerator.markdown(from: resolvedHTML)
-        let emails = EmailExtractor().extract(from: resolvedHTML)
+        let emails = EmailExtractor().extract(from: await emailExtractionText(links: links))
 
         return LoadedPage(
             url: effectiveURL,
@@ -243,6 +243,26 @@ final class WebPageLoader: NSObject {
             links: links,
             emails: emails
         )
+    }
+
+    /// Visible page text plus mailto hrefs (which may not appear in innerText).
+    private func emailExtractionText(links: [ContentBlockLink]) async -> String {
+        let visibleText = (try? await extractVisibleText()) ?? ""
+        let mailtoHrefs = links.compactMap { link -> String? in
+            guard link.url.scheme?.lowercased() == "mailto" else { return nil }
+            return link.url.absoluteString
+        }
+        guard !mailtoHrefs.isEmpty else { return visibleText }
+        return ([visibleText] + mailtoHrefs)
+            .filter { !$0.isEmpty }
+            .joined(separator: "\n")
+    }
+
+    private func extractVisibleText() async throws -> String {
+        let result: String = try await evaluateJavaScript(
+            "document.body ? document.body.innerText : ''"
+        )
+        return result
     }
 
     private func preparePage() async throws {
@@ -256,6 +276,7 @@ final class WebPageLoader: NSObject {
             y += 400
         }
 
+        
         try await evaluateJavaScriptVoid("window.scrollTo(0, \(Int(scrollHeight)))")
         try await Task.sleep(for: .milliseconds(300))
         try await evaluateJavaScriptVoid("window.scrollTo(0, 0)")

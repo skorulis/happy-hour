@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   adjustedEndMinute,
+  hoursContains,
   parseDealHours,
   toMinutes,
+  uniqueHours,
 } from "@/lib/extract/process/hours";
 import type { DealHours } from "@/lib/extract/process/types";
 
@@ -173,5 +175,40 @@ describe("adjustedEndMinute", () => {
   it("extends early morning end into next day", () => {
     expect(adjustedEndMinute(22 * 60, 2 * 60)).toBe(26 * 60);
     expect(adjustedEndMinute(16 * 60, 18 * 60)).toBe(18 * 60);
+  });
+});
+
+describe("hoursContains", () => {
+  it("treats a range as containing its endpoint from-time", () => {
+    expect(hoursContains(between(16 * 60, 17 * 60), from(17 * 60))).toBe(true);
+    expect(hoursContains(between(16 * 60, 17 * 60), from(16 * 60))).toBe(true);
+    expect(hoursContains(between(16 * 60, 17 * 60), from(16 * 60 + 30))).toBe(
+      true,
+    );
+  });
+
+  it("does not treat a from-time as containing a range", () => {
+    expect(hoursContains(from(17 * 60), between(16 * 60, 17 * 60))).toBe(false);
+  });
+});
+
+describe("uniqueHours", () => {
+  it("drops a from-time covered by an existing range", () => {
+    expect(uniqueHours([between(16 * 60, 17 * 60), from(17 * 60)])).toEqual([
+      between(16 * 60, 17 * 60),
+    ]);
+  });
+
+  it("replaces a from-time when a covering range appears later", () => {
+    expect(uniqueHours([from(17 * 60), between(16 * 60, 17 * 60)])).toEqual([
+      between(16 * 60, 17 * 60),
+    ]);
+  });
+
+  it("keeps distinct non-overlapping hours", () => {
+    expect(uniqueHours([between(16 * 60, 17 * 60), from(18 * 60)])).toEqual([
+      between(16 * 60, 17 * 60),
+      from(18 * 60),
+    ]);
   });
 });

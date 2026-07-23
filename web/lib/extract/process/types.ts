@@ -46,16 +46,3 @@ export function hoursKey(h: DealHours): string {
 export function hoursEqual(a: DealHours, b: DealHours): boolean {
   return hoursKey(a) === hoursKey(b);
 }
-
-/** Deduplicates `DealHours`, preserving first-seen order. */
-export function uniqueHours(hours: DealHours[]): DealHours[] {
-  const seen = new Set<string>();
-  const result: DealHours[] = [];
-  for (const h of hours) {
-    const key = hoursKey(h);
-    if (seen.has(key)) continue;
-    seen.add(key);
-    result.push(h);
-  }
-  return result;
-}

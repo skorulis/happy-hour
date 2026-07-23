@@ -6,6 +6,7 @@
  */
 
 import type { DealHours } from "./types";
+import { hoursEqual } from "./types";
 
 const MIN_MINUTES = 420; // 7 AM
 const MAX_MINUTES = 1260; // 9 PM
@@ -193,4 +194,43 @@ function normalizeTimeComponent(str: string): string {
     normalized = normalized.slice(0, -1);
   }
   return normalized;
+}
+
+/**
+ * True when `outer` fully covers `inner`.
+ *
+ * `from` is treated as a point (e.g. a listed "5pm") so a range like 4–5pm
+ * absorbs a redundant endpoint time.
+ */
+export function hoursContains(outer: DealHours, inner: DealHours): boolean {
+  if (hoursEqual(outer, inner)) return true;
+  if (outer.kind === "allDay") return true;
+  if (inner.kind === "allDay") return false;
+
+  if (outer.kind === "between") {
+    if (inner.kind === "from") {
+      return outer.start <= inner.minutes && inner.minutes <= outer.end;
+    }
+    return outer.start <= inner.start && inner.end <= outer.end;
+  }
+
+  return false;
+}
+
+/**
+ * Deduplicates `DealHours` and drops entries fully covered by another,
+ * preserving first-seen order among survivors.
+ */
+export function uniqueHours(hours: DealHours[]): DealHours[] {
+  const result: DealHours[] = [];
+  for (const h of hours) {
+    if (result.some((existing) => hoursContains(existing, h))) continue;
+    for (let i = result.length - 1; i >= 0; i--) {
+      if (hoursContains(h, result[i]!)) {
+        result.splice(i, 1);
+      }
+    }
+    result.push(h);
+  }
+  return result;
 }

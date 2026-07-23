@@ -5,9 +5,13 @@
  * formats seen in scraped/OCR'd menus.
  */
 
-import { makeBetween, parseDealHours, toMinutes } from "./hours";
+import {
+  makeBetween,
+  parseDealHours,
+  toMinutes,
+  uniqueHours,
+} from "./hours";
 import type { DealHours } from "./types";
-import { uniqueHours } from "./types";
 
 const TIME = String.raw`\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?`;
 

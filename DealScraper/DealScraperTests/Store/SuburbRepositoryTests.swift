@@ -192,58 +192,13 @@ struct SuburbRepositoryTests {
         #expect(found.heroR2Url == nil)
     }
 
-    @Test func isEligibleForCrawlRequiresPostcodeAndGreaterSydney() throws {
-        let eligible = Suburb(
-            name: "Newtown",
-            postcode: "2042",
-            state: "NSW",
-            statisticArea: SuburbRepository.greaterSydneyStatisticArea
-        )
-        let missingPostcode = Suburb(
-            name: "Newtown",
-            postcode: nil,
-            state: "NSW",
-            statisticArea: SuburbRepository.greaterSydneyStatisticArea
-        )
-        let wrongArea = Suburb(
-            name: "Newtown",
-            postcode: "2042",
-            state: "NSW",
-            statisticArea: "Melbourne"
-        )
+    @Test func isExcludedFromCrawlMatchesPerrysCrossing2775() {
+        let excluded = Suburb(name: "Perrys Crossing", postcode: "2775", state: "NSW")
+        let otherPostcode = Suburb(name: "Perrys Crossing", postcode: "2000", state: "NSW")
+        let otherName = Suburb(name: "Newtown", postcode: "2775", state: "NSW")
 
-        let excluded = Suburb(
-            name: "Perrys Crossing",
-            postcode: "2775",
-            state: "NSW",
-            statisticArea: SuburbRepository.greaterSydneyStatisticArea
-        )
-
-        #expect(SuburbRepository.isEligibleForCrawl(eligible))
-        #expect(!SuburbRepository.isEligibleForCrawl(missingPostcode))
-        #expect(!SuburbRepository.isEligibleForCrawl(wrongArea))
-        #expect(!SuburbRepository.isEligibleForCrawl(excluded))
-    }
-
-    @Test func allEligibleForCrawlFiltersSuburbs() throws {
-        let store = SQLStore.inMemory()
-        let repository = SuburbRepository(store: store)
-        _ = try insertSuburb(
-            Suburb(name: "Newtown", postcode: "2042", state: "NSW", statisticArea: SuburbRepository.greaterSydneyStatisticArea),
-            store: store
-        )
-        _ = try insertSuburb(
-            Suburb(name: "No Postcode", postcode: nil, state: "NSW", statisticArea: SuburbRepository.greaterSydneyStatisticArea),
-            store: store
-        )
-        _ = try insertSuburb(
-            Suburb(name: "Melbourne", postcode: "3000", state: "VIC", statisticArea: "Melbourne"),
-            store: store
-        )
-
-        let eligible = try repository.allEligibleForCrawl()
-
-        #expect(eligible.count == 1)
-        #expect(eligible[0].name == "Newtown")
+        #expect(SuburbRepository.isExcludedFromCrawl(excluded))
+        #expect(!SuburbRepository.isExcludedFromCrawl(otherPostcode))
+        #expect(!SuburbRepository.isExcludedFromCrawl(otherName))
     }
 }

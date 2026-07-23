@@ -331,20 +331,12 @@ final class JobQueueViewModel: CoordinatorViewModel {
     private func nextSuburbIdForCrawl() -> Int64? {
         guard let allSuburbs = try? suburbRepository.all() else { return nil }
 
-        let candidates: [Suburb]
-        switch selectedRegionFilter {
-        case .any:
-            // Preserve Greater Sydney eligibility when no region is selected.
-            candidates = allSuburbs.filter(SuburbRepository.isEligibleForCrawl)
-        case .none, .region:
-            candidates = allSuburbs.filter { suburb in
-                guard Self.hasCrawlablePostcode(suburb) else { return false }
-                guard !SuburbRepository.isExcludedFromCrawl(suburb) else { return false }
-                return matchesRegionFilter(suburbRegionId: suburb.regionId)
+        return allSuburbs
+            .filter { suburb in
+                Self.hasCrawlablePostcode(suburb)
+                    && !SuburbRepository.isExcludedFromCrawl(suburb)
+                    && matchesRegionFilter(suburbRegionId: suburb.regionId)
             }
-        }
-
-        return candidates
             .sorted(by: Self.suburbCrawlPrioritySort)
             .first { suburb in
                 guard let suburbId = suburb.id else { return false }

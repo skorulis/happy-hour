@@ -21,7 +21,8 @@ import {
 import { parseTimes, timesInText } from "./time-parser";
 import { trimUntilStable } from "./title-trimmer";
 import type { DealHours, MappedDeal } from "./types";
-import { hoursKey, uniqueHours } from "./types";
+import { hoursKey } from "./types";
+import { uniqueHours } from "./hours";
 
 const NEWLINE_SPLIT = /[\n\r\u2028\u2029\u0085\u000b\u000c]/;
 

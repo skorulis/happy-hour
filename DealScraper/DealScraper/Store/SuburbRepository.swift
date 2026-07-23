@@ -5,8 +5,6 @@ import Foundation
 
 final class SuburbRepository {
 
-    static let greaterSydneyStatisticArea = "Greater Sydney"
-
     private let store: SQLStore
 
     init(store: SQLStore) {
@@ -41,16 +39,7 @@ final class SuburbRepository {
         }
     }
 
-    func allEligibleForCrawl() throws -> [Suburb] {
-        try all().filter(Self.isEligibleForCrawl)
-    }
-
-    static func isEligibleForCrawl(_ suburb: Suburb) -> Bool {
-        guard normalized(suburb.postcode) != nil else { return false }
-        guard suburb.statisticArea == greaterSydneyStatisticArea else { return false }
-        return !isExcludedFromCrawl(suburb)
-    }
-
+    /// Suburbs the Places API cannot handle reliably — skip for "Crawl Next Suburb".
     static func isExcludedFromCrawl(_ suburb: Suburb) -> Bool {
         suburb.name == "Perrys Crossing" && normalized(suburb.postcode) == "2775"
     }

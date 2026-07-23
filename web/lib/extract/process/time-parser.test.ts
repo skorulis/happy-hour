@@ -247,6 +247,12 @@ describe("parseTimes", () => {
       between(19 * 60 + 30, 22 * 60 + 30),
     ]);
   });
+
+  it("drops a from-time covered by a range", () => {
+    expect(parseTimes(["4-5pm", "5pm"])).toEqual([
+      between(16 * 60, 17 * 60),
+    ]);
+  });
 });
 
 describe("timesInText", () => {

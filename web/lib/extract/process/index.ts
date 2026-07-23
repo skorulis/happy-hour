@@ -38,6 +38,8 @@ export {
   parseDealHours,
   makeBetween,
   adjustedEndMinute,
+  hoursContains,
+  uniqueHours,
 } from "./hours";
 export { parsePromotionDates } from "./promotion-dates";
 export { isNthWeekdayOfMonthMatch } from "./nth-weekday";
@@ -54,4 +56,4 @@ export {
   cleanLine,
 } from "./text-normalizer";
 export type { DealDay, DealHours, MappedDeal } from "./types";
-export { hoursKey, hoursEqual, uniqueHours } from "./types";
+export { hoursKey, hoursEqual } from "./types";
