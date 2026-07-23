@@ -12,6 +12,7 @@ import {
   isNull,
   lte,
   ne,
+  notExists,
   or,
   sql,
   type SQL,
@@ -83,6 +84,18 @@ export type VenueSearchResult = {
   websiteUri: string | null;
 };
 
+export type VenueListResult = {
+  id: number;
+  name: string;
+  suburbName: string | null;
+  lat: number;
+  lng: number;
+  websiteUri: string | null;
+  heroImage: string | null;
+  formattedAddress: string | null;
+  distanceKm?: number;
+};
+
 export type DealSearchResult = {
   id: number;
   title: string | null;
@@ -94,17 +107,7 @@ export type DealSearchResult = {
   endDate: string | null;
   /** True when the deal has an unresolved user report (venue pages). */
   hasOpenReport?: boolean;
-  venue: {
-    id: number;
-    name: string;
-    suburbName: string | null;
-    lat: number;
-    lng: number;
-    websiteUri: string | null;
-    heroImage: string | null;
-    formattedAddress: string | null;
-    distanceKm?: number;
-  };
+  venue: VenueListResult;
   schedules: Array<{
     dayOfWeek: number;
     startMinute: number;
@@ -253,6 +256,62 @@ function textSearchFilterForWhatQuery(query: string): SQL {
   }
 
   return or(...terms.map((term) => textSearchFilter(term)))!;
+}
+
+/** Approved + optional day/time/query filters shared by deal search and complement venue lists. */
+function dealContentFilters(options: {
+  day?: number;
+  days?: number[];
+  startMinute?: number;
+  endMinute?: number;
+  query?: string;
+  activeNow?: boolean;
+}): SQL[] {
+  const filters: SQL[] = [eq(deal.status, "approved")];
+
+  if (options.days !== undefined && options.days.length > 0) {
+    const timeFilter = scheduleTimeFilter(
+      options.days,
+      options.startMinute,
+      options.endMinute,
+    );
+    if (timeFilter) {
+      filters.push(timeFilter);
+    } else {
+      filters.push(daysScheduleFilter(options.days));
+    }
+  } else if (options.day !== undefined) {
+    const timeFilter = scheduleTimeFilter(
+      [options.day],
+      options.startMinute,
+      options.endMinute,
+    );
+    if (timeFilter) {
+      filters.push(timeFilter);
+    } else {
+      filters.push(dayScheduleFilter(options.day));
+    }
+  } else {
+    const timeFilter = scheduleTimeFilter(
+      undefined,
+      options.startMinute,
+      options.endMinute,
+    );
+    if (timeFilter) {
+      filters.push(timeFilter);
+    }
+  }
+
+  if (options.activeNow) {
+    filters.push(activeNowScheduleFilter());
+  }
+
+  const trimmedQuery = options.query?.trim();
+  if (trimmedQuery) {
+    filters.push(textSearchFilterForWhatQuery(trimmedQuery));
+  }
+
+  return filters;
 }
 
 const dealSearchVector = sql`to_tsvector('english', coalesce(${deal.title}, '') || ' ' || coalesce(${deal.details}, '') || ' ' || coalesce(${deal.conditions}, ''))`;
@@ -673,7 +732,7 @@ export type SearchDealsOptions = {
 export async function searchDeals(
   options: SearchDealsOptions,
 ): Promise<DealSearchResult[]> {
-  const filters: SQL[] = [eq(deal.status, "approved")];
+  const filters: SQL[] = [...dealContentFilters(options)];
   const hasBounds = options.bounds !== undefined;
   const hasNearLocation =
     !hasBounds &&
@@ -707,48 +766,6 @@ export async function searchDeals(
         options.radiusKm ?? NEAR_ME_RADIUS_KM,
       ),
     );
-  }
-
-  if (options.days !== undefined && options.days.length > 0) {
-    const timeFilter = scheduleTimeFilter(
-      options.days,
-      options.startMinute,
-      options.endMinute,
-    );
-    if (timeFilter) {
-      filters.push(timeFilter);
-    } else {
-      filters.push(daysScheduleFilter(options.days));
-    }
-  } else if (options.day !== undefined) {
-    const timeFilter = scheduleTimeFilter(
-      [options.day],
-      options.startMinute,
-      options.endMinute,
-    );
-    if (timeFilter) {
-      filters.push(timeFilter);
-    } else {
-      filters.push(dayScheduleFilter(options.day));
-    }
-  } else {
-    const timeFilter = scheduleTimeFilter(
-      undefined,
-      options.startMinute,
-      options.endMinute,
-    );
-    if (timeFilter) {
-      filters.push(timeFilter);
-    }
-  }
-
-  if (options.activeNow) {
-    filters.push(activeNowScheduleFilter());
-  }
-
-  const trimmedQuery = options.query?.trim();
-  if (trimmedQuery) {
-    filters.push(textSearchFilterForWhatQuery(trimmedQuery));
   }
 
   const dealSelectFields = {
@@ -915,15 +932,72 @@ export async function getDealsByIds(
   }));
 }
 
+export async function listSuburbVenuesWithoutMatchingDeals(
+  options: Omit<
+    SearchDealsOptions,
+    "suburbId" | "lat" | "lng" | "radiusKm" | "excludeSuburbId" | "bounds" | "venueId"
+  > & { suburbId: number },
+): Promise<VenueListResult[]> {
+  const matchingDealFilters = [
+    ...dealContentFilters(options),
+    eq(deal.venueId, venue.id),
+  ];
+
+  const rows = await db
+    .select({
+      id: venue.id,
+      name: venue.name,
+      suburbName: suburb.name,
+      lat: venue.lat,
+      lng: venue.lng,
+      websiteUri: venue.websiteUri,
+      heroImage: venue.heroImage,
+      venueJson: venue.json,
+    })
+    .from(venue)
+    .leftJoin(suburb, eq(venue.suburbId, suburb.id))
+    .where(
+      and(
+        eq(venue.suburbId, options.suburbId),
+        notExists(
+          db
+            .select({ one: sql`1` })
+            .from(deal)
+            .where(and(...matchingDealFilters)),
+        ),
+      ),
+    )
+    .orderBy(venue.name)
+    .limit(options.limit ?? 200);
+
+  return rows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    suburbName: row.suburbName,
+    lat: row.lat,
+    lng: row.lng,
+    websiteUri: row.websiteUri,
+    heroImage: row.heroImage,
+    formattedAddress: parseVenueFormattedAddress(row.venueJson),
+  }));
+}
+
 export async function searchDealsForSuburb(
   options: Omit<
     SearchDealsOptions,
     "suburbId" | "lat" | "lng" | "radiusKm" | "excludeSuburbId"
   > & { suburbId: number },
-): Promise<{ deals: DealSearchResult[]; nearbyDeals: DealSearchResult[] }> {
+): Promise<{
+  deals: DealSearchResult[];
+  nearbyDeals: DealSearchResult[];
+  venuesWithoutApplicableDeals: VenueListResult[];
+}> {
   const { suburbId, ...sharedOptions } = options;
 
-  const deals = await searchDeals({ ...sharedOptions, suburbId });
+  const [deals, venuesWithoutApplicableDeals] = await Promise.all([
+    searchDeals({ ...sharedOptions, suburbId }),
+    listSuburbVenuesWithoutMatchingDeals({ ...sharedOptions, suburbId }),
+  ]);
 
   const [suburbRow] = await db
     .select({ lat: suburb.lat, lng: suburb.lng, sqkm: suburb.sqkm })
@@ -936,7 +1010,7 @@ export async function searchDealsForSuburb(
     suburbRow.lat === null ||
     suburbRow.lng === null
   ) {
-    return { deals, nearbyDeals: [] };
+    return { deals, nearbyDeals: [], venuesWithoutApplicableDeals };
   }
 
   const nearbyDeals = await searchDeals({
@@ -947,7 +1021,7 @@ export async function searchDealsForSuburb(
     excludeSuburbId: suburbId,
   });
 
-  return { deals, nearbyDeals };
+  return { deals, nearbyDeals, venuesWithoutApplicableDeals };
 }
 
 async function buildVenueDetail(

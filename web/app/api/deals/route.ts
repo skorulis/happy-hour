@@ -181,19 +181,24 @@ export async function GET(request: Request) {
     }
 
     if (suburbId !== undefined) {
-      const { deals, nearbyDeals } = await searchDealsForSuburb({
-        venueId,
-        day,
-        days,
-        suburbId,
-        startMinute,
-        endMinute,
-        query,
-        activeNow,
-        limit: Number.isFinite(limit) ? limit : 100,
-      });
+      const { deals, nearbyDeals, venuesWithoutApplicableDeals } =
+        await searchDealsForSuburb({
+          venueId,
+          day,
+          days,
+          suburbId,
+          startMinute,
+          endMinute,
+          query,
+          activeNow,
+          limit: Number.isFinite(limit) ? limit : 100,
+        });
 
-      return NextResponse.json({ deals, nearbyDeals });
+      return NextResponse.json({
+        deals,
+        nearbyDeals,
+        venuesWithoutApplicableDeals,
+      });
     }
 
     const deals = await searchDeals({

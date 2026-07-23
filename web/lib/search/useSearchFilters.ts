@@ -10,6 +10,7 @@ import type {
   DealSearchResult,
   PopularSuburb,
   SuburbSearchResult,
+  VenueListResult,
 } from "@/lib/search/queries";
 import {
   boundsFromCenterRadiusKm,
@@ -129,6 +130,7 @@ export function useSearchFilters(options?: {
   initialWhat?: string[];
   initialDeals?: DealSearchResult[];
   initialNearbyDeals?: DealSearchResult[];
+  initialVenuesWithoutApplicableDeals?: VenueListResult[];
   initialPopularSuburbs?: PopularSuburb[];
   listBasePath?: string;
   regionId?: number;
@@ -139,6 +141,8 @@ export function useSearchFilters(options?: {
   const regionId = options?.regionId;
   const initialDeals = options?.initialDeals ?? [];
   const initialNearbyDeals = options?.initialNearbyDeals ?? [];
+  const initialVenuesWithoutApplicableDeals =
+    options?.initialVenuesWithoutApplicableDeals ?? [];
   const hasPopularSuburbs = options?.initialPopularSuburbs !== undefined;
   const initialPopularSuburbs = options?.initialPopularSuburbs ?? [];
   const seededFilters = filtersFromSeed(
@@ -157,7 +161,9 @@ export function useSearchFilters(options?: {
   // First client fetch after SSR seed (matching filters / ?days=)
   // should not flash "Loading…" over already-rendered cards.
   const skipLoadingOnceRef = useRef(
-    initialDeals.length > 0 || initialNearbyDeals.length > 0,
+    initialDeals.length > 0 ||
+      initialNearbyDeals.length > 0 ||
+      initialVenuesWithoutApplicableDeals.length > 0,
   );
   // Same for popular suburbs: keep SSR list visible during the first client fetch.
   const skipPopularLoadingOnceRef = useRef(hasPopularSuburbs);
@@ -169,6 +175,8 @@ export function useSearchFilters(options?: {
   const [deals, setDeals] = useState<DealSearchResult[]>(initialDeals);
   const [nearbyDeals, setNearbyDeals] =
     useState<DealSearchResult[]>(initialNearbyDeals);
+  const [venuesWithoutApplicableDeals, setVenuesWithoutApplicableDeals] =
+    useState<VenueListResult[]>(initialVenuesWithoutApplicableDeals);
   const [popularSuburbs, setPopularSuburbs] = useState<PopularSuburb[]>(
     initialPopularSuburbs,
   );
@@ -503,6 +511,7 @@ export function useSearchFilters(options?: {
       if (!mapViewport && filters.where.kind === "anywhere") {
         setDeals([]);
         setNearbyDeals([]);
+        setVenuesWithoutApplicableDeals([]);
         setLoadingDeals(false);
         return;
       }
@@ -530,6 +539,7 @@ export function useSearchFilters(options?: {
         const data = (await response.json()) as {
           deals: DealSearchResult[];
           nearbyDeals?: DealSearchResult[];
+          venuesWithoutApplicableDeals?: VenueListResult[];
         };
 
         if (mapViewport && !filterChanged) {
@@ -540,6 +550,11 @@ export function useSearchFilters(options?: {
 
         const nearby = mapViewport ? [] : (data.nearbyDeals ?? []);
         setNearbyDeals(nearby);
+        setVenuesWithoutApplicableDeals(
+          filters.where.kind === "suburb"
+            ? (data.venuesWithoutApplicableDeals ?? [])
+            : [],
+        );
         skipLoadingOnceRef.current = false;
 
         if (filterChanged || !mapViewport) {
@@ -682,7 +697,11 @@ export function useSearchFilters(options?: {
     filters.where.lng !== undefined
       ? { lat: filters.where.lat, lng: filters.where.lng }
       : null;
-  const isEmpty = !loadingDeals && !locating && totalDeals === 0;
+  const isEmpty =
+    !loadingDeals &&
+    !locating &&
+    totalDeals === 0 &&
+    venuesWithoutApplicableDeals.length === 0;
   const geolocationError =
     nearMePending && geolocationUnavailable
       ? "Location is not supported by your browser."
@@ -705,6 +724,7 @@ export function useSearchFilters(options?: {
     filters,
     venueGroups,
     nearbyVenueGroups,
+    venuesWithoutApplicableDeals,
     allVenueGroups,
     dealCount,
     nearbyDealCount,

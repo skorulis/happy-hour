@@ -38,13 +38,21 @@ export function groupDealsByVenue(deals: DealSearchResult[]): VenueGroupedDeals[
 type VenueSearchCardProps = {
   group: VenueGroupedDeals;
   searchDays?: number[];
+  /** When true, link to the venue page without day filters (full deal list). */
+  omitDaysParam?: boolean;
 };
 
-export function VenueSearchCard({ group, searchDays = [] }: VenueSearchCardProps) {
-  const venueHref = appendDaysParam(
-    venuePath(group.venue.suburbName, group.venue.name),
-    searchDays,
-  );
+export function VenueSearchCard({
+  group,
+  searchDays = [],
+  omitDaysParam = false,
+}: VenueSearchCardProps) {
+  const venueHref = omitDaysParam
+    ? venuePath(group.venue.suburbName, group.venue.name)
+    : appendDaysParam(
+        venuePath(group.venue.suburbName, group.venue.name),
+        searchDays,
+      );
   const imageUrl =
     venueHeroThumbUrl(group.venue.heroImage) ??
     group.deals.find((deal) => deal.imageUrl)?.imageUrl ??
@@ -97,33 +105,34 @@ export function VenueSearchCard({ group, searchDays = [] }: VenueSearchCardProps
         </div>
       </div>
 
-      <ul className="mt-4 space-y-3">
-        {group.deals.map((deal) => {
-          const scheduleLine = formatDealScheduleLine(
-            deal.schedules,
-            deal.startDate,
-            deal.endDate,
-          );
+      {group.deals.length > 0 ? (
+        <ul className="mt-4 space-y-3">
+          {group.deals.map((deal) => {
+            const scheduleLine = formatDealScheduleLine(
+              deal.schedules,
+              deal.startDate,
+              deal.endDate,
+            );
 
-          return (
-            <li
-              key={deal.id}
-              className="flex items-start gap-3"
-            >
-              <DealProductIcon deal={deal} />
-              <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-                <span className="font-medium text-foreground">
-                  {deal.title || "Untitled deal"}
-                </span>
-                <DealScheduleLine
-                  text={scheduleLine}
-                  className="sm:text-right"
-                />
-              </div>
-            </li>
-          );
-        })}
-      </ul>
+            return (
+              <li key={deal.id} className="flex items-start gap-3">
+                <DealProductIcon deal={deal} />
+                <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                  <span className="font-medium text-foreground">
+                    {deal.title || "Untitled deal"}
+                  </span>
+                  <DealScheduleLine
+                    text={scheduleLine}
+                    className="sm:text-right"
+                  />
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <p className="mt-4 text-sm text-muted">No matching deals</p>
+      )}
     </Link>
   );
 }

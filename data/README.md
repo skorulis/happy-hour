@@ -32,7 +32,7 @@ Approved geographic regions used by DealScraper (and shared with the web via the
 | Field | Required | Description |
 |-------|----------|-------------|
 | `name` | yes | Display name for the region (must match seeded `geographic_region.name` values). |
-| `status` | yes | `"live"`, `"in-progress"`, or `"future"`. Controls web sync: `"live"` regions copy the full suburb catalog to Postgres; other statuses only sync suburbs that have venues with approved deals. DealScraper seeds all listed regions regardless of status. |
+| `status` | yes | `"live"`, `"in-progress"`, or `"future"`. Controls web sync: `"live"` regions copy the full suburb catalog and all non-broken venues to Postgres; other statuses do not sync venues. DealScraper seeds all listed regions regardless of status. |
 
 ## Example
 
@@ -43,4 +43,4 @@ Approved geographic regions used by DealScraper (and shared with the web via the
 }
 ```
 
-When syncing SQLite → Postgres, only `"live"` regions receive every suburb. Non-live regions keep region rows and any suburbs that have venues with approved deals; empty suburbs in those regions are pruned.
+When syncing SQLite → Postgres, only `"live"` regions receive every suburb and every non-broken venue (including venues with no deals). Non-live region rows still sync; empty suburbs in those regions are pruned. Full syncs also prune Postgres venues that are broken or outside live regions.

@@ -114,13 +114,16 @@ export default async function SuburbSearchPage({
 
   const suburb = await findSuburbByWhereSlug(whereSlug);
   if (suburb) {
-    const { deals: initialDeals, nearbyDeals: initialNearbyDeals } =
-      await searchDealsForSuburb({
-        suburbId: suburb.id,
-        ...(days.length > 0 ? { days } : {}),
-        ...(what.length > 0 ? { query: what.join(",") } : {}),
-        limit: SUBURB_SSR_DEAL_LIMIT,
-      });
+    const {
+      deals: initialDeals,
+      nearbyDeals: initialNearbyDeals,
+      venuesWithoutApplicableDeals: initialVenuesWithoutApplicableDeals,
+    } = await searchDealsForSuburb({
+      suburbId: suburb.id,
+      ...(days.length > 0 ? { days } : {}),
+      ...(what.length > 0 ? { query: what.join(",") } : {}),
+      limit: SUBURB_SSR_DEAL_LIMIT,
+    });
 
     const initialWhere = {
       kind: "suburb" as const,
@@ -136,6 +139,9 @@ export default async function SuburbSearchPage({
         initialWhat={what}
         initialDeals={initialDeals}
         initialNearbyDeals={initialNearbyDeals}
+        initialVenuesWithoutApplicableDeals={
+          initialVenuesWithoutApplicableDeals
+        }
       />
     );
   }

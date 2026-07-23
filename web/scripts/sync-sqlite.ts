@@ -63,6 +63,7 @@ type SqliteVenue = {
   google_rating: number | null;
   last_crawl_date: string | null;
   last_update: string | null;
+  status: string;
   json: string;
 };
 
@@ -156,7 +157,7 @@ function resolveRegionsCatalogPath(): string {
   );
 }
 
-/** Region names with status "live" get a full suburb catalog synced to Postgres. */
+/** Region names with status "live" get full suburb + venue catalogs synced to Postgres. */
 function loadLiveRegionNames(): Set<string> {
   const catalogPath = resolveRegionsCatalogPath();
   const entries = JSON.parse(
@@ -238,38 +239,12 @@ async function main() {
   let bulkSuburbsSynced = 0;
   let venueSuburbsSynced = 0;
   let prunedEmptySuburbs = 0;
+  let prunedIneligibleVenues = 0;
   const syncedSuburbKeys = new Set<string>();
   const today = sydneyToday();
   const liveRegionNames = loadLiveRegionNames();
 
   try {
-    const venueRows = (
-      useIncremental
-        ? sqlite
-            .prepare(
-              `
-              SELECT DISTINCT v.*
-              FROM venue v
-              INNER JOIN deal d ON d.venue_id = v.id
-              WHERE d.status = 'approved'
-                AND datetime(v.last_update) > datetime(?)
-              ORDER BY v.id
-              `,
-            )
-            .all(watermark!.toISOString())
-        : sqlite
-            .prepare(
-              `
-              SELECT DISTINCT v.*
-              FROM venue v
-              INNER JOIN deal d ON d.venue_id = v.id
-              WHERE d.status = 'approved'
-              ORDER BY v.id
-              `,
-            )
-            .all()
-    ) as SqliteVenue[];
-
     function suburbKey(name: string, postcode: string | null): string {
       return `${name}\u0000${postcode ?? ""}`;
     }
@@ -334,6 +309,65 @@ async function main() {
       }
     }
 
+    const liveSqliteRegionIds = sqliteRegions
+      .filter((region) => liveRegionNames.has(region.name))
+      .map((region) => region.id);
+
+    const liveRegionPlaceholders =
+      liveSqliteRegionIds.length === 0
+        ? ""
+        : liveSqliteRegionIds.map(() => "?").join(", ");
+
+    // Non-broken venues in live regions (including venues with no approved deals).
+    const venueRows = (
+      liveSqliteRegionIds.length === 0
+        ? []
+        : useIncremental
+          ? sqlite
+              .prepare(
+                `
+                SELECT v.*
+                FROM venue v
+                INNER JOIN suburb s ON s.id = v.suburb_id
+                WHERE v.status != 'broken'
+                  AND s.region_id IN (${liveRegionPlaceholders})
+                  AND datetime(v.last_update) > datetime(?)
+                ORDER BY v.id
+                `,
+              )
+              .all(...liveSqliteRegionIds, watermark!.toISOString())
+          : sqlite
+              .prepare(
+                `
+                SELECT v.*
+                FROM venue v
+                INNER JOIN suburb s ON s.id = v.suburb_id
+                WHERE v.status != 'broken'
+                  AND s.region_id IN (${liveRegionPlaceholders})
+                ORDER BY v.id
+                `,
+              )
+              .all(...liveSqliteRegionIds)
+    ) as SqliteVenue[];
+
+    const eligibleGoogleMapIds = new Set(
+      (
+        liveSqliteRegionIds.length === 0
+          ? []
+          : (sqlite
+              .prepare(
+                `
+                SELECT v.google_map_id
+                FROM venue v
+                INNER JOIN suburb s ON s.id = v.suburb_id
+                WHERE v.status != 'broken'
+                  AND s.region_id IN (${liveRegionPlaceholders})
+                `,
+              )
+              .all(...liveSqliteRegionIds) as { google_map_id: string }[])
+      ).map((row) => row.google_map_id),
+    );
+
     async function upsertSuburb(
       tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
       suburbRow: SqliteSuburb,
@@ -375,18 +409,12 @@ async function main() {
       return upsertedSuburb.id;
     }
 
-    const liveSqliteRegionIds = sqliteRegions
-      .filter((region) => liveRegionNames.has(region.name))
-      .map((region) => region.id);
-
     const regionSuburbs =
       liveSqliteRegionIds.length === 0
         ? []
         : (sqlite
             .prepare(
-              `SELECT * FROM suburb WHERE region_id IN (${liveSqliteRegionIds
-                .map(() => "?")
-                .join(", ")}) ORDER BY id`,
+              `SELECT * FROM suburb WHERE region_id IN (${liveRegionPlaceholders}) ORDER BY id`,
             )
             .all(...liveSqliteRegionIds) as SqliteSuburb[]);
 
@@ -508,6 +536,25 @@ async function main() {
       });
     }
 
+    if (!useIncremental) {
+      const pgVenues = await db
+        .select({
+          id: schema.venue.id,
+          googleMapId: schema.venue.googleMapId,
+        })
+        .from(schema.venue);
+      const ineligibleIds = pgVenues
+        .filter((row) => !eligibleGoogleMapIds.has(row.googleMapId))
+        .map((row) => row.id);
+      if (ineligibleIds.length > 0) {
+        const pruned = await db
+          .delete(schema.venue)
+          .where(inArray(schema.venue.id, ineligibleIds))
+          .returning({ id: schema.venue.id });
+        prunedIneligibleVenues = pruned.length;
+      }
+    }
+
     if (nonLivePgRegionIds.length > 0) {
       const pruned = await db
         .delete(schema.suburb)
@@ -555,6 +602,9 @@ async function main() {
   console.log(`    Bulk (live regions): ${bulkSuburbsSynced}`);
   console.log(`    Via venues (non-bulk): ${venueSuburbsSynced}`);
   console.log(`  Empty non-live suburbs pruned: ${prunedEmptySuburbs}`);
+  if (!useIncremental) {
+    console.log(`  Ineligible venues pruned: ${prunedIneligibleVenues}`);
+  }
   console.log(`  Venues synced: ${venuesSynced}`);
   console.log(`  Deals synced: ${dealsSynced}`);
 }

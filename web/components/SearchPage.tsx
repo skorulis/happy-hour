@@ -6,7 +6,11 @@ import { RegionFocusNotice } from "@/components/RegionFocusNotice";
 import { VenueSearchCard } from "@/components/VenueSearchCard";
 import { SearchBar } from "@/components/search/SearchBar";
 import type { WhereFilter } from "@/components/search/SuburbSelect";
-import type { DealSearchResult, PopularSuburb } from "@/lib/search/queries";
+import type {
+  DealSearchResult,
+  PopularSuburb,
+  VenueListResult,
+} from "@/lib/search/queries";
 import { filtersToBrowserSearchParams } from "@/lib/search/url";
 import { useSearchFilters } from "@/lib/search/useSearchFilters";
 
@@ -16,6 +20,7 @@ type SearchPageProps = {
   initialWhat?: string[];
   initialDeals?: DealSearchResult[];
   initialNearbyDeals?: DealSearchResult[];
+  initialVenuesWithoutApplicableDeals?: VenueListResult[];
   popularSuburbs?: PopularSuburb[];
   pageTitle?: string;
   listBasePath?: string;
@@ -31,6 +36,7 @@ export function SearchPage({
   initialWhat,
   initialDeals,
   initialNearbyDeals,
+  initialVenuesWithoutApplicableDeals,
   popularSuburbs: initialPopularSuburbs,
   pageTitle,
   listBasePath,
@@ -43,6 +49,7 @@ export function SearchPage({
     filters,
     venueGroups,
     nearbyVenueGroups,
+    venuesWithoutApplicableDeals,
     dealCount,
     nearbyDealCount,
     isEmpty,
@@ -63,6 +70,7 @@ export function SearchPage({
     initialWhat,
     initialDeals,
     initialNearbyDeals,
+    initialVenuesWithoutApplicableDeals,
     initialPopularSuburbs,
     listBasePath,
     regionId,
@@ -76,6 +84,10 @@ export function SearchPage({
     filters.what,
   ).toString();
   const hasNearby = nearbyVenueGroups.length > 0;
+  const hasVenuesWithoutApplicableDeals =
+    venuesWithoutApplicableDeals.length > 0;
+  const suburbName =
+    filters.where.kind === "suburb" ? filters.where.suburb.name : null;
   const resultsCountLabel = locating
     ? "Getting your location..."
     : loadingDeals
@@ -190,6 +202,28 @@ export function SearchPage({
                         key={group.venue.id}
                         group={group}
                         searchDays={filters.days}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {hasVenuesWithoutApplicableDeals && suburbName ? (
+                <div className="space-y-4 border-t border-border-subtle pt-8">
+                  <div className="space-y-1">
+                    <h2 className="text-xl font-semibold text-foreground">
+                      More venues in {suburbName}
+                    </h2>
+                    <p className="text-sm text-muted">
+                      {venuesWithoutApplicableDeals.length} venues
+                    </p>
+                  </div>
+                  <div className="grid gap-4">
+                    {venuesWithoutApplicableDeals.map((venue) => (
+                      <VenueSearchCard
+                        key={venue.id}
+                        group={{ venue, deals: [] }}
+                        omitDaysParam
                       />
                     ))}
                   </div>

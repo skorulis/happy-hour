@@ -111,7 +111,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 1. Import venues, crawl websites, approve sources, and extract deals in **DealScraper**.
 2. Approve deals you want to publish.
-3. Run `npm run sync` in `web/` to copy venues with approved deals into PostgreSQL.
+3. Run `npm run sync` in `web/` to copy non-broken venues in live regions (and their approved deals) into PostgreSQL.
 4. The website serves search results from PostgreSQL only.
 
 The sync script upserts suburbs by `(name, postcode)`, venues by `google_map_id`, and deals by `(venue_id, source_deal_id)`. It does not copy `deal_source` workflow data.
