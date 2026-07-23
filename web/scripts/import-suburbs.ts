@@ -6,7 +6,7 @@ import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import path from "node:path";
 
-const REQUIRED_REGION_NAMES = ["Sydney", "Sunshine Coast"] as const;
+const REQUIRED_REGION_NAMES = ["Sydney", "Sunshine Coast", "Regional NSW"] as const;
 
 type SuburbNameOverride = {
   sourceName: string;
@@ -186,6 +186,9 @@ function resolveRegionId(
   }
   if (entry.local_goverment_area === "Sunshine Coast (Regional Council)") {
     return regionIdsByName.get("Sunshine Coast") ?? null;
+  }
+  if (entry.state === "NSW") {
+    return regionIdsByName.get("Regional NSW") ?? null;
   }
   return null;
 }
