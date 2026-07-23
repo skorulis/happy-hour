@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { suburbHeroThumbUrl, venueHeroThumbUrl } from "./venue-hero-url";
+import {
+  regionHeroThumbUrl,
+  suburbHeroThumbUrl,
+  venueHeroThumbUrl,
+} from "./venue-hero-url";
 
 describe("venueHeroThumbUrl", () => {
   it("returns null for empty values", () => {
@@ -56,5 +60,34 @@ describe("suburbHeroThumbUrl", () => {
   it("leaves non-CDN / source URLs unchanged", () => {
     const source = "https://example.com/photos/suburb-street.jpg";
     expect(suburbHeroThumbUrl(source)).toBe(source);
+  });
+});
+
+describe("regionHeroThumbUrl", () => {
+  it("returns null for empty values", () => {
+    expect(regionHeroThumbUrl(null)).toBeNull();
+    expect(regionHeroThumbUrl(undefined)).toBeNull();
+    expect(regionHeroThumbUrl("")).toBeNull();
+    expect(regionHeroThumbUrl("   ")).toBeNull();
+  });
+
+  it("rewrites CDN full hero URLs to thumb", () => {
+    expect(
+      regionHeroThumbUrl("https://images.duskroute.com/regions/42.jpg"),
+    ).toBe("https://images.duskroute.com/regions/42-thumb.jpg");
+    expect(
+      regionHeroThumbUrl("https://images.duskroute.com/regions/7.jpeg"),
+    ).toBe("https://images.duskroute.com/regions/7-thumb.jpg");
+  });
+
+  it("leaves already-thumb CDN URLs unchanged", () => {
+    expect(
+      regionHeroThumbUrl("https://images.duskroute.com/regions/42-thumb.jpg"),
+    ).toBe("https://images.duskroute.com/regions/42-thumb.jpg");
+  });
+
+  it("leaves non-CDN / source URLs unchanged", () => {
+    const source = "https://example.com/photos/region-skyline.jpg";
+    expect(regionHeroThumbUrl(source)).toBe(source);
   });
 });

@@ -45,6 +45,9 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
         container.register(SuburbDetailViewModel.self) { (resolver: Resolver, suburbId: Int64) in
             SuburbDetailViewModel.make(resolver: resolver, suburbId: suburbId)
         }
+        container.register(GeographicRegionDetailViewModel.self) { (resolver: Resolver, regionId: Int64) in
+            GeographicRegionDetailViewModel.make(resolver: resolver, regionId: regionId)
+        }
         container.register(ApprovalViewModel.self) { ApprovalViewModel.make(resolver: $0) }
         container.register(JobQueueViewModel.self) { JobQueueViewModel.make(resolver: $0) }
     }
@@ -143,6 +146,14 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
         container.register(SuburbHeroImageStore.self) { resolver in
             SuburbHeroImageStore(
                 suburbRepository: resolver.suburbRepository(),
+                imageFetcher: resolver.crawlImageFetcher(),
+                uploader: resolver.r2Client()
+            )
+        }
+
+        container.register(RegionHeroImageStore.self) { resolver in
+            RegionHeroImageStore(
+                geographicRegionRepository: resolver.geographicRegionRepository(),
                 imageFetcher: resolver.crawlImageFetcher(),
                 uploader: resolver.r2Client()
             )

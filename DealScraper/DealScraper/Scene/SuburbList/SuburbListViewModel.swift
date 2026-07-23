@@ -13,6 +13,11 @@ final class SuburbListViewModel {
         case failed(message: String)
     }
 
+    enum ListMode: Equatable, Hashable {
+        case suburbs
+        case regions
+    }
+
     enum RegionFilter: Equatable, Hashable {
         case any
         case none
@@ -23,9 +28,23 @@ final class SuburbListViewModel {
     private(set) var suburbs: [Suburb] = []
     private(set) var regions: [GeographicRegion] = []
     private(set) var venueCountsBySuburbId: [Int64: Int] = [:]
+    private(set) var suburbCountsByRegionId: [Int64: Int] = [:]
     var searchText = ""
     var selectedRegionFilter: RegionFilter = .any
     var selectedSuburbId: Int64?
+    var selectedRegionId: Int64?
+
+    var listMode: ListMode = .suburbs {
+        didSet {
+            guard listMode != oldValue else { return }
+            switch listMode {
+            case .suburbs:
+                selectedRegionId = nil
+            case .regions:
+                selectedSuburbId = nil
+            }
+        }
+    }
 
     var filteredSuburbs: [Suburb] {
         var result = suburbs
@@ -73,11 +92,20 @@ final class SuburbListViewModel {
         return venueCountsBySuburbId[suburbId] ?? 0
     }
 
+    func suburbCount(for region: GeographicRegion) -> Int {
+        guard let regionId = region.id else { return 0 }
+        return suburbCountsByRegionId[regionId] ?? 0
+    }
+
     func loadSuburbs() {
         do {
             regions = try geographicRegionRepository.all()
             let allSuburbs = try suburbRepository.all()
             venueCountsBySuburbId = try venueRepository.countsBySuburbId()
+            suburbCountsByRegionId = Dictionary(
+                grouping: allSuburbs.compactMap { suburb -> Int64? in suburb.regionId },
+                by: { $0 }
+            ).mapValues(\.count)
             suburbs = allSuburbs.sorted { lhs, rhs in
                 let lhsCount = venueCount(for: lhs)
                 let rhsCount = venueCount(for: rhs)
@@ -94,6 +122,11 @@ final class SuburbListViewModel {
                !suburbs.contains(where: { $0.id == selectedSuburbId })
             {
                 self.selectedSuburbId = nil
+            }
+            if let selectedRegionId,
+               !regions.contains(where: { $0.id == selectedRegionId })
+            {
+                self.selectedRegionId = nil
             }
             state = .idle
         } catch {

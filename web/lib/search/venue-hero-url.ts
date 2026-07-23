@@ -18,9 +18,19 @@ export function suburbHeroThumbUrl(
   return heroThumbUrl(url, "suburbs");
 }
 
+/**
+ * Rewrites a CDN region hero URL (`/regions/{id}.jpg`) to the 300px thumb
+ * (`/regions/{id}-thumb.jpg`). Non-CDN / source URLs are returned unchanged.
+ */
+export function regionHeroThumbUrl(
+  url: string | null | undefined,
+): string | null {
+  return heroThumbUrl(url, "regions");
+}
+
 function heroThumbUrl(
   url: string | null | undefined,
-  folder: "venues" | "suburbs",
+  folder: "venues" | "suburbs" | "regions",
 ): string | null {
   if (!url?.trim()) {
     return null;

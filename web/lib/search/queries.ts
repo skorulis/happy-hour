@@ -318,6 +318,7 @@ export type RegionWithCounts = {
   id: number;
   name: string;
   slug: string;
+  heroImage: string | null;
   dealCount: number;
   venueCount: number;
 };
@@ -496,6 +497,7 @@ export async function listRegions(): Promise<RegionWithCounts[]> {
     .select({
       id: geographicRegion.id,
       name: geographicRegion.name,
+      heroImage: geographicRegion.heroImage,
       dealCount,
       venueCount,
     })
@@ -506,7 +508,11 @@ export async function listRegions(): Promise<RegionWithCounts[]> {
       deal,
       and(eq(deal.venueId, venue.id), eq(deal.status, "approved")),
     )
-    .groupBy(geographicRegion.id, geographicRegion.name)
+    .groupBy(
+      geographicRegion.id,
+      geographicRegion.name,
+      geographicRegion.heroImage,
+    )
     .orderBy(desc(dealCount), geographicRegion.name);
 
   return rows.map((row) => ({
