@@ -11,6 +11,7 @@ export function GET() {
 <sitemap><loc>${base}/sitemap_static.xml</loc><lastmod>${lastmod}</lastmod></sitemap>
 <sitemap><loc>${base}/sitemap_venues.xml</loc><lastmod>${lastmod}</lastmod></sitemap>
 <sitemap><loc>${base}/sitemap_suburbs.xml</loc><lastmod>${lastmod}</lastmod></sitemap>
+<sitemap><loc>${base}/sitemap_regions.xml</loc><lastmod>${lastmod}</lastmod></sitemap>
 </sitemapindex>`;
 
   return new Response(xml, {

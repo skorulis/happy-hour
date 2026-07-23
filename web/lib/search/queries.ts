@@ -1096,3 +1096,16 @@ export async function getAllSuburbsForSitemap(): Promise<SuburbSitemapRow[]> {
     .from(suburb)
     .orderBy(suburb.name);
 }
+
+export type RegionSitemapRow = {
+  name: string;
+};
+
+export async function getAllRegionsForSitemap(): Promise<RegionSitemapRow[]> {
+  return db
+    .select({
+      name: geographicRegion.name,
+    })
+    .from(geographicRegion)
+    .orderBy(geographicRegion.name);
+}
