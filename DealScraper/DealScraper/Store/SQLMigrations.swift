@@ -292,7 +292,7 @@ final class SQLMigrations {
                 SET name = ?
                 WHERE name = ?
                 """,
-                arguments: [GeographicRegion.sydneyName, "Greater Sydney"]
+                arguments: ["Sydney", "Greater Sydney"]
             )
         }
 

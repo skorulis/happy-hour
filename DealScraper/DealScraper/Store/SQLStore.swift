@@ -62,7 +62,7 @@ final class SQLStore {
                 return
             }
 
-            for name in GeographicRegion.australiaRegionNames {
+            for name in RegionsCatalog.regionNames {
                 let existing = try GeographicRegion
                     .filter(Column("country_id") == australiaId)
                     .filter(Column("name") == name)

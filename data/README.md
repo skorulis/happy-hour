@@ -22,3 +22,23 @@ Shared keyword list used for search suggestions and query expansion. Defined in 
 ```
 
 Searching for `beer` will also match deals containing any of `schooner`, `pint`, or `jugs`. A venue whose deal text mentions `beer` shows the Beer icon on the map; venues with no matching icon keyword fall back to the standard map pin.
+
+# Geographic regions
+
+Approved geographic regions used by DealScraper (and shared with the web via the `data/` copy). Defined in [`regions.json`](regions.json).
+
+## Entry fields
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `name` | yes | Display name for the region (must match seeded `geographic_region.name` values). |
+| `status` | yes | `"live"` or `"in-progress"`. Metadata for consumers; DealScraper seeds all listed regions regardless of status. |
+
+## Example
+
+```json
+{
+  "name": "Sydney",
+  "status": "live"
+}
+```
