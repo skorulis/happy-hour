@@ -47,6 +47,7 @@ struct VenueDetailsView: View {
                 switch selectedTab {
                 case .details:
                     locationSection
+                    contactSection
                     linksSection(venue)
                     actionsSection
                     metadataSection(venue)
@@ -256,6 +257,31 @@ struct VenueDetailsView: View {
 
             if let mapsURL = viewModel.mapsURL {
                 Link("Open in Google Maps", destination: mapsURL)
+            }
+        }
+    }
+
+    private var contactSection: some View {
+        detailSection(title: "Contact") {
+            TextField("Email", text: $viewModel.contactEmailText)
+                .textFieldStyle(.roundedBorder)
+
+            Button("Save") {
+                viewModel.saveContactEmail()
+            }
+            .disabled(!viewModel.canSaveContactEmail)
+
+            switch viewModel.saveContactEmailState {
+            case .idle:
+                EmptyView()
+            case .completed:
+                Text("Contact email saved.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            case let .failed(message):
+                Text(message)
+                    .font(.caption)
+                    .foregroundStyle(.red)
             }
         }
     }

@@ -213,6 +213,34 @@ final class VenueRepository {
         }
     }
 
+    func updateContactEmail(venueId: Int64, contactEmail: String?) throws {
+        try store.dbQueue.write { db in
+            try db.execute(
+                sql: "UPDATE venue SET contact_email = ?, last_update = ? WHERE id = ?",
+                arguments: [contactEmail, Date(), venueId]
+            )
+        }
+    }
+
+    /// Sets `contact_email` only when the venue currently has no non-empty value.
+    @discardableResult
+    func setContactEmailIfEmpty(venueId: Int64, contactEmail: String) throws -> Bool {
+        let trimmed = contactEmail.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return false }
+
+        return try store.dbQueue.write { db in
+            guard let existing = try Venue.fetchOne(db, key: venueId) else { return false }
+            let current = existing.contactEmail?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            guard current.isEmpty else { return false }
+
+            try db.execute(
+                sql: "UPDATE venue SET contact_email = ?, last_update = ? WHERE id = ?",
+                arguments: [trimmed, Date(), venueId]
+            )
+            return true
+        }
+    }
+
     private static func linkSuburb(for venue: inout Venue, in db: Database) throws {
         guard let jsonData = venue.json.data(using: .utf8),
               let place = try? JSONDecoder().decode(GooglePlace.self, from: jsonData),

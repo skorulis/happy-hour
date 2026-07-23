@@ -389,6 +389,63 @@ struct VenueRepositoryTests {
         #expect(found.blurb == blurb)
     }
 
+    @Test func updateContactEmailPersistsText() throws {
+        let repository = VenueRepository(store: SQLStore.inMemory())
+
+        try repository.upsert(Venue(
+            googleMapId: "places/ChIJContactEmail",
+            name: "Contact Pub",
+            lat: -33.8688,
+            lng: 151.2093,
+            json: "{}"
+        ))
+
+        let venueId = try #require(try repository.find(googleMapId: "places/ChIJContactEmail")?.id)
+        try repository.updateContactEmail(venueId: venueId, contactEmail: "hello@venue.com")
+
+        let found = try #require(try repository.find(id: venueId))
+        #expect(found.contactEmail == "hello@venue.com")
+    }
+
+    @Test func setContactEmailIfEmptyFillsWhenMissing() throws {
+        let repository = VenueRepository(store: SQLStore.inMemory())
+
+        try repository.upsert(Venue(
+            googleMapId: "places/ChIJContactEmpty",
+            name: "Empty Email Pub",
+            lat: -33.8688,
+            lng: 151.2093,
+            json: "{}"
+        ))
+
+        let venueId = try #require(try repository.find(googleMapId: "places/ChIJContactEmpty")?.id)
+        let didSet = try repository.setContactEmailIfEmpty(venueId: venueId, contactEmail: "hello@venue.com")
+
+        #expect(didSet)
+        let found = try #require(try repository.find(id: venueId))
+        #expect(found.contactEmail == "hello@venue.com")
+    }
+
+    @Test func setContactEmailIfEmptyDoesNotOverwriteExisting() throws {
+        let repository = VenueRepository(store: SQLStore.inMemory())
+
+        try repository.upsert(Venue(
+            googleMapId: "places/ChIJContactKeep",
+            name: "Keep Email Pub",
+            lat: -33.8688,
+            lng: 151.2093,
+            contactEmail: "existing@venue.com",
+            json: "{}"
+        ))
+
+        let venueId = try #require(try repository.find(googleMapId: "places/ChIJContactKeep")?.id)
+        let didSet = try repository.setContactEmailIfEmpty(venueId: venueId, contactEmail: "new@venue.com")
+
+        #expect(!didSet)
+        let found = try #require(try repository.find(id: venueId))
+        #expect(found.contactEmail == "existing@venue.com")
+    }
+
     @Test func upsertAndFieldUpdatesSetLastUpdate() throws {
         let repository = VenueRepository(store: SQLStore.inMemory())
 

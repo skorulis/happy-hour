@@ -104,6 +104,7 @@ final class VenueWebsiteCrawler {
         var discoveredByURL: [URL: DiscoveredSource] = [:]
         var pdfURLs: Set<URL> = []
         var pdfSourceURLs: [URL: URL] = [:]
+        var discoveredEmails = Set<String>()
 
         if CrawlPolicy.shouldUseSitemap(for: baseURL) {
             await progress("Loading sitemap…")
@@ -145,6 +146,8 @@ final class VenueWebsiteCrawler {
             }
             
             print("CRAWL: Loaded. Blocks: \(loadedPage.contentBlocks.count). Images: \(loadedPage.imageURLs.count)")
+
+            discoveredEmails.formUnion(loadedPage.emails)
 
             let identityKey = URLNormalizer.hash(loadedPage.normalizedURL)
             guard visitedIdentities.insert(identityKey).inserted else {
@@ -275,7 +278,13 @@ final class VenueWebsiteCrawler {
         
         let newCount = try dealSourceRepository.upsert(sources: dealSources, forVenueId: venueId)
         try venueRepository.updateLastCrawlDate(venueId: venueId, date: now, url: venue.websiteUri)
-        
+
+        if venue.contactEmail?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty != false,
+           let selectedEmail = ContactEmailSelector().select(from: discoveredEmails)
+        {
+            try venueRepository.setContactEmailIfEmpty(venueId: venueId, contactEmail: selectedEmail)
+        }
+
         let results = VenueCrawlResults(
             dealsFound: newCount,
             visitedPages: visitedPages,

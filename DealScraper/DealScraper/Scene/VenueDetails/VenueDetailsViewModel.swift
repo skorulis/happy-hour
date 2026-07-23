@@ -50,6 +50,12 @@ final class VenueDetailsViewModel {
         case failed(message: String)
     }
 
+    enum SaveContactEmailState: Equatable {
+        case idle
+        case completed
+        case failed(message: String)
+    }
+
     enum FetchPlacesSummariesState: Equatable {
         case idle
         case fetching
@@ -67,6 +73,7 @@ final class VenueDetailsViewModel {
     private(set) var deleteVenueState: DeleteVenueState = .idle
     private(set) var generateBlurbState: GenerateBlurbState = .idle
     private(set) var saveBlurbState: SaveBlurbState = .idle
+    private(set) var saveContactEmailState: SaveContactEmailState = .idle
     private(set) var fetchPlacesSummariesState: FetchPlacesSummariesState = .idle
     private(set) var fetchedEditorialSummary: String?
     private(set) var fetchedReviewSummary: String?
@@ -78,6 +85,14 @@ final class VenueDetailsViewModel {
         didSet {
             if saveBlurbState == .completed {
                 saveBlurbState = .idle
+            }
+        }
+    }
+
+    var contactEmailText = "" {
+        didSet {
+            if saveContactEmailState == .completed {
+                saveContactEmailState = .idle
             }
         }
     }
@@ -214,6 +229,13 @@ final class VenueDetailsViewModel {
         return draft != saved
     }
 
+    var canSaveContactEmail: Bool {
+        guard venue?.id != nil else { return false }
+        let draft = contactEmailText.trimmingCharacters(in: .whitespacesAndNewlines)
+        let saved = venue?.contactEmail?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return draft != saved
+    }
+
     var canFetchPlacesSummaries: Bool {
         venue != nil
             && !apiKeyStore.googlePlacesAPIKey.isEmpty
@@ -259,6 +281,21 @@ final class VenueDetailsViewModel {
             saveBlurbState = .completed
         } catch {
             saveBlurbState = .failed(message: error.localizedDescription)
+        }
+    }
+
+    func saveContactEmail() {
+        guard let venueId = venue?.id, canSaveContactEmail else { return }
+
+        let trimmed = contactEmailText.trimmingCharacters(in: .whitespacesAndNewlines)
+        let email: String? = trimmed.isEmpty ? nil : trimmed
+
+        do {
+            try venueRepository.updateContactEmail(venueId: venueId, contactEmail: email)
+            load()
+            saveContactEmailState = .completed
+        } catch {
+            saveContactEmailState = .failed(message: error.localizedDescription)
         }
     }
 
@@ -550,6 +587,8 @@ final class VenueDetailsViewModel {
         }
         blurbText = venue?.blurb ?? ""
         saveBlurbState = .idle
+        contactEmailText = venue?.contactEmail ?? ""
+        saveContactEmailState = .idle
     }
 
     private func mapCrawlState(_ status: JobStatus) -> ProgressState<VenueCrawlResults> {
