@@ -5,7 +5,7 @@ import Foundation
 struct EmailExtractor {
 
     private static let pattern = try! NSRegularExpression(
-        pattern: #"(?:mailto:)?[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}"#,
+        pattern: #"(?:mailto:)?[A-Z0-9._%+-]+@(?!\d+x\.)[A-Z0-9.-]+\.[A-Z]{2,}"#,
         options: .caseInsensitive
     )
 

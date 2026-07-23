@@ -34,4 +34,14 @@ struct EmailExtractorTests {
 
         #expect(extractor.extract(from: text).isEmpty)
     }
+
+    @Test func ignoresRetinaImageFilenames() {
+        let text = """
+        <img src="apollo-bay-yha-700x507@2x.jpg">
+        <img src="logo@3x.png">
+        Contact hello@venue.com
+        """
+
+        #expect(extractor.extract(from: text) == ["hello@venue.com"])
+    }
 }

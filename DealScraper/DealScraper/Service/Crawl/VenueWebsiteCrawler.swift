@@ -104,7 +104,7 @@ final class VenueWebsiteCrawler {
         var discoveredByURL: [URL: DiscoveredSource] = [:]
         var pdfURLs: Set<URL> = []
         var pdfSourceURLs: [URL: URL] = [:]
-        var discoveredEmails = Set<String>()
+        var discoveredEmails: [String: Int] = [:]
 
         if CrawlPolicy.shouldUseSitemap(for: baseURL) {
             await progress("Loading sitemap…")
@@ -147,7 +147,9 @@ final class VenueWebsiteCrawler {
             
             print("CRAWL: Loaded. Blocks: \(loadedPage.contentBlocks.count). Images: \(loadedPage.imageURLs.count)")
 
-            discoveredEmails.formUnion(loadedPage.emails)
+            for email in loadedPage.emails {
+                discoveredEmails[email, default: 0] += 1
+            }
 
             let identityKey = URLNormalizer.hash(loadedPage.normalizedURL)
             guard visitedIdentities.insert(identityKey).inserted else {
