@@ -110,6 +110,17 @@ describe("trimOnce", () => {
     expect(trimOnce("Food & Drink")).toBe("Food & Drink");
   });
 
+  it("strips orphan and word", () => {
+    expect(trimOnce("Happy Hour And")).toBe("Happy Hour");
+    expect(trimOnce("And Happy Hour")).toBe("Happy Hour");
+    expect(trimOnce("and Steak Night and")).toBe("Steak Night");
+    expect(trimOnce("And")).toBe("And");
+  });
+
+  it("keeps and inside title", () => {
+    expect(trimOnce("Fish And Chips")).toBe("Fish And Chips");
+  });
+
   it("does not strip invalid trailing times", () => {
     expect(trimOnce("Happy Hour 25:00")).toBe("Happy Hour 25:00");
     expect(trimOnce("Happy Hour not a time")).toBe("Happy Hour not a time");

@@ -174,7 +174,13 @@
     { "name": "taco", "icon": "Taco" },
     { "name": "tapas", "icon": "UtensilsCrossed" },
     { "name": "tomahawk", "icon": "Beef" },
-    { "name": "wings", "icon": "Wings" },
+    {
+        "name": "wings",
+        "icon": "Wings",
+        "synonyms": [
+            "chicken wings"
+        ]
+    },
     {
         "name": "events",
         "icon": "CalendarDays",
@@ -187,6 +193,7 @@
             "live music",
             "meat tray",
             "pool",
+            "raffle",
             "run club"
         ]
     },
@@ -203,7 +210,10 @@
     { "name": "free snacks", "icon": "UtensilsCrossed" },
     { "name": "hospo", "icon": "UserStar" },
     { "name": "hospitality", "icon": "UserStar" },
+    { "name": "joker poker", "icon": "Club" },
+    { "name": "poker", "icon": "Spade" },
     { "name": "punters club", "icon": "Coins" },
+    { "name": "raffle", "icon": "Ticket" },
     { "name": "tarot", "icon": "Sparkles" },
     { "name": "trivia", "icon": "CircleQuestionMark" },
     { "name": "kids eat free", "icon": "Baby" },

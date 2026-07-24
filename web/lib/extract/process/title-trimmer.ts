@@ -63,6 +63,7 @@ export function trimOnce(title: string): string {
 
   result = stripTrailingFromWord(result);
   result = stripTrailingEveryWord(result);
+  result = stripOrphanAndWord(result);
   result = stripTrailingOrphanSeparator(result);
 
   return result;
@@ -114,6 +115,17 @@ function stripTrailingEveryWord(title: string): string {
     return parts.slice(0, -1).join(" ");
   }
   return title;
+}
+
+function stripOrphanAndWord(title: string): string {
+  let parts = splitOnSpaces(title);
+  if (parts.length > 1 && parts[0]!.toLowerCase() === "and") {
+    parts = parts.slice(1);
+  }
+  if (parts.length > 1 && parts[parts.length - 1]!.toLowerCase() === "and") {
+    parts = parts.slice(0, -1);
+  }
+  return parts.join(" ");
 }
 
 function stripTrailingOrphanSeparator(title: string): string {
