@@ -97,6 +97,21 @@ private final class BundleToken {}
 @MainActor
 struct CrawlImageValidatorTests {
 
+    @Test func rejectsFewerThanThreeWords() {
+        #expect(!CrawlImageValidator.hasMinimumWords(""))
+        #expect(!CrawlImageValidator.hasMinimumWords("Lunch"))
+        #expect(!CrawlImageValidator.hasMinimumWords("Happy Hour"))
+        #expect(CrawlImageValidator.wordCount(in: "Lunch") == 1)
+        #expect(CrawlImageValidator.wordCount(in: "Happy Hour") == 2)
+    }
+
+    @Test func acceptsAtLeastThreeWords() {
+        #expect(CrawlImageValidator.hasMinimumWords("Happy Hour Tuesday"))
+        #expect(CrawlImageValidator.hasMinimumWords("Lunch\nSpecial\nFridays"))
+        #expect(CrawlImageValidator.wordCount(in: "Happy Hour Tuesday") == 3)
+        #expect(CrawlImageValidator.wordCount(in: "Lunch\nSpecial\nFridays") == 3)
+    }
+
     @Test func acceptsImageWithText() async throws {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)

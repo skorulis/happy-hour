@@ -195,7 +195,7 @@ final class ExperimentViewModel {
         guard let validation = await crawlImageValidator.validateImage(url: url) else {
             return CrawlDealValidation(
                 isAccepted: false,
-                message: "Rejected by crawler — image is too small, has no deal text, or matches an excluded URL pattern."
+                message: "Rejected by crawler — image is too small, has too little deal text, or matches an excluded URL pattern."
             )
         }
 

@@ -1,4 +1,4 @@
-import { findMatchingProductsForDeals } from "@data/products";
+import { findMatchingProductsForDealsV2 } from "@data/products";
 
 export type ExtractProductsRequest = {
   title: string | null;
@@ -69,7 +69,7 @@ export function validateExtractProductsRequest(
 export function extractProducts(
   request: ExtractProductsRequest,
 ): ExtractProductsResponse {
-  const matches = findMatchingProductsForDeals([
+  const matches = findMatchingProductsForDealsV2([
     {
       title: request.title,
       details: request.details,

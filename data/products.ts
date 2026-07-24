@@ -113,6 +113,38 @@ export function findMatchingProductsForDeals(
   return findProductsMatchingText(dealDetailsText(deals));
 }
 
+type ProductMatchRuleV2 = {
+  id: string;
+  apply: (deals: DealTextFields[]) => Product[];
+};
+
+function dealTitleAndDetailsText(deals: DealTextFields[]): string {
+  return [dealTitleText(deals), dealDetailsText(deals)]
+    .filter(Boolean)
+    .join(" ");
+}
+
+const PRODUCT_MATCH_RULES_V2: ProductMatchRuleV2[] = [
+  {
+    id: "combined-substring",
+    apply: (deals) => findProductsMatchingText(dealTitleAndDetailsText(deals)),
+  },
+];
+
+export function findMatchingProductsForDealsV2(
+  deals: DealTextFields[],
+): Product[] {
+  const byName = new Map<string, Product>();
+
+  for (const rule of PRODUCT_MATCH_RULES_V2) {
+    for (const product of rule.apply(deals)) {
+      byName.set(product.name.toLowerCase(), product);
+    }
+  }
+
+  return [...byName.values()].sort(compareProductMatches);
+}
+
 export function resolveMapIconForDeals(
   deals: DealTextFields[],
 ): string | undefined {

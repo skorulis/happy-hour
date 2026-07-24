@@ -11,6 +11,7 @@ final class CrawlImageValidator {
 
     private static let minimumPixelWidth: CGFloat = 470
     private static let minimumPixelHeight: CGFloat = 500
+    private static let minimumWordCount = 3
 
     private let fetcher: CrawlImageFetcher
     private let imageExtractor: DealImageExtractor
@@ -61,6 +62,9 @@ final class CrawlImageValidator {
         }
 
         let combinedText = lines.map(\.text).joined(separator: "\n")
+        guard Self.hasMinimumWords(combinedText) else {
+            return nil
+        }
         guard DealTextFilter().isValidDeal(combinedText) else {
             return nil
         }
@@ -74,6 +78,15 @@ final class CrawlImageValidator {
             featurePrint: featurePrint,
             contentHash: contentHash
         )
+    }
+
+    /// Images with only one or two OCR words (e.g. "Lunch") lack enough context to extract a deal.
+    static func hasMinimumWords(_ text: String) -> Bool {
+        wordCount(in: text) >= minimumWordCount
+    }
+
+    static func wordCount(in text: String) -> Int {
+        text.split { $0.isWhitespace || $0.isNewline }.count
     }
 
     func validateImages(urls: [URL]) async -> [ImageValidationResult] {

@@ -55,18 +55,18 @@ describe("extractProducts", () => {
     ).toEqual({ products: [] });
   });
 
-  it("prefers title matches over details matches", () => {
+  it("returns matches from both title and details", () => {
     const result = extractProducts({
       title: "$15 Pizza Night",
       details: "happy hour on tap beer",
     });
 
-    expect(result.products.map((product) => product.name)).toContain("pizza");
+    const names = result.products.map((product) => product.name);
+    expect(names).toEqual(
+      expect.arrayContaining(["pizza", "beer", "happy hour"]),
+    );
     expect(result.products.every((product) => product.price === null)).toBe(
       true,
-    );
-    expect(result.products.some((product) => product.name === "beer")).toBe(
-      false,
     );
   });
 
@@ -79,5 +79,28 @@ describe("extractProducts", () => {
     ).toEqual({
       products: [{ name: "steak", price: null }],
     });
+  });
+
+  it("matches happy hour title plus drink keywords in details", () => {
+    const result = extractProducts({
+      title: "Happy Hour",
+      details:
+        "$8 Schooners & $10.50 pints of select house beers, $8 house spirits, $8 house wine, $16 aperol spritz & $19 cocktails.\nHappy hour means happy prices, so join us for great deals on your favourite drinks.",
+    });
+
+    expect(result.products.map((product) => product.name)).toEqual([
+      "happy hour",
+      "drinks",
+      "beer",
+      "cocktails",
+      "schooner",
+      "spirits",
+      "spritz",
+      "pint",
+      "wine",
+    ]);
+    expect(result.products.every((product) => product.price === null)).toBe(
+      true,
+    );
   });
 });
