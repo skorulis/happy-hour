@@ -3,9 +3,11 @@
 import { track } from "@/lib/analytics/client";
 import { navIconPillClassName } from "@/lib/navStyles";
 import {
+  getMapEntryVersion,
   listHrefFromMapEntry,
   mapEntryFromListPathname,
   readMapEntry,
+  subscribeMapEntry,
   writeMapEntry,
 } from "@/lib/search/map-entry";
 import { parseWherePath, pathnameToMapHref } from "@/lib/search/url";
@@ -28,6 +30,8 @@ export function MapNavLink() {
     () => true,
     () => false,
   );
+  // Re-render when the map entry's day changes while the URL stays `/map`.
+  useSyncExternalStore(subscribeMapEntry, getMapEntryVersion, () => 0);
   const href = isMapOpen
     ? listHrefFromMapEntry(
         isHydrated ? readMapEntry() : null,

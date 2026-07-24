@@ -34,6 +34,28 @@ let seededMapBoundsMemory: MapBounds | null = null;
 /** Set while a venue page is mounted so Map → /map can center on that venue. */
 let venueMapCameraSeed: VenueMapCameraSeed | null = null;
 
+/** Bumped when the stored map entry changes so nav can refresh list hrefs. */
+let mapEntryVersion = 0;
+const mapEntryListeners = new Set<() => void>();
+
+function notifyMapEntryListeners(): void {
+  mapEntryVersion += 1;
+  for (const listener of mapEntryListeners) {
+    listener();
+  }
+}
+
+export function subscribeMapEntry(listener: () => void): () => void {
+  mapEntryListeners.add(listener);
+  return () => {
+    mapEntryListeners.delete(listener);
+  };
+}
+
+export function getMapEntryVersion(): number {
+  return mapEntryVersion;
+}
+
 function getSessionStorage(): Storage | null {
   try {
     if (typeof window === "undefined") {
@@ -179,13 +201,40 @@ function baseListPath(path: string): string {
   return `/${rewritten.join("/")}`;
 }
 
+/**
+ * Days carried onto the map: prefer a legacy `/map-{day}` path, otherwise the
+ * day stored on the map-entry list path (map URLs themselves omit the day).
+ */
+export function daysFromMapEntry(
+  entry: MapEntry | null,
+  mapPathname?: string,
+  params?: URLSearchParams,
+): number[] {
+  if (mapPathname) {
+    const fromMapPath = daysFromBrowserUrl(mapPathname, params);
+    if (fromMapPath.length > 0) {
+      return fromMapPath;
+    }
+  }
+  if (entry?.listPath) {
+    const fromEntry = daysFromBrowserUrl(entry.listPath, params);
+    if (fromEntry.length > 0) {
+      return fromEntry;
+    }
+  }
+  if (params) {
+    return daysFromBrowserUrl("/", params);
+  }
+  return [];
+}
+
 export function listHrefFromMapEntry(
   entry: MapEntry | null,
   params: URLSearchParams,
   mapPathname?: string,
 ): string {
   const stored = entry?.listPath ?? "/";
-  const day = daysFromBrowserUrl(mapPathname ?? stored, params);
+  const day = daysFromMapEntry(entry, mapPathname, params);
   const base = baseListPath(stored);
   const path =
     entry?.source.kind === "venue"
@@ -201,6 +250,38 @@ export function listHrefFromMapEntry(
     return `${path.slice(0, hashIndex)}?${qs}${path.slice(hashIndex)}`;
   }
   return `${path}?${qs}`;
+}
+
+/** Keep the stored list path's day in sync while the map URL stays `/map`. */
+export function syncMapEntryDays(
+  days: number[],
+  storage: Pick<Storage, "getItem" | "setItem"> | null = getSessionStorage(),
+): void {
+  if (!storage) {
+    return;
+  }
+
+  const entry = readMapEntry(storage);
+  if (!entry) {
+    return;
+  }
+
+  const nextListPath = appendDayToPath(baseListPath(entry.listPath), days);
+  if (nextListPath === entry.listPath) {
+    return;
+  }
+
+  try {
+    // Update in place — do not go through writeMapEntry, which clears the
+    // in-memory camera seed used for the current map visit.
+    storage.setItem(
+      MAP_ENTRY_STORAGE_KEY,
+      JSON.stringify({ ...entry, listPath: nextListPath }),
+    );
+    notifyMapEntryListeners();
+  } catch {
+    // Ignore quota errors and private browsing restrictions.
+  }
 }
 
 export function readMapEntry(
@@ -229,6 +310,7 @@ export function writeMapEntry(
 
   try {
     storage.setItem(MAP_ENTRY_STORAGE_KEY, JSON.stringify(entry));
+    notifyMapEntryListeners();
   } catch {
     // Ignore quota errors and private browsing restrictions.
   }

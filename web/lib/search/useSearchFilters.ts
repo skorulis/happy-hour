@@ -19,9 +19,12 @@ import {
 } from "@/lib/search/bounds";
 import {
   markMapEntryCameraApplied,
+  readMapEntry,
   readPendingMapEntryCamera,
   readSeededMapBounds,
   rememberSeededMapBounds,
+  daysFromMapEntry,
+  syncMapEntryDays,
 } from "@/lib/search/map-entry";
 import {
   NEAR_ME_MAP_RADIUS_KM,
@@ -190,6 +193,7 @@ export function useSearchFilters(options?: {
     () => (mapViewport ? readSeededMapBounds() : null),
   );
   const nearbyCameraPendingRef = useRef(false);
+  const skipMapDaySyncOnceRef = useRef(true);
 
   const setViewportBounds = useCallback((bounds: MapBounds) => {
     setViewportBoundsState((current) =>
@@ -309,6 +313,40 @@ export function useSearchFilters(options?: {
     };
   }, [mapViewport, applyInitialMapBounds]);
 
+  // Map URLs omit the day (Google Maps referrer). Restore it from the map entry
+  // written when leaving the list, and keep that entry updated while on the map.
+  useEffect(() => {
+    if (!mapViewport) {
+      return;
+    }
+
+    const entryDays = daysFromMapEntry(readMapEntry());
+    if (entryDays.length === 0) {
+      return;
+    }
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setFilters((current) => {
+      if (current.days.length > 0) {
+        return current;
+      }
+      return { ...current, days: entryDays };
+    });
+  }, [mapViewport]);
+
+  useEffect(() => {
+    if (!mapViewport) {
+      return;
+    }
+    // Skip the mount pass so we do not clear a day stored on the map entry
+    // before the restore effect above can apply it.
+    if (skipMapDaySyncOnceRef.current) {
+      skipMapDaySyncOnceRef.current = false;
+      return;
+    }
+    syncMapEntryDays(filters.days);
+  }, [mapViewport, daysKey, filters.days]);
+
   useEffect(() => {
     if (!mapViewport || !nearbyCameraPendingRef.current) {
       return;
@@ -348,7 +386,11 @@ export function useSearchFilters(options?: {
 
       const params = new URLSearchParams(current);
       const parsed = parseWherePath(path);
-      const days = parsed.day !== undefined ? [parsed.day] : [];
+      let days = parsed.day !== undefined ? [parsed.day] : [];
+      // `/map` never encodes the day; keep the current selection (or map entry).
+      if (parsed.map && days.length === 0) {
+        days = daysFromMapEntry(readMapEntry(), path, params);
+      }
 
       if (parsed.kind === "nearby") {
         setFilters((currentFilters) => {

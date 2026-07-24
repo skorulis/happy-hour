@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import { notFound, permanentRedirect, redirect } from "next/navigation";
 import type { Metadata } from "next";
-import { MapPage } from "@/components/MapPage";
 import { SearchPage } from "@/components/SearchPage";
 import { SearchUrlRedirect } from "@/components/SearchUrlRedirect";
 import { stripDaySuffix } from "@/lib/search/day-path";
@@ -169,19 +168,13 @@ export default async function SuburbSearchPage({
   }
 
   if (whereSlug === "map") {
-    return (
-      <Suspense
-        fallback={
-          <div className="relative flex min-h-0 flex-1 flex-col">
-            <div className="absolute inset-0 flex items-center justify-center bg-background text-sm text-muted">
-              Loading map...
-            </div>
-          </div>
-        }
-      >
-        <MapPage initialDays={days} />
-      </Suspense>
-    );
+    // Legacy `/map-{day}` — canonicalize to `/map` so Google Maps referrer checks pass.
+    const cleaned = new URLSearchParams();
+    if (whatParam) {
+      cleaned.set("q", whatParam);
+    }
+    const qs = cleaned.toString();
+    permanentRedirect(qs ? `/map?${qs}` : "/map");
   }
 
   const suburb = await findSuburbByWhereSlug(whereSlug);

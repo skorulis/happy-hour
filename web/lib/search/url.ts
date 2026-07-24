@@ -103,9 +103,13 @@ export function whereToListPath(
   return appendDayToPath(path, days);
 }
 
-/** Map is always `/map` (optionally with a day suffix) — viewport bounds, not where. */
-export function whereToMapPath(days: number[] = []): string {
-  return appendDayToPath("/map", days);
+/**
+ * Map is always `/map` — viewport bounds, not where.
+ * Day selection is kept in session map-entry storage (not the URL) so Google
+ * Maps referrer checks stay on an authorized path.
+ */
+export function whereToMapPath(_days: number[] = []): string {
+  return "/map";
 }
 
 export function filtersToBrowserPath(
@@ -129,12 +133,10 @@ function hrefWithQuery(path: string, params: URLSearchParams): string {
 }
 
 export function pathnameToMapHref(
-  pathname: string,
+  _pathname: string,
   params: URLSearchParams,
 ): string {
-  const day = daysFromBrowserUrl(pathname, params);
-  const path = whereToMapPath(day);
-  return hrefWithQuery(path, stripLocationParams(params));
+  return hrefWithQuery(whereToMapPath(), stripLocationParams(params));
 }
 
 export function pathnameToListHref(
@@ -234,7 +236,12 @@ export function legacyDaysRedirectHref(
     return segment;
   });
 
-  // Day belongs on the where/map segment (first), not on "map".
+  // Canonical map URL never carries a day suffix (Google Maps referrer).
+  if (rewritten.length === 1 && rewritten[0] === "map") {
+    return hrefWithQuery("/map", cleaned);
+  }
+
+  // Day belongs on the where segment (first), not on trailing "map".
   if (rewritten[rewritten.length - 1] === "map" && rewritten.length >= 2) {
     rewritten[0] = appendDayToPath(rewritten[0]!, day).replace(/^\//, "");
   } else {

@@ -9,6 +9,7 @@ import {
   readMapEntry,
   readPendingMapEntryCamera,
   setVenueMapCameraSeed,
+  syncMapEntryDays,
   writeMapEntry,
   type MapEntry,
 } from "./map-entry";
@@ -125,6 +126,18 @@ describe("listHrefFromMapEntry", () => {
     ).toBe("/abbotsbury-2176-thursday");
   });
 
+  it("restores the day from the stored list path when map URL has none", () => {
+    const entry: MapEntry = {
+      listPath: "/abbotsbury-2176-thursday",
+      source: { kind: "suburb", slug: "abbotsbury-2176" },
+      cameraPending: false,
+    };
+
+    expect(listHrefFromMapEntry(entry, new URLSearchParams(), "/map")).toBe(
+      "/abbotsbury-2176-thursday",
+    );
+  });
+
   it("restores the venue path with a day hash", () => {
     const entry: MapEntry = {
       listPath: "/surry-hills/the-local",
@@ -152,6 +165,30 @@ describe("listHrefFromMapEntry", () => {
     const params = new URLSearchParams("days=1&lat=-33.8&lng=151.2");
 
     expect(listHrefFromMapEntry(entry, params)).toBe("/nearby-sunday");
+  });
+});
+
+describe("syncMapEntryDays", () => {
+  it("rewrites the stored list path day while keeping the source", () => {
+    const storage = memoryStorage();
+    writeMapEntry(mapEntryFromListPathname("/abbotsbury-2176-monday"), storage);
+
+    syncMapEntryDays([5], storage);
+
+    expect(readMapEntry(storage)).toEqual({
+      listPath: "/abbotsbury-2176-thursday",
+      source: { kind: "suburb", slug: "abbotsbury-2176" },
+      cameraPending: true,
+    });
+  });
+
+  it("clears the day suffix when the map day filter is cleared", () => {
+    const storage = memoryStorage();
+    writeMapEntry(mapEntryFromListPathname("/nearby-monday"), storage);
+
+    syncMapEntryDays([], storage);
+
+    expect(readMapEntry(storage)?.listPath).toBe("/nearby");
   });
 });
 
