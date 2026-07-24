@@ -130,7 +130,13 @@
     { "name": "cheese", "icon": "Cheese" },
     { "name": "chicken", "icon": "Drumstick" },
     { "name": "chips", "icon": "Chips" },
-    { "name": "fish & chips", "icon": "Fish" },
+    { 
+        "name": "fish & chips",
+        "synonyms": [
+            "fish with chips"
+        ],
+        "icon": "Fish"
+    },
     { "name": "curry", "icon": "Soup" },
     {
         "name": "gyros",
@@ -209,7 +215,7 @@
     { "name": "brunch", "icon": "Sun" },
     { "name": "lunch", "icon": "UtensilsCrossed" },
     { "name": "dinner", "icon": "Moon" },
-    { "name": "night", "icon": "Moon" },
+    { "name": "badge draw", "icon": "BadgeDollarSign" },
     { "name": "bingo", "icon": "Grid3x3" },
     { "name": "comedy", "icon": "Mic" },
     { "name": "bowls", "icon": "Bowls" },

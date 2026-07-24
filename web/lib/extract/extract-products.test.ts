@@ -105,12 +105,11 @@ describe("extractProducts", () => {
     expect(result.products).toEqual(
       expect.arrayContaining([
         { name: "pizza", price: 15 },
-        { name: "night", price: null },
         { name: "beer", price: null },
         { name: "happy hour", price: null },
       ]),
     );
-    expect(result.products).toHaveLength(4);
+    expect(result.products).toHaveLength(3);
   });
 
   it("falls back to details when title has no keyword match", () => {
