@@ -190,6 +190,7 @@ final class ApprovalViewModel: CoordinatorViewModel {
                     startDate: draft.startDate,
                     endDate: draft.endDate,
                     schedules: draft.schedules.map { $0.toDealSchedule() },
+                    products: draft.products.map { $0.toDealProduct() },
                     status: status
                 )
             case .new, .rejected:

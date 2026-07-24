@@ -19,13 +19,7 @@ final class DealRepository {
                 .fetchAll(db)
 
             return try deals.map { deal in
-                guard let dealId = deal.id else {
-                    throw DealRepositoryError.missingDealID
-                }
-                let schedules = try DealSchedule
-                    .filter(Column("deal_id") == dealId)
-                    .fetchAll(db)
-                return DealWithSchedules(deal: deal, schedules: schedules)
+                try Self.dealWithRelations(db: db, deal: deal)
             }
         }
     }
@@ -37,13 +31,7 @@ final class DealRepository {
                 .fetchAll(db)
 
             return try deals.map { deal in
-                guard let dealId = deal.id else {
-                    throw DealRepositoryError.missingDealID
-                }
-                let schedules = try DealSchedule
-                    .filter(Column("deal_id") == dealId)
-                    .fetchAll(db)
-                return DealWithSchedules(deal: deal, schedules: schedules)
+                try Self.dealWithRelations(db: db, deal: deal)
             }
         }
     }
@@ -150,6 +138,15 @@ final class DealRepository {
                     )
                     try newSchedule.insert(db)
                 }
+
+                for product in item.products {
+                    var newProduct = DealProduct(
+                        dealId: dealId,
+                        product: product.product,
+                        price: product.price
+                    )
+                    try newProduct.insert(db)
+                }
             }
 
             try Venue.touchLastUpdate(db, venueId: venueId)
@@ -161,6 +158,9 @@ final class DealRepository {
         try store.dbQueue.write { db in
             guard let original = try Deal.fetchOne(db, key: id) else { return nil }
             let schedules = try DealSchedule
+                .filter(Column("deal_id") == id)
+                .fetchAll(db)
+            let products = try DealProduct
                 .filter(Column("deal_id") == id)
                 .fetchAll(db)
 
@@ -191,8 +191,23 @@ final class DealRepository {
                 newSchedules.append(newSchedule)
             }
 
+            var newProducts: [DealProduct] = []
+            for product in products {
+                var newProduct = DealProduct(
+                    dealId: newDealId,
+                    product: product.product,
+                    price: product.price
+                )
+                try newProduct.insert(db)
+                newProducts.append(newProduct)
+            }
+
             try Venue.touchLastUpdate(db, venueId: original.venueId)
-            return DealWithSchedules(deal: newDeal, schedules: newSchedules)
+            return DealWithSchedules(
+                deal: newDeal,
+                schedules: newSchedules,
+                products: newProducts
+            )
         }
     }
 
@@ -215,6 +230,7 @@ final class DealRepository {
         startDate: Date? = nil,
         endDate: Date? = nil,
         schedules: [DealSchedule]? = nil,
+        products: [DealProduct]? = nil,
         status: DealStatus
     ) throws {
         try store.dbQueue.write { db in
@@ -246,8 +262,36 @@ final class DealRepository {
                 }
             }
 
+            if let products {
+                try DealProduct
+                    .filter(Column("deal_id") == id)
+                    .deleteAll(db)
+
+                for product in products {
+                    var newProduct = DealProduct(
+                        dealId: id,
+                        product: product.product,
+                        price: product.price
+                    )
+                    try newProduct.insert(db)
+                }
+            }
+
             try Venue.touchLastUpdate(db, venueId: deal.venueId)
         }
+    }
+
+    private static func dealWithRelations(db: Database, deal: Deal) throws -> DealWithSchedules {
+        guard let dealId = deal.id else {
+            throw DealRepositoryError.missingDealID
+        }
+        let schedules = try DealSchedule
+            .filter(Column("deal_id") == dealId)
+            .fetchAll(db)
+        let products = try DealProduct
+            .filter(Column("deal_id") == dealId)
+            .fetchAll(db)
+        return DealWithSchedules(deal: deal, schedules: schedules, products: products)
     }
 }
 

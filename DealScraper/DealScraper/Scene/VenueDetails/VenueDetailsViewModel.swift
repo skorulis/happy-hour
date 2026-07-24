@@ -517,6 +517,7 @@ final class VenueDetailsViewModel {
                 startDate: draft.startDate,
                 endDate: draft.endDate,
                 schedules: draft.schedules.map { $0.toDealSchedule() },
+                products: draft.products.map { $0.toDealProduct() },
                 status: status
             )
             if let index = deals.firstIndex(where: { $0.deal.id == id }) {
@@ -532,7 +533,8 @@ final class VenueDetailsViewModel {
                 updatedDeal.updateDate = .now
                 deals[index] = DealWithSchedules(
                     deal: updatedDeal,
-                    schedules: draft.schedules.map { $0.toDealSchedule() }
+                    schedules: draft.schedules.map { $0.toDealSchedule() },
+                    products: draft.products.map { $0.toDealProduct() }
                 )
             }
         } catch {

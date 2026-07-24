@@ -318,6 +318,17 @@ final class SQLMigrations {
                 t.add(column: "contact_email", .text)
             }
         }
+
+        migrator.registerMigration("v37_create_deal_product") { db in
+            try db.create(table: "deal_product") { t in
+                t.autoIncrementedPrimaryKey("id")
+                t.column("deal_id", .integer)
+                    .notNull()
+                    .references("deal", onDelete: .cascade)
+                t.column("product", .text).notNull()
+                t.column("price", .double)
+            }
+        }
     }
 }
 

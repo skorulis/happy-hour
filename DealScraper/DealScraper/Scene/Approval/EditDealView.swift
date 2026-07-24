@@ -1,5 +1,7 @@
 //Created by Alex Skorulis on 25/6/2026.
 
+import ASKCore
+import Knit
 import SwiftUI
 
 struct EditableDealSchedule: Identifiable, Sendable {
@@ -42,6 +44,41 @@ struct EditableDealSchedule: Identifiable, Sendable {
     }
 }
 
+struct EditableDealProduct: Identifiable, Sendable {
+    let id: Int64
+    let dealId: Int64
+    var product: String
+    var price: Double?
+
+    init(product: DealProduct, fallbackID: Int64) {
+        id = product.id ?? fallbackID
+        dealId = product.dealId
+        self.product = product.product
+        price = product.price
+    }
+
+    init(
+        dealId: Int64,
+        id: Int64,
+        product: String,
+        price: Double? = nil
+    ) {
+        self.id = id
+        self.dealId = dealId
+        self.product = product
+        self.price = price
+    }
+
+    func toDealProduct() -> DealProduct {
+        DealProduct(
+            id: id,
+            dealId: dealId,
+            product: product,
+            price: price
+        )
+    }
+}
+
 struct EditDealDraft: Sendable {
     var title: String
     var details: String
@@ -51,6 +88,7 @@ struct EditDealDraft: Sendable {
     var startDate: Date?
     var endDate: Date?
     var schedules: [EditableDealSchedule]
+    var products: [EditableDealProduct]
 }
 
 struct EditDealView: View {
@@ -68,6 +106,8 @@ struct EditDealView: View {
     var onSave: ((EditDealDraft) -> Void)?
     var onCancel: (() -> Void)?
 
+    @Environment(\.resolver) private var resolver
+
     @State private var title = ""
     @State private var details = ""
     @State private var conditions = ""
@@ -76,6 +116,9 @@ struct EditDealView: View {
     @State private var startDate: Date?
     @State private var endDate: Date?
     @State private var schedules: [EditableDealSchedule] = []
+    @State private var products: [EditableDealProduct] = []
+    @State private var isExtractingProducts = false
+    @State private var extractProductsError: String?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -162,23 +205,62 @@ struct EditDealView: View {
                         }
                     }
 
-                    editableField(label: "Schedule") {
-                        VStack(alignment: .leading, spacing: 8) {
-                            if !schedules.isEmpty {
-                                Text(formattedScheduleSummary)
+                    HStack(alignment: .top, spacing: 16) {
+                        editableField(label: "Schedule") {
+                            VStack(alignment: .leading, spacing: 8) {
+                                if !schedules.isEmpty {
+                                    Text(formattedScheduleSummary)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+
+                                ForEach($schedules) { $schedule in
+                                    scheduleEditRow(schedule: $schedule)
+                                }
+
+                                Button(action: addSchedule) {
+                                    Label("Add schedule", systemImage: "plus.circle")
+                                }
+                                .buttonStyle(.plain)
+                                .font(.caption)
+                            }
+                        }
+
+                        editableField(label: "Products") {
+                            VStack(alignment: .leading, spacing: 8) {
+                                ForEach($products) { $product in
+                                    productEditRow(product: $product)
+                                }
+
+                                HStack(spacing: 12) {
+                                    Button(action: addProduct) {
+                                        Label("Add product", systemImage: "plus.circle")
+                                    }
+                                    .buttonStyle(.plain)
                                     .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
 
-                            ForEach($schedules) { $schedule in
-                                scheduleEditRow(schedule: $schedule)
-                            }
+                                    Button {
+                                        Task { await extractProductsFromAPI() }
+                                    } label: {
+                                        if isExtractingProducts {
+                                            ProgressView()
+                                                .controlSize(.small)
+                                        } else {
+                                            Label("Extract", systemImage: "wand.and.stars")
+                                        }
+                                    }
+                                    .buttonStyle(.plain)
+                                    .font(.caption)
+                                    .disabled(isExtractingProducts)
+                                    .help("Replace products using title and details")
+                                }
 
-                            Button(action: addSchedule) {
-                                Label("Add schedule", systemImage: "plus.circle")
+                                if let extractProductsError {
+                                    Text(extractProductsError)
+                                        .font(.caption2)
+                                        .foregroundStyle(.red)
+                                }
                             }
-                            .buttonStyle(.plain)
-                            .font(.caption)
                         }
                     }
 
@@ -240,7 +322,8 @@ struct EditDealView: View {
             creativeURL: creativeURL,
             startDate: startDate,
             endDate: endDate,
-            schedules: schedules
+            schedules: schedules,
+            products: products
         )
     }
 
@@ -262,12 +345,111 @@ struct EditDealView: View {
             .map { index, schedule in
                 EditableDealSchedule(schedule: schedule, fallbackID: Int64(-index - 1))
             }
+        products = item.products
+            .enumerated()
+            .map { index, product in
+                EditableDealProduct(product: product, fallbackID: Int64(-index - 1))
+            }
     }
 
     private func addSchedule() {
         let dealId = item.deal.id ?? schedules.first?.dealId ?? 0
         let newID = (schedules.map(\.id).min() ?? 0) - 1
         schedules.append(EditableDealSchedule(dealId: dealId, id: newID))
+    }
+
+    private func addProduct() {
+        let catalog = ProductsCatalog.productNames
+        guard let defaultProduct = catalog.first(where: { name in
+            !products.contains { $0.product == name }
+        }) ?? catalog.first else {
+            return
+        }
+        let dealId = item.deal.id ?? products.first?.dealId ?? schedules.first?.dealId ?? 0
+        let newID = (products.map(\.id).min() ?? 0) - 1
+        products.append(
+            EditableDealProduct(dealId: dealId, id: newID, product: defaultProduct)
+        )
+    }
+
+    @MainActor
+    private func extractProductsFromAPI() async {
+        guard !isExtractingProducts else { return }
+        guard let resolver else {
+            extractProductsError = "App services unavailable"
+            return
+        }
+
+        isExtractingProducts = true
+        extractProductsError = nil
+        defer { isExtractingProducts = false }
+
+        do {
+            let client = resolver.extractProductsAPIClient()
+            let baseURL = resolver.backendURLStore().backendURL
+            let payload = try await client.extractProducts(
+                baseURL: baseURL,
+                title: title.isEmpty ? nil : title,
+                details: details.isEmpty ? nil : details
+            )
+
+            let dealId = item.deal.id ?? products.first?.dealId ?? schedules.first?.dealId ?? 0
+            products = payload.products.enumerated().map { index, extracted in
+                EditableDealProduct(
+                    dealId: dealId,
+                    id: Int64(-index - 1),
+                    product: extracted.name,
+                    price: extracted.price
+                )
+            }
+        } catch {
+            extractProductsError = error.localizedDescription
+        }
+    }
+
+    private func productEditRow(product: Binding<EditableDealProduct>) -> some View {
+        HStack(spacing: 8) {
+            Picker("Product", selection: product.product) {
+                ForEach(ProductsCatalog.productNames, id: \.self) { name in
+                    Text(name).tag(name)
+                }
+            }
+            .labelsHidden()
+            .frame(minWidth: 120)
+
+            TextField(
+                "Price",
+                text: Binding(
+                    get: {
+                        guard let price = product.wrappedValue.price else { return "" }
+                        if price.rounded() == price {
+                            return String(Int(price))
+                        }
+                        return String(price)
+                    },
+                    set: { newValue in
+                        let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
+                        if trimmed.isEmpty {
+                            product.wrappedValue.price = nil
+                        } else {
+                            product.wrappedValue.price = Double(trimmed)
+                        }
+                    }
+                )
+            )
+            .textFieldStyle(.roundedBorder)
+            .frame(width: 72)
+
+            Button {
+                products.removeAll { $0.id == product.wrappedValue.id }
+            } label: {
+                Image(systemName: "minus.circle")
+                    .foregroundStyle(.red)
+            }
+            .buttonStyle(.plain)
+            .help("Remove product")
+        }
+        .font(.caption)
     }
 
     private func scheduleEditRow(schedule: Binding<EditableDealSchedule>) -> some View {
@@ -503,6 +685,9 @@ struct EditDealView: View {
             ),
             schedules: [
                 DealSchedule(id: 1, dealId: 1, dayOfWeek: 2, startMinute: 960, endMinute: 1140)
+            ],
+            products: [
+                DealProduct(id: 1, dealId: 1, product: "beer", price: 5)
             ]
         ),
         venueName: "The Local",

@@ -45,6 +45,62 @@ struct DealRepositoryTests {
         #expect(found[0].schedules[0].dayOfWeek == 6)
     }
 
+    @Test func replaceAllAndUpdateRoundTripProducts() throws {
+        let store = SQLStore.inMemory()
+        let venueRepository = VenueRepository(store: store)
+        let dealRepository = DealRepository(store: store)
+
+        try venueRepository.upsert(Venue(
+            googleMapId: "places/test",
+            name: "Test Pub",
+            lat: 0,
+            lng: 0,
+            json: "{}"
+        ))
+
+        let venueId = try #require(try venueRepository.find(googleMapId: "places/test")?.id)
+
+        _ = try dealRepository.replaceAll(
+            venueId: venueId,
+            deals: [
+                DealWithSchedules(
+                    deal: Deal(venueId: venueId, title: "Happy Hour"),
+                    schedules: [],
+                    products: [
+                        DealProduct(dealId: 0, product: "beer", price: 8),
+                        DealProduct(dealId: 0, product: "wine", price: nil),
+                    ]
+                ),
+            ]
+        )
+
+        let found = try dealRepository.find(venueId: venueId)
+        #expect(found.count == 1)
+        #expect(found[0].products.count == 2)
+        #expect(found[0].products.map(\.product) == ["beer", "wine"])
+        #expect(found[0].products.map(\.price) == [8, nil])
+
+        let dealId = try #require(found[0].deal.id)
+        try dealRepository.update(
+            id: dealId,
+            title: "Happy Hour",
+            details: nil,
+            conditions: nil,
+            sourceURL: nil,
+            creativeURL: nil,
+            products: [
+                DealProduct(dealId: dealId, product: "cocktails", price: 14),
+            ],
+            status: .approved
+        )
+
+        let updated = try dealRepository.find(venueId: venueId)
+        #expect(updated.count == 1)
+        #expect(updated[0].products.count == 1)
+        #expect(updated[0].products[0].product == "cocktails")
+        #expect(updated[0].products[0].price == 14)
+    }
+
     @Test func replaceAllBumpsVenueLastUpdate() throws {
         let store = SQLStore.inMemory()
         let venueRepository = VenueRepository(store: store)
