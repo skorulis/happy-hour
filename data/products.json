@@ -97,9 +97,7 @@
             "ribs",
             "roast",
             "rump",
-            "parma",
-            "parmi",
-            "parmy",
+            "chicken parmigiana",
             "salad",
             "skewer",
             "steak",
@@ -133,9 +131,16 @@
     { "name": "ribs", "icon": "Beef" },
     { "name": "roast", "icon": "Ham" },
     { "name": "rump", "icon": "Beef" },
-    { "name": "parma", "icon": "UtensilsCrossed" },
-    { "name": "parmi", "icon": "UtensilsCrossed" },
-    { "name": "parmy", "icon": "UtensilsCrossed" },
+    {
+        "name": "chicken parmigiana",
+        "icon": "UtensilsCrossed",
+        "synonyms": [
+            "parma",
+            "parmi",
+            "parmy"
+        ]
+
+    },
     { "name": "salad", "icon": "Salad" },
     { "name": "skewer", "icon": "Kebab" },
     { "name": "snacks", "icon": "Cookie" },

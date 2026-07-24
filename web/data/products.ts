@@ -190,8 +190,11 @@ export function filterSuggestions(
     .filter(
       (product) =>
         isVisible(product) &&
-        product.name.toLowerCase().includes(trimmed) &&
-        !isExcluded(product.name, exclude),
+        !isExcluded(product.name, exclude) &&
+        (product.name.toLowerCase().includes(trimmed) ||
+          (product.synonyms ?? []).some((synonym) =>
+            synonym.toLowerCase().includes(trimmed),
+          )),
     )
     .sort((a, b) => {
       const aRank = a.rank ?? Number.MAX_SAFE_INTEGER;
