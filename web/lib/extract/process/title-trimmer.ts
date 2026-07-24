@@ -117,7 +117,7 @@ function stripTrailingEveryWord(title: string): string {
 }
 
 function stripTrailingOrphanSeparator(title: string): string {
-  const match = /\s*(?:-|\u2013|\u2014)\s*$/.exec(title);
+  const match = /\s*(?:-|\u2013|\u2014|&)\s*$/.exec(title);
   if (!match) return title;
   return title.slice(0, match.index).trim();
 }

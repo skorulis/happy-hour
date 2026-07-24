@@ -124,7 +124,13 @@
     { "name": "chips", "icon": "Chips" },
     { "name": "fish & chips", "icon": "Fish" },
     { "name": "curry", "icon": "Soup" },
-    { "name": "gyros", "icon": "Sandwich" },
+    {
+        "name": "gyros",
+        "icon": "Sandwich",
+        "synonyms": [
+            "yeeros"
+        ]
+    },
     { "name": "muscles", "icon": "Fish" },
     { "name": "nachos", "icon": "Nachos" },
     { "name": "oysters", "icon": "Fish" },
@@ -148,9 +154,10 @@
     { "name": "skewer", "icon": "Kebab" },
     { "name": "snacks", "icon": "Cookie" },
     {
-        "name": "schnitzel",
+        "name": "chicken schnitzel",
         "synonyms": [
-            "schnitty"
+            "schnitty",
+            "schnitzel"
         ],
         "icon": "UtensilsCrossed"
     },

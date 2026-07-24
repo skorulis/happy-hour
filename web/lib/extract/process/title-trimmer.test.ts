@@ -34,6 +34,8 @@ describe("trimOnce", () => {
     expect(trimOnce(",Happy Hour,")).toBe("Happy Hour");
     expect(trimOnce("Happy Hour:")).toBe("Happy Hour");
     expect(trimOnce(":Happy Hour:")).toBe("Happy Hour");
+    expect(trimOnce("&Happy Hour&")).toBe("Happy Hour");
+    expect(trimOnce("Happy Hour&")).toBe("Happy Hour");
   });
 
   it("strips leading day word", () => {
@@ -101,6 +103,11 @@ describe("trimOnce", () => {
     expect(trimOnce("Happy Hour -")).toBe("Happy Hour");
     expect(trimOnce("Happy Hour \u2013")).toBe("Happy Hour");
     expect(trimOnce("Happy Hour \u2014")).toBe("Happy Hour");
+    expect(trimOnce("Happy Hour &")).toBe("Happy Hour");
+  });
+
+  it("keeps ampersand inside title", () => {
+    expect(trimOnce("Food & Drink")).toBe("Food & Drink");
   });
 
   it("does not strip invalid trailing times", () => {

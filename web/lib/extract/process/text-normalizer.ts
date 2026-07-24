@@ -132,9 +132,9 @@ function normalizeCondition(str: string): string {
   return trimmed;
 }
 
-// Swift `String.cleanLine()`: trims whitespace/newlines plus the set `\*._|’-,:`.
-const CLEAN_LINE_LEADING = /^[\s\\*._|\u2019,:-]+/;
-const CLEAN_LINE_TRAILING = /[\s\\*._|\u2019,:-]+$/;
+// Swift `String.cleanLine()`: trims whitespace/newlines plus the set `\*._|’-,:&`.
+const CLEAN_LINE_LEADING = /^[\s\\*._|\u2019,:&-]+/;
+const CLEAN_LINE_TRAILING = /[\s\\*._|\u2019,:&-]+$/;
 
 export function cleanLine(str: string): string {
   return str.replace(CLEAN_LINE_LEADING, "").replace(CLEAN_LINE_TRAILING, "");
