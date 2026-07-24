@@ -23,6 +23,23 @@ const MONTHS: Record<string, number> = {
   december: 12,
 };
 
+const MONTH_NAMES = Object.keys(MONTHS).join("|");
+const WEEKDAY_NAMES =
+  "monday|tuesday|wednesday|thursday|friday|saturday|sunday";
+const ORDINAL = "(?:st|nd|rd|th)";
+
+/** Matches calendar dates embedded in free-form prose. */
+const PROSE_DATE_REGEX = new RegExp(
+  String.raw`(?:(?:${WEEKDAY_NAMES}),?\s+)?(?:` +
+    // Month-first: "September 12th", "July 26, 2026"
+    String.raw`(${MONTH_NAMES})\s+(\d{1,2})${ORDINAL}?(?:,?\s+(\d{4}))?` +
+    String.raw`|` +
+    // Day-first: "12th September", "14 November 2025"
+    String.raw`(\d{1,2})${ORDINAL}?\s+(${MONTH_NAMES})(?:,?\s+(\d{4}))?` +
+    String.raw`)`,
+  "gi",
+);
+
 export function parsePromotionDates(
   promotionDates: string[] | null,
 ): DateRange {
@@ -49,6 +66,63 @@ export function parsePromotionDates(
   }
 
   return { start: earliestStart, end: latestEnd };
+}
+
+/**
+ * Scans free-form deal text for calendar dates and returns a promotion range.
+ * One date → start = end; multiple → min start / max end.
+ */
+export function parsePromotionDatesFromDealText(parts: string[]): DateRange {
+  const dates: string[] = [];
+  for (const part of parts) {
+    if (part.length === 0) continue;
+    dates.push(...extractDatesFromText(part));
+  }
+
+  if (dates.length === 0) {
+    return { start: null, end: null };
+  }
+
+  let earliest: string | null = null;
+  let latest: string | null = null;
+  for (const date of dates) {
+    earliest = minDate(earliest, date);
+    latest = maxDate(latest, date);
+  }
+  return { start: earliest, end: latest };
+}
+
+export function extractDatesFromText(text: string): string[] {
+  const year = new Date().getFullYear();
+  const dates: string[] = [];
+  PROSE_DATE_REGEX.lastIndex = 0;
+
+  for (const match of text.matchAll(PROSE_DATE_REGEX)) {
+    const date = dateFromProseMatch(match, year);
+    if (date !== null) {
+      dates.push(date);
+    }
+  }
+  return dates;
+}
+
+function dateFromProseMatch(
+  match: RegExpMatchArray,
+  defaultYear: number,
+): string | null {
+  // Month-first groups: 1=month, 2=day, 3=year?
+  if (match[1] !== undefined && match[2] !== undefined) {
+    const explicitYear =
+      match[3] !== undefined ? Number.parseInt(match[3], 10) : defaultYear;
+    return buildDate(explicitYear, match[1], Number.parseInt(match[2], 10));
+  }
+  // Day-first groups: 4=day, 5=month, 6=year?
+  if (match[4] !== undefined && match[5] !== undefined) {
+    const explicitYear =
+      match[6] !== undefined ? Number.parseInt(match[6], 10) : defaultYear;
+    return buildDate(explicitYear, match[5], Number.parseInt(match[4], 10));
+  }
+  return null;
 }
 
 function parseLine(text: string): DateRange {
@@ -139,8 +213,9 @@ function parseDate(text: string, referenceYear: number | null): string | null {
     yearFrom(withoutWeekday) ?? referenceYear ?? new Date().getFullYear();
 
   // Formats with an explicit year (weekday prefix already stripped):
-  //   "d MMMM yyyy", "MMMM d, yyyy", "MMMM d yyyy"
-  let m = /^(\d{1,2})\s+([a-z]+)\s+(\d{4})$/i.exec(withoutWeekday);
+  //   "d[st] MMMM yyyy", "MMMM d[st], yyyy", "MMMM d[st] yyyy"
+  let m =
+    /^(\d{1,2})(?:st|nd|rd|th)?\s+([a-z]+)\s+(\d{4})$/i.exec(withoutWeekday);
   if (m) {
     const date = buildDate(
       Number.parseInt(m[3]!, 10),
@@ -150,7 +225,9 @@ function parseDate(text: string, referenceYear: number | null): string | null {
     if (date !== null) return date;
   }
 
-  m = /^([a-z]+)\s+(\d{1,2}),?\s+(\d{4})$/i.exec(withoutWeekday);
+  m = /^([a-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})$/i.exec(
+    withoutWeekday,
+  );
   if (m) {
     const date = buildDate(
       Number.parseInt(m[3]!, 10),
@@ -160,14 +237,14 @@ function parseDate(text: string, referenceYear: number | null): string | null {
     if (date !== null) return date;
   }
 
-  // Formats without a year: "d MMMM", "MMMM d"
-  m = /^(\d{1,2})\s+([a-z]+)$/i.exec(withoutWeekday);
+  // Formats without a year: "d[st] MMMM", "MMMM d[st]"
+  m = /^(\d{1,2})(?:st|nd|rd|th)?\s+([a-z]+)$/i.exec(withoutWeekday);
   if (m) {
     const date = buildDate(year, m[2]!, Number.parseInt(m[1]!, 10));
     if (date !== null) return date;
   }
 
-  m = /^([a-z]+)\s+(\d{1,2})$/i.exec(withoutWeekday);
+  m = /^([a-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?$/i.exec(withoutWeekday);
   if (m) {
     const date = buildDate(year, m[1]!, Number.parseInt(m[2]!, 10));
     if (date !== null) return date;

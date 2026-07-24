@@ -84,6 +84,72 @@ describe("toProcessedDeal", () => {
     expect(deal!.status).toBe("rejected");
   });
 
+  it("extracts single date from details and auto-rejects", () => {
+    const year = new Date().getFullYear();
+    const deal = toProcessedDeal(
+      raw({
+        title: "Shake & Bake",
+        details: [
+          "Shake & Bake are back Saturday September 12th for another show we all know and love. Entry is free, we'll see you there!",
+        ],
+        conditions: [],
+        days: ["Saturday"],
+        times: ["all day"],
+        promotionDates: null,
+      }),
+      webpageSource,
+    );
+    expect(deal).not.toBeNull();
+    expect(deal!.startDate).toBe(`${year}-09-12`);
+    expect(deal!.endDate).toBe(`${year}-09-12`);
+    expect(deal!.status).toBe("rejected");
+  });
+
+  it("extracts date range from multiple dates in details", () => {
+    const year = new Date().getFullYear();
+    const deal = toProcessedDeal(
+      raw({
+        title: "Drag Bingo",
+        details: [
+          "Get ready for a fun night of bingo hosted by our fabulous drag queens.",
+          "Upcoming dates:",
+          "July 27th",
+          "August 31st",
+          "September 21st",
+        ],
+        conditions: [],
+        days: [],
+        times: ["all day"],
+        promotionDates: null,
+      }),
+      webpageSource,
+    );
+    expect(deal).not.toBeNull();
+    expect(deal!.startDate).toBe(`${year}-07-27`);
+    expect(deal!.endDate).toBe(`${year}-09-21`);
+    expect(deal!.status).toBe("new");
+  });
+
+  it("prefers explicit promotionDates over prose dates", () => {
+    const deal = toProcessedDeal(
+      raw({
+        title: "Gift Card Sale",
+        details: ["Sale ends September 12th"],
+        conditions: [],
+        days: [],
+        times: ["all day"],
+        promotionDates: [
+          "Friday, 14 November \u2013 Monday, 1 December 2025",
+        ],
+      }),
+      webpageSource,
+    );
+    expect(deal).not.toBeNull();
+    expect(deal!.startDate).toBe("2025-11-14");
+    expect(deal!.endDate).toBe("2025-12-01");
+    expect(deal!.status).toBe("new");
+  });
+
   it("auto-rejects nth-weekday-of-month deal", () => {
     const deal = toProcessedDeal(
       raw({

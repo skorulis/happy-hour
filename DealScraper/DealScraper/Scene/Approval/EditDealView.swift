@@ -205,61 +205,59 @@ struct EditDealView: View {
                         }
                     }
 
-                    HStack(alignment: .top, spacing: 16) {
-                        editableField(label: "Schedule") {
-                            VStack(alignment: .leading, spacing: 8) {
-                                if !schedules.isEmpty {
-                                    Text(formattedScheduleSummary)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
+                    editableField(label: "Schedule") {
+                        VStack(alignment: .leading, spacing: 8) {
+                            if !schedules.isEmpty {
+                                Text(formattedScheduleSummary)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
 
-                                ForEach($schedules) { $schedule in
-                                    scheduleEditRow(schedule: $schedule)
-                                }
+                            ForEach($schedules) { $schedule in
+                                scheduleEditRow(schedule: $schedule)
+                            }
 
-                                Button(action: addSchedule) {
-                                    Label("Add schedule", systemImage: "plus.circle")
+                            Button(action: addSchedule) {
+                                Label("Add schedule", systemImage: "plus.circle")
+                            }
+                            .buttonStyle(.plain)
+                            .font(.caption)
+                        }
+                    }
+
+                    editableField(label: "Products") {
+                        VStack(alignment: .leading, spacing: 8) {
+                            ForEach($products) { $product in
+                                productEditRow(product: $product)
+                            }
+
+                            HStack(spacing: 12) {
+                                Button(action: addProduct) {
+                                    Label("Add product", systemImage: "plus.circle")
                                 }
                                 .buttonStyle(.plain)
                                 .font(.caption)
+
+                                Button {
+                                    Task { await extractProductsFromAPI() }
+                                } label: {
+                                    if isExtractingProducts {
+                                        ProgressView()
+                                            .controlSize(.small)
+                                    } else {
+                                        Label("Extract", systemImage: "wand.and.stars")
+                                    }
+                                }
+                                .buttonStyle(.plain)
+                                .font(.caption)
+                                .disabled(isExtractingProducts)
+                                .help("Replace products using title and details")
                             }
-                        }
 
-                        editableField(label: "Products") {
-                            VStack(alignment: .leading, spacing: 8) {
-                                ForEach($products) { $product in
-                                    productEditRow(product: $product)
-                                }
-
-                                HStack(spacing: 12) {
-                                    Button(action: addProduct) {
-                                        Label("Add product", systemImage: "plus.circle")
-                                    }
-                                    .buttonStyle(.plain)
-                                    .font(.caption)
-
-                                    Button {
-                                        Task { await extractProductsFromAPI() }
-                                    } label: {
-                                        if isExtractingProducts {
-                                            ProgressView()
-                                                .controlSize(.small)
-                                        } else {
-                                            Label("Extract", systemImage: "wand.and.stars")
-                                        }
-                                    }
-                                    .buttonStyle(.plain)
-                                    .font(.caption)
-                                    .disabled(isExtractingProducts)
-                                    .help("Replace products using title and details")
-                                }
-
-                                if let extractProductsError {
-                                    Text(extractProductsError)
-                                        .font(.caption2)
-                                        .foregroundStyle(.red)
-                                }
+                            if let extractProductsError {
+                                Text(extractProductsError)
+                                    .font(.caption2)
+                                    .foregroundStyle(.red)
                             }
                         }
                     }

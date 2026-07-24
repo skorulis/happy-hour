@@ -70,6 +70,26 @@ describe("extractProducts", () => {
     });
   });
 
+  it("prefers fish & chips over overlapping chips", () => {
+    expect(
+      extractProducts({ title: "Fish & chips $18", details: null }),
+    ).toEqual({
+      products: [{ name: "fish & chips", price: null }],
+    });
+  });
+
+  it("keeps chips when it appears outside fish & chips", () => {
+    const result = extractProducts({
+      title: "Fish & chips and chips",
+      details: null,
+    });
+
+    expect(result.products.map((product) => product.name).sort()).toEqual([
+      "chips",
+      "fish & chips",
+    ]);
+  });
+
   it("returns an empty list when no product keyword matches", () => {
     expect(
       extractProducts({ title: "$10 specials", details: "all week" }),

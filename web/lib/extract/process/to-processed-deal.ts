@@ -16,7 +16,10 @@ import type {
 } from "../types";
 import { mapDeal } from "./map-deal";
 import { isNthWeekdayOfMonthMatch } from "./nth-weekday";
-import { parsePromotionDates } from "./promotion-dates";
+import {
+  parsePromotionDates,
+  parsePromotionDatesFromDealText,
+} from "./promotion-dates";
 import type { DealHours, MappedDeal } from "./types";
 
 export function toProcessedDeal(
@@ -38,7 +41,14 @@ export function toProcessedDeal(
     return null;
   }
 
-  const promotionDates = parsePromotionDates(raw.promotionDates);
+  let promotionDates = parsePromotionDates(raw.promotionDates);
+  if (promotionDates.start === null && promotionDates.end === null) {
+    promotionDates = parsePromotionDatesFromDealText([
+      raw.title,
+      ...raw.details,
+      ...raw.conditions,
+    ]);
+  }
 
   const autoReject =
     isNthWeekdayOfMonthMatch({

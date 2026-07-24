@@ -114,6 +114,68 @@ function findProductsMatchingText(text: string): Product[] {
   return [...matches].sort(compareProductMatches);
 }
 
+type MatchSpan = {
+  productKey: string;
+  start: number;
+  end: number;
+};
+
+function collectMatchSpans(text: string, product: Product): MatchSpan[] {
+  const productKey = product.name.toLowerCase();
+  const needles = [product.name, ...(product.synonyms ?? [])];
+  const spans: MatchSpan[] = [];
+
+  for (const needle of needles) {
+    const n = needle.toLowerCase();
+    if (!n) {
+      continue;
+    }
+    let from = 0;
+    while (from <= text.length) {
+      const idx = text.indexOf(n, from);
+      if (idx === -1) {
+        break;
+      }
+      spans.push({ productKey, start: idx, end: idx + n.length });
+      from = idx + 1;
+    }
+  }
+
+  return spans;
+}
+
+function suppressOverlappingMatches(
+  text: string,
+  matches: Product[],
+): Product[] {
+  if (matches.length <= 1) {
+    return matches;
+  }
+
+  const spans = matches.flatMap((product) => collectMatchSpans(text, product));
+  spans.sort(
+    (a, b) => b.end - b.start - (a.end - a.start) || a.start - b.start,
+  );
+
+  const acceptedSpans: MatchSpan[] = [];
+  const acceptedProducts = new Set<string>();
+
+  for (const span of spans) {
+    const covered = acceptedSpans.some(
+      (accepted) => span.start >= accepted.start && span.end <= accepted.end,
+    );
+    if (covered) {
+      continue;
+    }
+    acceptedSpans.push(span);
+    acceptedProducts.add(span.productKey);
+  }
+
+  return matches.filter((product) =>
+    acceptedProducts.has(product.name.toLowerCase()),
+  );
+}
+
 export function findMatchingProductsForDeals(
   deals: DealTextFields[],
 ): Product[] {
@@ -138,7 +200,10 @@ function dealTitleAndDetailsText(deals: DealTextFields[]): string {
 const PRODUCT_MATCH_RULES_V2: ProductMatchRuleV2[] = [
   {
     id: "combined-substring",
-    apply: (deals) => findProductsMatchingText(dealTitleAndDetailsText(deals)),
+    apply: (deals) => {
+      const text = dealTitleAndDetailsText(deals);
+      return suppressOverlappingMatches(text, findProductsMatchingText(text));
+    },
   },
 ];
 
