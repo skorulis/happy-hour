@@ -262,7 +262,8 @@ struct DealCondenserTests {
                 status: deal.status,
                 startDate: deal.startDate,
                 endDate: deal.endDate,
-                schedules: deal.schedules
+                schedules: deal.schedules,
+                products: deal.products
             )
             return processed.toDealWithSchedules(venueId: venueId)
         }
@@ -519,7 +520,8 @@ struct DealCondenserShouldMergeTests {
                 status: deal.status,
                 startDate: deal.startDate,
                 endDate: deal.endDate,
-                schedules: deal.schedules
+                schedules: deal.schedules,
+                products: deal.products
             )
             return processed.toDealWithSchedules(venueId: venueId)
         }

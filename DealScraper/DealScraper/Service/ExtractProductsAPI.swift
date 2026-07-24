@@ -57,7 +57,7 @@ struct ExtractProductsPayload: Decodable, Sendable {
     let products: [ExtractedProductPayload]
 }
 
-struct ExtractedProductPayload: Decodable, Sendable {
+struct ExtractedProductPayload: Codable, Sendable {
     let name: String
     let price: Double?
 }

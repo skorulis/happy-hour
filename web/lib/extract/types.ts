@@ -1,3 +1,5 @@
+import type { ExtractedProduct } from "./extract-products";
+
 export type ExtractSourceType = "image" | "webpage" | "pdf";
 
 export type ExtractedDeal = {
@@ -49,6 +51,7 @@ export type ProcessedDeal = {
   startDate: string | null;
   endDate: string | null;
   schedules: ProcessedDealSchedule[];
+  products: ExtractedProduct[];
 };
 
 export type ExtractProcessDealsResponse = {

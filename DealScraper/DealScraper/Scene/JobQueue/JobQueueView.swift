@@ -119,16 +119,8 @@ struct JobQueueView: View {
             canCancel: viewModel.canCancel(job),
             onCancel: { viewModel.cancel(job: job) }
         )
-
-        if let venueId = job.venueId,
-           let googleMapId = viewModel.googleMapId(for: venueId)
-        {
-            Button(action: {
-                viewModel.coordinator?.push(MainPath.venueDetails(googleMapId))
-            }, label: { row })
-        } else {
-            row
-        }
+        
+        Button(action: { viewModel.showDetails(job) }, label: { row })
     }
 }
 

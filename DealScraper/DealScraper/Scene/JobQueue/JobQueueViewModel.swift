@@ -183,6 +183,14 @@ final class JobQueueViewModel: CoordinatorViewModel {
             return false
         }
     }
+    
+    func showDetails(_ job: JobItem) {
+        if let venueId = job.venueId, let googleMapId = googleMapId(for: venueId) {
+            coordinator?.push(MainPath.venueDetails(googleMapId))
+        } else if let suburbId = job.suburbId {
+            coordinator?.push(MainPath.suburbDetails(suburbId))
+        }
+    }
 
     private static func crawlPrioritySort(_ lhs: Venue, _ rhs: Venue) -> Bool {
         switch (lhs.lastCrawlDate, rhs.lastCrawlDate) {

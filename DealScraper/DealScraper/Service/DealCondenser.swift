@@ -79,7 +79,11 @@ struct TextMatchDealCondenser: DealCondenser {
         )
 
         let schedules = mergedSchedules(lhs.schedules, rhs.schedules)
-        return DealWithSchedules(deal: deal, schedules: schedules)
+        return DealWithSchedules(
+            deal: deal,
+            schedules: schedules,
+            products: DealWithSchedules.mergedProducts(lhs.products, rhs.products)
+        )
     }
 
     private func normalizedText(for item: DealWithSchedules) -> String {

@@ -16,6 +16,7 @@ nonisolated struct ProcessedDeal: Codable, Sendable {
     let startDate: String?
     let endDate: String?
     let schedules: [ProcessedDealSchedule]
+    let products: [ExtractedProductPayload]
 
     init(
         title: String?,
@@ -26,7 +27,8 @@ nonisolated struct ProcessedDeal: Codable, Sendable {
         status: DealStatus,
         startDate: String?,
         endDate: String?,
-        schedules: [ProcessedDealSchedule]
+        schedules: [ProcessedDealSchedule],
+        products: [ExtractedProductPayload] = []
     ) {
         self.title = title
         self.details = details
@@ -37,6 +39,21 @@ nonisolated struct ProcessedDeal: Codable, Sendable {
         self.startDate = startDate
         self.endDate = endDate
         self.schedules = schedules
+        self.products = products
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        title = try container.decodeIfPresent(String.self, forKey: .title)
+        details = try container.decodeIfPresent(String.self, forKey: .details)
+        conditions = try container.decodeIfPresent(String.self, forKey: .conditions)
+        creativeURL = try container.decodeIfPresent(String.self, forKey: .creativeURL)
+        sourceURL = try container.decodeIfPresent(String.self, forKey: .sourceURL)
+        status = try container.decode(DealStatus.self, forKey: .status)
+        startDate = try container.decodeIfPresent(String.self, forKey: .startDate)
+        endDate = try container.decodeIfPresent(String.self, forKey: .endDate)
+        schedules = try container.decode([ProcessedDealSchedule].self, forKey: .schedules)
+        products = try container.decodeIfPresent([ExtractedProductPayload].self, forKey: .products) ?? []
     }
 
     func toDealWithSchedules(venueId: Int64) -> DealWithSchedules {
@@ -59,7 +76,14 @@ nonisolated struct ProcessedDeal: Codable, Sendable {
                 endMinute: $0.endMinute
             )
         }
-        return DealWithSchedules(deal: deal, schedules: schedules)
+        let products = products.map {
+            DealProduct(
+                dealId: 0,
+                product: $0.name,
+                price: $0.price
+            )
+        }
+        return DealWithSchedules(deal: deal, schedules: schedules, products: products)
     }
 
     private static let dateFormatter: DateFormatter = {

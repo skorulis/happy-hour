@@ -33,6 +33,10 @@ struct ExtractProcessDealsAPIClientTests {
                           "startMinute": 960,
                           "endMinute": 1080
                         }
+                      ],
+                      "products": [
+                        { "name": "happy hour", "price": null },
+                        { "name": "wine", "price": 8 }
                       ]
                     }
                   ]
@@ -86,6 +90,14 @@ struct ExtractProcessDealsAPIClientTests {
         #expect(payload.deals.first?.title == "Happy Hour")
         #expect(payload.deals.first?.schedules.count == 1)
         #expect(payload.deals.first?.schedules.first?.dayOfWeek == 6)
+        #expect(payload.deals.first?.products.count == 2)
+        #expect(payload.deals.first?.products.map(\.name) == ["happy hour", "wine"])
+        #expect(payload.deals.first?.products.map(\.price) == [nil, 8])
+
+        let mapped = try #require(payload.deals.first).toDealWithSchedules(venueId: 1)
+        #expect(mapped.products.count == 2)
+        #expect(mapped.products.map(\.product) == ["happy hour", "wine"])
+        #expect(mapped.products.map(\.price) == [nil, 8])
     }
 
     @Test func surfacesBackendErrorMessage() async throws {

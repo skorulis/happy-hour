@@ -66,6 +66,12 @@ describe("toProcessedDeal", () => {
     expect(deal!.sourceURL).toBe("https://example.com/specials");
     expect(deal!.schedules.length).toBeGreaterThan(0);
     expect(deal!.schedules.some((s) => s.dayOfWeek === 6)).toBe(true);
+    expect(deal!.products).toEqual(
+      expect.arrayContaining([
+        { name: "happy hour", price: null },
+        { name: "wine", price: 8 },
+      ]),
+    );
   });
 
   it("auto-rejects deal with same-day start and end dates", () => {

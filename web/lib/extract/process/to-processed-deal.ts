@@ -7,6 +7,7 @@
  * schedule expansion. Returns `null` for deals that should be dropped.
  */
 
+import { extractProducts } from "../extract-products";
 import { calendarWeekday, scheduleDays } from "./days";
 import type {
   ExtractDealsSource,
@@ -68,8 +69,14 @@ export function toProcessedDeal(
     return null;
   }
 
+  const resolvedTitle = title.length === 0 ? null : title;
+  const products = extractProducts({
+    title: resolvedTitle,
+    details,
+  }).products;
+
   return {
-    title: title.length === 0 ? null : title,
+    title: resolvedTitle,
     details,
     conditions,
     creativeURL,
@@ -78,6 +85,7 @@ export function toProcessedDeal(
     startDate: promotionDates.start,
     endDate: promotionDates.end,
     schedules,
+    products,
   };
 }
 

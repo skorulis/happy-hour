@@ -23,6 +23,7 @@ function toProcessedDeal(deal: EditableVenueDeal): ProcessedDeal {
     startDate: deal.startDate,
     endDate: deal.endDate,
     schedules: deal.schedules,
+    products: [],
   };
 }
 
