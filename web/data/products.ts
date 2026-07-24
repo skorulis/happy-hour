@@ -4,6 +4,7 @@ export type Product = {
   name: string;
   rank?: number;
   groups?: string[];
+  synonyms?: string[];
   hidden?: boolean;
   icon?: string;
 };
@@ -26,6 +27,7 @@ function mergeProducts(raw: Product[]): Product[] {
         name: product.name,
         rank: product.rank,
         groups: product.groups ? [...new Set(product.groups)] : undefined,
+        synonyms: product.synonyms ? [...new Set(product.synonyms)] : undefined,
         hidden: product.hidden,
         icon: product.icon,
       });
@@ -35,11 +37,15 @@ function mergeProducts(raw: Product[]): Product[] {
     const groups = [
       ...new Set([...(existing.groups ?? []), ...(product.groups ?? [])]),
     ];
+    const synonyms = [
+      ...new Set([...(existing.synonyms ?? []), ...(product.synonyms ?? [])]),
+    ];
 
     byName.set(key, {
       name: existing.name,
       rank: existing.rank ?? product.rank,
       groups: groups.length > 0 ? groups : undefined,
+      synonyms: synonyms.length > 0 ? synonyms : undefined,
       hidden: existing.hidden || product.hidden,
       icon: existing.icon ?? product.icon,
     });
@@ -96,9 +102,14 @@ function findProductsMatchingText(text: string): Product[] {
     return [];
   }
 
-  const matches = productsWithIcons.filter((product) =>
-    text.includes(product.name.toLowerCase()),
-  );
+  const matches = productsWithIcons.filter((product) => {
+    if (text.includes(product.name.toLowerCase())) {
+      return true;
+    }
+    return (product.synonyms ?? []).some((synonym) =>
+      text.includes(synonym.toLowerCase()),
+    );
+  });
 
   return [...matches].sort(compareProductMatches);
 }

@@ -29,6 +29,9 @@
         "name": "cocktails",
         "rank": 5,
         "icon": "Martini",
+        "synonyms": [
+            "cocktail"
+        ],
         "groups": [
             "negroni",
             "martini",
@@ -72,6 +75,9 @@
     {
         "name": "food",
         "rank": 3,
+        "synonyms": [
+            "meal"
+        ],
         "icon": "UtensilsCrossed",
         "groups": [
             "bento",
@@ -83,7 +89,6 @@
             "curry",
             "dumplings",
             "gyros",
-            "meal",
             "muscles",
             "nachos",
             "pasta",
@@ -103,8 +108,13 @@
             "tapas"
         ]
     },
-    { "name": "2-4-1", "hidden": true },
-    { "name": "2 for 1", "icon": "Percent", "groups": [ "2-4-1" ] },
+    {
+        "name": "2 for 1",
+        "icon": "Percent",
+        "synonyms": [
+            "2-4-1"
+        ]
+    },
     { "name": "bao", "icon": "BowlChopsticks" },
     { "name": "bento", "icon": "LunchBox" },
     { "name": "burger", "icon": "Burger" },
@@ -114,7 +124,6 @@
     { "name": "chips", "icon": "Chips" },
     { "name": "curry", "icon": "Soup" },
     { "name": "gyros", "icon": "Sandwich" },
-    { "name": "meal", "icon": "UtensilsCrossed" },
     { "name": "muscles", "icon": "Fish" },
     { "name": "nachos", "icon": "Nachos" },
     { "name": "oysters", "icon": "Fish" },
@@ -130,13 +139,12 @@
     { "name": "salad", "icon": "Salad" },
     { "name": "skewer", "icon": "Kebab" },
     { "name": "snacks", "icon": "Cookie" },
-    { "name": "schnitty", "hidden": true },
     {
         "name": "schnitzel",
-        "icon": "UtensilsCrossed",
-        "groups": [
+        "synonyms": [
             "schnitty"
-        ]
+        ],
+        "icon": "UtensilsCrossed"
     },
     { "name": "sirloin", "icon": "Beef" },
     {

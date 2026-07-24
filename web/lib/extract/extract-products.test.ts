@@ -35,17 +35,38 @@ describe("validateExtractProductsRequest", () => {
 });
 
 describe("extractProducts", () => {
-  it("returns cocktails from a cocktail title with null price", () => {
+  it("returns cocktails from a cocktail title with price", () => {
     expect(
       extractProducts({ title: "$14 Cocktails", details: null }),
     ).toEqual({
-      products: [{ name: "cocktails", price: null }],
+      products: [{ name: "cocktails", price: 14 }],
     });
   });
 
-  it("returns steak from a steak title with null price", () => {
+  it("returns cocktails via synonym from Cocktail Happy Hour", () => {
+    const result = extractProducts({
+      title: "Cocktail Happy Hour",
+      details: "",
+    });
+
+    expect(result.products).toEqual(
+      expect.arrayContaining([
+        { name: "happy hour", price: null },
+        { name: "cocktails", price: null },
+      ]),
+    );
+    expect(result.products).toHaveLength(2);
+  });
+
+  it("returns cocktails with price via singular synonym", () => {
+    expect(extractProducts({ title: "$14 Cocktail", details: null })).toEqual({
+      products: [{ name: "cocktails", price: 14 }],
+    });
+  });
+
+  it("returns steak from a steak title with price", () => {
     expect(extractProducts({ title: "$22 Steak", details: null })).toEqual({
-      products: [{ name: "steak", price: null }],
+      products: [{ name: "steak", price: 22 }],
     });
   });
 
@@ -55,19 +76,21 @@ describe("extractProducts", () => {
     ).toEqual({ products: [] });
   });
 
-  it("returns matches from both title and details", () => {
+  it("returns matches from both title and details with title price", () => {
     const result = extractProducts({
       title: "$15 Pizza Night",
       details: "happy hour on tap beer",
     });
 
-    const names = result.products.map((product) => product.name);
-    expect(names).toEqual(
-      expect.arrayContaining(["pizza", "beer", "happy hour"]),
+    expect(result.products).toEqual(
+      expect.arrayContaining([
+        { name: "pizza", price: 15 },
+        { name: "night", price: null },
+        { name: "beer", price: null },
+        { name: "happy hour", price: null },
+      ]),
     );
-    expect(result.products.every((product) => product.price === null)).toBe(
-      true,
-    );
+    expect(result.products).toHaveLength(4);
   });
 
   it("falls back to details when title has no keyword match", () => {
@@ -81,26 +104,23 @@ describe("extractProducts", () => {
     });
   });
 
-  it("matches happy hour title plus drink keywords in details", () => {
+  it("matches happy hour title plus drink keywords and prices in details", () => {
     const result = extractProducts({
       title: "Happy Hour",
       details:
         "$8 Schooners & $10.50 pints of select house beers, $8 house spirits, $8 house wine, $16 aperol spritz & $19 cocktails.\nHappy hour means happy prices, so join us for great deals on your favourite drinks.",
     });
 
-    expect(result.products.map((product) => product.name)).toEqual([
-      "happy hour",
-      "drinks",
-      "beer",
-      "cocktails",
-      "schooner",
-      "spirits",
-      "spritz",
-      "pint",
-      "wine",
+    expect(result.products).toEqual([
+      { name: "happy hour", price: null },
+      { name: "drinks", price: null },
+      { name: "beer", price: null },
+      { name: "cocktails", price: 19 },
+      { name: "schooner", price: 8 },
+      { name: "spirits", price: 8 },
+      { name: "spritz", price: 16 },
+      { name: "pint", price: 10.5 },
+      { name: "wine", price: 8 },
     ]);
-    expect(result.products.every((product) => product.price === null)).toBe(
-      true,
-    );
   });
 });

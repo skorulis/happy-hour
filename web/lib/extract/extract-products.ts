@@ -1,4 +1,5 @@
 import { findMatchingProductsForDealsV2 } from "@data/products";
+import { associatePricesWithProducts } from "./extract-product-price";
 
 export type ExtractProductsRequest = {
   title: string | null;
@@ -7,7 +8,7 @@ export type ExtractProductsRequest = {
 
 export type ExtractedProduct = {
   name: string;
-  price: null;
+  price: number | null;
 };
 
 export type ExtractProductsResponse = {
@@ -77,10 +78,16 @@ export function extractProducts(
     },
   ]);
 
+  const pricesByName = associatePricesWithProducts(
+    request.title,
+    request.details,
+    matches.map((product) => product.name),
+  );
+
   return {
     products: matches.map((product) => ({
       name: product.name,
-      price: null,
+      price: pricesByName.get(product.name.toLowerCase()) ?? null,
     })),
   };
 }
