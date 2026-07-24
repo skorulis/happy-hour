@@ -33,6 +33,7 @@
             "cocktail"
         ],
         "groups": [
+            "espresso martini",
             "negroni",
             "martini",
             "spritz",
@@ -53,11 +54,18 @@
     { "name": "guinness", "icon": "Beer" },
     { "name": "jugs", "icon": "Beer" },
     { "name": "margarita", "icon": "Martini" },
+    { "name": "espresso martini", "icon": "Martini" },
     { "name": "martini", "icon": "Martini" },
     { "name": "mojito", "icon": "Martini" },
     { "name": "mulled wine", "icon": "Coffee" },
     { "name": "negroni", "icon": "Martini" },
-    { "name": "pint", "icon": "Beer" },
+    {
+        "name": "pint",
+        "icon": "Beer",
+        "synonyms": [
+            "pints for schooner"
+        ]
+    },
     { "name": "porter", "icon": "Beer" },
     { "name": "saki", "icon": "Saki" },
     { "name": "sangria", "icon": "Wine" },
