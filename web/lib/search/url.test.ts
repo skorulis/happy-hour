@@ -47,6 +47,11 @@ describe("parseWherePath", () => {
 
   it("parses nearby with optional day", () => {
     expect(parseWherePath("/nearby")).toEqual({ kind: "nearby", map: false });
+    expect(parseWherePath("/nearby/monday")).toEqual({
+      kind: "nearby",
+      map: false,
+      day: 2,
+    });
     expect(parseWherePath("/nearby-monday")).toEqual({
       kind: "nearby",
       map: false,
@@ -55,6 +60,11 @@ describe("parseWherePath", () => {
     expect(parseWherePath("/nearby/map")).toEqual({
       kind: "nearby",
       map: true,
+    });
+    expect(parseWherePath("/nearby/monday/map")).toEqual({
+      kind: "nearby",
+      map: true,
+      day: 2,
     });
     expect(parseWherePath("/nearby-monday/map")).toEqual({
       kind: "nearby",
@@ -68,6 +78,12 @@ describe("parseWherePath", () => {
       kind: "suburb",
       slug: "abbotsbury-2176",
       map: false,
+    });
+    expect(parseWherePath("/abbotsbury-2176/monday")).toEqual({
+      kind: "suburb",
+      slug: "abbotsbury-2176",
+      map: false,
+      day: 2,
     });
     expect(parseWherePath("/abbotsbury-2176-monday")).toEqual({
       kind: "suburb",
@@ -86,11 +102,11 @@ describe("parseWherePath", () => {
 describe("where paths", () => {
   it("builds list paths from where and day", () => {
     expect(whereToListPath(suburbWhere)).toBe("/abbotsbury-2176");
-    expect(whereToListPath(suburbWhere, [2])).toBe("/abbotsbury-2176-monday");
+    expect(whereToListPath(suburbWhere, [2])).toBe("/abbotsbury-2176/monday");
     expect(whereToMapPath()).toBe("/map");
     expect(whereToMapPath([5])).toBe("/map");
     expect(whereToListPath(nearMeWhere)).toBe("/nearby");
-    expect(whereToListPath(nearMeWhere, [2])).toBe("/nearby-monday");
+    expect(whereToListPath(nearMeWhere, [2])).toBe("/nearby/monday");
     expect(whereToListPath({ kind: "anywhere" })).toBe("/");
   });
 });
@@ -138,8 +154,8 @@ describe("appendDayToPath", () => {
     expect(appendDayToPath("/venue/foo", [])).toBe("/venue/foo");
   });
 
-  it("appends a day suffix for a single selection", () => {
-    expect(appendDayToPath("/venue/foo", [5])).toBe("/venue/foo-thursday");
+  it("appends a day segment for a single selection", () => {
+    expect(appendDayToPath("/venue/foo", [5])).toBe("/venue/foo/thursday");
   });
 });
 
@@ -197,7 +213,7 @@ describe("filtersToBrowserPath", () => {
     ).toBe("/map");
     expect(
       filtersToBrowserPath({ ...baseFilters, where: suburbWhere }, "/"),
-    ).toBe("/abbotsbury-2176-thursday");
+    ).toBe("/abbotsbury-2176/thursday");
   });
 
   it("preserves region base path for anywhere filters", () => {
@@ -205,24 +221,27 @@ describe("filtersToBrowserPath", () => {
       filtersToBrowserPath(baseFilters, "/sydney", {
         anywhereBasePath: "/sydney",
       }),
-    ).toBe("/sydney-thursday");
+    ).toBe("/sydney/thursday");
     expect(
       filtersToBrowserPath(
         { ...baseFilters, where: suburbWhere },
         "/sydney",
         { anywhereBasePath: "/sydney" },
       ),
-    ).toBe("/abbotsbury-2176-thursday");
+    ).toBe("/abbotsbury-2176/thursday");
   });
 });
 
 describe("pathname list/map hrefs", () => {
   it("keeps map at /map and embeds day only on list paths", () => {
     const params = new URLSearchParams();
-    expect(pathnameToMapHref("/abbotsbury-2176-thursday", params)).toBe("/map");
-    expect(pathnameToMapHref("/nearby-thursday", params)).toBe("/map");
+    expect(pathnameToMapHref("/abbotsbury-2176/thursday", params)).toBe("/map");
+    expect(pathnameToMapHref("/nearby/thursday", params)).toBe("/map");
+    expect(pathnameToListHref("/abbotsbury-2176/thursday/map", params)).toBe(
+      "/abbotsbury-2176/thursday",
+    );
     expect(pathnameToListHref("/abbotsbury-2176-thursday/map", params)).toBe(
-      "/abbotsbury-2176-thursday",
+      "/abbotsbury-2176/thursday",
     );
     expect(pathnameToListHref("/map-thursday", params)).toBe("/");
   });
@@ -238,19 +257,19 @@ describe("legacyDaysRedirectHref", () => {
   it("redirects single-day query params into the path", () => {
     expect(
       legacyDaysRedirectHref("/nearby", new URLSearchParams("days=2")),
-    ).toBe("/nearby-monday");
+    ).toBe("/nearby/monday");
     expect(
       legacyDaysRedirectHref(
         "/newtown-2042",
         new URLSearchParams("days=2&q=beer"),
       ),
-    ).toBe("/newtown-2042-monday?q=beer");
+    ).toBe("/newtown-2042/monday?q=beer");
     expect(
       legacyDaysRedirectHref(
         "/newtown/the-venue",
         new URLSearchParams("days=2"),
       ),
-    ).toBe("/newtown/the-venue-monday");
+    ).toBe("/newtown/the-venue/monday");
   });
 
   it("drops multi-day query values", () => {
@@ -263,7 +282,7 @@ describe("legacyDaysRedirectHref", () => {
     expect(legacyDaysRedirectHref("/nearby", new URLSearchParams())).toBeNull();
   });
 
-  it("strips days from /map without adding a day suffix", () => {
+  it("strips days from /map without adding a day segment", () => {
     expect(legacyDaysRedirectHref("/map", new URLSearchParams("days=5"))).toBe(
       "/map",
     );
@@ -274,18 +293,18 @@ describe("legacyDaysRedirectHref", () => {
 });
 
 describe("legacyLocationRedirectHref", () => {
-  it("redirects suburb query params to a path with day suffix", () => {
+  it("redirects suburb query params to a path with day segment", () => {
     const params = new URLSearchParams(
       "days=5&suburbId=334&suburbName=Abbotsbury&suburbPostcode=2176",
     );
     expect(legacyLocationRedirectHref("/", params)).toBe(
-      "/abbotsbury-2176-thursday",
+      "/abbotsbury-2176/thursday",
     );
   });
 
-  it("redirects lat/lng to /nearby with day suffix", () => {
+  it("redirects lat/lng to /nearby with day segment", () => {
     const params = new URLSearchParams("days=5&lat=-33.87&lng=151.21");
-    expect(legacyLocationRedirectHref("/", params)).toBe("/nearby-thursday");
+    expect(legacyLocationRedirectHref("/", params)).toBe("/nearby/thursday");
   });
 
   it("redirects view=map with suburb to /map", () => {

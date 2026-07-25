@@ -7,6 +7,7 @@ import {
   daysFromBrowserUrl,
   hashToDayNumber,
   pathSlugToDayNumber,
+  stripDayFromPath,
   stripDaySuffix,
 } from "./day-path";
 
@@ -52,28 +53,65 @@ describe("stripDaySuffix", () => {
   });
 });
 
+describe("stripDayFromPath", () => {
+  it("strips a trailing day path segment", () => {
+    expect(stripDayFromPath("/nearby/monday")).toEqual({
+      base: "/nearby",
+      day: 2,
+    });
+    expect(stripDayFromPath("/newtown-2042/monday")).toEqual({
+      base: "/newtown-2042",
+      day: 2,
+    });
+  });
+
+  it("strips legacy hyphenated day suffixes", () => {
+    expect(stripDayFromPath("/nearby-monday")).toEqual({
+      base: "/nearby",
+      day: 2,
+    });
+    expect(stripDayFromPath("/newtown-2042-monday")).toEqual({
+      base: "/newtown-2042",
+      day: 2,
+    });
+  });
+
+  it("does not treat a sole segment as a day", () => {
+    expect(stripDayFromPath("/monday")).toEqual({
+      base: "/monday",
+      day: null,
+    });
+  });
+});
+
 describe("appendDayToPath", () => {
-  it("appends a single day to the last segment", () => {
-    expect(appendDayToPath("/nearby", [2])).toBe("/nearby-monday");
-    expect(appendDayToPath("/newtown-2042", [2])).toBe("/newtown-2042-monday");
+  it("appends a single day as its own path segment", () => {
+    expect(appendDayToPath("/nearby", [2])).toBe("/nearby/monday");
+    expect(appendDayToPath("/newtown-2042", [2])).toBe("/newtown-2042/monday");
     expect(appendDayToPath("/newtown/the-venue", [2])).toBe(
-      "/newtown/the-venue-monday",
+      "/newtown/the-venue/monday",
     );
-    expect(appendDayToPath("/map", [5])).toBe("/map-thursday");
+  });
+
+  it("never appends a day to /map", () => {
+    expect(appendDayToPath("/map", [5])).toBe("/map");
   });
 
   it("strips an existing day when clearing the filter", () => {
+    expect(appendDayToPath("/nearby/monday", [])).toBe("/nearby");
+    expect(appendDayToPath("/newtown-2042/monday", [])).toBe("/newtown-2042");
     expect(appendDayToPath("/nearby-monday", [])).toBe("/nearby");
     expect(appendDayToPath("/newtown-2042-monday", [])).toBe("/newtown-2042");
   });
 
-  it("replaces an existing day suffix", () => {
-    expect(appendDayToPath("/nearby-monday", [5])).toBe("/nearby-thursday");
+  it("replaces an existing day segment", () => {
+    expect(appendDayToPath("/nearby/monday", [5])).toBe("/nearby/thursday");
+    expect(appendDayToPath("/nearby-monday", [5])).toBe("/nearby/thursday");
   });
 
   it("preserves query and hash", () => {
     expect(appendDayToPath("/nearby?q=beer", [2])).toBe(
-      "/nearby-monday?q=beer",
+      "/nearby/monday?q=beer",
     );
   });
 });
@@ -121,7 +159,16 @@ describe("dayNumberToHash / hashToDayNumber", () => {
 });
 
 describe("daysFromBrowserUrl", () => {
-  it("prefers the path suffix over query params", () => {
+  it("prefers a day path segment over query params", () => {
+    expect(
+      daysFromBrowserUrl(
+        "/nearby/monday",
+        new URLSearchParams("days=5"),
+      ),
+    ).toEqual([2]);
+  });
+
+  it("reads legacy hyphenated day suffixes", () => {
     expect(
       daysFromBrowserUrl(
         "/nearby-monday",

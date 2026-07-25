@@ -1,4 +1,4 @@
-/** Lowercase full weekday names used as path suffixes (`monday`, …). */
+/** Lowercase full weekday names used as path segments (`monday`, …). */
 export const DAY_PATH_SLUGS: Readonly<Record<number, string>> = {
   1: "sunday",
   2: "monday",
@@ -25,6 +25,11 @@ export function pathSlugToDayNumber(slug: string): number | null {
   return PATH_SLUG_TO_DAY[slug.trim().toLowerCase()] ?? null;
 }
 
+/** True when `slug` is a known weekday path segment (`monday`, …). */
+export function isDayPathSlug(slug: string): boolean {
+  return pathSlugToDayNumber(slug) !== null;
+}
+
 export type StrippedDaySuffix = {
   base: string;
   day: number | null;
@@ -33,6 +38,7 @@ export type StrippedDaySuffix = {
 /**
  * Strips a trailing weekday slug (`-monday`, …) from a single path segment.
  * Only known day names are stripped so postcodes and other suffixes stay intact.
+ * Kept for legacy hyphenated URLs and venue legacy redirects.
  */
 export function stripDaySuffix(slug: string): StrippedDaySuffix {
   const trimmed = slug.trim().toLowerCase();
@@ -49,11 +55,48 @@ export function stripDaySuffix(slug: string): StrippedDaySuffix {
   return { base, day };
 }
 
+export type StrippedDayPath = {
+  base: string;
+  day: number | null;
+};
+
 /**
- * Appends `-{day}` to the last path segment when exactly one day is selected.
- * Always strips an existing day suffix first so clearing the filter returns the base path.
+ * Removes a trailing day path segment (`/monday`) and any legacy `-{day}`
+ * suffixes from path segments. The sole segment of a path is never treated as
+ * a day segment (it is the where slug).
  */
-export function appendDayToPath(path: string, days: number[]): string {
+export function stripDayFromPath(pathname: string): StrippedDayPath {
+  const segments = pathname.split("/").filter(Boolean);
+  if (segments.length === 0) {
+    return { base: "/", day: null };
+  }
+
+  let day: number | null = null;
+  const working = [...segments];
+
+  if (working.length >= 2) {
+    const lastDay = pathSlugToDayNumber(working[working.length - 1]!);
+    if (lastDay !== null) {
+      day = lastDay;
+      working.pop();
+    }
+  }
+
+  const rewritten = working.map((segment) => {
+    const stripped = stripDaySuffix(segment);
+    if (stripped.day !== null && day === null) {
+      day = stripped.day;
+    }
+    return stripped.base;
+  });
+
+  return { base: `/${rewritten.join("/")}`, day };
+}
+
+function splitPathTrailing(path: string): {
+  pathOnly: string;
+  trailing: string;
+} {
   const hashIndex = path.indexOf("#");
   const queryIndex = path.indexOf("?");
   let suffixStart = path.length;
@@ -63,34 +106,38 @@ export function appendDayToPath(path: string, days: number[]): string {
   if (queryIndex >= 0) {
     suffixStart = Math.min(suffixStart, queryIndex);
   }
+  return {
+    pathOnly: path.slice(0, suffixStart),
+    trailing: path.slice(suffixStart),
+  };
+}
 
-  const pathOnly = path.slice(0, suffixStart);
-  const trailing = path.slice(suffixStart);
+/**
+ * Appends `/{day}` as its own path segment when exactly one day is selected.
+ * Always strips an existing day segment or legacy suffix first so clearing the
+ * filter returns the base path. `/map` never gains a day segment.
+ */
+export function appendDayToPath(path: string, days: number[]): string {
+  const { pathOnly, trailing } = splitPathTrailing(path);
   if (pathOnly === "/" || pathOnly === "") {
     return `${pathOnly || "/"}${trailing}`;
   }
 
-  const segments = pathOnly.split("/");
-  const lastIndex = segments.length - 1;
-  const last = segments[lastIndex] ?? "";
-  if (!last) {
-    return path;
+  const { base } = stripDayFromPath(pathOnly);
+  if (base === "/map") {
+    return `/map${trailing}`;
   }
 
-  const { base } = stripDaySuffix(last);
   if (days.length !== 1) {
-    segments[lastIndex] = base;
-    return `${segments.join("/")}${trailing}`;
+    return `${base}${trailing}`;
   }
 
   const daySlug = dayNumberToPathSlug(days[0]!);
   if (!daySlug) {
-    segments[lastIndex] = base;
-    return `${segments.join("/")}${trailing}`;
+    return `${base}${trailing}`;
   }
 
-  segments[lastIndex] = `${base}-${daySlug}`;
-  return `${segments.join("/")}${trailing}`;
+  return `${base}/${daySlug}${trailing}`;
 }
 
 function parseLegacySingleDayParam(value: string | null): number[] {
@@ -105,19 +152,17 @@ function parseLegacySingleDayParam(value: string | null): number[] {
 }
 
 /**
- * Days from a browser URL: prefer path suffix; fall back to legacy `?days=`
- * (used for redirects). Multi-day query values collapse to empty.
+ * Days from a browser URL: prefer a trailing day path segment, then a legacy
+ * hyphen suffix on any segment, then legacy `?days=` (used for redirects).
+ * Multi-day query values collapse to empty.
  */
 export function daysFromBrowserUrl(
   pathname: string,
   searchParams?: URLSearchParams | { get(name: string): string | null },
 ): number[] {
-  const segments = pathname.split("/").filter(Boolean);
-  for (const segment of segments) {
-    const { day } = stripDaySuffix(segment);
-    if (day !== null) {
-      return [day];
-    }
+  const { day: pathDay } = stripDayFromPath(pathname);
+  if (pathDay !== null) {
+    return [pathDay];
   }
 
   if (!searchParams) {
@@ -154,13 +199,13 @@ export function hashToDayNumber(hash: string): number | null {
 
 /**
  * Appends `#monday` when exactly one day is selected.
- * Strips any existing hash and any day path suffix on the last segment first.
+ * Strips any existing hash and any day path suffix/segment first.
  */
 export function appendDayHash(path: string, days: number[]): string {
   const hashIndex = path.indexOf("#");
   const pathWithoutHash = hashIndex >= 0 ? path.slice(0, hashIndex) : path;
 
-  // Venue pages use hash for day; strip any accidental path-day suffix.
+  // Venue pages use hash for day; strip any accidental path-day encoding.
   const queryIndex = pathWithoutHash.indexOf("?");
   const pathOnly =
     queryIndex >= 0 ? pathWithoutHash.slice(0, queryIndex) : pathWithoutHash;
@@ -169,13 +214,7 @@ export function appendDayHash(path: string, days: number[]): string {
 
   let cleanedPath = pathOnly;
   if (pathOnly !== "/" && pathOnly !== "") {
-    const segments = pathOnly.split("/");
-    const lastIndex = segments.length - 1;
-    const last = segments[lastIndex] ?? "";
-    if (last) {
-      segments[lastIndex] = stripDaySuffix(last).base;
-      cleanedPath = segments.join("/");
-    }
+    cleanedPath = stripDayFromPath(pathOnly).base;
   }
 
   const base = `${cleanedPath}${query}`;

@@ -3,7 +3,7 @@ import {
   appendDayHash,
   appendDayToPath,
   daysFromBrowserUrl,
-  stripDaySuffix,
+  stripDayFromPath,
 } from "@/lib/search/day-path";
 import { parseWherePath, stripLocationParams } from "@/lib/search/url";
 
@@ -193,12 +193,7 @@ export function mapEntryFromListPathname(pathname: string): MapEntry {
 }
 
 function baseListPath(path: string): string {
-  const segments = path.split("/").filter(Boolean);
-  if (segments.length === 0) {
-    return "/";
-  }
-  const rewritten = segments.map((segment) => stripDaySuffix(segment).base);
-  return `/${rewritten.join("/")}`;
+  return stripDayFromPath(path).base;
 }
 
 /**

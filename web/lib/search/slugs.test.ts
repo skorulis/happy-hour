@@ -101,10 +101,10 @@ describe("suburb slug aliases", () => {
     expect(suburbWhereRedirectPath("sydney-2000")).toBe("/sydney-cbd-2000");
     expect(
       suburbWhereRedirectPath("sydney-2000", { days: "5", q: "beer" }),
-    ).toBe("/sydney-cbd-2000-thursday?q=beer");
+    ).toBe("/sydney-cbd-2000/thursday?q=beer");
     expect(
       suburbWhereRedirectPath("sydney-2000", { day: 2, q: "beer" }),
-    ).toBe("/sydney-cbd-2000-monday?q=beer");
+    ).toBe("/sydney-cbd-2000/monday?q=beer");
     expect(suburbWhereRedirectPath("surry-hills-2010")).toBeNull();
   });
 

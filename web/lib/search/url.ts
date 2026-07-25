@@ -5,6 +5,7 @@ import { boundsToApiParams, type MapBounds } from "@/lib/search/bounds";
 import {
   appendDayToPath,
   daysFromBrowserUrl,
+  pathSlugToDayNumber,
   stripDaySuffix,
 } from "@/lib/search/day-path";
 import {
@@ -55,33 +56,40 @@ export function parseWherePath(pathname: string): WherePathKind {
   }
 
   const first = stripDaySuffix(segments[0]!);
-  const isMapSegment = segments[1] === "map";
+  let day: number | null = first.day;
+  let rest = segments.slice(1);
+
+  if (rest.length > 0) {
+    const segmentDay = pathSlugToDayNumber(rest[0]!);
+    if (segmentDay !== null) {
+      day = segmentDay;
+      rest = rest.slice(1);
+    }
+  }
+
+  const isMapSegment = rest[0] === "map";
 
   if (segments.length === 1 && first.base === "map") {
     return withOptionalDay({ kind: "anywhere", map: true }, first.day);
   }
 
   if (first.base === NEARBY_WHERE_SLUG) {
-    return withOptionalDay(
-      {
-        kind: "nearby",
-        map: isMapSegment,
-      },
-      first.day,
-    );
+    if (rest.length === 0 || (rest.length === 1 && isMapSegment)) {
+      return withOptionalDay(
+        {
+          kind: "nearby",
+          map: isMapSegment,
+        },
+        day,
+      );
+    }
+    return { kind: "anywhere", map: false };
   }
 
-  if (segments.length === 1) {
+  if (rest.length === 0 || (rest.length === 1 && isMapSegment)) {
     return withOptionalDay(
-      { kind: "suburb", slug: first.base, map: false },
-      first.day,
-    );
-  }
-
-  if (segments.length === 2 && segments[1] === "map") {
-    return withOptionalDay(
-      { kind: "suburb", slug: first.base, map: true },
-      first.day,
+      { kind: "suburb", slug: first.base, map: isMapSegment },
+      day,
     );
   }
 
@@ -205,8 +213,8 @@ export function initialVenueDay(days: number[]): number | null {
 }
 
 /**
- * Redirect legacy `?days=` browser URLs to path-suffixed URLs.
- * Multi-day query values drop the day filter (path without suffix).
+ * Redirect legacy `?days=` browser URLs to path-segment day URLs.
+ * Multi-day query values drop the day filter (path without day segment).
  * Returns null when no redirect is needed.
  */
 export function legacyDaysRedirectHref(
@@ -227,32 +235,34 @@ export function legacyDaysRedirectHref(
     return hrefWithQuery(appendDayToPath("/", day), cleaned);
   }
 
-  // Strip any existing day suffix, then re-apply single-day (or none).
-  const rewritten = segments.map((segment, index) => {
-    if (index === segments.length - 1 || segment !== "map") {
-      const { base } = stripDaySuffix(segment);
-      return base;
+  const cleanedSegments: string[] = [];
+  for (const segment of segments) {
+    if (pathSlugToDayNumber(segment) !== null) {
+      continue;
     }
-    return segment;
-  });
+    cleanedSegments.push(stripDaySuffix(segment).base);
+  }
 
-  // Canonical map URL never carries a day suffix (Google Maps referrer).
-  if (rewritten.length === 1 && rewritten[0] === "map") {
+  // Canonical map URL never carries a day segment (Google Maps referrer).
+  if (cleanedSegments.length === 1 && cleanedSegments[0] === "map") {
     return hrefWithQuery("/map", cleaned);
   }
 
-  // Day belongs on the where segment (first), not on trailing "map".
-  if (rewritten[rewritten.length - 1] === "map" && rewritten.length >= 2) {
-    rewritten[0] = appendDayToPath(rewritten[0]!, day).replace(/^\//, "");
-  } else {
-    const last = rewritten.length - 1;
-    rewritten[last] = appendDayToPath(rewritten[last]!, day).replace(
-      /^\//,
-      "",
-    );
+  const endsWithMap =
+    cleanedSegments.length >= 2 &&
+    cleanedSegments[cleanedSegments.length - 1] === "map";
+  const whereSegments = endsWithMap
+    ? cleanedSegments.slice(0, -1)
+    : cleanedSegments;
+  const wherePath =
+    whereSegments.length === 0 ? "/" : `/${whereSegments.join("/")}`;
+  const withDay = appendDayToPath(wherePath, day);
+
+  if (endsWithMap) {
+    return hrefWithQuery(`${withDay}/map`, cleaned);
   }
 
-  return hrefWithQuery(`/${rewritten.join("/")}`, cleaned);
+  return hrefWithQuery(withDay, cleaned);
 }
 
 function parseTimeRange(
