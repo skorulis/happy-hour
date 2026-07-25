@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { DuskAtmosphere } from "@/components/DuskAtmosphere";
+import { getAppVersion } from "@/lib/app-version";
 
 export const metadata: Metadata = {
   title: "About | DuskRoute",
@@ -10,6 +11,8 @@ export const metadata: Metadata = {
 };
 
 export default function AboutPage() {
+  const version = getAppVersion();
+
   return (
     <div className="relative flex flex-1 flex-col items-center justify-center overflow-hidden px-4 py-20 md:px-6 text-center">
       <DuskAtmosphere />
@@ -45,6 +48,8 @@ export default function AboutPage() {
         >
           Find happy hours
         </Link>
+
+        <p className="text-sm text-muted">v {version}</p>
       </div>
     </div>
   );

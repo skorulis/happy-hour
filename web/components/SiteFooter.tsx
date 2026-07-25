@@ -1,9 +1,11 @@
 import Link from "next/link";
-import { getAppVersion } from "@/lib/app-version";
+import { SiInstagram, SiUntappd } from "react-icons/si";
+
+const socialLinkClassName =
+  "inline-flex items-center gap-1.5 transition-colors hover:text-accent-soft";
 
 export function SiteFooter() {
   const year = new Date().getFullYear();
-  const version = getAppVersion();
 
   return (
     <footer className="border-t border-border-subtle/80 bg-background/40 backdrop-blur-md">
@@ -44,8 +46,26 @@ export function SiteFooter() {
           >
             © {year} skorulis.com
           </a>
-          {" | v "}
-          {version}
+          {" | "}
+          <a
+            href="https://www.instagram.com/skorulis/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={socialLinkClassName}
+          >
+            <SiInstagram aria-hidden className="h-3.5 w-3.5 shrink-0" />
+            Instagram
+          </a>
+          {" | "}
+          <a
+            href="https://untappd.com/user/Skorulis"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={socialLinkClassName}
+          >
+            <SiUntappd aria-hidden className="h-3.5 w-3.5 shrink-0" />
+            Untappd
+          </a>
         </p>
       </div>
     </footer>
