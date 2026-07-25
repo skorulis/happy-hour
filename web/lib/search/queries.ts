@@ -434,6 +434,9 @@ export type RegionWithCounts = {
 export type RegionSearchResult = {
   id: number;
   name: string;
+  lat?: number | null;
+  lng?: number | null;
+  sqkm?: number | null;
 };
 
 export type ListPopularSuburbsOptions = {
@@ -638,7 +641,13 @@ export async function findRegionBySlug(
   }
 
   const regions = await db
-    .select({ id: geographicRegion.id, name: geographicRegion.name })
+    .select({
+      id: geographicRegion.id,
+      name: geographicRegion.name,
+      lat: geographicRegion.lat,
+      lng: geographicRegion.lng,
+      sqkm: geographicRegion.sqkm,
+    })
     .from(geographicRegion);
 
   return regions.find((region) => regionSlug(region.name) === normalized) ?? null;

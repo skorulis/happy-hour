@@ -15,7 +15,8 @@
     "db:push": "drizzle-kit push",
     "sync": "tsx scripts/sync-sqlite.ts",
     "sync:prod": "tsx scripts/sync-prod.ts",
-    "import-suburbs": "tsx scripts/import-suburbs.ts"
+    "import-suburbs": "tsx scripts/import-suburbs.ts",
+    "backfill-region-geo": "tsx scripts/backfill-region-geo.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1091.0",

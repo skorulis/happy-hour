@@ -9,6 +9,7 @@ import { track } from "@/lib/analytics/client";
 import type {
   DealSearchResult,
   PopularSuburb,
+  RegionSearchResult,
   SuburbSearchResult,
   VenueListResult,
 } from "@/lib/search/queries";
@@ -30,6 +31,7 @@ import {
   NEAR_ME_MAP_RADIUS_KM,
   VENUE_MAP_RADIUS_KM,
   nearbySuburbRadiusKm,
+  regionMapRadiusKm,
 } from "@/lib/search/nearby-radius";
 import { suburbWhereSlug } from "@/lib/search/slugs";
 import {
@@ -124,6 +126,24 @@ async function fetchSuburbBySlug(
   }
   const data = (await response.json()) as { suburb: SuburbSearchResult };
   return data.suburb;
+}
+
+async function fetchRegionBySlug(
+  slug: string,
+  signal?: AbortSignal,
+): Promise<RegionSearchResult | null> {
+  const params = new URLSearchParams({ slug });
+  const response = await fetch(`/api/regions/where?${params.toString()}`, {
+    signal,
+  });
+  if (response.status === 404) {
+    return null;
+  }
+  if (!response.ok) {
+    throw new Error("Failed to load region");
+  }
+  const data = (await response.json()) as { region: RegionSearchResult };
+  return data.region;
 }
 
 export function useSearchFilters(options?: {
@@ -281,30 +301,55 @@ export function useSearchFilters(options?: {
     void (async () => {
       try {
         const suburb = await fetchSuburbBySlug(slug);
-        if (cancelled || !suburb || suburb.lat == null || suburb.lng == null) {
+        if (cancelled) {
           return;
         }
 
-        const bounds = boundsFromCenterRadiusKm(
-          suburb.lat,
-          suburb.lng,
-          nearbySuburbRadiusKm(suburb.sqkm),
+        if (suburb) {
+          if (suburb.lat == null || suburb.lng == null) {
+            return;
+          }
+
+          const bounds = boundsFromCenterRadiusKm(
+            suburb.lat,
+            suburb.lng,
+            nearbySuburbRadiusKm(suburb.sqkm),
+          );
+          if (!bounds || cancelled) {
+            return;
+          }
+
+          applyInitialMapBounds(bounds);
+          setFilters((current) => ({
+            ...current,
+            where: {
+              kind: "suburb",
+              id: suburb.id,
+              suburb,
+            },
+          }));
+          return;
+        }
+
+        // Region list pages share the `/{slug}` path shape with suburbs, so a
+        // suburb miss means the map was opened from a region.
+        const region = await fetchRegionBySlug(slug);
+        if (cancelled || !region || region.lat == null || region.lng == null) {
+          return;
+        }
+
+        const regionBounds = boundsFromCenterRadiusKm(
+          region.lat,
+          region.lng,
+          regionMapRadiusKm(region.sqkm),
         );
-        if (!bounds || cancelled) {
+        if (!regionBounds || cancelled) {
           return;
         }
 
-        applyInitialMapBounds(bounds);
-        setFilters((current) => ({
-          ...current,
-          where: {
-            kind: "suburb",
-            id: suburb.id,
-            suburb,
-          },
-        }));
+        applyInitialMapBounds(regionBounds);
       } catch {
-        // Keep default map camera if suburb lookup fails.
+        // Keep default map camera if the location lookup fails.
       }
     })();
 

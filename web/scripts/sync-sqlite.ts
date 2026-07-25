@@ -14,6 +14,7 @@ import {
   type SqliteDealSchedule,
   syncVenueDeals,
 } from "./sync-deals";
+import { syncRegionGeo } from "./sync-region-geo";
 
 type RegionCatalogEntry = {
   name: string;
@@ -244,6 +245,7 @@ async function main() {
   let venueSuburbsSynced = 0;
   let prunedEmptySuburbs = 0;
   let prunedIneligibleVenues = 0;
+  let regionsFramed = 0;
   const syncedSuburbKeys = new Set<string>();
   const today = sydneyToday();
   const liveRegionNames = loadLiveRegionNames();
@@ -623,6 +625,9 @@ async function main() {
       prunedEmptySuburbs = pruned.length;
     }
 
+    // Region map framing follows suburb membership, so recompute it last.
+    regionsFramed = (await syncRegionGeo(db)).framed;
+
     await db
       .update(schema.syncRun)
       .set({
@@ -652,6 +657,7 @@ async function main() {
   console.log(`    Bulk (live regions): ${bulkSuburbsSynced}`);
   console.log(`    Via venues (non-bulk): ${venueSuburbsSynced}`);
   console.log(`  Empty non-live suburbs pruned: ${prunedEmptySuburbs}`);
+  console.log(`  Regions with map framing: ${regionsFramed}`);
   if (!useIncremental) {
     console.log(`  Ineligible venues pruned: ${prunedIneligibleVenues}`);
   }

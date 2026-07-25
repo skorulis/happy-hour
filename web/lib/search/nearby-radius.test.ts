@@ -5,6 +5,7 @@ import {
   NEARBY_SUBURB_BUFFER_KM,
   VENUE_MAP_RADIUS_KM,
   nearbySuburbRadiusKm,
+  regionMapRadiusKm,
 } from "./nearby-radius";
 
 describe("NEAR_ME_RADIUS_KM", () => {
@@ -45,5 +46,19 @@ describe("nearbySuburbRadiusKm", () => {
     expect(oneSqkm).toBeCloseTo(Math.sqrt(1 / Math.PI) + NEARBY_SUBURB_BUFFER_KM);
     expect(fourSqkm).toBeCloseTo(Math.sqrt(4 / Math.PI) + NEARBY_SUBURB_BUFFER_KM);
     expect(fourSqkm).toBeGreaterThan(oneSqkm);
+  });
+});
+
+describe("regionMapRadiusKm", () => {
+  it("is zero when region area is missing or invalid", () => {
+    expect(regionMapRadiusKm(null)).toBe(0);
+    expect(regionMapRadiusKm(undefined)).toBe(0);
+    expect(regionMapRadiusKm(0)).toBe(0);
+    expect(regionMapRadiusKm(-1)).toBe(0);
+  });
+
+  it("returns the radius of the equivalent circle without a buffer", () => {
+    expect(regionMapRadiusKm(Math.PI)).toBeCloseTo(1);
+    expect(regionMapRadiusKm(Math.PI * 900)).toBeCloseTo(30);
   });
 });

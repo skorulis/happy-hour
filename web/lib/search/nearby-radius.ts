@@ -20,3 +20,16 @@ export function nearbySuburbRadiusKm(sqkm: number | null | undefined): number {
 
   return encompassingRadiusKm + NEARBY_SUBURB_BUFFER_KM;
 }
+
+/**
+ * Radius (km) for the map viewport when entering from a region. Region area is
+ * stored as the circle that already covers its suburbs plus a buffer, so no
+ * further buffer is added here.
+ */
+export function regionMapRadiusKm(sqkm: number | null | undefined): number {
+  if (sqkm === null || sqkm === undefined || !(sqkm > 0)) {
+    return 0;
+  }
+
+  return Math.sqrt(sqkm / Math.PI);
+}

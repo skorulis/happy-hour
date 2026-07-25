@@ -29,6 +29,10 @@ export const geographicRegion = pgTable(
       .references(() => country.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
     heroImage: text("hero_image"),
+    // Map camera framing, derived from member suburb centres.
+    lat: doublePrecision("lat"),
+    lng: doublePrecision("lng"),
+    sqkm: doublePrecision("sqkm"),
   },
   (table) => [
     uniqueIndex("geographic_region_country_name_idx").on(

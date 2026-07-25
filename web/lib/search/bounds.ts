@@ -99,7 +99,7 @@ export function boundsFromGoogleMap(map: google.maps.Map): MapBounds | null {
   return isValidBounds(bounds) ? bounds : null;
 }
 
-const KM_PER_DEG_LAT = 111;
+export const KM_PER_DEG_LAT = 111;
 
 /**
  * Approximate bounding box for a circle of `radiusKm` around a point.
