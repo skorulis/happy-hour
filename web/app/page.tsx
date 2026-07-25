@@ -32,11 +32,41 @@ export default async function Home() {
         <SearchUrlRedirect />
       </Suspense>
 
-      <div className="relative flex flex-1 flex-col overflow-hidden">
-        <DuskAtmosphere />
+      <div className="relative flex flex-1 flex-col">
+        <section className="relative flex min-h-[55vh] flex-col overflow-hidden md:min-h-[60vh]">
+          <Image
+            src="/landing-hero.jpg"
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-center"
+          />
 
-        <div className="relative mx-auto flex w-full max-w-5xl flex-1 flex-col gap-12 px-4 py-16 md:gap-16 md:px-6 md:py-20">
-          <header className="animate-dusk-rise flex flex-col items-center gap-6 text-center">
+          {/* Readability scrim — heavier left (bright sunset) and bottom fade into page */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background: `
+                linear-gradient(
+                  90deg,
+                  rgb(8 20 38 / 0.72) 0%,
+                  rgb(8 20 38 / 0.45) 45%,
+                  rgb(8 20 38 / 0.55) 100%
+                ),
+                linear-gradient(
+                  180deg,
+                  rgb(8 20 38 / 0.35) 0%,
+                  rgb(8 20 38 / 0.25) 40%,
+                  rgb(8 20 38 / 0.85) 78%,
+                  var(--background) 100%
+                )
+              `,
+            }}
+            aria-hidden
+          />
+
+          <header className="animate-dusk-rise relative z-10 mx-auto flex w-full max-w-5xl flex-1 flex-col items-center justify-center gap-6 px-4 py-20 text-center md:px-6 md:py-28">
             <Image
               src="/icon.png"
               alt=""
@@ -61,9 +91,13 @@ export default async function Home() {
               </p>
             </div>
           </header>
+        </section>
 
-          <section
-            className="animate-dusk-rise"
+        <section className="relative overflow-hidden">
+          <DuskAtmosphere />
+
+          <div
+            className="animate-dusk-rise relative mx-auto w-full max-w-5xl px-4 pb-16 pt-4 md:px-6 md:pb-20 md:pt-6"
             style={{ animationDelay: "0.15s" }}
           >
             <PopularRegions
@@ -71,8 +105,8 @@ export default async function Home() {
               title="Where to?"
               description="Jump to deals near you, or pick a region to explore."
             />
-          </section>
-        </div>
+          </div>
+        </section>
       </div>
     </>
   );
