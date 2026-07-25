@@ -3,14 +3,10 @@ import {
   appendDayHash,
   daysFromBrowserUrl,
 } from "@/lib/search/day-path";
-import {
-  parseWhatTokens,
-  parseWherePath,
-  stripCatalogWhatFromParams,
-  stripLocationParams,
-} from "@/lib/search/url";
+import { parseWherePath, stripLocationParams } from "@/lib/search/url";
 import {
   appendFiltersToPath,
+  splitWhatForPath,
   stripFiltersFromPath,
 } from "@/lib/search/what-path";
 
@@ -27,6 +23,12 @@ export type MapEntry = {
   source: MapEntrySource;
   /** True until the map has applied the entry as its initial camera. */
   cameraPending: boolean;
+  /**
+   * Free-text what tokens that cannot live on the list path filter segment.
+   * Catalog what stays encoded on `listPath`; this preserves the rest while
+   * the map URL itself carries no what (mirrors how day is kept off `/map`).
+   */
+  queryWhat?: string[];
 };
 
 export type VenueMapCameraSeed = {
@@ -123,6 +125,7 @@ function parseMapEntry(raw: string | null): MapEntry | null {
       listPath?: unknown;
       source?: unknown;
       cameraPending?: unknown;
+      queryWhat?: unknown;
     };
 
     if (typeof entry.listPath !== "string" || entry.listPath.length === 0) {
@@ -133,10 +136,18 @@ function parseMapEntry(raw: string | null): MapEntry | null {
       return null;
     }
 
+    const queryWhat = Array.isArray(entry.queryWhat)
+      ? entry.queryWhat.filter(
+          (token): token is string =>
+            typeof token === "string" && token.length > 0,
+        )
+      : [];
+
     return {
       listPath: entry.listPath,
       source: entry.source,
       cameraPending: entry.cameraPending === true,
+      ...(queryWhat.length > 0 ? { queryWhat } : {}),
     };
   } catch {
     return null;
@@ -167,7 +178,10 @@ export function mapEntryFromVenue(
   };
 }
 
-export function mapEntryFromListPathname(pathname: string): MapEntry {
+export function mapEntryFromListPathname(
+  pathname: string,
+  queryWhat: string[] = [],
+): MapEntry {
   const venueSeed = venueMapCameraSeed;
   if (venueSeed && venueSeed.listPath === pathname) {
     return mapEntryFromVenue(venueSeed.listPath, venueSeed.lat, venueSeed.lng);
@@ -176,12 +190,15 @@ export function mapEntryFromListPathname(pathname: string): MapEntry {
   const parsed = parseWherePath(pathname);
   const day = parsed.day !== undefined ? [parsed.day] : [];
   const what = parsed.what ?? [];
+  const freeText = queryWhat.filter((token) => token.trim().length > 0);
+  const queryWhatFields = freeText.length > 0 ? { queryWhat: freeText } : {};
 
   if (parsed.kind === "nearby") {
     return {
       listPath: appendFiltersToPath("/nearby", day, what),
       source: { kind: "nearby" },
       cameraPending: true,
+      ...queryWhatFields,
     };
   }
 
@@ -190,6 +207,7 @@ export function mapEntryFromListPathname(pathname: string): MapEntry {
       listPath: appendFiltersToPath(`/${parsed.slug}`, day, what),
       source: { kind: "suburb", slug: parsed.slug },
       cameraPending: true,
+      ...queryWhatFields,
     };
   }
 
@@ -197,6 +215,7 @@ export function mapEntryFromListPathname(pathname: string): MapEntry {
     listPath: appendFiltersToPath("/", day, what),
     source: { kind: "anywhere" },
     cameraPending: true,
+    ...queryWhatFields,
   };
 }
 
@@ -231,6 +250,37 @@ export function daysFromMapEntry(
   return [];
 }
 
+/**
+ * What tokens carried by the map entry: catalog tokens encoded on the stored
+ * `listPath` plus any free-text tokens kept on the entry. Mirrors how the day
+ * is read back from the entry while the map URL itself stays bare.
+ */
+export function whatFromMapEntry(entry: MapEntry | null): string[] {
+  if (!entry) {
+    return [];
+  }
+
+  const what = [...stripFiltersFromPath(entry.listPath).what];
+  for (const token of entry.queryWhat ?? []) {
+    if (!what.some((item) => item.toLowerCase() === token.toLowerCase())) {
+      what.push(token);
+    }
+  }
+  return what;
+}
+
+function hrefWithQueryAndHash(path: string, qs: string): string {
+  if (!qs) {
+    return path;
+  }
+  // Hash must come after query if both exist; appendDayHash already places hash last.
+  const hashIndex = path.indexOf("#");
+  if (hashIndex >= 0) {
+    return `${path.slice(0, hashIndex)}?${qs}${path.slice(hashIndex)}`;
+  }
+  return `${path}?${qs}`;
+}
+
 export function listHrefFromMapEntry(
   entry: MapEntry | null,
   params: URLSearchParams,
@@ -239,30 +289,38 @@ export function listHrefFromMapEntry(
   const stored = entry?.listPath ?? "/";
   const day = daysFromMapEntry(entry, mapPathname, params);
   const base = baseListPath(stored);
-  const what = parseWhatTokens(params.get("q") ?? "");
-  const path =
-    entry?.source.kind === "venue"
-      ? appendDayHash(base, day)
-      : appendFiltersToPath(base, day, what);
-  const qs = (
-    entry?.source.kind === "venue"
-      ? stripLocationParams(params)
-      : stripCatalogWhatFromParams(stripLocationParams(params))
-  ).toString();
-  // Hash must come after query if both exist; appendDayHash already places hash last.
-  if (!qs) {
-    return path;
+
+  if (entry?.source.kind === "venue") {
+    return hrefWithQueryAndHash(
+      appendDayHash(base, day),
+      stripLocationParams(params).toString(),
+    );
   }
-  const hashIndex = path.indexOf("#");
-  if (hashIndex >= 0) {
-    return `${path.slice(0, hashIndex)}?${qs}${path.slice(hashIndex)}`;
+
+  // What is owned by the map entry (the map URL never carries it), so ignore
+  // any stale `q` on the map URL and rebuild it from the entry instead.
+  const what = whatFromMapEntry(entry);
+  const path = appendFiltersToPath(base, day, what);
+  const cleaned = stripLocationParams(params);
+  cleaned.delete("q");
+  const { queryTokens } = splitWhatForPath(what);
+  if (queryTokens.length > 0) {
+    cleaned.set("q", queryTokens.join(","));
   }
-  return `${path}?${qs}`;
+  return hrefWithQueryAndHash(path, cleaned.toString());
 }
 
-/** Keep the stored list path's day in sync while the map URL stays `/map`. */
-export function syncMapEntryDays(
+function queryWhatEqual(a: string[], b: string[]): boolean {
+  return a.length === b.length && a.every((token, index) => token === b[index]);
+}
+
+/**
+ * Keep the stored list path's day and catalog what in sync while the map URL
+ * stays `/map`, preserving free-text what on the entry. Mirrors day handling.
+ */
+export function syncMapEntryFilters(
   days: number[],
+  what: string[],
   storage: Pick<Storage, "getItem" | "setItem"> | null = getSessionStorage(),
 ): void {
   if (!storage) {
@@ -275,22 +333,31 @@ export function syncMapEntryDays(
   }
 
   const stripped = stripFiltersFromPath(entry.listPath);
-  const nextListPath = appendFiltersToPath(
-    stripped.base,
-    days,
-    stripped.what,
-  );
-  if (nextListPath === entry.listPath) {
+  const nextListPath = appendFiltersToPath(stripped.base, days, what);
+  const { queryTokens } = splitWhatForPath(what);
+  const currentQueryWhat = entry.queryWhat ?? [];
+  if (
+    nextListPath === entry.listPath &&
+    queryWhatEqual(currentQueryWhat, queryTokens)
+  ) {
     return;
+  }
+
+  const nextEntry: MapEntry = {
+    ...entry,
+    listPath: nextListPath,
+    ...(queryTokens.length > 0
+      ? { queryWhat: queryTokens }
+      : { queryWhat: undefined }),
+  };
+  if (queryTokens.length === 0) {
+    delete nextEntry.queryWhat;
   }
 
   try {
     // Update in place — do not go through writeMapEntry, which clears the
     // in-memory camera seed used for the current map visit.
-    storage.setItem(
-      MAP_ENTRY_STORAGE_KEY,
-      JSON.stringify({ ...entry, listPath: nextListPath }),
-    );
+    storage.setItem(MAP_ENTRY_STORAGE_KEY, JSON.stringify(nextEntry));
     notifyMapEntryListeners();
   } catch {
     // Ignore quota errors and private browsing restrictions.

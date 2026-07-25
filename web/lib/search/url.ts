@@ -188,25 +188,16 @@ function hrefWithQuery(path: string, params: URLSearchParams): string {
 }
 
 /**
- * Map href from a list pathname. Catalog what tokens on the list path are
- * moved into `?q=` so the map keeps filtering (day stays in map-entry).
+ * Map href from a list pathname. The map URL never carries what (catalog or
+ * free-text); it is preserved on the session map-entry instead, mirroring how
+ * the day is kept off `/map`.
  */
 export function pathnameToMapHref(
   pathname: string,
   params: URLSearchParams,
 ): string {
   const cleaned = stripLocationParams(params);
-  const { what: pathWhat } = stripFiltersFromPath(pathname);
-  if (pathWhat.length > 0) {
-    const existing = parseWhatParam(cleaned.get("q"));
-    const merged = [...pathWhat];
-    for (const token of existing) {
-      if (!merged.some((item) => item.toLowerCase() === token.toLowerCase())) {
-        merged.push(token);
-      }
-    }
-    cleaned.set("q", merged.join(","));
-  }
+  cleaned.delete("q");
   return hrefWithQuery(whereToMapPath(), cleaned);
 }
 
@@ -343,14 +334,10 @@ export function legacyDaysRedirectHref(
     }
   }
 
-  // Canonical map URL never carries a filter segment.
+  // Canonical map URL never carries a filter segment or what; the map entry
+  // owns what once the client takes over.
   if (stripped.base === "/map") {
-    // Restore full q on map (including catalog tokens).
-    if (queryWhat.length > 0) {
-      cleaned.set("q", queryWhat.join(","));
-    } else {
-      cleaned.delete("q");
-    }
+    cleaned.delete("q");
     return hrefWithQuery("/map", cleaned);
   }
 
@@ -682,13 +669,14 @@ export function legacyLocationRedirectHref(
   const qs = isMap
     ? stripLocationParams(params)
     : stripCatalogWhatFromParams(stripLocationParams(params));
+  if (isMap) {
+    // Map URLs never carry what; the map entry owns it once on the client.
+    qs.delete("q");
+  }
 
   let path: string;
   if (isMap) {
     path = whereToMapPath(day);
-    if (what.length > 0) {
-      qs.set("q", what.join(","));
-    }
   } else if (legacy.type === "nearby") {
     path = appendFiltersToPath(`/${NEARBY_WHERE_SLUG}`, day, what);
   } else {

@@ -9,7 +9,8 @@ import {
   readMapEntry,
   readPendingMapEntryCamera,
   setVenueMapCameraSeed,
-  syncMapEntryDays,
+  syncMapEntryFilters,
+  whatFromMapEntry,
   writeMapEntry,
   type MapEntry,
 } from "./map-entry";
@@ -146,20 +147,30 @@ describe("listHrefFromMapEntry", () => {
     );
   });
 
-  it("moves map q catalog tokens into the list path", () => {
+  it("restores catalog what stored on the entry path, ignoring map q", () => {
     const entry: MapEntry = {
-      listPath: "/abbotsbury-2176/thursday",
+      listPath: "/abbotsbury-2176/thursday-beer",
       source: { kind: "suburb", slug: "abbotsbury-2176" },
       cameraPending: false,
     };
 
+    // The map URL no longer carries what, so a stray `q` must not leak through.
     expect(
-      listHrefFromMapEntry(
-        entry,
-        new URLSearchParams("q=beer"),
-        "/map",
-      ),
+      listHrefFromMapEntry(entry, new URLSearchParams("q=wine"), "/map"),
     ).toBe("/abbotsbury-2176/thursday-beer");
+  });
+
+  it("restores free-text what from the entry into the list query", () => {
+    const entry: MapEntry = {
+      listPath: "/abbotsbury-2176/thursday",
+      source: { kind: "suburb", slug: "abbotsbury-2176" },
+      cameraPending: false,
+      queryWhat: ["obscure snack"],
+    };
+
+    expect(listHrefFromMapEntry(entry, new URLSearchParams(), "/map")).toBe(
+      "/abbotsbury-2176/thursday?q=obscure+snack",
+    );
   });
 
   it("restores the venue path with a day hash", () => {
@@ -192,30 +203,65 @@ describe("listHrefFromMapEntry", () => {
   });
 });
 
-describe("syncMapEntryDays", () => {
-  it("rewrites the stored list path day while keeping the source and what", () => {
+describe("whatFromMapEntry", () => {
+  it("returns [] for a missing entry", () => {
+    expect(whatFromMapEntry(null)).toEqual([]);
+  });
+
+  it("merges catalog what on the path with free-text queryWhat", () => {
+    const entry: MapEntry = {
+      listPath: "/abbotsbury-2176/thursday-beer",
+      source: { kind: "suburb", slug: "abbotsbury-2176" },
+      cameraPending: false,
+      queryWhat: ["obscure snack"],
+    };
+
+    expect(whatFromMapEntry(entry)).toEqual(["beer", "obscure snack"]);
+  });
+});
+
+describe("syncMapEntryFilters", () => {
+  it("rewrites the stored list path day and catalog what while keeping the source", () => {
     const storage = memoryStorage();
     writeMapEntry(
       mapEntryFromListPathname("/abbotsbury-2176/monday-beer"),
       storage,
     );
 
-    syncMapEntryDays([5], storage);
+    syncMapEntryFilters([5], ["cocktails"], storage);
 
     expect(readMapEntry(storage)).toEqual({
-      listPath: "/abbotsbury-2176/thursday-beer",
+      listPath: "/abbotsbury-2176/thursday-cocktails",
       source: { kind: "suburb", slug: "abbotsbury-2176" },
       cameraPending: true,
     });
   });
 
-  it("clears the day segment when the map day filter is cleared", () => {
+  it("stores free-text what on the entry rather than the path", () => {
     const storage = memoryStorage();
-    writeMapEntry(mapEntryFromListPathname("/nearby/monday"), storage);
+    writeMapEntry(mapEntryFromListPathname("/abbotsbury-2176"), storage);
 
-    syncMapEntryDays([], storage);
+    syncMapEntryFilters([5], ["beer", "obscure snack"], storage);
 
-    expect(readMapEntry(storage)?.listPath).toBe("/nearby");
+    expect(readMapEntry(storage)).toEqual({
+      listPath: "/abbotsbury-2176/thursday-beer",
+      source: { kind: "suburb", slug: "abbotsbury-2176" },
+      cameraPending: true,
+      queryWhat: ["obscure snack"],
+    });
+  });
+
+  it("clears the day and what when both filters are cleared", () => {
+    const storage = memoryStorage();
+    writeMapEntry(mapEntryFromListPathname("/nearby/monday-beer"), storage);
+
+    syncMapEntryFilters([], [], storage);
+
+    expect(readMapEntry(storage)).toEqual({
+      listPath: "/nearby",
+      source: { kind: "nearby" },
+      cameraPending: true,
+    });
   });
 });
 

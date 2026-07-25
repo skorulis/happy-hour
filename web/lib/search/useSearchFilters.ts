@@ -25,7 +25,8 @@ import {
   readSeededMapBounds,
   rememberSeededMapBounds,
   daysFromMapEntry,
-  syncMapEntryDays,
+  syncMapEntryFilters,
+  whatFromMapEntry,
 } from "@/lib/search/map-entry";
 import {
   NEAR_ME_MAP_RADIUS_KM,
@@ -365,32 +366,47 @@ export function useSearchFilters(options?: {
       return;
     }
 
-    const entryDays = daysFromMapEntry(readMapEntry());
-    if (entryDays.length === 0) {
+    const entry = readMapEntry();
+    const entryDays = daysFromMapEntry(entry);
+    const entryWhat = whatFromMapEntry(entry);
+    if (entryDays.length === 0 && entryWhat.length === 0) {
       return;
     }
 
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setFilters((current) => {
-      if (current.days.length > 0) {
+      const days =
+        current.days.length === 0 && entryDays.length > 0
+          ? entryDays
+          : current.days;
+      const what =
+        current.what.length === 0 && entryWhat.length > 0
+          ? entryWhat
+          : current.what;
+      if (days === current.days && what === current.what) {
         return current;
       }
-      return { ...current, days: entryDays };
+      return { ...current, days, what };
     });
+    if (entryWhat.length > 0) {
+      // Keep the debounced what (drives fetching + URL sync) aligned with the
+      // restore so it does not lag behind by a debounce cycle.
+      setDebouncedWhat((current) => (current.length === 0 ? entryWhat : current));
+    }
   }, [mapViewport]);
 
   useEffect(() => {
     if (!mapViewport) {
       return;
     }
-    // Skip the mount pass so we do not clear a day stored on the map entry
+    // Skip the mount pass so we do not clear a day/what stored on the map entry
     // before the restore effect above can apply it.
     if (skipMapDaySyncOnceRef.current) {
       skipMapDaySyncOnceRef.current = false;
       return;
     }
-    syncMapEntryDays(filters.days);
-  }, [mapViewport, daysKey, filters.days]);
+    syncMapEntryFilters(filters.days, filters.what);
+  }, [mapViewport, daysKey, whatKey, filters.days, filters.what]);
 
   useEffect(() => {
     if (!mapViewport || !nearbyCameraPendingRef.current) {
@@ -432,10 +448,17 @@ export function useSearchFilters(options?: {
       const params = new URLSearchParams(current);
       const parsed = parseWherePath(path);
       let days = parsed.day !== undefined ? [parsed.day] : [];
-      const pathWhat = parsed.what ?? [];
-      // `/map` never encodes the day; keep the current selection (or map entry).
-      if (parsed.map && days.length === 0) {
-        days = daysFromMapEntry(readMapEntry(), path, params);
+      let pathWhat = parsed.what ?? [];
+      // `/map` never encodes the day or what; restore both from the map entry
+      // when the URL carries none (a legacy `?q=` is honoured when present).
+      if (parsed.map) {
+        const entry = readMapEntry();
+        if (days.length === 0) {
+          days = daysFromMapEntry(entry, path, params);
+        }
+        if (!params.get("q")) {
+          pathWhat = whatFromMapEntry(entry);
+        }
       }
 
       if (parsed.kind === "nearby") {
@@ -572,9 +595,13 @@ export function useSearchFilters(options?: {
     const nextPath = filtersToBrowserPath(filters, pathname, {
       anywhereBasePath: listBasePath,
     });
-    const next = filtersToBrowserSearchParams(filters, debouncedWhat, {
-      pathEncodeWhat: !mapViewport,
-    }).toString();
+    // The map URL never carries what (catalog or free-text); it lives on the
+    // map entry, mirroring how the day stays off `/map`.
+    const next = filtersToBrowserSearchParams(
+      filters,
+      mapViewport ? [] : debouncedWhat,
+      { pathEncodeWhat: !mapViewport },
+    ).toString();
 
     if (
       nextPath === syncedPathRef.current &&

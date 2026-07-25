@@ -10,7 +10,12 @@ import {
   subscribeMapEntry,
   writeMapEntry,
 } from "@/lib/search/map-entry";
-import { parseWherePath, pathnameToMapHref } from "@/lib/search/url";
+import {
+  parseWhatTokens,
+  parseWherePath,
+  pathnameToMapHref,
+} from "@/lib/search/url";
+import { splitWhatForPath } from "@/lib/search/what-path";
 import { List, MapPin } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -44,7 +49,13 @@ export function MapNavLink() {
 
   function handleClick() {
     if (!isMapOpen) {
-      writeMapEntry(mapEntryFromListPathname(pathname));
+      // Catalog what is already encoded on the list pathname; carry the
+      // free-text portion of `?q=` onto the map entry so it survives the
+      // switch to the map view (where the URL holds no what).
+      const { queryTokens } = splitWhatForPath(
+        parseWhatTokens(searchParams.get("q") ?? ""),
+      );
+      writeMapEntry(mapEntryFromListPathname(pathname, queryTokens));
     }
 
     track("view_mode_toggled", {

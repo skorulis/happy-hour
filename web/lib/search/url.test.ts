@@ -270,12 +270,15 @@ describe("filtersToBrowserPath", () => {
 });
 
 describe("pathname list/map hrefs", () => {
-  it("keeps map at /map and embeds day/what only on list paths", () => {
+  it("keeps map at /map and never carries what on the map URL", () => {
     const params = new URLSearchParams();
     expect(pathnameToMapHref("/abbotsbury-2176/thursday", params)).toBe("/map");
     expect(pathnameToMapHref("/abbotsbury-2176/thursday-beer", params)).toBe(
-      "/map?q=beer",
+      "/map",
     );
+    expect(
+      pathnameToMapHref("/abbotsbury-2176/thursday", new URLSearchParams("q=beer")),
+    ).toBe("/map");
     expect(pathnameToListHref("/abbotsbury-2176/thursday/map", params)).toBe(
       "/abbotsbury-2176/thursday",
     );
@@ -326,13 +329,13 @@ describe("legacyDaysRedirectHref", () => {
     expect(legacyDaysRedirectHref("/nearby", new URLSearchParams())).toBeNull();
   });
 
-  it("strips days from /map without adding a filter segment", () => {
+  it("strips days and what from /map without adding a filter segment", () => {
     expect(legacyDaysRedirectHref("/map", new URLSearchParams("days=5"))).toBe(
       "/map",
     );
     expect(
       legacyDaysRedirectHref("/map", new URLSearchParams("days=5&q=beer")),
-    ).toBe("/map?q=beer");
+    ).toBe("/map");
   });
 });
 
