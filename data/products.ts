@@ -223,12 +223,33 @@ function dealTitleAndDetailsText(deals: DealTextFields[]): string {
     .join(" ");
 }
 
+function titleMatchesBottomless(deals: DealTextFields[]): boolean {
+  return findProductsMatchingText(dealTitleText(deals)).some(
+    (product) => product.name.toLowerCase() === "bottomless",
+  );
+}
+
+function matchProductsInText(text: string): Product[] {
+  return suppressOverlappingMatches(text, findProductsMatchingText(text));
+}
+
 const PRODUCT_MATCH_RULES_V2: ProductMatchRuleV2[] = [
+  {
+    id: "bottomless-title-only",
+    apply: (deals) => {
+      if (!titleMatchesBottomless(deals)) {
+        return [];
+      }
+      return matchProductsInText(dealTitleText(deals));
+    },
+  },
   {
     id: "combined-substring",
     apply: (deals) => {
-      const text = dealTitleAndDetailsText(deals);
-      return suppressOverlappingMatches(text, findProductsMatchingText(text));
+      if (titleMatchesBottomless(deals)) {
+        return [];
+      }
+      return matchProductsInText(dealTitleAndDetailsText(deals));
     },
   },
 ];

@@ -150,6 +150,27 @@ describe("extractProducts", () => {
     expect(result.products).toHaveLength(3);
   });
 
+  it("ignores details matches when the title matches bottomless", () => {
+    const result = extractProducts({
+      title: "$49 Bottomless",
+      details: "pizza, pasta, beer and cocktails",
+    });
+
+    expect(result.products).toEqual([{ name: "bottomless", price: 49 }]);
+  });
+
+  it("still matches other title products alongside bottomless", () => {
+    const result = extractProducts({
+      title: "Bottomless pizza $39",
+      details: "includes salad and chips",
+    });
+
+    expect(result.products.map((product) => product.name).sort()).toEqual([
+      "bottomless",
+      "pizza",
+    ]);
+  });
+
   it("falls back to details when title has no keyword match", () => {
     expect(
       extractProducts({

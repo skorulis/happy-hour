@@ -46,3 +46,7 @@ If a product name or synonym appears only inside one of these phrases, that hit 
   "chips down"
 ]
 ```
+
+## Match rules
+
+- **Bottomless title-only:** If the deal title matches `bottomless`, product matching uses the title only and ignores details. Other title keywords (e.g. `Bottomless pizza`) still match.

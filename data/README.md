@@ -47,6 +47,10 @@ If a product name or synonym appears only inside one of these phrases, that hit 
 ]
 ```
 
+## Match rules
+
+- **Bottomless title-only:** If the deal title matches `bottomless`, product matching uses the title only and ignores details. Other title keywords (e.g. `Bottomless pizza`) still match.
+
 # Geographic regions
 
 Approved geographic regions used by DealScraper (and shared with the web via the `data/` copy). Defined in [`regions.json`](regions.json).
