@@ -17,7 +17,7 @@ export default function PrivacyPage() {
         <h1 className="text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
           Privacy policy
         </h1>
-        <p className="text-sm text-muted">Last updated: 22 July 2026</p>
+        <p className="text-sm text-muted">Last updated: 26 July 2026</p>
       </header>
 
       <article className="space-y-8 text-base leading-relaxed text-secondary">
@@ -91,6 +91,15 @@ export default function PrivacyPage() {
               ID.
             </li>
             <li>
+              <span className="text-foreground">Search analytics</span> — when
+              you run a nearby or suburb deal search, we may store the search
+              type, selected suburb (for suburb searches), selected day of week
+              (when exactly one day is chosen), and selected products. If you
+              are signed in, the record may be linked to your user ID; otherwise
+              it is anonymous. We do not store your precise GPS coordinates in
+              this table.
+            </li>
+            <li>
               <span className="text-foreground">Approximate location</span> —
               only if you use “near me” and grant browser geolocation
               permission. Coordinates are used for nearby search and are not
@@ -118,7 +127,9 @@ export default function PrivacyPage() {
             </li>
             <li>
               Understand product usage via analytics (for example page views,
-              searches, map interactions, and venue opens).
+              searches, map interactions, and venue opens), including
+              first-party search analytics stored in our application database
+              to improve search and the product.
             </li>
             <li>Diagnose errors and reliability issues via error monitoring.</li>
             <li>
@@ -142,8 +153,8 @@ export default function PrivacyPage() {
             <li>
               <span className="text-foreground">Application database</span> —
               Postgres hosted on a DigitalOcean droplet in Sydney (accounts,
-              sessions, favorites, venue ownership, deals, reports, and related
-              app data).
+              sessions, favorites, venue ownership, deals, reports, first-party
+              search analytics, and related app data).
             </li>
             <li>
               <span className="text-foreground">Uploaded images</span> —
@@ -233,8 +244,10 @@ export default function PrivacyPage() {
           <p>
             If you choose “near me”, your browser may ask for location
             permission. Coordinates are used to find nearby deals via our API
-            and to show your position on the map. We do not keep a history of
-            your precise location on your user profile.
+            and to show your position on the map. We may log that a nearby
+            search occurred (without storing those coordinates) for product
+            analytics. We do not keep a history of your precise location on
+            your user profile.
           </p>
         </section>
 
@@ -263,12 +276,15 @@ export default function PrivacyPage() {
             <li>
               There is currently no in-product account deletion or data-export
               flow. If you want an account removed, contact us using the details
-              below and we will handle the request manually.
+              below and we will handle the request manually, including search
+              analytics rows linked to your user ID when applicable.
             </li>
           </ul>
           <p>
-            Analytics and error data retention is controlled by Amplitude and
-            Sentry according to their product settings. Uploaded deal images may
+            First-party search analytics remain in our application database
+            until we purge them operationally or remove them as part of a
+            manual account-removal request. Amplitude and Sentry retention is
+            controlled by their product settings. Uploaded deal images may
             remain publicly reachable by URL while they exist in our storage.
           </p>
         </section>

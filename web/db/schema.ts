@@ -8,6 +8,7 @@ import {
   jsonb,
   pgTable,
   serial,
+  smallint,
   text,
   timestamp,
   uniqueIndex,
@@ -233,6 +234,31 @@ export const syncRun = pgTable("sync_run", {
   suburbsSynced: integer("suburbs_synced").notNull().default(0),
 });
 
+export const searchQueryType = ["nearby", "suburb"] as const;
+export type SearchQueryType = (typeof searchQueryType)[number];
+
+export const searchQueries = pgTable(
+  "search_queries",
+  {
+    id: serial("id").primaryKey(),
+    userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+    type: text("type").notNull(),
+    suburbId: integer("suburb_id").references(() => suburb.id, {
+      onDelete: "set null",
+    }),
+    day: smallint("day"),
+    products: text("products"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("search_queries_user_id_idx").on(table.userId),
+    index("search_queries_suburb_id_idx").on(table.suburbId),
+    index("search_queries_created_at_idx").on(table.createdAt),
+  ],
+);
+
 export const venueRelations = relations(venue, ({ one, many }) => ({
   suburb: one(suburb, {
     fields: [venue.suburbId],
@@ -267,6 +293,18 @@ export const suburbRelations = relations(suburb, ({ one, many }) => ({
     references: [geographicRegion.id],
   }),
   venues: many(venue),
+  searchQueries: many(searchQueries),
+}));
+
+export const searchQueriesRelations = relations(searchQueries, ({ one }) => ({
+  user: one(user, {
+    fields: [searchQueries.userId],
+    references: [user.id],
+  }),
+  suburb: one(suburb, {
+    fields: [searchQueries.suburbId],
+    references: [suburb.id],
+  }),
 }));
 
 export const venueLinksRelations = relations(venueLinks, ({ one }) => ({
@@ -341,6 +379,7 @@ export type DealReport = typeof dealReport.$inferSelect;
 export type FavoriteDeal = typeof favoriteDeal.$inferSelect;
 export type VenueOwnership = typeof venueOwnership.$inferSelect;
 export type SyncRun = typeof syncRun.$inferSelect;
+export type SearchQuery = typeof searchQueries.$inferSelect;
 
 /** Full-text search vector for deals (used in raw SQL queries). */
 export const dealSearchVector = sql`to_tsvector('english', coalesce(${deal.title}, '') || ' ' || coalesce(${deal.details}, '') || ' ' || coalesce(${deal.conditions}, ''))`;

@@ -1,6 +1,7 @@
 import { sendAnalyticsEvent } from "@/lib/analytics/send";
 import { validateAnalyticsTrackRequest } from "@/lib/analytics/validate";
 import { auth } from "@/lib/auth";
+import { after } from "next/server";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
@@ -19,18 +20,14 @@ export async function POST(request: Request) {
 
   const session = await auth.api.getSession({ headers: request.headers });
 
-  try {
-    await sendAnalyticsEvent({
+  after(() =>
+    sendAnalyticsEvent({
       ...validated.value,
       user_id: session?.user.id ?? null,
-    });
+    }).catch((error) => {
+      console.error("Failed to send analytics event", error);
+    }),
+  );
 
-    return NextResponse.json({ ok: true });
-  } catch (error) {
-    console.error("Failed to send analytics event", error);
-    return NextResponse.json(
-      { error: "Failed to track event" },
-      { status: 500 },
-    );
-  }
+  return NextResponse.json({ ok: true });
 }

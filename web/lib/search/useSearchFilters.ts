@@ -609,6 +609,7 @@ export function useSearchFilters(options?: {
           track("search_performed", {
             view: mapViewport ? "map" : "list",
             where_kind: whereKind,
+            suburb_id: whereKind === "suburb" ? filters.where.id : null,
             suburb_slug:
               whereKind === "suburb"
                 ? suburbWhereSlug(
