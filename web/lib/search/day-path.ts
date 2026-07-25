@@ -64,6 +64,8 @@ export type StrippedDayPath = {
  * Removes a trailing day path segment (`/monday`) and any legacy `-{day}`
  * suffixes from path segments. The sole segment of a path is never treated as
  * a day segment (it is the where slug).
+ * Compound filter segments (`/wednesday-beer`) are handled by
+ * `stripFiltersFromPath` in what-path.ts.
  */
 export function stripDayFromPath(pathname: string): StrippedDayPath {
   const segments = pathname.split("/").filter(Boolean);
@@ -90,7 +92,10 @@ export function stripDayFromPath(pathname: string): StrippedDayPath {
     return stripped.base;
   });
 
-  return { base: `/${rewritten.join("/")}`, day };
+  return {
+    base: rewritten.length === 0 ? "/" : `/${rewritten.join("/")}`,
+    day,
+  };
 }
 
 function splitPathTrailing(path: string): {
@@ -114,8 +119,9 @@ function splitPathTrailing(path: string): {
 
 /**
  * Appends `/{day}` as its own path segment when exactly one day is selected.
- * Always strips an existing day segment or legacy suffix first so clearing the
- * filter returns the base path. `/map` never gains a day segment.
+ * Always strips an existing pure day segment or legacy suffix first.
+ * Prefer `appendFiltersToPath` when catalog what tokens may be present.
+ * `/map` never gains a day segment.
  */
 export function appendDayToPath(path: string, days: number[]): string {
   const { pathOnly, trailing } = splitPathTrailing(path);
@@ -152,9 +158,9 @@ function parseLegacySingleDayParam(value: string | null): number[] {
 }
 
 /**
- * Days from a browser URL: prefer a trailing day path segment, then a legacy
- * hyphen suffix on any segment, then legacy `?days=` (used for redirects).
- * Multi-day query values collapse to empty.
+ * Days from a browser URL: prefer a trailing day path segment (including the
+ * day prefix of a compound filter segment like `wednesday-beer`), then a legacy
+ * hyphen suffix, then legacy `?days=`. Multi-day query values collapse to empty.
  */
 export function daysFromBrowserUrl(
   pathname: string,
@@ -163,6 +169,17 @@ export function daysFromBrowserUrl(
   const { day: pathDay } = stripDayFromPath(pathname);
   if (pathDay !== null) {
     return [pathDay];
+  }
+
+  // Compound filter segments (`/sydney/wednesday-beer`) are not pure day
+  // segments; read the leading day slug when present.
+  const segments = pathname.split("/").filter(Boolean);
+  if (segments.length >= 2) {
+    const firstPart = segments[segments.length - 1]!.split("-")[0]!;
+    const compoundDay = pathSlugToDayNumber(firstPart);
+    if (compoundDay !== null) {
+      return [compoundDay];
+    }
   }
 
   if (!searchParams) {

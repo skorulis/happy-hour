@@ -6,12 +6,24 @@ import { canManageVenue } from "@/lib/admin";
 import { auth } from "@/lib/auth";
 import {
   dayNumberToHash,
-  pathSlugToDayNumber,
   stripDaySuffix,
 } from "@/lib/search/day-path";
 import { getVenueDetailBySlug } from "@/lib/search/queries";
-import { suburbWhereRedirectPath, venuePath, venueRedirectPath } from "@/lib/search/slugs";
-import { parseDaysParam, parseWhatTokens } from "@/lib/search/url";
+import {
+  suburbWhereRedirectPath,
+  venuePath,
+  venueRedirectPath,
+} from "@/lib/search/slugs";
+import {
+  appendFiltersToPath,
+  legacyDaysRedirectHref,
+  parseDaysParam,
+  parseWhatTokens,
+} from "@/lib/search/url";
+import {
+  parseFilterSegment,
+  splitWhatForPath,
+} from "@/lib/search/what-path";
 import {
   generateWhereListMetadata,
   renderWhereListPage,
@@ -28,11 +40,18 @@ export async function generateMetadata({
 }: VenuePageProps): Promise<Metadata> {
   const { suburb, venueSlug: rawVenueSlug } = await params;
   const { q: whatParam } = await searchParams;
-  const day = pathSlugToDayNumber(rawVenueSlug);
+  const filter = parseFilterSegment(rawVenueSlug);
 
-  if (day !== null) {
-    const what = whatParam ? parseWhatTokens(whatParam) : [];
-    return generateWhereListMetadata(suburb, [day], what);
+  if (filter) {
+    const queryWhat = whatParam ? parseWhatTokens(whatParam) : [];
+    const days = filter.day !== null ? [filter.day] : [];
+    const what = [...filter.what];
+    for (const token of queryWhat) {
+      if (!what.some((item) => item.toLowerCase() === token.toLowerCase())) {
+        what.push(token);
+      }
+    }
+    return generateWhereListMetadata(suburb, days, what);
   }
 
   const { base: venueSlug } = stripDaySuffix(rawVenueSlug);
@@ -77,20 +96,64 @@ export default async function VenuePage({ params, searchParams }: VenuePageProps
   const { suburb, venueSlug: rawVenueSlug } = await params;
   const resolvedSearchParams = await searchParams;
   const { days: daysParam, q: whatParam } = resolvedSearchParams;
-  const day = pathSlugToDayNumber(rawVenueSlug);
+  const filter = parseFilterSegment(rawVenueSlug);
 
-  // `/{where}/{day}` list URLs share this dynamic segment with venues.
-  if (day !== null) {
+  // `/{where}/{filter}` list URLs share this dynamic segment with venues.
+  if (filter) {
+    const search = new URLSearchParams();
+    if (daysParam) {
+      search.set("days", daysParam);
+    }
+    if (whatParam) {
+      search.set("q", whatParam);
+    }
+
+    const daysRedirect = legacyDaysRedirectHref(
+      `/${suburb}/${rawVenueSlug}`,
+      search,
+    );
+    if (daysRedirect) {
+      permanentRedirect(daysRedirect);
+    }
+
+    const queryWhat = whatParam ? parseWhatTokens(whatParam) : [];
+    const { pathTokens, queryTokens } = splitWhatForPath(queryWhat);
+    if (pathTokens.length > 0) {
+      const days = filter.day !== null ? [filter.day] : [];
+      const mergedWhat = [...filter.what];
+      for (const token of pathTokens) {
+        if (
+          !mergedWhat.some((item) => item.toLowerCase() === token.toLowerCase())
+        ) {
+          mergedWhat.push(token);
+        }
+      }
+      const path = appendFiltersToPath(`/${suburb}`, days, mergedWhat);
+      const cleaned = new URLSearchParams();
+      if (queryTokens.length > 0) {
+        cleaned.set("q", queryTokens.join(","));
+      }
+      const qs = cleaned.toString();
+      permanentRedirect(qs ? `${path}?${qs}` : path);
+    }
+
+    const days = filter.day !== null ? [filter.day] : [];
     const aliasRedirect = suburbWhereRedirectPath(suburb, {
-      day,
+      day: filter.day ?? undefined,
+      what: filter.what,
       q: whatParam,
     });
     if (aliasRedirect) {
       redirect(aliasRedirect);
     }
 
-    const what = whatParam ? parseWhatTokens(whatParam) : [];
-    return renderWhereListPage(suburb, [day], what);
+    const what = [...filter.what];
+    for (const token of queryWhat) {
+      if (!what.some((item) => item.toLowerCase() === token.toLowerCase())) {
+        what.push(token);
+      }
+    }
+    return renderWhereListPage(suburb, days, what);
   }
 
   const { base: pathBase, day: pathDay } = stripDaySuffix(rawVenueSlug);

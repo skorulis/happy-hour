@@ -432,6 +432,7 @@ export function useSearchFilters(options?: {
       const params = new URLSearchParams(current);
       const parsed = parseWherePath(path);
       let days = parsed.day !== undefined ? [parsed.day] : [];
+      const pathWhat = parsed.what ?? [];
       // `/map` never encodes the day; keep the current selection (or map entry).
       if (parsed.map && days.length === 0) {
         days = daysFromMapEntry(readMapEntry(), path, params);
@@ -443,10 +444,20 @@ export function useSearchFilters(options?: {
             currentFilters.where.kind === "nearMe"
               ? currentFilters.where
               : { kind: "nearMe" as const };
-          return searchParamsToInitialFilters(params, existingNearMe, days);
+          return searchParamsToInitialFilters(
+            params,
+            existingNearMe,
+            days,
+            pathWhat,
+          );
         });
         setDebouncedWhat(
-          searchParamsToInitialFilters(params, { kind: "anywhere" }, days).what,
+          searchParamsToInitialFilters(
+            params,
+            { kind: "anywhere" },
+            days,
+            pathWhat,
+          ).what,
         );
         return;
       }
@@ -467,7 +478,12 @@ export function useSearchFilters(options?: {
               id: suburb.id,
               suburb,
             };
-            const fromUrl = searchParamsToInitialFilters(params, where, days);
+            const fromUrl = searchParamsToInitialFilters(
+              params,
+              where,
+              days,
+              pathWhat,
+            );
             setFilters(fromUrl);
             setDebouncedWhat(fromUrl.what);
           } catch {
@@ -481,6 +497,7 @@ export function useSearchFilters(options?: {
         params,
         { kind: "anywhere" },
         days,
+        pathWhat,
       );
       setFilters(fromUrl);
       setDebouncedWhat(fromUrl.what);
@@ -555,7 +572,9 @@ export function useSearchFilters(options?: {
     const nextPath = filtersToBrowserPath(filters, pathname, {
       anywhereBasePath: listBasePath,
     });
-    const next = filtersToBrowserSearchParams(filters, debouncedWhat).toString();
+    const next = filtersToBrowserSearchParams(filters, debouncedWhat, {
+      pathEncodeWhat: !mapViewport,
+    }).toString();
 
     if (
       nextPath === syncedPathRef.current &&
@@ -584,6 +603,7 @@ export function useSearchFilters(options?: {
     filters,
     router,
     listBasePath,
+    mapViewport,
   ]);
 
   useEffect(() => {

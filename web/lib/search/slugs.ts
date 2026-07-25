@@ -1,4 +1,5 @@
-import { appendDayHash, appendDayToPath } from "@/lib/search/day-path";
+import { appendDayHash } from "@/lib/search/day-path";
+import { appendFiltersToPath, splitWhatForPath } from "@/lib/search/what-path";
 
 export const UNKNOWN_SUBURB_SLUG = "unknown";
 export const NEARBY_WHERE_SLUG = "nearby";
@@ -48,7 +49,12 @@ function hrefWithOptionalQuery(
 
 export function suburbWhereRedirectPath(
   whereSlug: string,
-  searchParams?: { day?: number; days?: string; q?: string },
+  searchParams?: {
+    day?: number;
+    days?: string;
+    what?: string[];
+    q?: string;
+  },
 ): string | null {
   const normalized = whereSlug.trim().toLowerCase();
   const canonical = SUBURB_WHERE_SLUG_ALIASES[normalized];
@@ -58,12 +64,27 @@ export function suburbWhereRedirectPath(
 
   const day =
     searchParams?.day ?? singleDayFromLegacyParam(searchParams?.days) ?? null;
-  const path = appendDayToPath(
+  const explicitWhat = searchParams?.what;
+  let pathWhat = explicitWhat ?? [];
+  let queryQ = searchParams?.q;
+  if (explicitWhat === undefined && searchParams?.q) {
+    const split = splitWhatForPath(
+      searchParams.q
+        .split(",")
+        .map((part) => part.trim())
+        .filter((part) => part.length > 0),
+    );
+    pathWhat = split.pathTokens;
+    queryQ =
+      split.queryTokens.length > 0 ? split.queryTokens.join(",") : undefined;
+  }
+  const path = appendFiltersToPath(
     `/${canonical}`,
     day !== null ? [day] : [],
+    pathWhat,
   );
 
-  return hrefWithOptionalQuery(path, searchParams);
+  return hrefWithOptionalQuery(path, { q: queryQ });
 }
 
 export function suburbMapRedirectPath(whereSlug: string): string | null {

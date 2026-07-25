@@ -5,7 +5,6 @@ import { boundsToApiParams, type MapBounds } from "@/lib/search/bounds";
 import {
   appendDayToPath,
   daysFromBrowserUrl,
-  pathSlugToDayNumber,
   stripDaySuffix,
 } from "@/lib/search/day-path";
 import {
@@ -13,6 +12,12 @@ import {
   suburbWherePath,
   suburbWhereSlug,
 } from "@/lib/search/slugs";
+import {
+  appendFiltersToPath,
+  parseFilterSegment,
+  splitWhatForPath,
+  stripFiltersFromPath,
+} from "@/lib/search/what-path";
 
 export const DEFAULT_SEARCH_FILTERS: SearchFilters = {
   days: [],
@@ -22,18 +27,29 @@ export const DEFAULT_SEARCH_FILTERS: SearchFilters = {
 };
 
 export type WherePathKind =
-  | { kind: "anywhere"; map: boolean; day?: number }
-  | { kind: "nearby"; map: boolean; day?: number }
-  | { kind: "suburb"; slug: string; map: boolean; day?: number };
+  | { kind: "anywhere"; map: boolean; day?: number; what?: string[] }
+  | { kind: "nearby"; map: boolean; day?: number; what?: string[] }
+  | {
+      kind: "suburb";
+      slug: string;
+      map: boolean;
+      day?: number;
+      what?: string[];
+    };
 
-function withOptionalDay<T extends WherePathKind>(
+function withOptionalFilters<T extends WherePathKind>(
   value: T,
   day: number | null,
+  what: string[],
 ): T {
-  if (day === null) {
-    return value;
+  let next: T = value;
+  if (day !== null) {
+    next = { ...next, day };
   }
-  return { ...value, day };
+  if (what.length > 0) {
+    next = { ...next, what };
+  }
+  return next;
 }
 
 export function stripLocationParams(params: URLSearchParams): URLSearchParams {
@@ -48,6 +64,24 @@ export function stripLocationParams(params: URLSearchParams): URLSearchParams {
   return filtered;
 }
 
+/** Drop catalog tokens from `q` after they have been moved into the path. */
+export function stripCatalogWhatFromParams(
+  params: URLSearchParams,
+): URLSearchParams {
+  const filtered = new URLSearchParams(params.toString());
+  const q = filtered.get("q");
+  if (q === null) {
+    return filtered;
+  }
+  const { queryTokens } = splitWhatForPath(parseWhatTokens(q));
+  if (queryTokens.length === 0) {
+    filtered.delete("q");
+  } else {
+    filtered.set("q", queryTokens.join(","));
+  }
+  return filtered;
+}
+
 export function parseWherePath(pathname: string): WherePathKind {
   const segments = pathname.split("/").filter(Boolean);
 
@@ -57,12 +91,14 @@ export function parseWherePath(pathname: string): WherePathKind {
 
   const first = stripDaySuffix(segments[0]!);
   let day: number | null = first.day;
+  let what: string[] = [];
   let rest = segments.slice(1);
 
   if (rest.length > 0) {
-    const segmentDay = pathSlugToDayNumber(rest[0]!);
-    if (segmentDay !== null) {
-      day = segmentDay;
+    const filter = parseFilterSegment(rest[0]!);
+    if (filter) {
+      day = filter.day ?? day;
+      what = filter.what;
       rest = rest.slice(1);
     }
   }
@@ -70,26 +106,32 @@ export function parseWherePath(pathname: string): WherePathKind {
   const isMapSegment = rest[0] === "map";
 
   if (segments.length === 1 && first.base === "map") {
-    return withOptionalDay({ kind: "anywhere", map: true }, first.day);
+    return withOptionalFilters(
+      { kind: "anywhere", map: true },
+      first.day,
+      [],
+    );
   }
 
   if (first.base === NEARBY_WHERE_SLUG) {
     if (rest.length === 0 || (rest.length === 1 && isMapSegment)) {
-      return withOptionalDay(
+      return withOptionalFilters(
         {
           kind: "nearby",
           map: isMapSegment,
         },
         day,
+        what,
       );
     }
     return { kind: "anywhere", map: false };
   }
 
   if (rest.length === 0 || (rest.length === 1 && isMapSegment)) {
-    return withOptionalDay(
+    return withOptionalFilters(
       { kind: "suburb", slug: first.base, map: isMapSegment },
       day,
+      what,
     );
   }
 
@@ -99,6 +141,7 @@ export function parseWherePath(pathname: string): WherePathKind {
 export function whereToListPath(
   where: WhereFilter,
   days: number[] = [],
+  what: string[] = [],
 ): string {
   let path: string;
   if (where.kind === "suburb") {
@@ -108,7 +151,7 @@ export function whereToListPath(
   } else {
     path = "/";
   }
-  return appendDayToPath(path, days);
+  return appendFiltersToPath(path, days, what);
 }
 
 /**
@@ -130,9 +173,13 @@ export function filtersToBrowserPath(
     return whereToMapPath(filters.days);
   }
   if (filters.where.kind === "anywhere" && options?.anywhereBasePath) {
-    return appendDayToPath(options.anywhereBasePath, filters.days);
+    return appendFiltersToPath(
+      options.anywhereBasePath,
+      filters.days,
+      filters.what,
+    );
   }
-  return whereToListPath(filters.where, filters.days);
+  return whereToListPath(filters.where, filters.days, filters.what);
 }
 
 function hrefWithQuery(path: string, params: URLSearchParams): string {
@@ -140,11 +187,27 @@ function hrefWithQuery(path: string, params: URLSearchParams): string {
   return qs ? `${path}?${qs}` : path;
 }
 
+/**
+ * Map href from a list pathname. Catalog what tokens on the list path are
+ * moved into `?q=` so the map keeps filtering (day stays in map-entry).
+ */
 export function pathnameToMapHref(
-  _pathname: string,
+  pathname: string,
   params: URLSearchParams,
 ): string {
-  return hrefWithQuery(whereToMapPath(), stripLocationParams(params));
+  const cleaned = stripLocationParams(params);
+  const { what: pathWhat } = stripFiltersFromPath(pathname);
+  if (pathWhat.length > 0) {
+    const existing = parseWhatParam(cleaned.get("q"));
+    const merged = [...pathWhat];
+    for (const token of existing) {
+      if (!merged.some((item) => item.toLowerCase() === token.toLowerCase())) {
+        merged.push(token);
+      }
+    }
+    cleaned.set("q", merged.join(","));
+  }
+  return hrefWithQuery(whereToMapPath(), cleaned);
 }
 
 export function pathnameToListHref(
@@ -156,6 +219,15 @@ export function pathnameToListHref(
     parsed.day !== undefined
       ? [parsed.day]
       : daysFromBrowserUrl(pathname, params);
+  const pathWhat = parsed.what ?? stripFiltersFromPath(pathname).what;
+  const queryWhat = parseWhatParam(params.get("q"));
+  const what = [...pathWhat];
+  for (const token of queryWhat) {
+    if (!what.some((item) => item.toLowerCase() === token.toLowerCase())) {
+      what.push(token);
+    }
+  }
+
   let path: string;
   if (parsed.kind === "nearby") {
     path = `/${NEARBY_WHERE_SLUG}`;
@@ -164,7 +236,10 @@ export function pathnameToListHref(
   } else {
     path = "/";
   }
-  return hrefWithQuery(appendDayToPath(path, day), stripLocationParams(params));
+
+  const withFilters = appendFiltersToPath(path, day, what);
+  const cleaned = stripCatalogWhatFromParams(stripLocationParams(params));
+  return hrefWithQuery(withFilters, cleaned);
 }
 
 /** Legacy helper: map href from query params alone (anywhere). */
@@ -206,63 +281,92 @@ export function appendDaysParam(path: string, days: number[]): string {
   return `${path}?days=${days.join(",")}`;
 }
 
-export { appendDayToPath };
+export { appendDayToPath, appendFiltersToPath };
 
 export function initialVenueDay(days: number[]): number | null {
   return days.length === 1 ? days[0]! : null;
 }
 
 /**
- * Redirect legacy `?days=` browser URLs to path-segment day URLs.
- * Multi-day query values drop the day filter (path without day segment).
- * Returns null when no redirect is needed.
+ * Redirect legacy `?days=` and catalog `?q=` tokens into the filter path segment.
+ * Free-text `q` tokens remain as query params. `/map` keeps `q` and never gets
+ * a filter segment. Returns null when no redirect is needed.
  */
 export function legacyDaysRedirectHref(
   pathname: string,
   params: URLSearchParams,
 ): string | null {
-  if (!params.has("days")) {
+  const hasDays = params.has("days");
+  const queryWhat = parseWhatParam(params.get("q"));
+  const { pathTokens, queryTokens } = splitWhatForPath(queryWhat);
+  const needsWhatRedirect = pathTokens.length > 0 && pathname !== "/map";
+
+  if (!hasDays && !needsWhatRedirect) {
     return null;
   }
 
-  const parsedDays = parseDaysParam(params.get("days"));
-  const day = parsedDays.length === 1 ? parsedDays : [];
-  const cleaned = new URLSearchParams(params.toString());
-  cleaned.delete("days");
-
+  // Home has no where segment to attach filters to — leave catalog q as-is.
   const segments = pathname.split("/").filter(Boolean);
   if (segments.length === 0) {
+    if (!hasDays) {
+      return null;
+    }
+    const cleaned = new URLSearchParams(params.toString());
+    cleaned.delete("days");
+    const parsedDays = parseDaysParam(params.get("days"));
+    const day = parsedDays.length === 1 ? parsedDays : [];
     return hrefWithQuery(appendDayToPath("/", day), cleaned);
   }
 
-  const cleanedSegments: string[] = [];
-  for (const segment of segments) {
-    if (pathSlugToDayNumber(segment) !== null) {
-      continue;
-    }
-    cleanedSegments.push(stripDaySuffix(segment).base);
+  const parsedDays = hasDays ? parseDaysParam(params.get("days")) : [];
+  const dayFromQuery = parsedDays.length === 1 ? parsedDays : [];
+  const cleaned = new URLSearchParams(params.toString());
+  cleaned.delete("days");
+  if (queryTokens.length === 0) {
+    cleaned.delete("q");
+  } else {
+    cleaned.set("q", queryTokens.join(","));
   }
 
-  // Canonical map URL never carries a day segment (Google Maps referrer).
-  if (cleanedSegments.length === 1 && cleanedSegments[0] === "map") {
+  const stripped = stripFiltersFromPath(pathname);
+  const existingDay =
+    dayFromQuery.length === 1
+      ? dayFromQuery
+      : stripped.day !== null
+        ? [stripped.day]
+        : [];
+  const existingWhat = stripped.what;
+  const mergedWhat = [...existingWhat];
+  for (const token of pathTokens) {
+    if (!mergedWhat.some((item) => item.toLowerCase() === token.toLowerCase())) {
+      mergedWhat.push(token);
+    }
+  }
+
+  // Canonical map URL never carries a filter segment.
+  if (stripped.base === "/map") {
+    // Restore full q on map (including catalog tokens).
+    if (queryWhat.length > 0) {
+      cleaned.set("q", queryWhat.join(","));
+    } else {
+      cleaned.delete("q");
+    }
     return hrefWithQuery("/map", cleaned);
   }
 
+  const pathSegments = stripped.base.split("/").filter(Boolean);
   const endsWithMap =
-    cleanedSegments.length >= 2 &&
-    cleanedSegments[cleanedSegments.length - 1] === "map";
-  const whereSegments = endsWithMap
-    ? cleanedSegments.slice(0, -1)
-    : cleanedSegments;
-  const wherePath =
-    whereSegments.length === 0 ? "/" : `/${whereSegments.join("/")}`;
-  const withDay = appendDayToPath(wherePath, day);
+    pathSegments.length >= 2 && pathSegments[pathSegments.length - 1] === "map";
+  const wherePath = endsWithMap
+    ? `/${pathSegments.slice(0, -1).join("/")}`
+    : stripped.base;
+  const withFilters = appendFiltersToPath(wherePath, existingDay, mergedWhat);
 
   if (endsWithMap) {
-    return hrefWithQuery(`${withDay}/map`, cleaned);
+    return hrefWithQuery(`${withFilters}/map`, cleaned);
   }
 
-  return hrefWithQuery(withDay, cleaned);
+  return hrefWithQuery(withFilters, cleaned);
 }
 
 function parseTimeRange(
@@ -374,10 +478,11 @@ export function searchParamsEqual(a: string, b: string): boolean {
   return true;
 }
 
-/** Browser URL query params — time and what only (days live in the path). */
+/** Browser URL query params — time always; what only when not path-encoded. */
 export function filtersToBrowserSearchParams(
   filters: SearchFilters,
   what: string[],
+  options?: { pathEncodeWhat?: boolean },
 ): URLSearchParams {
   const params = new URLSearchParams();
 
@@ -389,7 +494,14 @@ export function filtersToBrowserSearchParams(
       params.set("endMinute", String(filters.timeRange.endMinute));
     }
   }
-  if (what.length > 0) {
+
+  const pathEncodeWhat = options?.pathEncodeWhat ?? true;
+  if (pathEncodeWhat) {
+    const { queryTokens } = splitWhatForPath(what);
+    if (queryTokens.length > 0) {
+      params.set("q", queryTokens.join(","));
+    }
+  } else if (what.length > 0) {
     params.set("q", what.join(","));
   }
 
@@ -408,7 +520,15 @@ export function searchParamsToFilters(
   params: URLSearchParams,
   where: WhereFilter = { kind: "anywhere" },
   days: number[] = [],
+  pathWhat: string[] = [],
 ): SearchFilters {
+  const queryWhat = parseWhatParam(params.get("q"));
+  const what = [...pathWhat];
+  for (const token of queryWhat) {
+    if (!what.some((item) => item.toLowerCase() === token.toLowerCase())) {
+      what.push(token);
+    }
+  }
   return {
     days,
     timeRange: parseTimeRange(
@@ -416,20 +536,21 @@ export function searchParamsToFilters(
       params.get("endMinute"),
     ),
     where,
-    what: parseWhatParam(params.get("q")),
+    what,
   };
 }
 
 /**
- * Filters for the main search page. Days come from the path (or optional
- * legacy query fallback when provided via `days`).
+ * Filters for the main search page. Days and catalog what come from the path;
+ * free-text what comes from `?q=`.
  */
 export function searchParamsToInitialFilters(
   params: URLSearchParams,
   where: WhereFilter = { kind: "anywhere" },
   days: number[] = [],
+  pathWhat: string[] = [],
 ): SearchFilters {
-  return searchParamsToFilters(params, where, days);
+  return searchParamsToFilters(params, where, days, pathWhat);
 }
 
 /** API query params — includes suburbId or lat/lng for the deals endpoint. */
@@ -437,7 +558,9 @@ export function filtersToApiSearchParams(
   filters: SearchFilters,
   what: string[],
 ): URLSearchParams {
-  const params = filtersToBrowserSearchParams(filters, what);
+  const params = filtersToBrowserSearchParams(filters, what, {
+    pathEncodeWhat: false,
+  });
 
   if (filters.days.length > 0) {
     params.set("days", filters.days.join(","));
@@ -548,15 +671,28 @@ export function legacyLocationRedirectHref(
     params.get("view") === "map" || parsed.map || pathname === "/map";
 
   const day = daysFromBrowserUrl(pathname, params);
-  const qs = stripLocationParams(params);
+  const pathWhat = parsed.what ?? stripFiltersFromPath(pathname).what;
+  const queryWhat = parseWhatParam(params.get("q"));
+  const what = [...pathWhat];
+  for (const token of queryWhat) {
+    if (!what.some((item) => item.toLowerCase() === token.toLowerCase())) {
+      what.push(token);
+    }
+  }
+  const qs = isMap
+    ? stripLocationParams(params)
+    : stripCatalogWhatFromParams(stripLocationParams(params));
 
   let path: string;
   if (isMap) {
     path = whereToMapPath(day);
+    if (what.length > 0) {
+      qs.set("q", what.join(","));
+    }
   } else if (legacy.type === "nearby") {
-    path = appendDayToPath(`/${NEARBY_WHERE_SLUG}`, day);
+    path = appendFiltersToPath(`/${NEARBY_WHERE_SLUG}`, day, what);
   } else {
-    path = appendDayToPath(`/${legacy.slug}`, day);
+    path = appendFiltersToPath(`/${legacy.slug}`, day, what);
   }
 
   return hrefWithQuery(path, qs);

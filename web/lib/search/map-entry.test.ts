@@ -36,9 +36,9 @@ describe("mapEntryFromListPathname", () => {
     });
   });
 
-  it("keeps the day segment on the list path and strips it from the source slug", () => {
-    expect(mapEntryFromListPathname("/abbotsbury-2176/monday")).toEqual({
-      listPath: "/abbotsbury-2176/monday",
+  it("keeps the filter segment on the list path and strips it from the source slug", () => {
+    expect(mapEntryFromListPathname("/abbotsbury-2176/monday-beer")).toEqual({
+      listPath: "/abbotsbury-2176/monday-beer",
       source: { kind: "suburb", slug: "abbotsbury-2176" },
       cameraPending: true,
     });
@@ -146,6 +146,22 @@ describe("listHrefFromMapEntry", () => {
     );
   });
 
+  it("moves map q catalog tokens into the list path", () => {
+    const entry: MapEntry = {
+      listPath: "/abbotsbury-2176/thursday",
+      source: { kind: "suburb", slug: "abbotsbury-2176" },
+      cameraPending: false,
+    };
+
+    expect(
+      listHrefFromMapEntry(
+        entry,
+        new URLSearchParams("q=beer"),
+        "/map",
+      ),
+    ).toBe("/abbotsbury-2176/thursday-beer");
+  });
+
   it("restores the venue path with a day hash", () => {
     const entry: MapEntry = {
       listPath: "/surry-hills/the-local",
@@ -160,7 +176,7 @@ describe("listHrefFromMapEntry", () => {
 
   it("falls back to / when no entry is stored", () => {
     expect(listHrefFromMapEntry(null, new URLSearchParams("q=beer"))).toBe(
-      "/?q=beer",
+      "/",
     );
   });
 
@@ -177,14 +193,17 @@ describe("listHrefFromMapEntry", () => {
 });
 
 describe("syncMapEntryDays", () => {
-  it("rewrites the stored list path day while keeping the source", () => {
+  it("rewrites the stored list path day while keeping the source and what", () => {
     const storage = memoryStorage();
-    writeMapEntry(mapEntryFromListPathname("/abbotsbury-2176/monday"), storage);
+    writeMapEntry(
+      mapEntryFromListPathname("/abbotsbury-2176/monday-beer"),
+      storage,
+    );
 
     syncMapEntryDays([5], storage);
 
     expect(readMapEntry(storage)).toEqual({
-      listPath: "/abbotsbury-2176/thursday",
+      listPath: "/abbotsbury-2176/thursday-beer",
       source: { kind: "suburb", slug: "abbotsbury-2176" },
       cameraPending: true,
     });

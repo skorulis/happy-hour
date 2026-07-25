@@ -8,7 +8,13 @@ import {
   NEARBY_WHERE_SLUG,
   suburbWhereRedirectPath,
 } from "@/lib/search/slugs";
-import { legacyDaysRedirectHref, parseWhatTokens } from "@/lib/search/url";
+import {
+  appendFiltersToPath,
+  legacyDaysRedirectHref,
+  parseWhatTokens,
+  stripCatalogWhatFromParams,
+} from "@/lib/search/url";
+import { splitWhatForPath } from "@/lib/search/what-path";
 import {
   generateWhereListMetadata,
   renderWhereListPage,
@@ -61,7 +67,6 @@ export default async function SuburbSearchPage({
     }
 
     if (whereSlug === "map") {
-      // Legacy `/map-{day}` — canonicalize to `/map` for Google Maps referrer.
       const cleaned = new URLSearchParams();
       if (whatParam) {
         cleaned.set("q", whatParam);
@@ -70,22 +75,44 @@ export default async function SuburbSearchPage({
       permanentRedirect(qs ? `/map?${qs}` : "/map");
     }
 
+    const queryWhat = whatParam ? parseWhatTokens(whatParam) : [];
+    const { pathTokens, queryTokens } = splitWhatForPath(queryWhat);
     const aliasRedirect = suburbWhereRedirectPath(whereSlug, {
       day: pathDay,
-      q: whatParam,
+      what: pathTokens,
+      q: queryTokens.length > 0 ? queryTokens.join(",") : undefined,
     });
     if (aliasRedirect) {
       redirect(aliasRedirect);
     }
 
+    const path = appendFiltersToPath(`/${whereSlug}`, [pathDay], pathTokens);
     const cleaned = new URLSearchParams();
-    if (whatParam) {
-      cleaned.set("q", whatParam);
+    if (queryTokens.length > 0) {
+      cleaned.set("q", queryTokens.join(","));
     }
     const qs = cleaned.toString();
-    permanentRedirect(
-      qs ? `/${whereSlug}/${daySlug}?${qs}` : `/${whereSlug}/${daySlug}`,
-    );
+    permanentRedirect(qs ? `${path}?${qs}` : path);
+  }
+
+  // Move catalog `?q=` tokens into a filter path segment.
+  if (whatParam) {
+    const queryWhat = parseWhatTokens(whatParam);
+    const { pathTokens, queryTokens } = splitWhatForPath(queryWhat);
+    if (pathTokens.length > 0) {
+      const aliasRedirect = suburbWhereRedirectPath(whereSlug, {
+        what: pathTokens,
+        q: queryTokens.length > 0 ? queryTokens.join(",") : undefined,
+      });
+      if (aliasRedirect) {
+        redirect(aliasRedirect);
+      }
+
+      const path = appendFiltersToPath(`/${whereSlug}`, [], pathTokens);
+      const cleaned = stripCatalogWhatFromParams(search);
+      const qs = cleaned.toString();
+      permanentRedirect(qs ? `${path}?${qs}` : path);
+    }
   }
 
   const redirectPath = suburbWhereRedirectPath(whereSlug, {

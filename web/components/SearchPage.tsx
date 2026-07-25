@@ -122,6 +122,7 @@ export function SearchPage({
             suburbs={popularSuburbs}
             search={popularSearch}
             days={filters.days}
+            what={filters.what}
             includeSpecialLinks
             includeNearbyLink={includeNearbyLink}
             allSuburbsHref={allSuburbsHref}

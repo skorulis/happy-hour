@@ -1,11 +1,18 @@
 import type { MapBounds } from "@/lib/search/bounds";
 import {
   appendDayHash,
-  appendDayToPath,
   daysFromBrowserUrl,
-  stripDayFromPath,
 } from "@/lib/search/day-path";
-import { parseWherePath, stripLocationParams } from "@/lib/search/url";
+import {
+  parseWhatTokens,
+  parseWherePath,
+  stripCatalogWhatFromParams,
+  stripLocationParams,
+} from "@/lib/search/url";
+import {
+  appendFiltersToPath,
+  stripFiltersFromPath,
+} from "@/lib/search/what-path";
 
 export const MAP_ENTRY_STORAGE_KEY = "happy-hour:map-entry";
 
@@ -168,10 +175,11 @@ export function mapEntryFromListPathname(pathname: string): MapEntry {
 
   const parsed = parseWherePath(pathname);
   const day = parsed.day !== undefined ? [parsed.day] : [];
+  const what = parsed.what ?? [];
 
   if (parsed.kind === "nearby") {
     return {
-      listPath: appendDayToPath("/nearby", day),
+      listPath: appendFiltersToPath("/nearby", day, what),
       source: { kind: "nearby" },
       cameraPending: true,
     };
@@ -179,21 +187,21 @@ export function mapEntryFromListPathname(pathname: string): MapEntry {
 
   if (parsed.kind === "suburb") {
     return {
-      listPath: appendDayToPath(`/${parsed.slug}`, day),
+      listPath: appendFiltersToPath(`/${parsed.slug}`, day, what),
       source: { kind: "suburb", slug: parsed.slug },
       cameraPending: true,
     };
   }
 
   return {
-    listPath: appendDayToPath("/", day),
+    listPath: appendFiltersToPath("/", day, what),
     source: { kind: "anywhere" },
     cameraPending: true,
   };
 }
 
 function baseListPath(path: string): string {
-  return stripDayFromPath(path).base;
+  return stripFiltersFromPath(path).base;
 }
 
 /**
@@ -231,11 +239,16 @@ export function listHrefFromMapEntry(
   const stored = entry?.listPath ?? "/";
   const day = daysFromMapEntry(entry, mapPathname, params);
   const base = baseListPath(stored);
+  const what = parseWhatTokens(params.get("q") ?? "");
   const path =
     entry?.source.kind === "venue"
       ? appendDayHash(base, day)
-      : appendDayToPath(base, day);
-  const qs = stripLocationParams(params).toString();
+      : appendFiltersToPath(base, day, what);
+  const qs = (
+    entry?.source.kind === "venue"
+      ? stripLocationParams(params)
+      : stripCatalogWhatFromParams(stripLocationParams(params))
+  ).toString();
   // Hash must come after query if both exist; appendDayHash already places hash last.
   if (!qs) {
     return path;
@@ -261,7 +274,12 @@ export function syncMapEntryDays(
     return;
   }
 
-  const nextListPath = appendDayToPath(baseListPath(entry.listPath), days);
+  const stripped = stripFiltersFromPath(entry.listPath);
+  const nextListPath = appendFiltersToPath(
+    stripped.base,
+    days,
+    stripped.what,
+  );
   if (nextListPath === entry.listPath) {
     return;
   }
