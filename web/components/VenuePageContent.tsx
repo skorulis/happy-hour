@@ -2,7 +2,11 @@ import { WeeklyDealsSection } from "@/components/WeeklyDealsSection";
 import { VenueMapCameraSeed } from "@/components/VenueMapCameraSeed";
 import { googleMapsPlaceUrl } from "@/lib/search/google-maps";
 import type { VenueDetailResult } from "@/lib/search/queries";
-import { venuePath } from "@/lib/search/slugs";
+import {
+  regionPath,
+  suburbWherePath,
+  venuePath,
+} from "@/lib/search/slugs";
 import { Building2, CirclePlus, Link, MapPin, Settings } from "lucide-react";
 import NextLink from "next/link";
 import type { ReactNode } from "react";
@@ -63,9 +67,32 @@ export function VenuePageContent({
             />
           </div>
         )}
-        <h1 className="text-3xl font-bold text-foreground">
-          {venue.name}
-        </h1>
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold text-foreground">
+            {venue.name}
+          </h1>
+          {venue.suburbName ? (
+            <nav aria-label="Breadcrumb" className="text-sm text-muted">
+              {venue.regionName ? (
+                <>
+                  <NextLink
+                    href={regionPath(venue.regionName)}
+                    className="hover:underline"
+                  >
+                    {venue.regionName}
+                  </NextLink>
+                  {" > "}
+                </>
+              ) : null}
+              <NextLink
+                href={suburbWherePath(venue.suburbName, venue.suburbPostcode)}
+                className="hover:underline"
+              >
+                {venue.suburbName}
+              </NextLink>
+            </nav>
+          ) : null}
+        </div>
         <div className="flex flex-wrap gap-2">
           {venue.websiteUri ? (
             <VenueExternalLink

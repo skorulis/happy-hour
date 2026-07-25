@@ -129,6 +129,8 @@ export type VenueDetailResult = VenueSearchResult & {
   heroImage: string | null;
   blurb: string | null;
   suburbName: string | null;
+  suburbPostcode: string | null;
+  regionName: string | null;
   links: {
     whatsOn: string | null;
     instagram: string | null;
@@ -1026,7 +1028,11 @@ export async function searchDealsForSuburb(
 
 async function buildVenueDetail(
   venueRow: typeof venue.$inferSelect,
-  suburbName: string | null,
+  location: {
+    suburbName: string | null;
+    suburbPostcode: string | null;
+    regionName: string | null;
+  },
 ): Promise<VenueDetailResult> {
   const [linksRow] = await db
     .select()
@@ -1043,7 +1049,9 @@ async function buildVenueDetail(
     id: venueRow.id,
     name: venueRow.name,
     googleMapId: venueRow.googleMapId,
-    suburbName,
+    suburbName: location.suburbName,
+    suburbPostcode: location.suburbPostcode,
+    regionName: location.regionName,
     lat: venueRow.lat,
     lng: venueRow.lng,
     websiteUri: venueRow.websiteUri,
@@ -1071,9 +1079,12 @@ export async function getVenueDetail(
     .select({
       venue: venue,
       suburbName: suburb.name,
+      suburbPostcode: suburb.postcode,
+      regionName: geographicRegion.name,
     })
     .from(venue)
     .leftJoin(suburb, eq(venue.suburbId, suburb.id))
+    .leftJoin(geographicRegion, eq(suburb.regionId, geographicRegion.id))
     .where(eq(venue.id, venueId))
     .limit(1);
 
@@ -1081,7 +1092,11 @@ export async function getVenueDetail(
     return null;
   }
 
-  return buildVenueDetail(row.venue, row.suburbName);
+  return buildVenueDetail(row.venue, {
+    suburbName: row.suburbName,
+    suburbPostcode: row.suburbPostcode,
+    regionName: row.regionName,
+  });
 }
 
 export async function getVenueDetailBySlug(
@@ -1122,18 +1137,26 @@ export async function getVenueDetailBySlug(
   }
 
   const venueRow = matchingVenues[0];
-  const suburbName =
+  const location =
     venueRow.suburbId === null
-      ? null
+      ? { suburbName: null, suburbPostcode: null, regionName: null }
       : (
           await db
-            .select({ name: suburb.name })
+            .select({
+              suburbName: suburb.name,
+              suburbPostcode: suburb.postcode,
+              regionName: geographicRegion.name,
+            })
             .from(suburb)
+            .leftJoin(
+              geographicRegion,
+              eq(suburb.regionId, geographicRegion.id),
+            )
             .where(eq(suburb.id, venueRow.suburbId))
             .limit(1)
-        )[0]?.name ?? null;
+        )[0] ?? { suburbName: null, suburbPostcode: null, regionName: null };
 
-  return buildVenueDetail(venueRow, suburbName);
+  return buildVenueDetail(venueRow, location);
 }
 
 export type VenueSitemapRow = {
