@@ -30,10 +30,10 @@ type WeeklyDealsSectionProps = {
 
 const defaultHeading = (count: number, selectedDay: number | null) => {
   if (selectedDay === null) {
-    return `Weekly Deals (${count})`;
+    return `Weekly Specials (${count})`;
   }
   const dayLabel = DAY_LABELS[selectedDay] ?? `Day ${selectedDay}`;
-  return `${dayLabel} Deals (${count})`;
+  return `${dayLabel} Specials (${count})`;
 };
 const defaultEmptyMessage =
   "This venue doesn't have any deals. If you know of one, please add it";
