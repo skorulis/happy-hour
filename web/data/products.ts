@@ -1,3 +1,4 @@
+import matchIgnoreJson from "./match-ignore.json";
 import productsJson from "./products.json";
 
 export type Product = {
@@ -54,6 +55,10 @@ function mergeProducts(raw: Product[]): Product[] {
   return [...byName.values()];
 }
 
+export const productMatchIgnore: string[] = [
+  ...new Set(matchIgnoreJson as string[]),
+];
+
 export const products: Product[] = mergeProducts(productsJson as Product[]);
 
 const productsByName = new Map(
@@ -97,22 +102,10 @@ function compareProductMatches(a: Product, b: Product): number {
   return b.name.length - a.name.length;
 }
 
-function findProductsMatchingText(text: string): Product[] {
-  if (!text) {
-    return [];
-  }
-
-  const matches = productsWithIcons.filter((product) => {
-    if (text.includes(product.name.toLowerCase())) {
-      return true;
-    }
-    return (product.synonyms ?? []).some((synonym) =>
-      text.includes(synonym.toLowerCase()),
-    );
-  });
-
-  return [...matches].sort(compareProductMatches);
-}
+type TextRange = {
+  start: number;
+  end: number;
+};
 
 type MatchSpan = {
   productKey: string;
@@ -120,10 +113,8 @@ type MatchSpan = {
   end: number;
 };
 
-function collectMatchSpans(text: string, product: Product): MatchSpan[] {
-  const productKey = product.name.toLowerCase();
-  const needles = [product.name, ...(product.synonyms ?? [])];
-  const spans: MatchSpan[] = [];
+function collectSubstringRanges(text: string, needles: string[]): TextRange[] {
+  const ranges: TextRange[] = [];
 
   for (const needle of needles) {
     const n = needle.toLowerCase();
@@ -136,12 +127,44 @@ function collectMatchSpans(text: string, product: Product): MatchSpan[] {
       if (idx === -1) {
         break;
       }
-      spans.push({ productKey, start: idx, end: idx + n.length });
+      ranges.push({ start: idx, end: idx + n.length });
       from = idx + 1;
     }
   }
 
-  return spans;
+  return ranges;
+}
+
+function isRangeCovered(range: TextRange, covers: TextRange[]): boolean {
+  return covers.some(
+    (cover) => range.start >= cover.start && range.end <= cover.end,
+  );
+}
+
+function collectMatchSpans(
+  text: string,
+  product: Product,
+  ignoreRanges: TextRange[],
+): MatchSpan[] {
+  const productKey = product.name.toLowerCase();
+  const needles = [product.name, ...(product.synonyms ?? [])];
+
+  return collectSubstringRanges(text, needles)
+    .filter((range) => !isRangeCovered(range, ignoreRanges))
+    .map((range) => ({ productKey, ...range }));
+}
+
+function findProductsMatchingText(text: string): Product[] {
+  if (!text) {
+    return [];
+  }
+
+  const ignoreRanges = collectSubstringRanges(text, productMatchIgnore);
+  const matches = productsWithIcons.filter(
+    (product) => collectMatchSpans(text, product, ignoreRanges).length > 0,
+  );
+
+  return [...matches].sort(compareProductMatches);
 }
 
 function suppressOverlappingMatches(
@@ -152,7 +175,10 @@ function suppressOverlappingMatches(
     return matches;
   }
 
-  const spans = matches.flatMap((product) => collectMatchSpans(text, product));
+  const ignoreRanges = collectSubstringRanges(text, productMatchIgnore);
+  const spans = matches.flatMap((product) =>
+    collectMatchSpans(text, product, ignoreRanges),
+  );
   spans.sort(
     (a, b) => b.end - b.start - (a.end - a.start) || a.start - b.start,
   );

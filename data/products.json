@@ -1,4 +1,3 @@
-
 [
     {
         "name": "drinks",
@@ -25,7 +24,7 @@
             "craft beer"
         ]
     },
-    { 
+    {
         "name": "cocktails",
         "rank": 5,
         "icon": "Martini",
@@ -40,7 +39,7 @@
             "mojito"
         ]
     },
-    { 
+    {
         "name": "music",
         "icon": "Music4",
         "groups": [
@@ -48,17 +47,50 @@
             "jazz"
         ]
     },
-    { "name": "aperitivo", "icon": "Wine" },
-    { "name": "champagne", "icon": "BottleWine" },
-    { "name": "craft beer", "icon": "Beer" },
-    { "name": "guinness", "icon": "Beer" },
-    { "name": "jugs", "icon": "Beer" },
-    { "name": "margarita", "icon": "Martini" },
-    { "name": "espresso martini", "icon": "Martini" },
-    { "name": "martini", "icon": "Martini" },
-    { "name": "mojito", "icon": "Martini" },
-    { "name": "mulled wine", "icon": "Coffee" },
-    { "name": "negroni", "icon": "Martini" },
+    {
+        "name": "aperitivo",
+        "icon": "Wine"
+    },
+    {
+        "name": "champagne",
+        "icon": "BottleWine"
+    },
+    {
+        "name": "craft beer",
+        "icon": "Beer"
+    },
+    {
+        "name": "guinness",
+        "icon": "Beer"
+    },
+    {
+        "name": "jugs",
+        "icon": "Beer"
+    },
+    {
+        "name": "margarita",
+        "icon": "Martini"
+    },
+    {
+        "name": "espresso martini",
+        "icon": "Martini"
+    },
+    {
+        "name": "martini",
+        "icon": "Martini"
+    },
+    {
+        "name": "mojito",
+        "icon": "Martini"
+    },
+    {
+        "name": "mulled wine",
+        "icon": "Coffee"
+    },
+    {
+        "name": "negroni",
+        "icon": "Martini"
+    },
     {
         "name": "pint",
         "icon": "Beer",
@@ -66,16 +98,46 @@
             "pints for schooner"
         ]
     },
-    { "name": "porter", "icon": "Beer" },
-    { "name": "saki", "icon": "Saki" },
-    { "name": "sangria", "icon": "Wine" },
-    { "name": "schooner", "icon": "Beer" },
-    { "name": "spirits", "icon": "GlassWater" },
-    { "name": "spritz", "icon": "Wine" },
-    { "name": "tastingpaddle", "icon": "Beer" },
-    { "name": "wine", "icon": "Wine" },
-    { "name": "whiskey", "icon": "Whisky" },
-    { "name": "bottomless", "icon": "Infinity" },
+    {
+        "name": "porter",
+        "icon": "Beer"
+    },
+    {
+        "name": "saki",
+        "icon": "Saki"
+    },
+    {
+        "name": "sangria",
+        "icon": "Wine"
+    },
+    {
+        "name": "schooner",
+        "icon": "Beer"
+    },
+    {
+        "name": "spirits",
+        "icon": "GlassWater"
+    },
+    {
+        "name": "spritz",
+        "icon": "Wine"
+    },
+    {
+        "name": "tastingpaddle",
+        "icon": "Beer"
+    },
+    {
+        "name": "wine",
+        "icon": "Wine"
+    },
+    {
+        "name": "whiskey",
+        "icon": "Whisky"
+    },
+    {
+        "name": "bottomless",
+        "icon": "Infinity"
+    },
     {
         "name": "happy hour",
         "rank": 1,
@@ -85,7 +147,8 @@
         "name": "food",
         "rank": 3,
         "synonyms": [
-            "meal"
+            "meal",
+            "pub classics"
         ],
         "icon": "UtensilsCrossed",
         "groups": [
@@ -123,21 +186,51 @@
             "2-4-1"
         ]
     },
-    { "name": "bao", "icon": "BowlChopsticks" },
-    { "name": "bento", "icon": "LunchBox" },
-    { "name": "burger", "icon": "Burger" },
-    { "name": "calamari", "icon": "Fish" },
-    { "name": "cheese", "icon": "Cheese" },
-    { "name": "chicken", "icon": "Drumstick" },
-    { "name": "chips", "icon": "Chips" },
-    { 
+    {
+        "name": "bao",
+        "icon": "BowlChopsticks"
+    },
+    {
+        "name": "bento",
+        "icon": "LunchBox"
+    },
+    {
+        "name": "burger",
+        "icon": "Burger",
+        "synonyms": [
+            "cheeseburger"
+        ]
+    },
+    {
+        "name": "calamari",
+        "icon": "Fish"
+    },
+    {
+        "name": "cheese",
+        "icon": "Cheese"
+    },
+    {
+        "name": "chicken",
+        "icon": "Drumstick"
+    },
+    {
+        "name": "chips",
+        "icon": "Chips",
+        "synonyms": [
+            "fries"
+        ]
+    },
+    {
         "name": "fish & chips",
         "synonyms": [
             "fish with chips"
         ],
         "icon": "Fish"
     },
-    { "name": "curry", "icon": "Soup" },
+    {
+        "name": "curry",
+        "icon": "Soup"
+    },
     {
         "name": "gyros",
         "icon": "Sandwich",
@@ -145,15 +238,42 @@
             "yeeros"
         ]
     },
-    { "name": "muscles", "icon": "Fish" },
-    { "name": "nachos", "icon": "Nachos" },
-    { "name": "oysters", "icon": "Fish" },
-    { "name": "pasta", "icon": "CookingPot" },
-    { "name": "pizza", "icon": "Pizza" },
-    { "name": "porterhouse", "icon": "Beef" },
-    { "name": "ribs", "icon": "Beef" },
-    { "name": "roast", "icon": "Ham" },
-    { "name": "rump", "icon": "Beef" },
+    {
+        "name": "muscles",
+        "icon": "Fish"
+    },
+    {
+        "name": "nachos",
+        "icon": "Nachos"
+    },
+    {
+        "name": "oysters",
+        "icon": "Fish"
+    },
+    {
+        "name": "pasta",
+        "icon": "CookingPot"
+    },
+    {
+        "name": "pizza",
+        "icon": "Pizza"
+    },
+    {
+        "name": "porterhouse",
+        "icon": "Beef"
+    },
+    {
+        "name": "ribs",
+        "icon": "Beef"
+    },
+    {
+        "name": "roast",
+        "icon": "Ham"
+    },
+    {
+        "name": "rump",
+        "icon": "Beef"
+    },
     {
         "name": "chicken parmigiana",
         "icon": "UtensilsCrossed",
@@ -162,11 +282,19 @@
             "parmi",
             "parmy"
         ]
-
     },
-    { "name": "salad", "icon": "Salad" },
-    { "name": "skewer", "icon": "Kebab" },
-    { "name": "snacks", "icon": "Cookie" },
+    {
+        "name": "salad",
+        "icon": "Salad"
+    },
+    {
+        "name": "skewer",
+        "icon": "Kebab"
+    },
+    {
+        "name": "snacks",
+        "icon": "Cookie"
+    },
     {
         "name": "chicken schnitzel",
         "synonyms": [
@@ -176,7 +304,10 @@
         ],
         "icon": "UtensilsCrossed"
     },
-    { "name": "sirloin", "icon": "Beef" },
+    {
+        "name": "sirloin",
+        "icon": "Beef"
+    },
     {
         "name": "steak",
         "icon": "Beef",
@@ -186,9 +317,18 @@
             "sirloin"
         ]
     },
-    { "name": "taco", "icon": "Taco" },
-    { "name": "tapas", "icon": "UtensilsCrossed" },
-    { "name": "tomahawk", "icon": "Beef" },
+    {
+        "name": "taco",
+        "icon": "Taco"
+    },
+    {
+        "name": "tapas",
+        "icon": "UtensilsCrossed"
+    },
+    {
+        "name": "tomahawk",
+        "icon": "Beef"
+    },
     {
         "name": "wings",
         "icon": "Wings",
@@ -208,36 +348,134 @@
             "live music",
             "meat tray",
             "pool",
+            "darts",
             "raffle",
             "run club"
         ]
     },
-    { "name": "brunch", "icon": "Sun" },
-    { "name": "lunch", "icon": "UtensilsCrossed" },
-    { "name": "dinner", "icon": "Moon" },
-    { "name": "badge draw", "icon": "BadgeDollarSign" },
-    { "name": "bingo", "icon": "Grid3x3" },
-    { "name": "comedy", "icon": "Mic" },
-    { "name": "bowls", "icon": "Bowls" },
-    { "name": "bowling", "icon": "Bowling" },
-    { "name": "byo", "icon": "BottleWine" },
-    { "name": "dj", "icon": "Music" },
-    { "name": "free snacks", "icon": "UtensilsCrossed" },
-    { "name": "hospo", "icon": "UserStar" },
-    { "name": "hospitality", "icon": "UserStar" },
-    { "name": "joker poker", "icon": "Club" },
-    { "name": "poker", "icon": "Spade" },
-    { "name": "punters club", "icon": "Coins" },
-    { "name": "raffle", "icon": "Ticket" },
-    { "name": "tarot", "icon": "Sparkles" },
-    { "name": "trivia", "icon": "CircleQuestionMark" },
-    { "name": "kids eat free", "icon": "Baby" },
-    { "name": "jazz", "icon": "Music" },
-    { "name": "karaoke", "icon": "Mic" },
-    { "name": "live music", "icon": "Music" },
-    { "name": "meat tray", "icon": "ChairsTablePlatter" },
-    { "name": "pool", "icon": "Pool" },
-    { "name": "run club", "icon": "Footprints" },
-    { "name": "student night", "icon": "GraduationCap" },
-    { "name": "locals night", "icon": "Users" }
+    {
+        "name": "brunch",
+        "icon": "Sun"
+    },
+    {
+        "name": "lunch",
+        "icon": "UtensilsCrossed"
+    },
+    {
+        "name": "dinner",
+        "icon": "Moon"
+    },
+    {
+        "name": "badge draw",
+        "icon": "BadgeDollarSign"
+    },
+    {
+        "name": "bingo",
+        "icon": "Grid3x3"
+    },
+    {
+        "name": "comedy",
+        "icon": "Mic"
+    },
+    {
+        "name": "bowls",
+        "icon": "Bowls"
+    },
+    {
+        "name": "bowling",
+        "icon": "Bowling"
+    },
+    {
+        "name": "byo",
+        "icon": "BottleWine"
+    },
+    {
+        "name": "dj",
+        "icon": "Music"
+    },
+    {
+        "name": "free snacks",
+        "icon": "UtensilsCrossed"
+    },
+    {
+        "name": "hospo",
+        "icon": "UserStar"
+    },
+    {
+        "name": "hospitality",
+        "icon": "UserStar"
+    },
+    {
+        "name": "joker poker",
+        "icon": "Club",
+        "synonyms": [
+            "jag the joker"
+        ]
+    },
+    {
+        "name": "poker",
+        "icon": "Spade"
+    },
+    {
+        "name": "punters club",
+        "icon": "Coins",
+        "synonyms": [
+            "punters paradise"
+        ]
+    },
+    {
+        "name": "raffle",
+        "icon": "Ticket"
+    },
+    {
+        "name": "tarot",
+        "icon": "Sparkles"
+    },
+    {
+        "name": "trivia",
+        "icon": "CircleQuestionMark"
+    },
+    {
+        "name": "kids eat free",
+        "icon": "Baby"
+    },
+    {
+        "name": "jazz",
+        "icon": "Music"
+    },
+    {
+        "name": "karaoke",
+        "icon": "Mic"
+    },
+    {
+        "name": "live music",
+        "icon": "Music",
+        "synonyms": [
+            "live local music"
+        ]
+    },
+    {
+        "name": "meat tray",
+        "icon": "ChairsTablePlatter"
+    },
+    {
+        "name": "pool",
+        "icon": "Pool"
+    },
+    {
+        "name": "darts",
+        "icon": "Target"
+    },
+    {
+        "name": "run club",
+        "icon": "Footprints"
+    },
+    {
+        "name": "student night",
+        "icon": "GraduationCap"
+    },
+    {
+        "name": "locals night",
+        "icon": "Users"
+    }
 ]

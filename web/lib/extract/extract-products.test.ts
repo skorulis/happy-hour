@@ -90,6 +90,44 @@ describe("extractProducts", () => {
     ]);
   });
 
+  it("ignores chips inside side-salad phrases", () => {
+    const steak = extractProducts({
+      title: "Steak with chips and salad $25",
+      details: null,
+    });
+    expect(steak.products.map((p) => p.name)).not.toContain("chips");
+    expect(steak.products.map((p) => p.name)).toContain("steak");
+
+    expect(
+      extractProducts({
+        title: "Meal with crispy chips and a fresh garden salad",
+        details: null,
+      }).products.map((p) => p.name),
+    ).not.toContain("chips");
+
+    expect(
+      extractProducts({
+        title: "Meal with chips and a garden salad",
+        details: null,
+      }).products.map((p) => p.name),
+    ).not.toContain("chips");
+  });
+
+  it("ignores chips in chips down", () => {
+    expect(
+      extractProducts({ title: "All chips down special", details: null }),
+    ).toEqual({ products: [] });
+  });
+
+  it("still matches chips outside ignore phrases", () => {
+    const result = extractProducts({
+      title: "Bowl of chips $8 with chips and salad on the side",
+      details: null,
+    });
+    expect(result.products.map((p) => p.name)).toContain("chips");
+    expect(result.products.find((p) => p.name === "chips")?.price).toBe(8);
+  });
+
   it("returns an empty list when no product keyword matches", () => {
     expect(
       extractProducts({ title: "$10 specials", details: "all week" }),

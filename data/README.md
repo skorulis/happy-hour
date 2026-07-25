@@ -34,6 +34,19 @@ Searching for `beer` will also match deals containing any of `schooner`, `pint`,
 
 Deal text containing `cocktail` (singular) matches the `cocktails` product during extract and map-icon matching.
 
+## Match ignore phrases
+
+Global substrings that should not count as product matches. Defined in [`match-ignore.json`](match-ignore.json).
+
+If a product name or synonym appears only inside one of these phrases, that hit is skipped for every product. For example, `Steak with chips and salad` does not match `chips` or `salad` when `with chips and salad` is listed.
+
+```json
+[
+  "with chips and salad",
+  "chips down"
+]
+```
+
 # Geographic regions
 
 Approved geographic regions used by DealScraper (and shared with the web via the `data/` copy). Defined in [`regions.json`](regions.json).
