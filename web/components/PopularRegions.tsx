@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LocateFixed } from "lucide-react";
+import { LocateFixed, Search } from "lucide-react";
 import type { RegionWithCounts } from "@/lib/search/queries";
 import { NEARBY_WHERE_SLUG, regionPath } from "@/lib/search/slugs";
 import { regionHeroThumbUrl } from "@/lib/search/venue-hero-url";
@@ -90,6 +90,25 @@ export function PopularRegions({
             </li>
           );
         })}
+        <li>
+          <Link
+            href="/venue-search"
+            className="flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-surface-muted"
+          >
+            <span className="flex min-w-0 items-center gap-3">
+              <span className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-accent-muted text-accent-soft">
+                <Search
+                  aria-hidden
+                  className="h-5 w-5"
+                  strokeWidth={1.75}
+                />
+              </span>
+              <span className="font-medium text-foreground">
+                Search by venue name
+              </span>
+            </span>
+          </Link>
+        </li>
       </ul>
     </div>
   );
