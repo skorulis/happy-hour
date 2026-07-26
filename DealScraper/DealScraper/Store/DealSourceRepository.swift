@@ -76,6 +76,18 @@ final class DealSourceRepository {
         }
     }
 
+    func find(ids: [Int64]) throws -> [DealSource] {
+        guard !ids.isEmpty else { return [] }
+        let sources = try store.dbQueue.read { db in
+            try DealSource.fetchAll(db, keys: ids)
+        }
+        let byId = Dictionary(uniqueKeysWithValues: sources.compactMap { source -> (Int64, DealSource)? in
+            guard let id = source.id else { return nil }
+            return (id, source)
+        })
+        return ids.compactMap { byId[$0] }
+    }
+
     @discardableResult
     func delete(id: Int64) throws -> Bool {
         try store.dbQueue.write { db in

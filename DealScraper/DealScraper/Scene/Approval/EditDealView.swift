@@ -117,6 +117,7 @@ struct EditDealView: View {
     @State private var endDate: Date?
     @State private var schedules: [EditableDealSchedule] = []
     @State private var products: [EditableDealProduct] = []
+    @State private var linkedSources: [DealSource] = []
     @State private var isExtractingProducts = false
     @State private var extractProductsError: String?
 
@@ -137,6 +138,7 @@ struct EditDealView: View {
         }
         .onAppear {
             syncFieldsFromItem()
+            loadLinkedSources()
         }
     }
 
@@ -268,6 +270,8 @@ struct EditDealView: View {
                         text: $creativeURL,
                         linkLabel: resolvedURL(from: creativeURL).map { creativeSourceLinkLabel(for: $0) }
                     )
+
+                    linkedSourcesSection
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -348,6 +352,55 @@ struct EditDealView: View {
             .map { index, product in
                 EditableDealProduct(product: product, fallbackID: Int64(-index - 1))
             }
+    }
+
+    private func loadLinkedSources() {
+        guard !item.sourceIds.isEmpty, let resolver else {
+            linkedSources = []
+            return
+        }
+        do {
+            linkedSources = try resolver.dealSourceRepository().find(ids: item.sourceIds)
+        } catch {
+            linkedSources = []
+        }
+    }
+
+    private var linkedSourcesSection: some View {
+        editableField(label: "Sources") {
+            if linkedSources.isEmpty {
+                Text("No linked sources")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else {
+                VStack(alignment: .leading, spacing: 6) {
+                    ForEach(linkedSources, id: \.id) { source in
+                        linkedSourceRow(source)
+                    }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func linkedSourceRow(_ source: DealSource) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Text(source.type.rawValue.capitalized)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .frame(width: 64, alignment: .leading)
+
+            if let url = URL(string: source.url) {
+                Link(url.absoluteString, destination: url)
+                    .font(.caption)
+                    .lineLimit(2)
+            } else {
+                Text(source.url)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+            }
+        }
     }
 
     private func addSchedule() {
