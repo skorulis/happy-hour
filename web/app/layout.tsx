@@ -4,6 +4,7 @@ import { SiteNav } from "@/components/SiteNav";
 import { siteUrl } from "@/lib/site-url";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -40,6 +41,11 @@ export default function RootLayout({
           </main>
           <SiteFooter />
         </AnalyticsProvider>
+        <Script
+          src="https://analytics.ahrefs.com/analytics.js"
+          data-key="3Ll+qx5RWpzTRJkQGdts0Q"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );

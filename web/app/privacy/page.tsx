@@ -168,7 +168,8 @@ export default function PrivacyPage() {
             </li>
             <li>
               <span className="text-foreground">Analytics and errors</span> —
-              Amplitude (product analytics) and Sentry (error monitoring).
+              Amplitude (product analytics), Ahrefs (website traffic
+              analytics), and Sentry (error monitoring).
             </li>
           </ul>
         </section>
@@ -191,6 +192,11 @@ export default function PrivacyPage() {
             <li>
               <span className="text-foreground">Amplitude</span> — product
               analytics.
+            </li>
+            <li>
+              <span className="text-foreground">Ahrefs</span> — website traffic
+              analytics (page views and related visit metrics via a browser
+              script; cookieless per Ahrefs).
             </li>
             <li>
               <span className="text-foreground">Sentry</span> — error and
@@ -283,9 +289,10 @@ export default function PrivacyPage() {
           <p>
             First-party search analytics remain in our application database
             until we purge them operationally or remove them as part of a
-            manual account-removal request. Amplitude and Sentry retention is
-            controlled by their product settings. Uploaded deal images may
-            remain publicly reachable by URL while they exist in our storage.
+            manual account-removal request. Amplitude, Ahrefs, and Sentry
+            retention is controlled by their product settings. Uploaded deal
+            images may remain publicly reachable by URL while they exist in our
+            storage.
           </p>
         </section>
 
