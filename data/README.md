@@ -61,13 +61,15 @@ Approved geographic regions used by DealScraper (and shared with the web via the
 |-------|----------|-------------|
 | `name` | yes | Display name for the region (must match seeded `geographic_region.name` values). |
 | `status` | yes | `"live"`, `"in-progress"`, or `"future"`. Controls web sync: `"live"` regions copy the full suburb catalog and all non-broken venues to Postgres; other statuses do not sync venues. DealScraper seeds all listed regions regardless of status. |
+| `country` | yes | ISO 3166-1 alpha-3 code for the region's country (`AUS`, `NZL`, …). Must match a seeded `country.iso3` value. |
 
 ## Example
 
 ```json
 {
   "name": "Sydney",
-  "status": "live"
+  "status": "live",
+  "country": "AUS"
 }
 ```
 

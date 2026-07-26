@@ -5,6 +5,8 @@ import Foundation
 struct RegionEntry: Decodable, Equatable {
     let name: String
     let status: String
+    /// ISO 3166-1 alpha-3 country code (e.g. AUS, NZL).
+    let country: String
 }
 
 nonisolated enum RegionsCatalog {

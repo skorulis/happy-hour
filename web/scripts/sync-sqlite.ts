@@ -19,6 +19,7 @@ import { syncRegionGeo } from "./sync-region-geo";
 type RegionCatalogEntry = {
   name: string;
   status: string;
+  country: string;
 };
 
 type SqliteSuburb = {

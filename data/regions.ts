@@ -5,6 +5,8 @@ export type RegionStatus = "live" | "in-progress" | "future" | string;
 export type RegionCatalogEntry = {
   name: string;
   status: RegionStatus;
+  /** ISO 3166-1 alpha-3 country code (e.g. AUS, NZL). */
+  country: string;
 };
 
 export const regions: RegionCatalogEntry[] = regionsJson as RegionCatalogEntry[];

@@ -16,6 +16,7 @@
     "sync": "tsx scripts/sync-sqlite.ts",
     "sync:prod": "tsx scripts/sync-prod.ts",
     "import-suburbs": "tsx scripts/import-suburbs.ts",
+    "import-nz-suburbs": "tsx scripts/import-nz-suburbs.ts",
     "backfill-region-geo": "tsx scripts/backfill-region-geo.ts"
   },
   "dependencies": {

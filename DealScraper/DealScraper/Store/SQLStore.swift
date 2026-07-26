@@ -54,21 +54,25 @@ final class SQLStore {
 
     private func seedDefaultGeographicRegions() throws {
         try dbQueue.write { db in
-            guard let australia = try Country
-                .filter(Column("iso3") == Country.australia.iso3)
-                .fetchOne(db),
-                let australiaId = australia.id
-            else {
-                return
+            var countriesByIso3: [String: Int64] = [:]
+            for country in try Country.fetchAll(db) {
+                guard let id = country.id else { continue }
+                countriesByIso3[country.iso3] = id
             }
 
-            for name in RegionsCatalog.regionNames {
+            for entry in RegionsCatalog.loadRegions() {
+                guard let countryId = countriesByIso3[entry.country] else {
+                    fatalError(
+                        "Missing country \(entry.country) for region \"\(entry.name)\". Open DealScraper once so default countries are seeded."
+                    )
+                }
+
                 let existing = try GeographicRegion
-                    .filter(Column("country_id") == australiaId)
-                    .filter(Column("name") == name)
+                    .filter(Column("country_id") == countryId)
+                    .filter(Column("name") == entry.name)
                     .fetchOne(db)
                 if existing == nil {
-                    var region = GeographicRegion(countryId: australiaId, name: name)
+                    var region = GeographicRegion(countryId: countryId, name: entry.name)
                     try region.insert(db)
                 }
             }
