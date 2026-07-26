@@ -1,9 +1,10 @@
-import { asc, count, isNotNull } from "drizzle-orm";
+import { asc, count } from "drizzle-orm";
 import { searchQueries } from "@/db/schema";
 import { db } from "@/lib/db";
 
+/** `null` day means no single day was selected (any day / multi-day). */
 export type SearchDayCount = {
-  day: number;
+  day: number | null;
   count: number;
 };
 
@@ -14,13 +15,16 @@ export async function getSearchesByDay(): Promise<SearchDayCount[]> {
       count: count(searchQueries.id),
     })
     .from(searchQueries)
-    .where(isNotNull(searchQueries.day))
     .groupBy(searchQueries.day)
     .orderBy(asc(searchQueries.day));
 
-  return rows.flatMap((row) =>
-    row.day !== null && row.day >= 1 && row.day <= 7
-      ? [{ day: row.day, count: row.count }]
-      : [],
-  );
+  return rows.flatMap((row) => {
+    if (row.day === null) {
+      return [{ day: null, count: row.count }];
+    }
+    if (row.day >= 1 && row.day <= 7) {
+      return [{ day: row.day, count: row.count }];
+    }
+    return [];
+  });
 }

@@ -49,7 +49,7 @@ export default async function AnalyticsPage() {
             Search day of week
           </h2>
           <p className="text-sm text-secondary">
-            Searches where a single day was selected.
+            Day filter on suburb and nearby searches, including any day.
           </p>
         </div>
         <SearchDayPieChartClient data={searchesByDay} />
