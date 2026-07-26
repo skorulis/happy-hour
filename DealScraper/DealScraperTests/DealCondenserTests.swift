@@ -15,13 +15,15 @@ struct DealCondenserTests {
             details: "$8 wines",
             creativeURL: "https://example.com/poster.jpg",
             sourceURL: "https://example.com/specials",
-            schedules: [schedule(day: 3, start: 0, end: 1_440)]
+            schedules: [schedule(day: 3, start: 0, end: 1_440)],
+            sourceIds: [11]
         )
         let webpageDeal = makeDeal(
             title: "Happy Hour",
             details: "$8 wines\n$8 schooners",
             sourceURL: "https://example.com/menu",
-            schedules: [schedule(day: 3, start: 960, end: 1_080)]
+            schedules: [schedule(day: 3, start: 960, end: 1_080)],
+            sourceIds: [22]
         )
 
         let result = condenser.condense([imageDeal, webpageDeal])
@@ -36,6 +38,7 @@ struct DealCondenserTests {
         #expect(merged.schedules.count == 1)
         #expect(merged.schedules[0].startMinute == 960)
         #expect(merged.schedules[0].endMinute == 1_080)
+        #expect(merged.sourceIds == [11, 22])
     }
 
     @Test func dropsSupersetScheduleWhenMergingSubset() {
@@ -265,7 +268,10 @@ struct DealCondenserTests {
                 schedules: deal.schedules,
                 products: deal.products
             )
-            return processed.toDealWithSchedules(venueId: venueId)
+            return processed.toDealWithSchedules(
+                venueId: venueId,
+                dealSourceId: material.dealSourceId
+            )
         }
     }
 
@@ -275,7 +281,8 @@ struct DealCondenserTests {
         conditions: String? = nil,
         creativeURL: String? = nil,
         sourceURL: String? = nil,
-        schedules: [DealSchedule] = []
+        schedules: [DealSchedule] = [],
+        sourceIds: [Int64] = []
     ) -> DealWithSchedules {
         let deal = Deal(
             venueId: 1,
@@ -285,7 +292,7 @@ struct DealCondenserTests {
             details: details,
             conditions: conditions
         )
-        return DealWithSchedules(deal: deal, schedules: schedules)
+        return DealWithSchedules(deal: deal, schedules: schedules, sourceIds: sourceIds)
     }
 
     private func schedule(day: Int, start: Int, end: Int) -> DealSchedule {
@@ -523,7 +530,10 @@ struct DealCondenserShouldMergeTests {
                 schedules: deal.schedules,
                 products: deal.products
             )
-            return processed.toDealWithSchedules(venueId: venueId)
+            return processed.toDealWithSchedules(
+                venueId: venueId,
+                dealSourceId: material.dealSourceId
+            )
         }
     }
 

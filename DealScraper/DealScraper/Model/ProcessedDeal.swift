@@ -56,7 +56,7 @@ nonisolated struct ProcessedDeal: Codable, Sendable {
         products = try container.decodeIfPresent([ExtractedProductPayload].self, forKey: .products) ?? []
     }
 
-    func toDealWithSchedules(venueId: Int64) -> DealWithSchedules {
+    func toDealWithSchedules(venueId: Int64, dealSourceId: Int64? = nil) -> DealWithSchedules {
         let deal = Deal(
             venueId: venueId,
             title: title,
@@ -83,7 +83,18 @@ nonisolated struct ProcessedDeal: Codable, Sendable {
                 price: $0.price
             )
         }
-        return DealWithSchedules(deal: deal, schedules: schedules, products: products)
+        let sourceIds: [Int64]
+        if let dealSourceId, dealSourceId > 0 {
+            sourceIds = [dealSourceId]
+        } else {
+            sourceIds = []
+        }
+        return DealWithSchedules(
+            deal: deal,
+            schedules: schedules,
+            products: products,
+            sourceIds: sourceIds
+        )
     }
 
     private static let dateFormatter: DateFormatter = {

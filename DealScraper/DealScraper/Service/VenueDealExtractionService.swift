@@ -145,7 +145,12 @@ final class VenueDealExtractionService {
         venueId: Int64
     ) -> [DealWithSchedules] {
         extractions.flatMap { extraction in
-            extraction.deals.map { $0.toDealWithSchedules(venueId: venueId) }
+            extraction.deals.map {
+                $0.toDealWithSchedules(
+                    venueId: venueId,
+                    dealSourceId: extraction.material.dealSourceId
+                )
+            }
         }
     }
 

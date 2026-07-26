@@ -58,7 +58,8 @@ struct KeywordDealCondenser: DealCondenser {
         return DealWithSchedules(
             deal: deal,
             schedules: mergedSchedules(preferred.schedules, other.schedules),
-            products: DealWithSchedules.mergedProducts(preferred.products, other.products)
+            products: DealWithSchedules.mergedProducts(preferred.products, other.products),
+            sourceIds: DealWithSchedules.mergedSourceIds(preferred.sourceIds, other.sourceIds)
         )
     }
 

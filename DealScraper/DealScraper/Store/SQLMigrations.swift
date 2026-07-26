@@ -329,6 +329,19 @@ final class SQLMigrations {
                 t.column("price", .double)
             }
         }
+
+        migrator.registerMigration("v38_create_deal_source_link") { db in
+            try db.create(table: "deal_source_link") { t in
+                t.autoIncrementedPrimaryKey("id")
+                t.column("deal_id", .integer)
+                    .notNull()
+                    .references("deal", onDelete: .cascade)
+                t.column("deal_source_id", .integer)
+                    .notNull()
+                    .references("deal_source", onDelete: .cascade)
+                t.uniqueKey(["deal_id", "deal_source_id"])
+            }
+        }
     }
 }
 

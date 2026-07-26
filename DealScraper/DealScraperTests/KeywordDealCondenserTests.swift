@@ -14,12 +14,14 @@ struct KeywordDealCondenserTests {
             title: nil,
             details: "$8 wines",
             creativeURL: "https://example.com/poster.jpg",
-            schedules: [schedule(day: 3, start: 960, end: 1_080)]
+            schedules: [schedule(day: 3, start: 960, end: 1_080)],
+            sourceIds: [10]
         )
         let detailed = makeDeal(
             title: "Happy Hour",
             details: "$8 wines\n$8 schooners",
-            schedules: [schedule(day: 3, start: 960, end: 1_080)]
+            schedules: [schedule(day: 3, start: 960, end: 1_080)],
+            sourceIds: [20]
         )
 
         let result = condenser.condense([sparse, detailed])
@@ -28,6 +30,27 @@ struct KeywordDealCondenserTests {
         #expect(result[0].deal.title == "Happy Hour")
         #expect(result[0].deal.details == "$8 wines\n$8 schooners")
         #expect(result[0].deal.creativeURL == "https://example.com/poster.jpg")
+        #expect(Set(result[0].sourceIds) == Set([10, 20]))
+    }
+
+    @Test func unionsSourceIdsWhenMergingIdenticalDeals() {
+        let first = makeDeal(
+            title: "Happy Hour",
+            details: "$8 wines",
+            schedules: [schedule(day: 3, start: 960, end: 1_080)],
+            sourceIds: [1, 2]
+        )
+        let second = makeDeal(
+            title: "Happy Hour",
+            details: "$8 wines",
+            schedules: [schedule(day: 5, start: 960, end: 1_080)],
+            sourceIds: [2, 3]
+        )
+
+        let result = condenser.condense([first, second])
+
+        #expect(result.count == 1)
+        #expect(result[0].sourceIds == [1, 2, 3])
     }
 
     @Test func doesNotMergeDealsWithDifferentKeywordsOnSameDay() {
@@ -216,7 +239,8 @@ struct KeywordDealCondenserTests {
         details: String? = nil,
         conditions: String? = nil,
         creativeURL: String? = nil,
-        schedules: [DealSchedule] = []
+        schedules: [DealSchedule] = [],
+        sourceIds: [Int64] = []
     ) -> DealWithSchedules {
         let deal = Deal(
             venueId: 1,
@@ -225,7 +249,7 @@ struct KeywordDealCondenserTests {
             details: details,
             conditions: conditions
         )
-        return DealWithSchedules(deal: deal, schedules: schedules)
+        return DealWithSchedules(deal: deal, schedules: schedules, sourceIds: sourceIds)
     }
 
     private func schedule(day: Int, start: Int, end: Int) -> DealSchedule {

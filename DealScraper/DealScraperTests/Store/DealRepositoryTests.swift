@@ -1,6 +1,7 @@
 //Created by Alex Skorulis on 17/6/2026.
 
 import Foundation
+import GRDB
 import Testing
 @testable import DealScraper
 
@@ -411,5 +412,169 @@ struct DealRepositoryTests {
         let found = try dealRepository.find(venueId: venueId)
         #expect(found.count == 1)
         #expect(found[0].deal.status == .approved)
+    }
+
+    @Test func replaceAllPersistsAndLoadsSourceLinks() throws {
+        let store = SQLStore.inMemory()
+        let venueRepository = VenueRepository(store: store)
+        let dealRepository = DealRepository(store: store)
+        let dealSourceRepository = DealSourceRepository(store: store)
+
+        try venueRepository.upsert(Venue(
+            googleMapId: "places/test",
+            name: "Test Pub",
+            lat: 0,
+            lng: 0,
+            json: "{}"
+        ))
+
+        let venueId = try #require(try venueRepository.find(googleMapId: "places/test")?.id)
+
+        _ = try dealSourceRepository.upsert(
+            sources: [
+                DealSource(venueId: venueId, url: "https://example.com/a", type: .webpage),
+                DealSource(venueId: venueId, url: "https://example.com/b", type: .image),
+            ],
+            forVenueId: venueId
+        )
+        let sources = try dealSourceRepository.find(venueId: venueId)
+        #expect(sources.count == 2)
+        let sourceIds = sources.compactMap(\.id)
+        #expect(sourceIds.count == 2)
+
+        _ = try dealRepository.replaceAll(
+            venueId: venueId,
+            deals: [
+                DealWithSchedules(
+                    deal: Deal(venueId: venueId, title: "Happy Hour"),
+                    schedules: [],
+                    sourceIds: sourceIds
+                ),
+            ]
+        )
+
+        let found = try dealRepository.find(venueId: venueId)
+        #expect(found.count == 1)
+        #expect(Set(found[0].sourceIds) == Set(sourceIds))
+    }
+
+    @Test func replaceAllSkipsNonPositiveSourceIds() throws {
+        let store = SQLStore.inMemory()
+        let venueRepository = VenueRepository(store: store)
+        let dealRepository = DealRepository(store: store)
+
+        try venueRepository.upsert(Venue(
+            googleMapId: "places/test",
+            name: "Test Pub",
+            lat: 0,
+            lng: 0,
+            json: "{}"
+        ))
+
+        let venueId = try #require(try venueRepository.find(googleMapId: "places/test")?.id)
+
+        _ = try dealRepository.replaceAll(
+            venueId: venueId,
+            deals: [
+                DealWithSchedules(
+                    deal: Deal(venueId: venueId, title: "Happy Hour"),
+                    schedules: [],
+                    sourceIds: [0, -1]
+                ),
+            ]
+        )
+
+        let found = try dealRepository.find(venueId: venueId)
+        #expect(found.count == 1)
+        #expect(found[0].sourceIds.isEmpty)
+    }
+
+    @Test func deleteCascadesSourceLinks() throws {
+        let store = SQLStore.inMemory()
+        let venueRepository = VenueRepository(store: store)
+        let dealRepository = DealRepository(store: store)
+        let dealSourceRepository = DealSourceRepository(store: store)
+
+        try venueRepository.upsert(Venue(
+            googleMapId: "places/test",
+            name: "Test Pub",
+            lat: 0,
+            lng: 0,
+            json: "{}"
+        ))
+
+        let venueId = try #require(try venueRepository.find(googleMapId: "places/test")?.id)
+
+        _ = try dealSourceRepository.upsert(
+            sources: [
+                DealSource(venueId: venueId, url: "https://example.com/specials", type: .webpage),
+            ],
+            forVenueId: venueId
+        )
+        let sourceId = try #require(try dealSourceRepository.find(venueId: venueId).first?.id)
+
+        _ = try dealRepository.replaceAll(
+            venueId: venueId,
+            deals: [
+                DealWithSchedules(
+                    deal: Deal(venueId: venueId, title: "Happy Hour"),
+                    schedules: [],
+                    sourceIds: [sourceId]
+                ),
+            ]
+        )
+
+        let dealId = try #require(try dealRepository.find(venueId: venueId).first?.deal.id)
+        _ = try dealRepository.delete(id: dealId)
+
+        let remainingLinks = try store.dbQueue.read { db in
+            try DealSourceLink.filter(Column("deal_source_id") == sourceId).fetchCount(db)
+        }
+        #expect(remainingLinks == 0)
+    }
+
+    @Test func duplicateCopiesSourceLinks() throws {
+        let store = SQLStore.inMemory()
+        let venueRepository = VenueRepository(store: store)
+        let dealRepository = DealRepository(store: store)
+        let dealSourceRepository = DealSourceRepository(store: store)
+
+        try venueRepository.upsert(Venue(
+            googleMapId: "places/test",
+            name: "Test Pub",
+            lat: 0,
+            lng: 0,
+            json: "{}"
+        ))
+
+        let venueId = try #require(try venueRepository.find(googleMapId: "places/test")?.id)
+
+        _ = try dealSourceRepository.upsert(
+            sources: [
+                DealSource(venueId: venueId, url: "https://example.com/specials", type: .webpage),
+            ],
+            forVenueId: venueId
+        )
+        let sourceId = try #require(try dealSourceRepository.find(venueId: venueId).first?.id)
+
+        _ = try dealRepository.replaceAll(
+            venueId: venueId,
+            deals: [
+                DealWithSchedules(
+                    deal: Deal(venueId: venueId, title: "Happy Hour"),
+                    schedules: [],
+                    sourceIds: [sourceId]
+                ),
+            ]
+        )
+
+        let dealId = try #require(try dealRepository.find(venueId: venueId).first?.deal.id)
+        let duplicated = try #require(try dealRepository.duplicate(id: dealId))
+
+        #expect(duplicated.sourceIds == [sourceId])
+
+        let all = try dealRepository.find(venueId: venueId)
+        #expect(all.count == 2)
+        #expect(all.allSatisfy { $0.sourceIds == [sourceId] })
     }
 }

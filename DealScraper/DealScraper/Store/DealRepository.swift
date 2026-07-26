@@ -147,6 +147,11 @@ final class DealRepository {
                     )
                     try newProduct.insert(db)
                 }
+
+                for sourceId in item.sourceIds where sourceId > 0 {
+                    var link = DealSourceLink(dealId: dealId, dealSourceId: sourceId)
+                    try link.insert(db)
+                }
             }
 
             try Venue.touchLastUpdate(db, venueId: venueId)
@@ -161,6 +166,9 @@ final class DealRepository {
                 .filter(Column("deal_id") == id)
                 .fetchAll(db)
             let products = try DealProduct
+                .filter(Column("deal_id") == id)
+                .fetchAll(db)
+            let sourceLinks = try DealSourceLink
                 .filter(Column("deal_id") == id)
                 .fetchAll(db)
 
@@ -202,11 +210,19 @@ final class DealRepository {
                 newProducts.append(newProduct)
             }
 
+            var newSourceIds: [Int64] = []
+            for link in sourceLinks {
+                var newLink = DealSourceLink(dealId: newDealId, dealSourceId: link.dealSourceId)
+                try newLink.insert(db)
+                newSourceIds.append(link.dealSourceId)
+            }
+
             try Venue.touchLastUpdate(db, venueId: original.venueId)
             return DealWithSchedules(
                 deal: newDeal,
                 schedules: newSchedules,
-                products: newProducts
+                products: newProducts,
+                sourceIds: newSourceIds
             )
         }
     }
@@ -291,7 +307,16 @@ final class DealRepository {
         let products = try DealProduct
             .filter(Column("deal_id") == dealId)
             .fetchAll(db)
-        return DealWithSchedules(deal: deal, schedules: schedules, products: products)
+        let sourceIds = try DealSourceLink
+            .filter(Column("deal_id") == dealId)
+            .fetchAll(db)
+            .map(\.dealSourceId)
+        return DealWithSchedules(
+            deal: deal,
+            schedules: schedules,
+            products: products,
+            sourceIds: sourceIds
+        )
     }
 }
 

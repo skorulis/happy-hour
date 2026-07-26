@@ -82,7 +82,8 @@ struct TextMatchDealCondenser: DealCondenser {
         return DealWithSchedules(
             deal: deal,
             schedules: schedules,
-            products: DealWithSchedules.mergedProducts(lhs.products, rhs.products)
+            products: DealWithSchedules.mergedProducts(lhs.products, rhs.products),
+            sourceIds: DealWithSchedules.mergedSourceIds(lhs.sourceIds, rhs.sourceIds)
         )
     }
 
