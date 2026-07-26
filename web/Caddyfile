@@ -1,4 +1,8 @@
-duskroute.com, www.duskroute.com {
+www.duskroute.com {
+	redir https://duskroute.com{uri} permanent
+}
+
+duskroute.com {
 	encode gzip
 	reverse_proxy web:3000
 }
