@@ -15,8 +15,12 @@ struct AddressParserRegistryTests {
         #expect(parsed?.state == "NSW")
     }
 
-    @Test func returnsNilForNewZealandUntilParserExists() {
-        #expect(AddressParserRegistry.parser(forCountryIso3: Country.newZealand.iso3) == nil)
+    @Test func returnsNewZealandParserForNZL() {
+        let parser = AddressParserRegistry.parser(forCountryIso3: Country.newZealand.iso3)
+        #expect(parser != nil)
+        let parsed = parser?.parse(from: "14 Camp St, Queenstown 9300, New Zealand")
+        #expect(parsed?.suburb == "Queenstown")
+        #expect(parsed?.postcode == "9300")
     }
 
     @Test func defaultFallbackIsAustralia() {

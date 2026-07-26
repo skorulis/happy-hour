@@ -7,6 +7,8 @@ enum AddressParserRegistry {
         switch iso3 {
         case Country.australia.iso3:
             return AustraliaAddressParser()
+        case Country.newZealand.iso3:
+            return NewZealandAddressParser()
         default:
             return nil
         }

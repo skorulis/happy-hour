@@ -251,7 +251,7 @@ final class VenueRepository {
             return AddressParserRegistry.parser(forCountryIso3OrDefault: nil)
         }
         return try store.dbQueue.read { db in
-            Self.addressParser(forSuburbId: suburbId, in: db)
+            try Self.addressParser(forSuburbId: suburbId, in: db)
         }
     }
 
