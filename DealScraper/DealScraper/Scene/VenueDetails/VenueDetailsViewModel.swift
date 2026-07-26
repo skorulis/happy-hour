@@ -210,10 +210,11 @@ final class VenueDetailsViewModel {
         {
             return suburb.name
         }
-        if let address = formattedAddress,
-           let parsed = AustraliaAddressParser.parse(from: address)
-        {
-            return parsed.suburb
+        if let address = formattedAddress {
+            let parser = AddressParserRegistry.parser(forCountryIso3OrDefault: nil)
+            if let parsed = parser.parse(from: address) {
+                return parsed.suburb
+            }
         }
         return nil
     }

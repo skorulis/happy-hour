@@ -15,7 +15,11 @@ final class VenueRepository {
     func upsert(_ venue: Venue, preferredSuburbId: Int64? = nil) throws -> Bool {
         try store.dbQueue.write { db in
             var mutableVenue = venue
-            try Self.linkSuburb(for: &mutableVenue, in: db)
+            try Self.linkSuburb(
+                for: &mutableVenue,
+                preferredSuburbId: preferredSuburbId,
+                in: db
+            )
             if mutableVenue.suburbId == nil, let preferredSuburbId {
                 mutableVenue.suburbId = preferredSuburbId
             }
@@ -76,6 +80,7 @@ final class VenueRepository {
 
     @discardableResult
     func upsert(places: [GooglePlace], suburbId: Int64? = nil) throws -> Int {
+        let parser = try addressParser(forSuburbId: suburbId)
         var newCount = 0
         for place in places {
             guard place.isImportable else {
@@ -88,7 +93,7 @@ final class VenueRepository {
                 continue
             }
             guard let address = place.formattedAddress,
-                  AustraliaAddressParser.parse(from: address) != nil
+                  parser.parse(from: address) != nil
             else {
                 continue
             }
@@ -241,12 +246,43 @@ final class VenueRepository {
         }
     }
 
-    private static func linkSuburb(for venue: inout Venue, in db: Database) throws {
+    private func addressParser(forSuburbId suburbId: Int64?) throws -> any AddressParser {
+        guard let suburbId else {
+            return AddressParserRegistry.parser(forCountryIso3OrDefault: nil)
+        }
+        return try store.dbQueue.read { db in
+            Self.addressParser(forSuburbId: suburbId, in: db)
+        }
+    }
+
+    private static func addressParser(forSuburbId suburbId: Int64?, in db: Database) throws -> any AddressParser {
+        guard let suburbId,
+              let suburb = try Suburb.fetchOne(db, key: suburbId),
+              let countryId = suburb.countryId,
+              let country = try Country.fetchOne(db, key: countryId)
+        else {
+            return AddressParserRegistry.parser(forCountryIso3OrDefault: nil)
+        }
+        return AddressParserRegistry.parser(forCountryIso3OrDefault: country.iso3)
+    }
+
+    private static func linkSuburb(
+        for venue: inout Venue,
+        preferredSuburbId: Int64?,
+        in db: Database
+    ) throws {
         guard let jsonData = venue.json.data(using: .utf8),
               let place = try? JSONDecoder().decode(GooglePlace.self, from: jsonData),
-              let address = place.formattedAddress,
-              let parsed = AustraliaAddressParser.parse(from: address)
+              let address = place.formattedAddress
         else {
+            return
+        }
+
+        let parser = try addressParser(
+            forSuburbId: venue.suburbId ?? preferredSuburbId,
+            in: db
+        )
+        guard let parsed = parser.parse(from: address) else {
             return
         }
 

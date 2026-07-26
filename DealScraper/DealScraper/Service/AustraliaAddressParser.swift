@@ -2,30 +2,24 @@
 
 import Foundation
 
-struct ParsedAustralianAddress: Equatable {
-    let suburb: String
-    let state: String
-    let postcode: String
-}
-
-enum AustraliaAddressParser {
+struct AustraliaAddressParser: AddressParser {
     private static let streetSuburbPattern =
         #/,\s*([^,]+?)\s+(?i)(NSW|VIC|QLD|SA|WA|TAS|NT|ACT)\s+(\d{4})\s*(?:,\s*Australia)?\s*$/#
 
     private static let standaloneSuburbPattern =
         #/^([^,]+?)\s+(?i)(NSW|VIC|QLD|SA|WA|TAS|NT|ACT)\s+(\d{4})\s*(?:,\s*Australia)?\s*$/#
 
-    static func parse(from formattedAddress: String) -> ParsedAustralianAddress? {
+    func parse(from formattedAddress: String) -> ParsedAddress? {
         let trimmed = formattedAddress.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
 
-        for pattern in [streetSuburbPattern, standaloneSuburbPattern] {
+        for pattern in [Self.streetSuburbPattern, Self.standaloneSuburbPattern] {
             if let match = trimmed.firstMatch(of: pattern) {
                 let suburb = String(match.1).trimmingCharacters(in: .whitespacesAndNewlines)
                 let state = String(match.2).uppercased()
                 let postcode = String(match.3)
                 guard !suburb.isEmpty else { return nil }
-                return ParsedAustralianAddress(suburb: suburb, state: state, postcode: postcode)
+                return ParsedAddress(suburb: suburb, state: state, postcode: postcode)
             }
         }
 
