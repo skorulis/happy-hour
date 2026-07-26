@@ -47,21 +47,33 @@ const DEFAULT_CENTER = { lat: -33.87, lng: 151.21 };
 const DEFAULT_ZOOM = 11;
 const VIEWPORT_IDLE_DEBOUNCE_MS = 300;
 
-const CLUSTER_ACCENT = "#f59e0b";
-const CLUSTER_ACCENT_BORDER = "#b45309";
+const CLUSTER_ACTIVE = "#f59e0b";
+const CLUSTER_ACTIVE_BORDER = "#b45309";
+const CLUSTER_INACTIVE = "#cbd5e1";
+const CLUSTER_INACTIVE_BORDER = "#94a3b8";
 const CLUSTER_LABEL = "#081426";
 
+/** Tracks whether a venue marker would render with the active (orange) color. */
+const markerHasActiveDeal = new WeakMap<Marker, boolean>();
+
+function clusterHasActiveDeal(markers: Marker[]): boolean {
+  return markers.some((marker) => markerHasActiveDeal.get(marker) === true);
+}
+
 const venueClusterRenderer: Renderer = {
-  render({ count, position }, _stats, map) {
+  render({ count, position, markers }, _stats, map) {
     const size = count < 10 ? 40 : count < 50 ? 48 : 56;
+    const hasActive = clusterHasActiveDeal(markers);
+    const fill = hasActive ? CLUSTER_ACTIVE : CLUSTER_INACTIVE;
+    const border = hasActive ? CLUSTER_ACTIVE_BORDER : CLUSTER_INACTIVE_BORDER;
 
     if (MarkerUtils.isAdvancedMarkerAvailable(map)) {
       const content = document.createElement("div");
       content.style.width = `${size}px`;
       content.style.height = `${size}px`;
       content.style.borderRadius = "9999px";
-      content.style.background = CLUSTER_ACCENT;
-      content.style.border = `2px solid ${CLUSTER_ACCENT_BORDER}`;
+      content.style.background = fill;
+      content.style.border = `2px solid ${border}`;
       content.style.boxShadow = "0 2px 6px rgba(0,0,0,0.35)";
       content.style.display = "flex";
       content.style.alignItems = "center";
@@ -80,7 +92,7 @@ const venueClusterRenderer: Renderer = {
     }
 
     const svg = window.btoa(`
-      <svg fill="${CLUSTER_ACCENT}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+      <svg fill="${fill}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
         <circle cx="120" cy="120" opacity=".9" r="70" />
         <circle cx="120" cy="120" opacity=".4" r="90" />
         <circle cx="120" cy="120" opacity=".2" r="110" />
@@ -331,7 +343,11 @@ function VenueMarker({
   isSelected: boolean;
   onSelect: (venueId: number) => void;
   onClose: () => void;
-  setMarkerRef: (marker: Marker | null, venueId: number) => void;
+  setMarkerRef: (
+    marker: Marker | null,
+    venueId: number,
+    hasActiveDeal: boolean,
+  ) => void;
 }) {
   const [marker, setMarker] = useState<google.maps.marker.AdvancedMarkerElement | null>(
     null,
@@ -348,6 +364,11 @@ function VenueMarker({
     [group.deals, now],
   );
   const hasFavoriteDeal = group.deals.some((deal) => isFavorite(deal.id));
+  const hasActiveDealRef = useRef(hasActiveDeal);
+
+  useEffect(() => {
+    hasActiveDealRef.current = hasActiveDeal;
+  }, [hasActiveDeal]);
 
   const handleMarkerClick = useCallback(() => {
     if (!isSelected) {
@@ -362,10 +383,18 @@ function VenueMarker({
   const handleMarkerRef = useCallback(
     (instance: google.maps.marker.AdvancedMarkerElement | null) => {
       setMarker(instance);
-      setMarkerRef(instance, group.venue.id);
+      setMarkerRef(instance, group.venue.id, hasActiveDealRef.current);
     },
     [group.venue.id, setMarkerRef],
   );
+
+  useEffect(() => {
+    if (!marker) {
+      return;
+    }
+
+    setMarkerRef(marker, group.venue.id, hasActiveDeal);
+  }, [group.venue.id, hasActiveDeal, marker, setMarkerRef]);
 
   const position = useMemo(
     () => ({ lat: group.venue.lat, lng: group.venue.lng }),
@@ -462,6 +491,18 @@ function ClusteredVenueMarkers({
   // fresh clusterer. useMemo + setMap(null) cleanup left a dead instance that
   // stopped clustering while AdvancedMarkers stayed on the map.
   const clustererRef = useRef<MarkerClusterer | null>(null);
+  const clusterRenderPendingRef = useRef(false);
+
+  const scheduleClusterRender = useCallback(() => {
+    if (clusterRenderPendingRef.current) {
+      return;
+    }
+    clusterRenderPendingRef.current = true;
+    queueMicrotask(() => {
+      clusterRenderPendingRef.current = false;
+      clustererRef.current?.render();
+    });
+  }, []);
 
   useEffect(() => {
     if (!map) {
@@ -519,26 +560,39 @@ function ClusteredVenueMarkers({
     };
   }, [map, markers, onInfoWindowClose, selectedMarker]);
 
-  const setMarkerRef = useCallback((marker: Marker | null, venueId: number) => {
-    const key = String(venueId);
-    setMarkers((current) => {
+  const setMarkerRef = useCallback(
+    (marker: Marker | null, venueId: number, hasActiveDeal: boolean) => {
+      const key = String(venueId);
+
       if (marker) {
-        // Replace when AdvancedMarker recreates the element for the same venue.
-        if (current[key] === marker) {
+        const previousActive = markerHasActiveDeal.get(marker);
+        markerHasActiveDeal.set(marker, hasActiveDeal);
+        if (previousActive !== hasActiveDeal) {
+          scheduleClusterRender();
+        }
+
+        setMarkers((current) => {
+          // Replace when AdvancedMarker recreates the element for the same venue.
+          if (current[key] === marker) {
+            return current;
+          }
+          return { ...current, [key]: marker };
+        });
+        return;
+      }
+
+      setMarkers((current) => {
+        if (!current[key]) {
           return current;
         }
-        return { ...current, [key]: marker };
-      }
 
-      if (!current[key]) {
-        return current;
-      }
-
-      const rest = { ...current };
-      delete rest[key];
-      return rest;
-    });
-  }, []);
+        const rest = { ...current };
+        delete rest[key];
+        return rest;
+      });
+    },
+    [scheduleClusterRender],
+  );
 
   return (
     <>
