@@ -1,0 +1,44 @@
+# DuskRoute
+
+> DuskRoute is a happy-hour discovery service for Australian cities. Find pub and bar deals for after-work drinks or an evening out — by region, suburb, map, or near you.
+
+DuskRoute (https://duskroute.com) lists structured happy hour and specials data for venues. Sydney is live; other Australian cities are planned.
+
+URL patterns:
+
+- Region deal list: https://duskroute.com/{region} (e.g. /sydney)
+- Suburb deal list: https://duskroute.com/{suburb-slug}-{postcode} (e.g. /surry-hills-2010)
+- Venue page: https://duskroute.com/{suburb-slug}/{venue-slug}
+
+Use the sitemap for exhaustive region, suburb, and venue URLs. Account, favourites, report, and admin paths are personal or internal and are not needed to understand the product.
+
+## Core
+
+- [Home](https://duskroute.com/): Choose a region or find deals near you
+- [About](https://duskroute.com/about): What DuskRoute is and who it is for
+- [Map search](https://duskroute.com/map): Browse deals on a map
+- [Near me](https://duskroute.com/nearby): Deals near your current location
+- [Venue search](https://duskroute.com/venue-search): Search venues by name
+- [All suburbs](https://duskroute.com/all-suburbs): Directory of suburbs with deals
+
+## Regions
+
+- [Sydney](https://duskroute.com/sydney): Happy hour deals across Sydney
+- [Sydney suburbs](https://duskroute.com/sydney/all-suburbs): Suburb directory for Sydney
+
+## Policies
+
+- [Privacy](https://duskroute.com/privacy): How DuskRoute collects, uses, and stores data
+- [Terms of service](https://duskroute.com/tos): Terms for using duskroute.com
+- [Contact](https://duskroute.com/contact): Support and venue contact emails
+
+## Discovery
+
+- [Sitemap](https://duskroute.com/sitemap.xml): Index of region, suburb, venue, and static sitemaps
+- [Robots](https://duskroute.com/robots.txt): Crawl allow/disallow rules
+
+## Optional
+
+- [Sydney statistics](https://duskroute.com/sydney/statistics): Aggregate deal stats for Sydney
+- [Sydney analytics](https://duskroute.com/sydney/analytics): Region analytics for Sydney
+- [Log in](https://duskroute.com/login): Sign in to save favourites and manage contributions
