@@ -169,7 +169,11 @@ export function VenuePageContent({
         showReportButton
       />
 
-      <NextLink href={`${path}/new-deal`} className={linkClassName}>
+      <NextLink
+        href={`${path}/new-deal`}
+        rel="nofollow"
+        className={linkClassName}
+      >
         <CirclePlus
           aria-hidden
           className="h-4 w-4 shrink-0"
