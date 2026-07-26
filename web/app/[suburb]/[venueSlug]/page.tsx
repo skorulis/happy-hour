@@ -70,17 +70,20 @@ export async function generateMetadata({
       : `Happy hour deals and specials at ${venue.name}${venue.suburbName ? ` in ${venue.suburbName}` : ""}.`;
 
   const title = `${venue.name}${venue.suburbName ? `, ${venue.suburbName}` : ""}`;
+  const path = venuePath(venue.suburbName, venue.name);
   const ogImages = venue.heroImage ? [{ url: venue.heroImage }] : undefined;
 
   return {
     title,
     description,
     alternates: {
-      canonical: venuePath(venue.suburbName, venue.name),
+      canonical: path,
     },
     openGraph: {
       title,
       description,
+      type: "website",
+      url: path,
       ...(ogImages ? { images: ogImages } : {}),
     },
     twitter: {

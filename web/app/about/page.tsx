@@ -8,6 +8,16 @@ export const metadata: Metadata = {
   title: "About | DuskRoute",
   description:
     "DuskRoute is your route to start the night — find happy hours for after-work drinks or an all-night bender.",
+  alternates: {
+    canonical: "/about",
+  },
+  openGraph: {
+    title: "About | DuskRoute",
+    description:
+      "DuskRoute is your route to start the night — find happy hours for after-work drinks or an all-night bender.",
+    type: "website",
+    url: "/about",
+  },
 };
 
 export default function AboutPage() {

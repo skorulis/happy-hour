@@ -29,11 +29,19 @@ export async function generateWhereListMetadata(
 ): Promise<Metadata> {
   if (whereSlug === NEARBY_WHERE_SLUG) {
     const title = formatNearbyDealsTitle(days, what);
+    const description = "Find pub and bar happy hour deals near you.";
+    const path = `/${NEARBY_WHERE_SLUG}`;
     return {
       title,
-      description: "Find pub and bar happy hour deals near you.",
+      description,
       alternates: {
-        canonical: `/${NEARBY_WHERE_SLUG}`,
+        canonical: path,
+      },
+      openGraph: {
+        title,
+        description,
+        type: "website",
+        url: path,
       },
     };
   }
@@ -46,17 +54,20 @@ export async function generateWhereListMetadata(
   if (suburb) {
     const title = formatSuburbDealsMetadataTitle(suburb.name, days, what);
     const description = `Find pub and bar happy hour deals in ${suburb.name}${suburb.postcode ? ` (${suburb.postcode})` : ""}.`;
+    const path = suburbWherePath(suburb.name, suburb.postcode);
     const ogImages = suburb.heroImage ? [{ url: suburb.heroImage }] : undefined;
 
     return {
       title,
       description,
       alternates: {
-        canonical: suburbWherePath(suburb.name, suburb.postcode),
+        canonical: path,
       },
       openGraph: {
         title,
         description,
+        type: "website",
+        url: path,
         ...(ogImages ? { images: ogImages } : {}),
       },
       twitter: {
@@ -75,16 +86,19 @@ export async function generateWhereListMetadata(
 
   const title = `Pub Specials in ${region.name}`;
   const description = `Find pub and bar happy hour deals in ${region.name}.`;
+  const path = regionPath(region.name);
 
   return {
     title,
     description,
     alternates: {
-      canonical: regionPath(region.name),
+      canonical: path,
     },
     openGraph: {
       title,
       description,
+      type: "website",
+      url: path,
     },
     twitter: {
       card: "summary",

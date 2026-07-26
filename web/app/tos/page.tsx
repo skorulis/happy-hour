@@ -5,6 +5,16 @@ export const metadata: Metadata = {
   title: "Terms of Service | DuskRoute",
   description:
     "Rules of use and disclaimers for duskroute.com, including deal accuracy.",
+  alternates: {
+    canonical: "/tos",
+  },
+  openGraph: {
+    title: "Terms of Service | DuskRoute",
+    description:
+      "Rules of use and disclaimers for duskroute.com, including deal accuracy.",
+    type: "website",
+    url: "/tos",
+  },
 };
 
 export default function TermsOfServicePage() {

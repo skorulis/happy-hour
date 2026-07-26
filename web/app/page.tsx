@@ -10,12 +10,20 @@ export const dynamic = "force-dynamic";
 
 const socialTitle = "DuskRoute: Your evening starts here";
 
+const description =
+  "Find happy hour deals as the day fades into night — after-work drinks or an all-night plan. Pick a region or jump to deals near you.";
+
 export const metadata: Metadata = {
   title: socialTitle,
-  description:
-    "Find happy hour deals as the day fades into night — after-work drinks or an all-night plan. Pick a region or jump to deals near you.",
+  description,
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     title: socialTitle,
+    description,
+    type: "website",
+    url: "/",
   },
   twitter: {
     title: socialTitle,

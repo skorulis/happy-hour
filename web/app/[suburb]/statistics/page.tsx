@@ -22,12 +22,19 @@ export async function generateMetadata({
 
   const title = `Statistics for ${region.name}`;
   const description = `Compare venues and deals by density and population across suburbs in ${region.name}.`;
+  const path = regionStatisticsPath(region.name);
 
   return {
     title,
     description,
     alternates: {
-      canonical: regionStatisticsPath(region.name),
+      canonical: path,
+    },
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      url: path,
     },
   };
 }

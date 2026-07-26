@@ -8,6 +8,15 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "All suburbs",
   description: "Browse every suburb, ordered by deal count.",
+  alternates: {
+    canonical: "/all-suburbs",
+  },
+  openGraph: {
+    title: "All suburbs",
+    description: "Browse every suburb, ordered by deal count.",
+    type: "website",
+    url: "/all-suburbs",
+  },
 };
 
 export default async function AllSuburbsPage() {

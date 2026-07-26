@@ -5,6 +5,16 @@ export const metadata: Metadata = {
   title: "Privacy | DuskRoute",
   description:
     "How DuskRoute collects, uses, and stores data when you use duskroute.com.",
+  alternates: {
+    canonical: "/privacy",
+  },
+  openGraph: {
+    title: "Privacy | DuskRoute",
+    description:
+      "How DuskRoute collects, uses, and stores data when you use duskroute.com.",
+    type: "website",
+    url: "/privacy",
+  },
 };
 
 export default function PrivacyPage() {

@@ -22,12 +22,19 @@ export async function generateMetadata({
 
   const title = `All suburbs in ${region.name}`;
   const description = `Browse every suburb in ${region.name}, ordered by deal count.`;
+  const path = regionAllSuburbsPath(region.name);
 
   return {
     title,
     description,
     alternates: {
-      canonical: regionAllSuburbsPath(region.name),
+      canonical: path,
+    },
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      url: path,
     },
   };
 }

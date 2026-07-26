@@ -5,6 +5,16 @@ export const metadata: Metadata = {
   title: "Contact | DuskRoute",
   description:
     "Get in touch with DuskRoute for support or venue inquiries.",
+  alternates: {
+    canonical: "/contact",
+  },
+  openGraph: {
+    title: "Contact | DuskRoute",
+    description:
+      "Get in touch with DuskRoute for support or venue inquiries.",
+    type: "website",
+    url: "/contact",
+  },
 };
 
 export default function ContactPage() {
