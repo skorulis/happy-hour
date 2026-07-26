@@ -42,6 +42,28 @@ describe("searchQueryFromEvent", () => {
     });
   });
 
+  it("maps nearMe searches with nearest suburb_id", () => {
+    expect(
+      searchQueryFromEvent({
+        event_type: "search_performed",
+        user_id: "user-1",
+        event_properties: {
+          where_kind: "nearMe",
+          suburb_id: 99,
+          suburb_slug: "surry-hills-2010",
+          days: "5",
+          what: "beer",
+        },
+      }),
+    ).toEqual({
+      userId: "user-1",
+      type: "nearby",
+      suburbId: 99,
+      day: 5,
+      products: "beer",
+    });
+  });
+
   it("maps suburb searches with suburb_id", () => {
     expect(
       searchQueryFromEvent({

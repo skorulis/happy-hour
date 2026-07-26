@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import type { SearchFilters } from "@/components/search/SearchBar";
 import type { TimeRange } from "@/components/search/DayPicker";
@@ -111,6 +111,24 @@ function isNearMePending(where: WhereFilter): boolean {
   return where.kind === "nearMe" && !isNearMeReady(where);
 }
 
+/** Round coords for cache keys so tiny GPS jitter does not thrash the lookup. */
+function nearMeCoordsKey(lat: number, lng: number): string {
+  return `${lat.toFixed(4)},${lng.toFixed(4)}`;
+}
+
+function subscribeGeolocationAvailability() {
+  return () => {};
+}
+
+function getGeolocationUnavailableSnapshot(): boolean {
+  return !navigator.geolocation;
+}
+
+/** Assume available during SSR so the first paint matches hydration. */
+function getGeolocationUnavailableServerSnapshot(): boolean {
+  return false;
+}
+
 async function fetchSuburbBySlug(
   slug: string,
   signal?: AbortSignal,
@@ -215,6 +233,10 @@ export function useSearchFilters(options?: {
   );
   const nearbyCameraPendingRef = useRef(false);
   const skipMapDaySyncOnceRef = useRef(true);
+  const nearestSuburbCacheRef = useRef<{
+    key: string;
+    suburb: SuburbSearchResult | null;
+  } | null>(null);
 
   const setViewportBounds = useCallback((bounds: MapBounds) => {
     setViewportBoundsState((current) =>
@@ -238,8 +260,11 @@ export function useSearchFilters(options?: {
   const daysKey = filters.days.join(",");
   const whereKey = whereFilterKey(filters.where);
   const nearMePending = isNearMePending(filters.where);
-  const geolocationUnavailable =
-    typeof navigator !== "undefined" && !navigator.geolocation;
+  const geolocationUnavailable = useSyncExternalStore(
+    subscribeGeolocationAvailability,
+    getGeolocationUnavailableSnapshot,
+    getGeolocationUnavailableServerSnapshot,
+  );
   const locating =
     nearMePending && !geolocationUnavailable && error === null;
   const scheduleKey = timeRangeKey(filters.timeRange);
@@ -679,6 +704,7 @@ export function useSearchFilters(options?: {
           deals: DealSearchResult[];
           nearbyDeals?: DealSearchResult[];
           venuesWithoutApplicableDeals?: VenueListResult[];
+          nearestSuburb?: SuburbSearchResult | null;
         };
 
         if (mapViewport && !filterChanged) {
@@ -696,19 +722,52 @@ export function useSearchFilters(options?: {
         );
         skipLoadingOnceRef.current = false;
 
+        if (
+          isNearMeReady(filters.where) &&
+          data.nearestSuburb !== undefined
+        ) {
+          nearestSuburbCacheRef.current = {
+            key: nearMeCoordsKey(filters.where.lat, filters.where.lng),
+            suburb: data.nearestSuburb,
+          };
+        }
+
         if (filterChanged || !mapViewport) {
           const whereKind = filters.where.kind;
+          let suburbId: number | null = null;
+          let suburbSlug: string | null = null;
+
+          if (whereKind === "suburb") {
+            suburbId = filters.where.id;
+            suburbSlug = suburbWhereSlug(
+              filters.where.suburb.name,
+              filters.where.suburb.postcode,
+            );
+          } else if (whereKind === "nearMe") {
+            let nearest: SuburbSearchResult | null = null;
+            if (isNearMeReady(filters.where)) {
+              const key = nearMeCoordsKey(
+                filters.where.lat,
+                filters.where.lng,
+              );
+              const cached = nearestSuburbCacheRef.current;
+              if (cached && cached.key === key) {
+                nearest = cached.suburb;
+              } else if (data.nearestSuburb !== undefined) {
+                nearest = data.nearestSuburb;
+              }
+            }
+            if (nearest) {
+              suburbId = nearest.id;
+              suburbSlug = suburbWhereSlug(nearest.name, nearest.postcode);
+            }
+          }
+
           track("search_performed", {
             view: mapViewport ? "map" : "list",
             where_kind: whereKind,
-            suburb_id: whereKind === "suburb" ? filters.where.id : null,
-            suburb_slug:
-              whereKind === "suburb"
-                ? suburbWhereSlug(
-                    filters.where.suburb.name,
-                    filters.where.suburb.postcode,
-                  )
-                : null,
+            suburb_id: suburbId,
+            suburb_slug: suburbSlug,
             days: filters.days.slice().sort((a, b) => a - b).join(","),
             time: timeRangeKey(filters.timeRange) || null,
             what: debouncedWhat.join(",") || null,

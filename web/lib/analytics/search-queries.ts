@@ -78,7 +78,7 @@ export function searchQueryFromEvent(input: {
   return {
     userId: input.user_id ?? null,
     type,
-    suburbId: type === "suburb" ? parseSuburbId(properties.suburb_id) : null,
+    suburbId: parseSuburbId(properties.suburb_id),
     day: parseDay(properties.days),
     products: parseProducts(properties.what),
   };

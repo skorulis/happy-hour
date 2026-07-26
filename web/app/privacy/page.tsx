@@ -93,11 +93,13 @@ export default function PrivacyPage() {
             <li>
               <span className="text-foreground">Search analytics</span> — when
               you run a nearby or suburb deal search, we may store the search
-              type, selected suburb (for suburb searches), selected day of week
-              (when exactly one day is chosen), and selected products. If you
-              are signed in, the record may be linked to your user ID; otherwise
-              it is anonymous. We do not store your precise GPS coordinates in
-              this table.
+              type, selected or nearest suburb (for suburb searches, the suburb
+              you chose; for nearby searches, the closest suburb centre within
+              about 20 km of your location when one is available), selected day
+              of week (when exactly one day is chosen), and selected products.
+              If you are signed in, the record may be linked to your user ID;
+              otherwise it is anonymous. We do not store your precise GPS
+              coordinates in this table.
             </li>
             <li>
               <span className="text-foreground">Approximate location</span> —
@@ -251,7 +253,8 @@ export default function PrivacyPage() {
             If you choose “near me”, your browser may ask for location
             permission. Coordinates are used to find nearby deals via our API
             and to show your position on the map. We may log that a nearby
-            search occurred (without storing those coordinates) for product
+            search occurred and attribute it to the closest suburb centre
+            within about 20 km (without storing those coordinates) for product
             analytics. We do not keep a history of your precise location on
             your user profile.
           </p>

@@ -6,8 +6,14 @@ import {
   parseUserDealInputs,
 } from "@/lib/deals/create-user-deals";
 import { parseBoundsParams } from "@/lib/search/bounds";
+import { NEAREST_SUBURB_MAX_KM } from "@/lib/search/nearby-radius";
 import { parseDealIdsParam } from "@/lib/search/parse-deal-ids";
-import { getDealsByIds, searchDeals, searchDealsForSuburb } from "@/lib/search/queries";
+import {
+  findNearestSuburb,
+  getDealsByIds,
+  searchDeals,
+  searchDealsForSuburb,
+} from "@/lib/search/queries";
 
 function parseDaysParam(value: string | null): number[] | undefined | "invalid" {
   if (value === null || value.trim() === "") {
@@ -201,7 +207,7 @@ export async function GET(request: Request) {
       });
     }
 
-    const deals = await searchDeals({
+    const dealsPromise = searchDeals({
       venueId,
       day,
       days,
@@ -213,6 +219,17 @@ export async function GET(request: Request) {
       lat,
       lng,
     });
+
+    if (lat !== undefined && lng !== undefined) {
+      const [deals, nearestSuburb] = await Promise.all([
+        dealsPromise,
+        findNearestSuburb(lat, lng, NEAREST_SUBURB_MAX_KM),
+      ]);
+
+      return NextResponse.json({ deals, nearestSuburb });
+    }
+
+    const deals = await dealsPromise;
 
     return NextResponse.json({ deals });
   } catch (error) {

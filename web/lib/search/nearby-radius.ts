@@ -4,6 +4,9 @@ export const NEARBY_SUBURB_BUFFER_KM = 0.5;
 /** Fixed radius (km) for near-me list search. */
 export const NEAR_ME_RADIUS_KM = 30;
 
+/** Max distance (km) for attributing a nearby search to a suburb in analytics. */
+export const NEAREST_SUBURB_MAX_KM = 20;
+
 /** Fixed radius (km) for the map viewport when entering from nearby. */
 export const NEAR_ME_MAP_RADIUS_KM = 2;
 
