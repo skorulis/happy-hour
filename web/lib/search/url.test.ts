@@ -122,7 +122,6 @@ describe("where paths", () => {
       "/abbotsbury-2176/monday-beer",
     );
     expect(whereToMapPath()).toBe("/map");
-    expect(whereToMapPath([5])).toBe("/map");
     expect(whereToListPath(nearMeWhere)).toBe("/nearby");
     expect(whereToListPath(nearMeWhere, [2])).toBe("/nearby/monday");
     expect(whereToListPath(nearMeWhere, [], ["happy hour"])).toBe(

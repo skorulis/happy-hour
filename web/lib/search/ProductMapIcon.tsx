@@ -9,6 +9,7 @@ import {
 } from "@lucide/lab";
 import {
   Baby,
+  BadgeDollarSign,
   Beef,
   Beer,
   BottleWine,
@@ -89,6 +90,7 @@ function wrapLucideIcon(IconComponent: LucideIcon): ProductIcon {
 
 const PRODUCT_ICON_REGISTRY: Record<string, ProductIcon> = {
   Baby: wrapLucideIcon(Baby),
+  BadgeDollarSign: wrapLucideIcon(BadgeDollarSign),
   Beef: wrapLucideIcon(Beef),
   Beer: wrapLucideIcon(Beer),
   BottleWine: wrapLucideIcon(BottleWine),

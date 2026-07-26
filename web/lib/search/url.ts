@@ -159,7 +159,7 @@ export function whereToListPath(
  * Day selection is kept in session map-entry storage (not the URL) so Google
  * Maps referrer checks stay on an authorized path.
  */
-export function whereToMapPath(_days: number[] = []): string {
+export function whereToMapPath(): string {
   return "/map";
 }
 
@@ -170,7 +170,7 @@ export function filtersToBrowserPath(
 ): string {
   const parsed = parseWherePath(pathname);
   if (parsed.map) {
-    return whereToMapPath(filters.days);
+    return whereToMapPath();
   }
   if (filters.where.kind === "anywhere" && options?.anywhereBasePath) {
     return appendFiltersToPath(
@@ -676,7 +676,7 @@ export function legacyLocationRedirectHref(
 
   let path: string;
   if (isMap) {
-    path = whereToMapPath(day);
+    path = whereToMapPath();
   } else if (legacy.type === "nearby") {
     path = appendFiltersToPath(`/${NEARBY_WHERE_SLUG}`, day, what);
   } else {

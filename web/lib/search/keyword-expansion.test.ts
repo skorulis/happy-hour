@@ -34,13 +34,14 @@ describe("expandKeywords", () => {
         "jugs",
         "guinness",
         "craft beer",
+        "espresso martini",
         "negroni",
         "martini",
         "spritz",
         "mojito",
       ]),
     );
-    expect(expanded).toHaveLength(16);
+    expect(expanded).toHaveLength(17);
   });
 
   it("deduplicates shared descendants", () => {
