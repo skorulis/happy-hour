@@ -1,7 +1,28 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import { permanentRedirect } from "next/navigation";
 import { SearchPage } from "@/components/SearchPage";
+import { formatNearbyDealsTitle } from "@/lib/search/schedule";
+import { NEARBY_WHERE_SLUG } from "@/lib/search/slugs";
 import { legacyDaysRedirectHref } from "@/lib/search/url";
+
+const title = formatNearbyDealsTitle([], []);
+const description = "Find pub and bar happy hour deals near you.";
+const path = `/${NEARBY_WHERE_SLUG}`;
+
+export const metadata: Metadata = {
+  title,
+  description,
+  alternates: {
+    canonical: path,
+  },
+  openGraph: {
+    title,
+    description,
+    type: "website",
+    url: path,
+  },
+};
 
 type NearbyPageProps = {
   searchParams: Promise<{ days?: string; q?: string }>;

@@ -1,15 +1,70 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import { notFound, permanentRedirect, redirect } from "next/navigation";
 import { MapPage } from "@/components/MapPage";
 import { appendDayToPath, stripDaySuffix } from "@/lib/search/day-path";
 import { findSuburbByWhereSlug } from "@/lib/search/queries";
-import { NEARBY_WHERE_SLUG, suburbMapRedirectPath } from "@/lib/search/slugs";
+import {
+  NEARBY_WHERE_SLUG,
+  suburbMapRedirectPath,
+  suburbWherePath,
+} from "@/lib/search/slugs";
 import { legacyDaysRedirectHref } from "@/lib/search/url";
 
 type SuburbMapPageProps = {
   params: Promise<{ suburb: string }>;
   searchParams: Promise<{ days?: string; q?: string }>;
 };
+
+export async function generateMetadata({
+  params,
+}: SuburbMapPageProps): Promise<Metadata> {
+  const { suburb: rawWhereSlug } = await params;
+  const { base: whereSlug } = stripDaySuffix(rawWhereSlug);
+
+  if (whereSlug === NEARBY_WHERE_SLUG) {
+    const title = "Happy Hour Map Nearby | DuskRoute";
+    const description =
+      "Explore pub and bar happy hour deals near you on a map.";
+    const path = `/${NEARBY_WHERE_SLUG}/map`;
+    return {
+      title,
+      description,
+      alternates: {
+        canonical: path,
+      },
+      openGraph: {
+        title,
+        description,
+        type: "website",
+        url: path,
+      },
+    };
+  }
+
+  const suburb = await findSuburbByWhereSlug(whereSlug);
+  if (!suburb) {
+    return {};
+  }
+
+  const title = `Happy Hour Map in ${suburb.name} | DuskRoute`;
+  const description = `Explore pub and bar happy hour deals in ${suburb.name}${suburb.postcode ? ` (${suburb.postcode})` : ""} on a map.`;
+  const path = `${suburbWherePath(suburb.name, suburb.postcode)}/map`;
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: path,
+    },
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      url: path,
+    },
+  };
+}
 
 export default async function SuburbMapPage({
   params,

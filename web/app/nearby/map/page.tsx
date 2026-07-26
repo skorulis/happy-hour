@@ -1,7 +1,28 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import { permanentRedirect } from "next/navigation";
 import { MapPage } from "@/components/MapPage";
+import { NEARBY_WHERE_SLUG } from "@/lib/search/slugs";
 import { legacyDaysRedirectHref } from "@/lib/search/url";
+
+const title = "Happy Hour Map Nearby | DuskRoute";
+const description =
+  "Explore pub and bar happy hour deals near you on a map.";
+const path = `/${NEARBY_WHERE_SLUG}/map`;
+
+export const metadata: Metadata = {
+  title,
+  description,
+  alternates: {
+    canonical: path,
+  },
+  openGraph: {
+    title,
+    description,
+    type: "website",
+    url: path,
+  },
+};
 
 type NearbyMapPageProps = {
   searchParams: Promise<{ days?: string; q?: string }>;

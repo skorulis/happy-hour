@@ -1,8 +1,28 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import { permanentRedirect } from "next/navigation";
 import { MapPage } from "@/components/MapPage";
 import { SearchUrlRedirect } from "@/components/SearchUrlRedirect";
 import { legacyDaysRedirectHref } from "@/lib/search/url";
+
+const title = "Happy Hour Map | DuskRoute";
+const description =
+  "Explore pub and bar happy hour deals on a map.";
+const path = "/map";
+
+export const metadata: Metadata = {
+  title,
+  description,
+  alternates: {
+    canonical: path,
+  },
+  openGraph: {
+    title,
+    description,
+    type: "website",
+    url: path,
+  },
+};
 
 type MapRouteProps = {
   searchParams: Promise<{ days?: string; q?: string }>;
