@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { headers } from "next/headers";
 import { RestrictedMessage } from "@/components/AdminPageContent";
-import { SearchDayPieChart } from "@/components/analytics/SearchDayPieChart";
+import { SearchDayPieChartClient } from "@/components/analytics/SearchDayPieChartClient";
 import { isAdmin } from "@/lib/admin";
 import { getSearchesByDay } from "@/lib/analytics/queries";
 import { auth } from "@/lib/auth";
@@ -52,7 +52,7 @@ export default async function AnalyticsPage() {
             Searches where a single day was selected.
           </p>
         </div>
-        <SearchDayPieChart data={searchesByDay} />
+        <SearchDayPieChartClient data={searchesByDay} />
       </section>
     </div>
   );
