@@ -38,4 +38,17 @@ extension Country {
     static let newZealand = Country(name: "New Zealand", iso3: "NZL")
 
     static let defaults: [Country] = [.australia, .newZealand]
+
+    /// Two-letter CLDR / ISO region code for Google Places `regionCode`.
+    var placesRegionCode: String {
+        switch iso3 {
+        case Self.australia.iso3:
+            return "AU"
+        case Self.newZealand.iso3:
+            return "NZ"
+        default:
+            // Fallback: first two letters of ISO3 (AUS→AU, NZL→NZ, …).
+            return String(iso3.prefix(2))
+        }
+    }
 }

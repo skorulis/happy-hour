@@ -64,15 +64,18 @@ struct SuburbCrawlerTests {
 
         let suburbRepository = SuburbRepository(store: store)
         let venueRepository = VenueRepository(store: store)
+        let countryRepository = CountryRepository(store: store)
         let assembler = DealScraperAssembly.testing()
         let apiKeyStore = assembler.resolver.apiKeyStore()
         apiKeyStore.googlePlacesAPIKey = "google-test-key"
 
         var capturedQuery: String?
+        var capturedRegionCode: String?
         let client = GooglePlacesClient { request in
             let body = try #require((request as? HTTPJSONRequest<GooglePlacesSearchResponse>)?.body)
             let json = try #require(JSONSerialization.jsonObject(with: body) as? [String: Any])
             capturedQuery = json["textQuery"] as? String
+            capturedRegionCode = json["regionCode"] as? String
 
             let responseData = Self.sampleResponse.data(using: .utf8)!
             return try JSONDecoder().decode(GooglePlacesSearchResponse.self, from: responseData)
@@ -82,6 +85,7 @@ struct SuburbCrawlerTests {
             googlePlacesClient: client,
             venueRepository: venueRepository,
             suburbRepository: suburbRepository,
+            countryRepository: countryRepository,
             apiKeyStore: apiKeyStore
         )
 
@@ -89,6 +93,7 @@ struct SuburbCrawlerTests {
         let results = try await crawler.crawl(suburb: suburb)
 
         #expect(capturedQuery == "pubs in Newtown 2042")
+        #expect(capturedRegionCode == "AU")
         #expect(results.venuesFound == 2)
         #expect(results.newVenues == 2)
 
@@ -98,6 +103,57 @@ struct SuburbCrawlerTests {
 
         let updatedSuburb = try #require(try suburbRepository.find(id: suburbId))
         #expect(updatedSuburb.lastCrawlDate != nil)
+    }
+
+    @Test @MainActor func crawlUsesNewZealandRegionCode() async throws {
+        let store = SQLStore.inMemory()
+        let nzId = try #require(
+            try store.dbQueue.read { db in
+                try Country
+                    .filter(Column("iso3") == Country.newZealand.iso3)
+                    .fetchOne(db)?
+                    .id
+            }
+        )
+        let suburbId = try Self.insertSuburb(
+            Suburb(
+                countryId: nzId,
+                name: "Fernhill",
+                postcode: "9300",
+                state: "Otago"
+            ),
+            in: store
+        )
+
+        let suburbRepository = SuburbRepository(store: store)
+        let venueRepository = VenueRepository(store: store)
+        let countryRepository = CountryRepository(store: store)
+        let assembler = DealScraperAssembly.testing()
+        let apiKeyStore = assembler.resolver.apiKeyStore()
+        apiKeyStore.googlePlacesAPIKey = "google-test-key"
+
+        var capturedRegionCode: String?
+        let client = GooglePlacesClient { request in
+            let body = try #require((request as? HTTPJSONRequest<GooglePlacesSearchResponse>)?.body)
+            let json = try #require(JSONSerialization.jsonObject(with: body) as? [String: Any])
+            capturedRegionCode = json["regionCode"] as? String
+
+            let responseData = Self.sampleResponse.data(using: .utf8)!
+            return try JSONDecoder().decode(GooglePlacesSearchResponse.self, from: responseData)
+        }
+
+        let crawler = SuburbCrawler(
+            googlePlacesClient: client,
+            venueRepository: venueRepository,
+            suburbRepository: suburbRepository,
+            countryRepository: countryRepository,
+            apiKeyStore: apiKeyStore
+        )
+
+        let suburb = try #require(try suburbRepository.find(id: suburbId))
+        _ = try await crawler.crawl(suburb: suburb)
+
+        #expect(capturedRegionCode == "NZ")
     }
 
     private static func insertSuburb(_ suburb: Suburb, in store: SQLStore) throws -> Int64 {

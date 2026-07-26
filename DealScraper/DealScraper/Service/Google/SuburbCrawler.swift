@@ -24,6 +24,7 @@ final class SuburbCrawler {
     private let googlePlacesClient: GooglePlacesClient
     private let venueRepository: VenueRepository
     private let suburbRepository: SuburbRepository
+    private let countryRepository: CountryRepository
     private let apiKeyStore: APIKeyStore
 
     @Resolvable<Resolver>
@@ -31,11 +32,13 @@ final class SuburbCrawler {
         googlePlacesClient: GooglePlacesClient,
         venueRepository: VenueRepository,
         suburbRepository: SuburbRepository,
+        countryRepository: CountryRepository,
         apiKeyStore: APIKeyStore
     ) {
         self.googlePlacesClient = googlePlacesClient
         self.venueRepository = venueRepository
         self.suburbRepository = suburbRepository
+        self.countryRepository = countryRepository
         self.apiKeyStore = apiKeyStore
     }
 
@@ -58,7 +61,7 @@ final class SuburbCrawler {
             apiKey: apiKey,
             textQuery: Self.searchQuery(for: suburb),
             includedType: "bar",
-            regionCode: "AU"
+            regionCode: try regionCode(for: suburb)
         )
 
         await progress("Saving \(response.places.count) venues…")
@@ -82,5 +85,14 @@ final class SuburbCrawler {
             return "pubs in \(suburb.name) \(postcode)"
         }
         return "pubs in \(suburb.name)"
+    }
+
+    private func regionCode(for suburb: Suburb) throws -> String {
+        guard let countryId = suburb.countryId,
+              let country = try countryRepository.find(id: countryId)
+        else {
+            return Country.australia.placesRegionCode
+        }
+        return country.placesRegionCode
     }
 }
