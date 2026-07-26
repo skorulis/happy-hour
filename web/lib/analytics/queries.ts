@@ -1,4 +1,4 @@
-import { asc, count } from "drizzle-orm";
+import { asc, count, eq } from "drizzle-orm";
 import { searchQueries } from "@/db/schema";
 import { db } from "@/lib/db";
 
@@ -8,23 +8,34 @@ export type SearchDayCount = {
   count: number;
 };
 
-export async function getSearchesByDay(): Promise<SearchDayCount[]> {
+export type AnalyticsFilters = {
+  suburbId?: number;
+};
+
+export async function getSearchesByDay(
+  filters: AnalyticsFilters = {},
+): Promise<SearchDayCount[]> {
   const rows = await db
     .select({
       day: searchQueries.day,
       count: count(searchQueries.id),
     })
     .from(searchQueries)
+    .where(
+      filters.suburbId === undefined
+        ? undefined
+        : eq(searchQueries.suburbId, filters.suburbId),
+    )
     .groupBy(searchQueries.day)
     .orderBy(asc(searchQueries.day));
 
-  return rows.flatMap((row) => {
+const results: SearchDayCount[] = [];
+  for (const row of rows) {
     if (row.day === null) {
-      return [{ day: null, count: row.count }];
+      results.push({ day: null, count: row.count });
+    } else if (row.day >= 1 && row.day <= 7) {
+      results.push({ day: row.day, count: row.count });
     }
-    if (row.day >= 1 && row.day <= 7) {
-      return [{ day: row.day, count: row.count }];
-    }
-    return [];
-  });
+  }
+  return results;
 }
