@@ -96,6 +96,18 @@ final class SuburbRepository {
             return id
         }
 
+        // Prefer name + postcode before postcode-only fallback so shared
+        // postcodes (e.g. NZ 9300) resolve to the named suburb, not the first id.
+        if let normalizedPostcode,
+           let id = try firstByNameAndPostcode(
+               name: canonicalName,
+               postcode: normalizedPostcode,
+               in: db
+           )
+        {
+            return id
+        }
+
         if let normalizedState,
            let id = try firstMatch(name: canonicalName, state: normalizedState, in: db)
         {
@@ -144,6 +156,19 @@ final class SuburbRepository {
         try Suburb
             .filter(Column("name") == name)
             .filter(Column("state") == state)
+            .order(Column("id"))
+            .fetchOne(db)?
+            .id
+    }
+
+    private static func firstByNameAndPostcode(
+        name: String,
+        postcode: String,
+        in db: Database
+    ) throws -> Int64? {
+        try Suburb
+            .filter(Column("name") == name)
+            .filter(Column("postcode") == postcode)
             .order(Column("id"))
             .fetchOne(db)?
             .id

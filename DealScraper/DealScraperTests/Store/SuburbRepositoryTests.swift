@@ -71,6 +71,31 @@ struct SuburbRepositoryTests {
         #expect(resolvedId == expectedId)
     }
 
+    @Test func resolvePrefersNameAndPostcodeWhenMultipleSharePostcode() throws {
+        let store = SQLStore.inMemory()
+        let repository = SuburbRepository(store: store)
+        // Insert Fernhill first so postcode-only fallback would pick it by id.
+        _ = try insertSuburb(
+            Suburb(name: "Fernhill", postcode: "9300", state: "Otago"),
+            store: store
+        )
+        let queenstownId = try insertSuburb(
+            Suburb(name: "Queenstown", postcode: "9300", state: "Otago"),
+            store: store
+        )
+        _ = try insertSuburb(
+            Suburb(name: "Frankton", postcode: "9300", state: "Otago"),
+            store: store
+        )
+
+        // NZ addresses often parse with an empty state.
+        let resolvedId = try #require(
+            try repository.resolve(name: "Queenstown", postcode: "9300", state: "")
+        )
+
+        #expect(resolvedId == queenstownId)
+    }
+
     @Test func resolveFallsBackToNameOnlyWhenStateAndPostcodeMissing() throws {
         let store = SQLStore.inMemory()
         let repository = SuburbRepository(store: store)
