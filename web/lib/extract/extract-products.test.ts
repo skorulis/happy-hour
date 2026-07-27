@@ -78,6 +78,20 @@ describe("extractProducts", () => {
     });
   });
 
+  it("prefers salad over overlapping caesar cocktail for caesar salad", () => {
+    expect(
+      extractProducts({ title: "Caesar salad $18", details: null }),
+    ).toEqual({
+      products: [{ name: "salad", price: 18 }],
+    });
+  });
+
+  it("returns caesar cocktail from a caesar title with price", () => {
+    expect(extractProducts({ title: "$12 Caesar", details: null })).toEqual({
+      products: [{ name: "caesar", price: 12 }],
+    });
+  });
+
   it("associates a price that follows the product", () => {
     expect(
       extractProducts({ title: "Happy Hour $8", details: null }),
@@ -193,6 +207,29 @@ describe("extractProducts", () => {
       }),
     ).toEqual({
       products: [{ name: "steak", price: null }],
+    });
+  });
+
+  it("does not treat $N off as an item price", () => {
+    expect(
+      extractProducts({
+        title: null,
+        details:
+          "Every tuesday at the locker room, enjoy $10 off our delicious slow cooked pork ribs.",
+      }),
+    ).toEqual({
+      products: [{ name: "ribs", price: null }],
+    });
+  });
+
+  it("still associates a real price when off is unrelated", () => {
+    expect(
+      extractProducts({
+        title: "$10 ribs",
+        details: "take-away available",
+      }),
+    ).toEqual({
+      products: [{ name: "ribs", price: 10 }],
     });
   });
 

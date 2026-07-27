@@ -27,7 +27,7 @@ final class CrawlPDFFetcher: HTTPService {
 
     init(
         cache: CrawlPDFCache,
-        urlSession: URLSessionProtocol = URLSession(configuration: .default),
+        urlSession: URLSessionProtocol = CrawlServerTrust.urlSession,
         logger: HTTPLogger? = nil
     ) {
         self.cache = cache

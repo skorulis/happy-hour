@@ -4,6 +4,7 @@ import {
   burger,
   chairsTablePlatter,
   cheese,
+  hotDog,
   kebab,
   lunchBox,
 } from "@lucide/lab";
@@ -121,6 +122,7 @@ const PRODUCT_ICON_REGISTRY: Record<string, ProductIcon> = {
   Grid3x3: wrapLucideIcon(Grid3x3),
   Ham: wrapLucideIcon(Ham),
   Headphones: wrapLucideIcon(Headphones),
+  HotDog: labIcon(hotDog),
   Infinity: wrapLucideIcon(Infinity),
   Kebab: labIcon(kebab),
   LunchBox: labIcon(lunchBox),

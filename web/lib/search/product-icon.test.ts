@@ -69,13 +69,12 @@ describe("resolveMapIconForDeals", () => {
 });
 
 describe("findMatchingProductsForDeals", () => {
-  it("prefers longer product names when ranks are equal", () => {
+  it("prefers longer overlapping matches when ranks are equal", () => {
     const matches = findMatchingProductsForDeals([
       { title: "craft beer special", details: null, conditions: null },
     ]);
 
-    expect(matches[0]?.name).toBe("beer");
-    expect(matches.some((product) => product.name === "craft beer")).toBe(true);
+    expect(matches.map((product) => product.name)).toEqual(["craft beer"]);
     expect(resolveMapIconForDeals([
       { title: "craft beer special", details: null, conditions: null },
     ])).toBe("Beer");
@@ -98,6 +97,19 @@ describe("findMatchingProductsForDeals", () => {
         conditions: null,
       },
     ])).toBe("Clock");
+  });
+
+  it("maps caesar cocktail to Martini and caesar salad to Salad", () => {
+    expect(
+      resolveMapIconForDeals([
+        { title: "$12 Caesar", details: null, conditions: null },
+      ]),
+    ).toBe("Martini");
+    expect(
+      resolveMapIconForDeals([
+        { title: "Caesar salad $18", details: null, conditions: null },
+      ]),
+    ).toBe("Salad");
   });
 });
 

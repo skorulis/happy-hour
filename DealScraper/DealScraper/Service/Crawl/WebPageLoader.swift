@@ -288,6 +288,20 @@ final class WebPageLoader: NSObject {
     }
 
     private func performLoad(url: URL) async throws {
+        do {
+            try await performSingleLoad(url: url)
+        } catch {
+            guard CrawlServerTrust.isCertificateError(error),
+                  let fallbackURL = CrawlServerTrust.wwwStrippedURL(from: url),
+                  fallbackURL != url
+            else {
+                throw error
+            }
+            try await performSingleLoad(url: fallbackURL)
+        }
+    }
+
+    private func performSingleLoad(url: URL) async throws {
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             loadContinuation = continuation
             webView.load(URLRequest(url: url))
@@ -416,5 +430,13 @@ extension WebPageLoader: WKNavigationDelegate {
         withError error: Error
     ) {
         finishLoad(with: .failure(WebPageLoaderError.navigationFailed(error.localizedDescription)))
+    }
+
+    func webView(
+        _ webView: WKWebView,
+        didReceive challenge: URLAuthenticationChallenge,
+        completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
+    ) {
+        CrawlServerTrust.handleAuthenticationChallenge(challenge, completionHandler: completionHandler)
     }
 }

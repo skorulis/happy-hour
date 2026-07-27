@@ -32,6 +32,7 @@
             "cocktail"
         ],
         "groups": [
+            "caesar",
             "espresso martini",
             "negroni",
             "martini",
@@ -67,6 +68,10 @@
     {
         "name": "jugs",
         "icon": "Beer"
+    },
+    {
+        "name": "caesar",
+        "icon": "Martini"
     },
     {
         "name": "margarita",
@@ -176,11 +181,13 @@
             "dumplings",
             "fish & chips",
             "gyros",
+            "hot dog",
             "muscles",
             "nachos",
             "pasta",
             "pie",
             "pizza",
+            "poutine",
             "porterhouse",
             "ribs",
             "roast",
@@ -254,6 +261,13 @@
         ]
     },
     {
+        "name": "hot dog",
+        "icon": "HotDog",
+        "synonyms": [
+            "hotdog"
+        ]
+    },
+    {
         "name": "muscles",
         "icon": "Fish"
     },
@@ -279,6 +293,10 @@
     {
         "name": "pizza",
         "icon": "Pizza"
+    },
+    {
+        "name": "poutine",
+        "icon": "Cheese"
     },
     {
         "name": "porterhouse",
@@ -310,7 +328,10 @@
     },
     {
         "name": "salad",
-        "icon": "Salad"
+        "icon": "Salad",
+        "synonyms": [
+            "caesar salad"
+        ]
     },
     {
         "name": "skewer",

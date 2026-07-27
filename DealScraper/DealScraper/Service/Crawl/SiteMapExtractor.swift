@@ -22,7 +22,7 @@ final class SiteMapExtractor: HTTPService {
 
     init(
         pageLinkFilter: PageLinkFilter = PageLinkFilter(),
-        urlSession: URLSessionProtocol = URLSession(configuration: .default),
+        urlSession: URLSessionProtocol = CrawlServerTrust.urlSession,
         logger: HTTPLogger? = nil
     ) {
         self.pageLinkFilter = pageLinkFilter

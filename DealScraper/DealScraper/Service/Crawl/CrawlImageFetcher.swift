@@ -27,7 +27,7 @@ final class CrawlImageFetcher: HTTPService {
 
     init(
         cache: CrawlImageCache,
-        urlSession: URLSessionProtocol = URLSession(configuration: .default),
+        urlSession: URLSessionProtocol = CrawlServerTrust.urlSession,
         logger: HTTPLogger? = nil
     ) {
         self.cache = cache

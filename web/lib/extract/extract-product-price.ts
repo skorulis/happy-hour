@@ -2,6 +2,19 @@ import { findProductByName } from "@data/products";
 
 const PRICE_PATTERN = /\$(\d+(?:\.\d{1,2})?)/g;
 
+/** True when `$N` is a discount amount, not an item price (e.g. "$10 off"). */
+function isDiscountAmount(text: string, start: number, end: number): boolean {
+  // "$10 off ...", "$5 discount", "$5 savings"
+  if (/^\s*(?:off|discount|savings?)\b/.test(text.slice(end))) {
+    return true;
+  }
+  // "save $10 ...", "save up to $10 ..."
+  if (/\bsave(?:\s+up\s+to)?\s*$/.test(text.slice(0, start))) {
+    return true;
+  }
+  return false;
+}
+
 type ProductMatchTerm = {
   /** Substring to search for in deal text (already lowercased). */
   needle: string;
@@ -105,10 +118,15 @@ function associatePricesInText(
     if (raw === undefined || match.index === undefined) {
       continue;
     }
+    const start = match.index;
+    const end = match.index + match[0].length;
+    if (isDiscountAmount(text, start, end)) {
+      continue;
+    }
     amounts.push({
       value: Number(raw),
-      start: match.index,
-      end: match.index + match[0].length,
+      start,
+      end,
     });
   }
 
@@ -151,7 +169,7 @@ function associatePricesInText(
  * Associates each matched product with a nearby $amount: prefers the first
  * catalog hit after that amount (until the next $), otherwise the nearest
  * catalog hit before it (after the previous $). Covers both "$8 beers" and
- * "Happy Hour $8".
+ * "Happy Hour $8". Discount amounts ("$10 off", "save $5") are skipped.
  * Title and details are scanned separately so a title price cannot bind to a
  * product that only appears in details.
  * Synonyms from the product catalog are also searched and keyed to the

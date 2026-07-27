@@ -223,11 +223,19 @@ function suppressOverlappingMatches(
 export function findMatchingProductsForDeals(
   deals: DealTextFields[],
 ): Product[] {
-  const titleMatches = findProductsMatchingText(dealTitleText(deals));
+  const titleText = dealTitleText(deals);
+  const titleMatches = suppressOverlappingMatches(
+    titleText,
+    findProductsMatchingText(titleText),
+  );
   if (titleMatches.length > 0) {
     return titleMatches;
   }
-  return findProductsMatchingText(dealDetailsText(deals));
+  const detailsText = dealDetailsText(deals);
+  return suppressOverlappingMatches(
+    detailsText,
+    findProductsMatchingText(detailsText),
+  );
 }
 
 type ProductMatchRuleV2 = {
