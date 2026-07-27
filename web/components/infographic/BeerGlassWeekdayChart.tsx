@@ -46,16 +46,6 @@ export function BeerGlassWeekdayChart({
               fill={segment.color}
             />
           ))}
-          {geometry.foam ? (
-            <rect
-              x={0}
-              y={geometry.foam.y}
-              width={geometry.glassWidth}
-              height={geometry.foam.height}
-              fill={geometry.foamColor}
-              opacity={0.92}
-            />
-          ) : null}
         </g>
 
         <path

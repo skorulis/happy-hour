@@ -149,15 +149,6 @@ function WeekdayMixBlock({
               fill={segment.color}
             />
           ))}
-          {geometry.foam ? (
-            <rect
-              x={0}
-              y={geometry.foam.y}
-              width={geometry.glassWidth}
-              height={geometry.foam.height}
-              fill={geometry.foamColor}
-            />
-          ) : null}
         </g>
         <path
           d={geometry.outlinePath}

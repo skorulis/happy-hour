@@ -51,7 +51,12 @@ describe("buildBeerGlassGeometry", () => {
     expect(geometry.legend.every((item) => item.leaderPath !== null)).toBe(
       true,
     );
-    expect(geometry.foam).not.toBeNull();
+    expect(geometry.segments[geometry.segments.length - 1]!.dayOfWeek).toBe(1);
+    expect(geometry.segments[geometry.segments.length - 1]!.color).toBe(
+      "#f8fafc",
+    );
+    expect(geometry.segments[0]!.dayOfWeek).toBe(2);
+    expect(geometry.segments[0]!.color).toBe("#a63e00");
     expect(geometry.outlinePath).toContain("C");
     expect(geometry.clipPath).toContain("C");
   });
@@ -71,7 +76,6 @@ describe("buildBeerGlassGeometry", () => {
     const days = normalizeWeekdayPercents([]);
     const geometry = buildBeerGlassGeometry(days);
     expect(geometry.segments).toEqual([]);
-    expect(geometry.foam).toBeNull();
     expect(geometry.legend.every((item) => item.leaderPath === null)).toBe(
       true,
     );

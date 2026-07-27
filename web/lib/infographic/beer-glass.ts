@@ -4,16 +4,23 @@ import type {
   RegionWeekdayShare,
 } from "@/lib/infographic/types";
 
-/** Hex colors aligned with `--chart-1`…`--chart-7` (Mon→Sun). */
+/**
+ * Beer SRM ramp for the schooner stack (Mon bottom → Sat near foam).
+ * Named steps match common SRM charts (Deep Amber → Pale Straw);
+ * Sunday stays foam white as the head.
+ * @see https://beermaverick.com/understanding-srm-and-lovibond-beer-color-calculations/
+ */
 export const WEEKDAY_CHART_COLORS: Record<number, string> = {
-  2: "#f59e0b", // Mon — chart-1
-  3: "#38bdf8", // Tue — chart-2
-  4: "#a78bfa", // Wed — chart-3
-  5: "#34d399", // Thu — chart-4
-  6: "#fb7185", // Fri — chart-5
-  7: "#fbbf24", // Sat — chart-6
-  1: "#22d3ee", // Sun — chart-7
+  2: "#a63e00", // Mon — Amber Brown ~SRM 18
+  3: "#bb5100", // Tue — Deep Amber ~SRM 15
+  4: "#cf6900", // Wed — Medium Amber ~SRM 12
+  5: "#e58500", // Thu — Pale Amber ~SRM 9
+  6: "#f8a600", // Fri — Deep Gold ~SRM 6
+  7: "#ffd878", // Sat — Pale Straw ~SRM 2
+  1: "#f8fafc", // Sun — foam white (top band)
 };
+
+const FALLBACK_BAND_COLOR = WEEKDAY_CHART_COLORS[5]!;
 
 export const BEER_GLASS_VIEWBOX = {
   width: 100,
@@ -27,11 +34,10 @@ export const BEER_GLASS_CHART_VIEWBOX = {
 } as const;
 
 const CENTER_X = 50;
-const LIQUID_TOP = 30;
+/** Top of stacked day bands (rim); Sunday occupies this as the white “head”. */
+const LIQUID_TOP = 18;
 const LIQUID_BOTTOM = 140;
-const FOAM_TOP = 18;
 const FOOT_Y = 152;
-const FOAM_COLOR = "#f8fafc";
 const OUTLINE_COLOR = "#cbd5e1";
 const LEADER_COLOR = "#64748b";
 const LEGEND_GUTTER_X = 94;
@@ -46,7 +52,7 @@ const LEGEND_BOTTOM = 148;
  * Walls are cubic Beziers through these points; left mirrors right.
  */
 const PROFILE: Array<{ y: number; halfWidth: number }> = [
-  { y: FOAM_TOP, halfWidth: 30 },
+  { y: LIQUID_TOP, halfWidth: 30 },
   { y: 36, halfWidth: 34 },
   { y: 58, halfWidth: 33 },
   { y: 88, halfWidth: 26 },
@@ -86,15 +92,13 @@ export type BeerGlassLegendItem = {
 export type BeerGlassGeometry = {
   viewBox: string;
   chartViewBox: string;
-  /** Smooth filled schooner path used as clip for day bands + foam. */
+  /** Smooth filled schooner path used as clip for day bands. */
   clipPath: string;
   /** Smooth stroked outline (includes foot). */
   outlinePath: string;
-  foam: { y: number; height: number } | null;
   segments: BeerGlassSegment[];
   legend: BeerGlassLegendItem[];
   outlineColor: string;
-  foamColor: string;
   leaderColor: string;
   glassWidth: number;
 };
@@ -300,7 +304,7 @@ export function buildBeerGlassGeometry(
     const yMid = (yTop + yBottom) / 2;
     segments.push({
       dayOfWeek: day.dayOfWeek,
-      color: WEEKDAY_CHART_COLORS[day.dayOfWeek] ?? "#f59e0b",
+      color: WEEKDAY_CHART_COLORS[day.dayOfWeek] ?? FALLBACK_BAND_COLOR,
       percent: day.percent,
       count: day.count,
       yTop,
@@ -322,7 +326,7 @@ export function buildBeerGlassGeometry(
     const t = legendCount === 1 ? 0 : index / (legendCount - 1);
     const y = LEGEND_TOP + t * legendSpan;
     const segment = segmentByDay.get(day.dayOfWeek);
-    const color = WEEKDAY_CHART_COLORS[day.dayOfWeek] ?? "#f59e0b";
+    const color = WEEKDAY_CHART_COLORS[day.dayOfWeek] ?? FALLBACK_BAND_COLOR;
     const swatchCenterX = LEGEND_SWATCH_X + LEGEND_SWATCH_SIZE / 2;
     return {
       dayOfWeek: day.dayOfWeek,
@@ -348,14 +352,9 @@ export function buildBeerGlassGeometry(
     chartViewBox: `0 0 ${BEER_GLASS_CHART_VIEWBOX.width} ${BEER_GLASS_CHART_VIEWBOX.height}`,
     clipPath,
     outlinePath,
-    foam:
-      fillDays.length > 0
-        ? { y: FOAM_TOP, height: LIQUID_TOP - FOAM_TOP }
-        : null,
     segments,
     legend,
     outlineColor: OUTLINE_COLOR,
-    foamColor: FOAM_COLOR,
     leaderColor: LEADER_COLOR,
     glassWidth: BEER_GLASS_VIEWBOX.width,
   };
