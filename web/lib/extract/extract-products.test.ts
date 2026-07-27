@@ -250,6 +250,21 @@ describe("extractProducts", () => {
     });
   });
 
+  it("does not match partial product names inside other words", () => {
+    const result = extractProducts({
+      title: "Happiest Hour",
+      details:
+        "Because this is happier than happy hour! swing past the bridgey from 4-6pm on weekdays and enjoy $7 house beer & wine and $8 house spirits.",
+    });
+
+    expect(result.products.map((product) => product.name).sort()).toEqual([
+      "beer",
+      "happy hour",
+      "spirits",
+      "wine",
+    ]);
+  });
+
   it("matches happy hour title plus drink keywords and prices in details", () => {
     const result = extractProducts({
       title: "Happy Hour",

@@ -113,6 +113,10 @@ type MatchSpan = {
   end: number;
 };
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function collectSubstringRanges(text: string, needles: string[]): TextRange[] {
   const ranges: TextRange[] = [];
 
@@ -129,6 +133,31 @@ function collectSubstringRanges(text: string, needles: string[]): TextRange[] {
       }
       ranges.push({ start: idx, end: idx + n.length });
       from = idx + 1;
+    }
+  }
+
+  return ranges;
+}
+
+/** Whole-word matches only; allows simple plural suffixes (beer/beers, wing/wings). */
+function collectWordBoundedRanges(text: string, needles: string[]): TextRange[] {
+  const ranges: TextRange[] = [];
+
+  for (const needle of needles) {
+    const n = needle.toLowerCase();
+    if (!n) {
+      continue;
+    }
+    const pattern = new RegExp(
+      `(?<![a-z0-9])${escapeRegExp(n)}(?:es|s)?(?![a-z0-9])`,
+      "g",
+    );
+    let match: RegExpExecArray | null;
+    while ((match = pattern.exec(text)) !== null) {
+      ranges.push({
+        start: match.index,
+        end: match.index + match[0].length,
+      });
     }
   }
 
@@ -167,7 +196,7 @@ function collectMatchSpans(
   const productKey = product.name.toLowerCase();
   const needles = [product.name, ...(product.synonyms ?? [])];
 
-  return collectSubstringRanges(text, needles)
+  return collectWordBoundedRanges(text, needles)
     .filter((range) => !isRangeCovered(range, ignoreRanges))
     .map((range) => ({ productKey, ...range }));
 }

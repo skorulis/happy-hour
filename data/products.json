@@ -178,7 +178,8 @@
             "mates rates",
             "social hour",
             "après hour",
-            "aprés hour"
+            "aprés hour",
+            "happiest hour"
         ]
     },
     {
@@ -214,6 +215,7 @@
             "rump",
             "chicken parmigiana",
             "salad",
+            "seafood",
             "skewer",
             "steak",
             "taco",
@@ -245,7 +247,9 @@
         "name": "burger",
         "icon": "Burger",
         "synonyms": [
-            "cheeseburger"
+            "cheeseburger",
+            "cheese burger",
+            "chicken burger"
         ]
     },
     {
@@ -302,6 +306,10 @@
     },
     {
         "name": "oysters",
+        "icon": "Fish"
+    },
+    {
+        "name": "seafood",
         "icon": "Fish"
     },
     {
@@ -445,7 +453,11 @@
     },
     {
         "name": "badge draw",
-        "icon": "BadgeDollarSign"
+        "icon": "BadgeDollarSign",
+        "synonyms": [
+            "membership jackpot draw",
+            "members draw"
+        ]
     },
     {
         "name": "bingo",
