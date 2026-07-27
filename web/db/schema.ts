@@ -11,6 +11,7 @@ import {
   smallint,
   text,
   timestamp,
+  unique,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
@@ -59,7 +60,9 @@ export const suburb = pgTable(
     heroImage: text("hero_image"),
   },
   (table) => [
-    uniqueIndex("suburb_name_postcode_idx").on(table.name, table.postcode),
+    unique("suburb_name_postcode_idx")
+      .on(table.name, table.postcode)
+      .nullsNotDistinct(),
   ],
 );
 

@@ -169,6 +169,13 @@
       "when": 1785020463313,
       "tag": "0023_sweet_joystick",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1785134343396,
+      "tag": "0024_jazzy_riptide",
+      "breakpoints": true
     }
   ]
 }
