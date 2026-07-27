@@ -88,6 +88,39 @@ struct CrawlPolicyTests {
         #expect(CrawlPolicy.dealSourceStatus(for: source, discoveredCount: 1) == .rejected)
     }
 
+    @Test func rejectsStaleInMonthImage() {
+        let source = DiscoveredSource(
+            url: URL(string: "https://greatnorthernhotel.com.au/wp-content/uploads/LocalsThursdays.jpg")!,
+            sourceURL: URL(string: "https://greatnorthernhotel.com.au/")!,
+            type: .image,
+            textPieces: .textLines([
+                "thursday local night",
+                "$20 JUGS",
+                "IN DECEMBER",
+                "7pm til close",
+            ])
+        )
+        let july = Calendar(identifier: .gregorian).date(from: DateComponents(year: 2026, month: 7, day: 27))!
+
+        #expect(CrawlPolicy.dealSourceStatus(for: source, discoveredCount: 1, now: july) == .rejected)
+    }
+
+    @Test func doesNotRejectCurrentInMonthImage() {
+        let source = DiscoveredSource(
+            url: URL(string: "https://example.com/july-specials.jpg")!,
+            sourceURL: URL(string: "https://example.com/")!,
+            type: .image,
+            textPieces: .textLines([
+                "thursday local night",
+                "IN JULY",
+                "7pm til close",
+            ])
+        )
+        let july = Calendar(identifier: .gregorian).date(from: DateComponents(year: 2026, month: 7, day: 27))!
+
+        #expect(CrawlPolicy.dealSourceStatus(for: source, discoveredCount: 1, now: july) == .approved)
+    }
+
     @Test func doesNotRejectNormalImage() {
         let source = DiscoveredSource(
             url: URL(string: "https://example.com/poster.jpg")!,

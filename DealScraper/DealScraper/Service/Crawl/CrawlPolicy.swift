@@ -53,11 +53,12 @@ enum CrawlPolicy {
         discoveredCount == 1 ? .approved : .new
     }
 
-    static func dealSourceStatus(for source: DiscoveredSource, discoveredCount: Int) -> DealStatus {
+    static func dealSourceStatus(for source: DiscoveredSource, discoveredCount: Int, now: Date = .now) -> DealStatus {
         if source.type == .image {
             let lines = textLines(from: source)
             if NthWeekdayOfMonthDetector.isMatch(in: lines)
-                || SingleDateDetector.isMatch(in: lines) {
+                || SingleDateDetector.isMatch(in: lines)
+                || InMonthDetector.isMatch(in: lines, now: now) {
                 return .rejected
             }
         }

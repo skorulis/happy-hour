@@ -53,11 +53,17 @@ final class CrawlImageValidator {
             return nil
         }
 
-        if NthWeekdayOfMonthDetector.isMatch(in: lines.map(\.text)) {
+        let ocrLines = lines.map(\.text)
+
+        if NthWeekdayOfMonthDetector.isMatch(in: ocrLines) {
             return nil
         }
 
-        if SingleDateDetector.isMatch(in: lines.map(\.text)) {
+        if SingleDateDetector.isMatch(in: ocrLines) {
+            return nil
+        }
+
+        if InMonthDetector.isMatch(in: ocrLines) {
             return nil
         }
 
