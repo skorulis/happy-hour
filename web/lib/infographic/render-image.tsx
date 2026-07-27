@@ -1,5 +1,8 @@
 import { ImageResponse } from "next/og";
-import { buildBeerGlassGeometry } from "@/lib/infographic/beer-glass";
+import {
+  BEER_GLASS_CHART_VIEWBOX,
+  buildBeerGlassGeometry,
+} from "@/lib/infographic/beer-glass";
 import type {
   InfographicComposition,
   InfographicFormat,
@@ -90,7 +93,10 @@ function WeekdayMixBlock({
 }) {
   const geometry = buildBeerGlassGeometry(slot.days);
   const chartHeight = compact ? 200 : 300;
-  const chartWidth = Math.round((chartHeight * 210) / 160);
+  const chartWidth = Math.round(
+    (chartHeight * BEER_GLASS_CHART_VIEWBOX.width) /
+      BEER_GLASS_CHART_VIEWBOX.height,
+  );
 
   return (
     <div

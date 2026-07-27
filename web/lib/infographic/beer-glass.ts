@@ -24,28 +24,28 @@ const FALLBACK_BAND_COLOR = WEEKDAY_CHART_COLORS[5]!;
 
 export const BEER_GLASS_VIEWBOX = {
   width: 100,
-  height: 160,
+  height: 190,
 } as const;
 
 /** Full chart including legend column + leader lines. */
 export const BEER_GLASS_CHART_VIEWBOX = {
   width: 210,
-  height: 160,
+  height: 190,
 } as const;
 
 const CENTER_X = 50;
 /** Top of stacked day bands (rim); Sunday occupies this as the white “head”. */
 const LIQUID_TOP = 18;
-const LIQUID_BOTTOM = 140;
-const FOOT_Y = 152;
-const OUTLINE_COLOR = "#cbd5e1";
+const LIQUID_BOTTOM = 168;
+const FOOT_Y = 182;
+const OUTLINE_COLOR = "#2b3541";
 const LEADER_COLOR = "#64748b";
 const LEGEND_GUTTER_X = 94;
 const LEGEND_SWATCH_X = 120;
 const LEGEND_SWATCH_SIZE = 6;
 const LEGEND_LABEL_X = 130;
 const LEGEND_TOP = 24;
-const LEGEND_BOTTOM = 148;
+const LEGEND_BOTTOM = 178;
 
 /**
  * Schooner half-width keyframes (rim → bowl → taper → foot).
@@ -53,12 +53,12 @@ const LEGEND_BOTTOM = 148;
  */
 const PROFILE: Array<{ y: number; halfWidth: number }> = [
   { y: LIQUID_TOP, halfWidth: 30 },
-  { y: 36, halfWidth: 34 },
-  { y: 58, halfWidth: 33 },
-  { y: 88, halfWidth: 26 },
-  { y: 118, halfWidth: 18 },
+  { y: 40, halfWidth: 34 },
+  { y: 67, halfWidth: 33 },
+  { y: 104, halfWidth: 26 },
+  { y: 141, halfWidth: 18 },
   { y: LIQUID_BOTTOM, halfWidth: 14 },
-  { y: 146, halfWidth: 16 },
+  { y: 175, halfWidth: 16 },
   { y: FOOT_Y, halfWidth: 22 },
 ];
 

@@ -22,7 +22,7 @@ export function BeerGlassWeekdayChart({
   const ariaLabel = weekdayMixAriaLabel(days, formatDayLabel);
 
   return (
-    <div className={className ?? "flex justify-center"}>
+    <div className={className ?? "flex justify-start"}>
       <svg
         viewBox={geometry.chartViewBox}
         className="h-56 w-auto max-w-full sm:h-72"
