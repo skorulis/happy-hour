@@ -56,6 +56,40 @@ function findFirstProductInSpan(
   return bestName;
 }
 
+/** Last (rightmost) catalog hit in [start, end), preferring the longer needle on ties. */
+function findLastProductInSpan(
+  text: string,
+  start: number,
+  end: number,
+  matchTerms: ProductMatchTerm[],
+): string | undefined {
+  let bestName: string | undefined;
+  let bestEnd = Number.NEGATIVE_INFINITY;
+  let bestNeedleLength = 0;
+
+  for (const term of matchTerms) {
+    let from = start;
+    while (from < end) {
+      const index = text.indexOf(term.needle, from);
+      if (index === -1 || index >= end) {
+        break;
+      }
+      const matchEnd = index + term.needle.length;
+      if (
+        matchEnd > bestEnd ||
+        (matchEnd === bestEnd && term.needle.length > bestNeedleLength)
+      ) {
+        bestEnd = matchEnd;
+        bestNeedleLength = term.needle.length;
+        bestName = term.canonicalName;
+      }
+      from = index + 1;
+    }
+  }
+
+  return bestName;
+}
+
 function associatePricesInText(
   text: string,
   matchTerms: ProductMatchTerm[],
@@ -65,7 +99,7 @@ function associatePricesInText(
     return;
   }
 
-  const amounts: { value: number; end: number }[] = [];
+  const amounts: { value: number; start: number; end: number }[] = [];
   for (const match of text.matchAll(PRICE_PATTERN)) {
     const raw = match[1];
     if (raw === undefined || match.index === undefined) {
@@ -73,21 +107,35 @@ function associatePricesInText(
     }
     amounts.push({
       value: Number(raw),
+      start: match.index,
       end: match.index + match[0].length,
     });
   }
 
-  for (const amount of amounts) {
-    // Span runs from after this $amount to the start of the next $ (or EOF).
+  for (let i = 0; i < amounts.length; i++) {
+    const amount = amounts[i]!;
+    // Prefer "$8 beers": first catalog hit after this amount until the next $.
     const nextDollar = text.indexOf("$", amount.end);
-    const end = nextDollar === -1 ? text.length : nextDollar;
+    const afterEnd = nextDollar === -1 ? text.length : nextDollar;
 
-    const productName = findFirstProductInSpan(
+    let productName = findFirstProductInSpan(
       text,
       amount.end,
-      end,
+      afterEnd,
       matchTerms,
     );
+
+    // Fallback for "Happy Hour $8" / "Fish & chips $18": nearest product before $.
+    if (!productName) {
+      const prevEnd = i > 0 ? amounts[i - 1]!.end : 0;
+      productName = findLastProductInSpan(
+        text,
+        prevEnd,
+        amount.start,
+        matchTerms,
+      );
+    }
+
     if (!productName) {
       continue;
     }
@@ -100,8 +148,10 @@ function associatePricesInText(
 }
 
 /**
- * Associates each matched product with the $amount that immediately precedes
- * it as the first catalog hit after that amount (until the next $).
+ * Associates each matched product with a nearby $amount: prefers the first
+ * catalog hit after that amount (until the next $), otherwise the nearest
+ * catalog hit before it (after the previous $). Covers both "$8 beers" and
+ * "Happy Hour $8".
  * Title and details are scanned separately so a title price cannot bind to a
  * product that only appears in details.
  * Synonyms from the product catalog are also searched and keyed to the

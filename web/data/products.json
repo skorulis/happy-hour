@@ -44,7 +44,8 @@
         "icon": "Music4",
         "groups": [
             "live music",
-            "jazz"
+            "jazz",
+            "silent disco"
         ]
     },
     {
@@ -169,6 +170,7 @@
             "muscles",
             "nachos",
             "pasta",
+            "pie",
             "pizza",
             "porterhouse",
             "ribs",
@@ -257,6 +259,13 @@
     {
         "name": "pasta",
         "icon": "CookingPot"
+    },
+    {
+        "name": "pie",
+        "icon": "ChartPie",
+        "synonyms": [
+            "meat pie"
+        ]
     },
     {
         "name": "pizza",
@@ -353,6 +362,7 @@
             "karaoke",
             "jazz",
             "live music",
+            "silent disco",
             "meat tray",
             "pool",
             "darts",
@@ -463,6 +473,10 @@
         "synonyms": [
             "live local music"
         ]
+    },
+    {
+        "name": "silent disco",
+        "icon": "Headphones"
     },
     {
         "name": "meat tray",

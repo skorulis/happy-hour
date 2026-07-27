@@ -74,7 +74,15 @@ describe("extractProducts", () => {
     expect(
       extractProducts({ title: "Fish & chips $18", details: null }),
     ).toEqual({
-      products: [{ name: "fish & chips", price: null }],
+      products: [{ name: "fish & chips", price: 18 }],
+    });
+  });
+
+  it("associates a price that follows the product", () => {
+    expect(
+      extractProducts({ title: "Happy Hour $8", details: null }),
+    ).toEqual({
+      products: [{ name: "happy hour", price: 8 }],
     });
   });
 
@@ -171,6 +179,10 @@ describe("extractProducts", () => {
       "bottomless",
       "pizza",
     ]);
+    expect(result.products.find((p) => p.name === "pizza")?.price).toBe(39);
+    expect(result.products.find((p) => p.name === "bottomless")?.price).toBe(
+      null,
+    );
   });
 
   it("falls back to details when title has no keyword match", () => {
