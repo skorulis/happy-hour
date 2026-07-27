@@ -4,9 +4,11 @@ import {
   burger,
   chairsTablePlatter,
   cheese,
+  dress,
   hotDog,
   kebab,
   lunchBox,
+  sausage,
 } from "@lucide/lab";
 import {
   Baby,
@@ -114,6 +116,7 @@ const PRODUCT_ICON_REGISTRY: Record<string, ProductIcon> = {
   Coins: wrapLucideIcon(Coins),
   Cookie: wrapLucideIcon(Cookie),
   CookingPot: wrapLucideIcon(CookingPot),
+  Dress: labIcon(dress),
   Drumstick: wrapLucideIcon(Drumstick),
   Fish: wrapLucideIcon(Fish),
   Footprints: wrapLucideIcon(Footprints),
@@ -140,6 +143,7 @@ const PRODUCT_ICON_REGISTRY: Record<string, ProductIcon> = {
   Saki: labIcon(saki),
   Salad: wrapLucideIcon(Salad),
   Sandwich: wrapLucideIcon(Sandwich),
+  Sausage: labIcon(sausage),
   Soup: wrapLucideIcon(Soup),
   Spade: wrapLucideIcon(Spade),
   Sparkles: wrapLucideIcon(Sparkles),

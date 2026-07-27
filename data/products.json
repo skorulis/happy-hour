@@ -32,6 +32,7 @@
             "cocktail"
         ],
         "groups": [
+            "bloody marys",
             "caesar",
             "espresso martini",
             "negroni",
@@ -68,6 +69,10 @@
     {
         "name": "jugs",
         "icon": "Beer"
+    },
+    {
+        "name": "bloody marys",
+        "icon": "Martini"
     },
     {
         "name": "caesar",
@@ -159,7 +164,8 @@
             "golden hour",
             "mates rates",
             "social hour",
-            "après hour"
+            "après hour",
+            "aprés hour"
         ]
     },
     {
@@ -171,6 +177,7 @@
         ],
         "icon": "UtensilsCrossed",
         "groups": [
+            "bangers & mash",
             "bento",
             "burger",
             "calamari",
@@ -211,6 +218,10 @@
     {
         "name": "bao",
         "icon": "BowlChopsticks"
+    },
+    {
+        "name": "bangers & mash",
+        "icon": "Sausage"
     },
     {
         "name": "bento",
@@ -537,5 +548,9 @@
     {
         "name": "locals night",
         "icon": "Users"
+    },
+    {
+        "name": "ladies night",
+        "icon": "Dress"
     }
 ]

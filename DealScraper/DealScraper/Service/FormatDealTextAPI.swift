@@ -1,0 +1,98 @@
+//Created by Alex Skorulis on 27/7/2026.
+
+import ASKCore
+import Foundation
+
+enum FormatDealTextAPI {
+
+    enum Error: Swift.Error, LocalizedError, Sendable {
+        case invalidBackendURL(String)
+        case apiError(statusCode: Int, message: String)
+        case decodingFailure
+
+        var errorDescription: String? {
+            switch self {
+            case let .invalidBackendURL(url):
+                return "Invalid backend URL: \(url)"
+            case let .apiError(_, message):
+                return message
+            case .decodingFailure:
+                return "Failed to decode format-deal-text response."
+            }
+        }
+    }
+
+    nonisolated static func formatDealTextRequest(
+        baseURL: String,
+        title: String?,
+        details: String?,
+        includeTitle: Bool,
+        includeDetails: Bool
+    ) throws -> BackendFormatDealTextRequest {
+        let trimmedBase = baseURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let root = URL(string: trimmedBase), root.scheme != nil, root.host != nil else {
+            throw Error.invalidBackendURL(baseURL)
+        }
+
+        let endpoint = root
+            .appendingPathComponent("api")
+            .appendingPathComponent("format-deal-text")
+            .absoluteString
+
+        var bodyObject: [String: Any] = [:]
+        if includeTitle {
+            bodyObject["title"] = title as Any? ?? NSNull()
+        }
+        if includeDetails {
+            bodyObject["details"] = details as Any? ?? NSNull()
+        }
+
+        return BackendFormatDealTextRequest(
+            endpoint: endpoint,
+            body: try JSONSerialization.data(withJSONObject: bodyObject),
+            headers: [
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            ]
+        )
+    }
+}
+
+struct FormatDealTextPayload: Decodable, Sendable {
+    let title: String?
+    let details: String?
+}
+
+struct BackendFormatDealTextRequest: HTTPRequest {
+    typealias ResponseType = FormatDealTextPayload
+
+    let endpoint: String
+    let method = "POST"
+    let body: Data?
+    let headers: [String: String]
+    let params: [String: String] = [:]
+
+    func decode(data: Data, response: URLResponse) throws -> FormatDealTextPayload {
+        let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 0
+        if !(200..<300).contains(statusCode) {
+            if let errorBody = try? JSONDecoder().decode(APIErrorBody.self, from: data),
+               !errorBody.error.isEmpty {
+                throw FormatDealTextAPI.Error.apiError(statusCode: statusCode, message: errorBody.error)
+            }
+            throw FormatDealTextAPI.Error.apiError(
+                statusCode: statusCode,
+                message: "format-deal-text failed (\(statusCode))"
+            )
+        }
+
+        do {
+            return try JSONDecoder().decode(FormatDealTextPayload.self, from: data)
+        } catch {
+            throw FormatDealTextAPI.Error.decodingFailure
+        }
+    }
+}
+
+private nonisolated struct APIErrorBody: Decodable, Sendable {
+    let error: String
+}

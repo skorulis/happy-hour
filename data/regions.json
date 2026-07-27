@@ -7,5 +7,5 @@
     { "name": "Darwin", "status": "future", "country": "AUS" },
     { "name": "The Sunshine Coast", "status": "in-progress", "country": "AUS" },
     { "name": "Regional NSW", "status": "future", "country": "AUS" },
-    { "name": "Queenstown Lakes", "status": "future", "country": "NZL" }
+    { "name": "Queenstown Lakes", "status": "live", "country": "NZL" }
 ]

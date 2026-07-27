@@ -120,6 +120,9 @@ struct EditDealView: View {
     @State private var linkedSources: [DealSource] = []
     @State private var isExtractingProducts = false
     @State private var extractProductsError: String?
+    @State private var isFormattingTitle = false
+    @State private var isFormattingDetails = false
+    @State private var formatTextError: String?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -173,12 +176,26 @@ struct EditDealView: View {
                 dealImage
 
                 VStack(alignment: .leading, spacing: 16) {
-                    editableField(label: "Title") {
+                    editableField(label: "Title", trailing: {
+                        capitalizationButton(
+                            isFormatting: isFormattingTitle,
+                            help: "Apply title capitalization"
+                        ) {
+                            Task { await applyTitleCapitalization() }
+                        }
+                    }) {
                         TextField("Title", text: $title)
                             .textFieldStyle(.roundedBorder)
                     }
 
-                    editableField(label: "Details") {
+                    editableField(label: "Details", trailing: {
+                        capitalizationButton(
+                            isFormatting: isFormattingDetails,
+                            help: "Apply details capitalization"
+                        ) {
+                            Task { await applyDetailsCapitalization() }
+                        }
+                    }) {
                         TextEditor(text: $details)
                             .font(.body)
                             .frame(minHeight: 100)
@@ -187,6 +204,12 @@ struct EditDealView: View {
                                 RoundedRectangle(cornerRadius: 6)
                                     .strokeBorder(Color.secondary.opacity(0.3))
                             }
+                    }
+
+                    if let formatTextError {
+                        Text(formatTextError)
+                            .font(.caption2)
+                            .foregroundStyle(.red)
                     }
 
                     editableField(label: "Conditions") {
@@ -424,6 +447,58 @@ struct EditDealView: View {
     }
 
     @MainActor
+    private func applyTitleCapitalization() async {
+        guard !isFormattingTitle else { return }
+        guard let resolver else {
+            formatTextError = "App services unavailable"
+            return
+        }
+
+        isFormattingTitle = true
+        formatTextError = nil
+        defer { isFormattingTitle = false }
+
+        do {
+            let client = resolver.formatDealTextAPIClient()
+            let baseURL = resolver.backendURLStore().backendURL
+            if let formatted = try await client.formatTitle(
+                baseURL: baseURL,
+                title: title.isEmpty ? nil : title
+            ) {
+                title = formatted
+            }
+        } catch {
+            formatTextError = error.localizedDescription
+        }
+    }
+
+    @MainActor
+    private func applyDetailsCapitalization() async {
+        guard !isFormattingDetails else { return }
+        guard let resolver else {
+            formatTextError = "App services unavailable"
+            return
+        }
+
+        isFormattingDetails = true
+        formatTextError = nil
+        defer { isFormattingDetails = false }
+
+        do {
+            let client = resolver.formatDealTextAPIClient()
+            let baseURL = resolver.backendURLStore().backendURL
+            if let formatted = try await client.formatDetails(
+                baseURL: baseURL,
+                details: details.isEmpty ? nil : details
+            ) {
+                details = formatted
+            }
+        } catch {
+            formatTextError = error.localizedDescription
+        }
+    }
+
+    @MainActor
     private func extractProductsFromAPI() async {
         guard !isExtractingProducts else { return }
         guard let resolver else {
@@ -606,13 +681,47 @@ struct EditDealView: View {
         label: String,
         @ViewBuilder content: () -> Content
     ) -> some View {
+        editableField(label: label, trailing: { EmptyView() }, content: content)
+    }
+
+    private func editableField<Content: View, Trailing: View>(
+        label: String,
+        @ViewBuilder trailing: () -> Trailing,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(label)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            HStack {
+                Text(label)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Spacer()
+
+                trailing()
+            }
+
             content()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func capitalizationButton(
+        isFormatting: Bool,
+        help: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            if isFormatting {
+                ProgressView()
+                    .controlSize(.small)
+            } else {
+                Image(systemName: "textformat")
+            }
+        }
+        .buttonStyle(.plain)
+        .font(.caption)
+        .disabled(isFormatting)
+        .help(help)
     }
 
     private func editableURLField(label: String, text: Binding<String>, linkLabel: String?) -> some View {
