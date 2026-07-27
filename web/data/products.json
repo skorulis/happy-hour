@@ -462,7 +462,11 @@
     },
     {
         "name": "bingo",
-        "icon": "Grid3x3"
+        "icon": "Grid3x3",
+        "synonyms": [
+            "music bingo",
+            "muiscal bingo"
+        ]
     },
     {
         "name": "board games",

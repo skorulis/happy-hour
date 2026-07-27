@@ -1,0 +1,163 @@
+import { describe, expect, it } from "vitest";
+import { buildRegionInfographicFacts } from "@/lib/infographic/build-facts";
+import { composeRegionInfographic } from "@/lib/infographic/compose";
+import type { SuburbStatistics } from "@/lib/search/queries";
+
+function suburb(
+  overrides: Partial<SuburbStatistics> & Pick<SuburbStatistics, "id" | "name">,
+): SuburbStatistics {
+  return {
+    postcode: null,
+    heroImage: null,
+    dealCount: 0,
+    venueCount: 0,
+    sqkm: null,
+    population: null,
+    venuesPerSqkm: null,
+    dealsPerSqkm: null,
+    venuesPerThousand: null,
+    dealsPerThousand: null,
+    ...overrides,
+  };
+}
+
+describe("buildRegionInfographicFacts", () => {
+  it("aggregates totals and picks density / per-capita winners", () => {
+    const facts = buildRegionInfographicFacts({
+      regionId: 1,
+      regionName: "Sydney",
+      venuesWithDeals: 8,
+      dayCounts: [
+        { dayOfWeek: 6, count: 40 },
+        { dayOfWeek: 5, count: 22 },
+      ],
+      topProducts: [
+        { name: "Beer", count: 12 },
+        { name: "Cocktails", count: 9 },
+      ],
+      suburbs: [
+        suburb({
+          id: 1,
+          name: "Surry Hills",
+          dealCount: 20,
+          venueCount: 10,
+          sqkm: 1,
+          population: 10000,
+          dealsPerSqkm: 20,
+          venuesPerSqkm: 10,
+          dealsPerThousand: 2,
+          venuesPerThousand: 1,
+        }),
+        suburb({
+          id: 2,
+          name: "Parramatta",
+          dealCount: 30,
+          venueCount: 15,
+          sqkm: 10,
+          population: 5000,
+          dealsPerSqkm: 3,
+          venuesPerSqkm: 1.5,
+          dealsPerThousand: 6,
+          venuesPerThousand: 3,
+        }),
+      ],
+    });
+
+    expect(facts.dealCount).toBe(50);
+    expect(facts.venueCount).toBe(25);
+    expect(facts.densestSuburb?.name).toBe("Surry Hills");
+    expect(facts.perCapitaSuburb?.name).toBe("Parramatta");
+    expect(facts.dealLeaderSuburb?.name).toBe("Parramatta");
+    expect(facts.busiestDay).toEqual({ dayOfWeek: 6, count: 40 });
+    expect(facts.coveragePercent).toBeCloseTo(32);
+    expect(facts.topProducts).toHaveLength(2);
+  });
+
+  it("omits density and per-capita when geo data is missing", () => {
+    const facts = buildRegionInfographicFacts({
+      regionId: 1,
+      regionName: "Sydney",
+      venuesWithDeals: 2,
+      dayCounts: [],
+      topProducts: [],
+      suburbs: [
+        suburb({
+          id: 1,
+          name: "Nowhere",
+          dealCount: 4,
+          venueCount: 2,
+        }),
+      ],
+    });
+
+    expect(facts.densestSuburb).toBeNull();
+    expect(facts.perCapitaSuburb).toBeNull();
+    expect(facts.dealLeaderSuburb?.name).toBe("Nowhere");
+    expect(facts.busiestDay).toBeNull();
+    expect(facts.coveragePercent).toBe(100);
+  });
+});
+
+describe("composeRegionInfographic", () => {
+  it("falls back densest slot to deal leader when area is missing", () => {
+    const facts = buildRegionInfographicFacts({
+      regionId: 1,
+      regionName: "Sydney",
+      venuesWithDeals: 2,
+      dayCounts: [{ dayOfWeek: 6, count: 10 }],
+      topProducts: [{ name: "Beer", count: 3 }],
+      suburbs: [
+        suburb({
+          id: 1,
+          name: "Bondi",
+          dealCount: 12,
+          venueCount: 5,
+        }),
+      ],
+    });
+
+    const composition = composeRegionInfographic(facts, "page");
+    const ids = composition.slots.map((slot) => slot.id);
+
+    expect(ids).toContain("headline");
+    expect(ids).toContain("dealLeader");
+    expect(ids).not.toContain("densest");
+    expect(ids).toContain("busiestDay");
+    expect(ids).toContain("topProducts");
+    expect(ids).toContain("coverage");
+    expect(ids).not.toContain("perCapita");
+  });
+
+  it("uses a tighter slot set for og format", () => {
+    const facts = buildRegionInfographicFacts({
+      regionId: 1,
+      regionName: "Sydney",
+      venuesWithDeals: 8,
+      dayCounts: [{ dayOfWeek: 5, count: 18 }],
+      topProducts: [{ name: "Wine", count: 4 }],
+      suburbs: [
+        suburb({
+          id: 1,
+          name: "Newtown",
+          dealCount: 20,
+          venueCount: 10,
+          sqkm: 2,
+          population: 10000,
+          dealsPerSqkm: 10,
+          venuesPerSqkm: 5,
+          dealsPerThousand: 2,
+          venuesPerThousand: 1,
+        }),
+      ],
+    });
+
+    const og = composeRegionInfographic(facts, "og");
+    expect(og.slots.map((slot) => slot.id)).toEqual([
+      "headline",
+      "densest",
+      "busiestDay",
+      "topProducts",
+      "coverage",
+    ]);
+  });
+});

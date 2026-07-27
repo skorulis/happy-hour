@@ -1,5 +1,10 @@
 import { getAllRegionsForSitemap } from "@/lib/search/queries";
-import { regionPath, regionSlug } from "@/lib/search/slugs";
+import {
+  regionAllSuburbsPath,
+  regionPath,
+  regionSlug,
+  regionStatisticsPath,
+} from "@/lib/search/slugs";
 import { siteUrl } from "@/lib/site-url";
 
 // Dynamic: region list comes from Postgres; CI/Docker builds have no
@@ -41,9 +46,21 @@ export async function GET() {
   const regions = filterUniqueRegionSlugs(await getAllRegionsForSitemap());
   const lastmod = new Date();
 
-  const entries = regions.map((row) =>
+  const entries = regions.flatMap((row) => [
     urlEntry(`${base}${regionPath(row.name)}`, lastmod, "weekly", "0.9"),
-  );
+    urlEntry(
+      `${base}${regionAllSuburbsPath(row.name)}`,
+      lastmod,
+      "weekly",
+      "0.7",
+    ),
+    urlEntry(
+      `${base}${regionStatisticsPath(row.name)}`,
+      lastmod,
+      "weekly",
+      "0.8",
+    ),
+  ]);
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries.join("\n")}\n</urlset>`;
 

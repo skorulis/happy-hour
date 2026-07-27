@@ -1,9 +1,19 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { RegionFocusNotice } from "@/components/RegionFocusNotice";
+import { RegionInfographicPoster } from "@/components/infographic/RegionInfographicPoster";
+import { RegionInfographicShare } from "@/components/infographic/RegionInfographicShare";
 import { RegionStatisticsView } from "@/components/RegionStatisticsView";
-import { findRegionBySlug, listSuburbStatistics } from "@/lib/search/queries";
-import { regionStatisticsPath } from "@/lib/search/slugs";
+import { composeRegionInfographic } from "@/lib/infographic/compose";
+import {
+  formatRegionInfographicDescription,
+  formatRegionInfographicTitle,
+} from "@/lib/infographic/copy";
+import { loadRegionInfographicFacts } from "@/lib/infographic/load-facts";
+import { findRegionBySlug } from "@/lib/search/queries";
+import { regionPath, regionStatisticsPath } from "@/lib/search/slugs";
+import { siteUrl } from "@/lib/site-url";
 
 export const dynamic = "force-dynamic";
 
@@ -20,9 +30,10 @@ export async function generateMetadata({
     return {};
   }
 
-  const title = `Statistics for ${region.name}`;
-  const description = `Compare venues and deals by density and population across suburbs in ${region.name}.`;
   const path = regionStatisticsPath(region.name);
+  const title = formatRegionInfographicTitle(region.name);
+  const description = `Deal density, busiest days, and what's pouring across ${region.name}.`;
+  const ogImage = `${path}/opengraph-image`;
 
   return {
     title,
@@ -35,6 +46,13 @@ export async function generateMetadata({
       description,
       type: "website",
       url: path,
+      images: [{ url: ogImage }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [ogImage],
     },
   };
 }
@@ -48,18 +66,64 @@ export default async function RegionStatisticsPage({
     notFound();
   }
 
-  const suburbs = await listSuburbStatistics({ regionId: region.id });
+  const { facts, suburbs } = await loadRegionInfographicFacts({
+    regionId: region.id,
+    regionName: region.name,
+  });
+  const composition = composeRegionInfographic(facts, "page");
+  const path = regionStatisticsPath(region.name);
+  const absoluteUrl = `${siteUrl()}${path}`;
+  const title = formatRegionInfographicTitle(region.name);
+  const shareText = formatRegionInfographicDescription(facts);
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-4 py-10 md:px-6">
+    <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-10 px-4 py-10 md:px-6">
       <header className="flex flex-col gap-4">
-        <h1 className="text-3xl font-bold text-foreground">
-          Statistics for {region.name}
+        <p className="text-sm font-medium tracking-[0.2em] text-accent-soft uppercase">
+          DuskRoute
+        </p>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+          {title}
         </h1>
+        <p className="max-w-2xl text-base text-muted md:text-lg">
+          {shareText}
+        </p>
         <RegionFocusNotice regionName={region.name} />
       </header>
 
-      <section>
+      <RegionInfographicPoster composition={composition} />
+
+      <section className="space-y-3">
+        <h2 className="text-sm font-medium tracking-wide text-secondary uppercase">
+          Share this poster
+        </h2>
+        <RegionInfographicShare
+          url={absoluteUrl}
+          title={title}
+          text={shareText}
+          downloadPath={`${path}/card?format=square`}
+        />
+        <p className="text-sm text-muted">
+          Browse deals in{" "}
+          <Link
+            href={regionPath(region.name)}
+            className="font-medium text-accent-soft underline-offset-2 hover:underline"
+          >
+            {region.name}
+          </Link>
+          .
+        </p>
+      </section>
+
+      <section className="space-y-4 border-t border-border-subtle pt-8">
+        <div className="space-y-1">
+          <h2 className="text-xl font-semibold text-foreground">
+            Explore the rankings
+          </h2>
+          <p className="text-sm text-muted">
+            Compare suburbs by density and population.
+          </p>
+        </div>
         <RegionStatisticsView suburbs={suburbs} regionName={region.name} />
       </section>
     </div>

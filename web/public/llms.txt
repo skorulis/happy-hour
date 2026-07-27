@@ -39,6 +39,6 @@ Use the sitemap for exhaustive region, suburb, and venue URLs. Account, favourit
 
 ## Optional
 
-- [Sydney statistics](https://duskroute.com/sydney/statistics): Aggregate deal stats for Sydney
+- [Sydney statistics](https://duskroute.com/sydney/statistics): Shareable Sydney happy hour infographic — densest suburbs, busiest days, and what's on offer
 - [Sydney analytics](https://duskroute.com/sydney/analytics): Region analytics for Sydney
 - [Log in](https://duskroute.com/login): Sign in to save favourites and manage contributions

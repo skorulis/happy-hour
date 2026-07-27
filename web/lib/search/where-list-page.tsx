@@ -17,6 +17,7 @@ import {
   NEARBY_WHERE_SLUG,
   regionAllSuburbsPath,
   regionPath,
+  regionStatisticsPath,
   suburbWherePath,
 } from "@/lib/search/slugs";
 
@@ -195,6 +196,7 @@ export async function renderWhereListPage(
         regionId={region.id}
         regionName={region.name}
         allSuburbsHref={regionAllSuburbsPath(region.name)}
+        statisticsHref={regionStatisticsPath(region.name)}
       />
     </>
   );

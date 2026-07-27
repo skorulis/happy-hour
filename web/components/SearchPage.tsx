@@ -1,6 +1,7 @@
 "use client";
 
-import { MapPinCheckInside } from "lucide-react";
+import Link from "next/link";
+import { ChartColumn, MapPinCheckInside } from "lucide-react";
 import { PopularSuburbs } from "@/components/PopularSuburbs";
 import { RegionFocusNotice } from "@/components/RegionFocusNotice";
 import { VenueSearchCard } from "@/components/VenueSearchCard";
@@ -27,6 +28,7 @@ type SearchPageProps = {
   regionId?: number;
   regionName?: string;
   allSuburbsHref?: string;
+  statisticsHref?: string;
   includeNearbyLink?: boolean;
 };
 
@@ -43,6 +45,7 @@ export function SearchPage({
   regionId,
   regionName,
   allSuburbsHref,
+  statisticsHref,
   includeNearbyLink = true,
 }: SearchPageProps) {
   const {
@@ -101,6 +104,15 @@ export function SearchPage({
           {pageTitle ?? resultsTitle}
         </h1>
         {regionName ? <RegionFocusNotice regionName={regionName} /> : null}
+        {statisticsHref ? (
+          <Link
+            href={statisticsHref}
+            className="inline-flex w-fit items-center gap-2 text-sm font-medium text-accent-soft underline-offset-2 hover:underline"
+          >
+            <ChartColumn aria-hidden className="h-4 w-4" />
+            {regionName ? `${regionName} in numbers` : "Region statistics"}
+          </Link>
+        ) : null}
       </header>
 
       <SearchBar

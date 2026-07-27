@@ -630,6 +630,78 @@ export async function listSuburbStatistics(
   });
 }
 
+export type RegionDealDayCount = {
+  dayOfWeek: number;
+  count: number;
+};
+
+export type RegionDealTextRow = {
+  title: string | null;
+  details: string | null;
+  conditions: string | null;
+};
+
+export async function countRegionVenuesWithDeals(
+  regionId: number,
+): Promise<number> {
+  const rows = await db
+    .select({
+      venuesWithDeals: countDistinct(venue.id),
+    })
+    .from(venue)
+    .innerJoin(suburb, eq(suburb.id, venue.suburbId))
+    .innerJoin(
+      deal,
+      and(eq(deal.venueId, venue.id), eq(deal.status, "approved")),
+    )
+    .where(eq(suburb.regionId, regionId));
+
+  return rows[0]?.venuesWithDeals ?? 0;
+}
+
+export async function listRegionDealDayCounts(
+  regionId: number,
+): Promise<RegionDealDayCount[]> {
+  const scheduleCount = count(dealSchedule.id);
+
+  const rows = await db
+    .select({
+      dayOfWeek: dealSchedule.dayOfWeek,
+      count: scheduleCount,
+    })
+    .from(dealSchedule)
+    .innerJoin(deal, eq(deal.id, dealSchedule.dealId))
+    .innerJoin(venue, eq(venue.id, deal.venueId))
+    .innerJoin(suburb, eq(suburb.id, venue.suburbId))
+    .where(
+      and(eq(suburb.regionId, regionId), eq(deal.status, "approved")),
+    )
+    .groupBy(dealSchedule.dayOfWeek)
+    .orderBy(dealSchedule.dayOfWeek);
+
+  return rows;
+}
+
+export async function listRegionDealTextsForMatching(
+  regionId: number,
+  limit = 500,
+): Promise<RegionDealTextRow[]> {
+  return db
+    .select({
+      title: deal.title,
+      details: deal.details,
+      conditions: deal.conditions,
+    })
+    .from(deal)
+    .innerJoin(venue, eq(venue.id, deal.venueId))
+    .innerJoin(suburb, eq(suburb.id, venue.suburbId))
+    .where(
+      and(eq(suburb.regionId, regionId), eq(deal.status, "approved")),
+    )
+    .orderBy(desc(deal.id))
+    .limit(limit);
+}
+
 export async function listRegions(): Promise<RegionWithCounts[]> {
   const dealCount = count(deal.id);
   const venueCount = countDistinct(venue.id);
