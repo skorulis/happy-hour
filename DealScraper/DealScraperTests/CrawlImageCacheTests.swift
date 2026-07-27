@@ -112,6 +112,17 @@ struct CrawlImageValidatorTests {
         #expect(CrawlImageValidator.wordCount(in: "Lunch\nSpecial\nFridays") == 3)
     }
 
+    @Test func requiresDaySubstringInOCR() {
+        #expect(CrawlImageValidator.containsDaySubstring("Happy Hour Tuesday"))
+        #expect(CrawlImageValidator.containsDaySubstring("WEEKDAY SPECIALS"))
+        #expect(CrawlImageValidator.containsDaySubstring("Every Day 4-6pm"))
+        #expect(CrawlImageValidator.containsDaySubstring("FRIDAY"))
+        #expect(!CrawlImageValidator.containsDaySubstring(""))
+        #expect(!CrawlImageValidator.containsDaySubstring("MOCKTAILS $12 Sweet Child O Mine"))
+        #expect(!CrawlImageValidator.containsDaySubstring("Happy Hour 4PM - 6PM"))
+        #expect(!CrawlImageValidator.containsDaySubstring("Weekend Specials"))
+    }
+
     @Test func acceptsImageWithText() async throws {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)

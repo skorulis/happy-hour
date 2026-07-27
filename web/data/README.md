@@ -38,15 +38,15 @@ Deal text containing `cocktail` (singular) matches the `cocktails` product durin
 
 Global substrings that should not count as product matches. Defined in [`match-ignore.json`](match-ignore.json).
 
-If a product name or synonym appears only inside one of these phrases, that hit is skipped for every product. For example, `Steak with chips and salad` does not match `chips` or `salad` when `with chips and salad` is listed.
+If a product name or synonym appears only inside one of these phrases, that hit is skipped for every product. For example, `All chips down special` does not match `chips` when `chips down` is listed.
 
 ```json
 [
-  "with chips and salad",
   "chips down"
 ]
 ```
 
 ## Match rules
 
+- **With-clause ignore:** From the word `with` through the end of that line is ignored for product matching. Those phrases describe sides or inclusions (e.g. `With house beer or wine`), not the product itself. Text before `with` still matches (e.g. `Steak with chips` → `steak`).
 - **Bottomless title-only:** If the deal title matches `bottomless`, product matching uses the title only and ignores details. Other title keywords (e.g. `Bottomless pizza`) still match.

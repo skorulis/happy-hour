@@ -90,12 +90,13 @@ describe("extractProducts", () => {
     ]);
   });
 
-  it("ignores chips inside side-salad phrases", () => {
+  it("ignores products after with on the same line", () => {
     const steak = extractProducts({
       title: "Steak with chips and salad $25",
       details: null,
     });
     expect(steak.products.map((p) => p.name)).not.toContain("chips");
+    expect(steak.products.map((p) => p.name)).not.toContain("salad");
     expect(steak.products.map((p) => p.name)).toContain("steak");
 
     expect(
@@ -107,10 +108,10 @@ describe("extractProducts", () => {
 
     expect(
       extractProducts({
-        title: "Meal with chips and a garden salad",
-        details: null,
+        title: "$30 Express lunch",
+        details: "With house beer or wine",
       }).products.map((p) => p.name),
-    ).not.toContain("chips");
+    ).toEqual(["lunch"]);
   });
 
   it("ignores chips in chips down", () => {
@@ -119,12 +120,13 @@ describe("extractProducts", () => {
     ).toEqual({ products: [] });
   });
 
-  it("still matches chips outside ignore phrases", () => {
+  it("still matches chips before a with clause", () => {
     const result = extractProducts({
-      title: "Bowl of chips $8 with chips and salad on the side",
+      title: "$8 Bowl of chips with salad on the side",
       details: null,
     });
     expect(result.products.map((p) => p.name)).toContain("chips");
+    expect(result.products.map((p) => p.name)).not.toContain("salad");
     expect(result.products.find((p) => p.name === "chips")?.price).toBe(8);
   });
 

@@ -65,6 +65,11 @@ final class CrawlImageValidator {
         guard Self.hasMinimumWords(combinedText) else {
             return nil
         }
+        // Require "day" so menus/price lists without a weekday (e.g. mocktails) are rejected.
+        // Weekday names, "weekday(s)", and "every day" all contain this substring.
+        guard Self.containsDaySubstring(combinedText) else {
+            return nil
+        }
         guard DealTextFilter().isValidDeal(combinedText) else {
             return nil
         }
@@ -83,6 +88,11 @@ final class CrawlImageValidator {
     /// Images with only one or two OCR words (e.g. "Lunch") lack enough context to extract a deal.
     static func hasMinimumWords(_ text: String) -> Bool {
         wordCount(in: text) >= minimumWordCount
+    }
+
+    /// True when OCR mentions a day-related word (Monday…Sunday, weekday, everyday, etc.).
+    static func containsDaySubstring(_ text: String) -> Bool {
+        text.localizedCaseInsensitiveContains("day")
     }
 
     static func wordCount(in text: String) -> Int {

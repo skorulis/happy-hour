@@ -135,6 +135,24 @@ function collectSubstringRanges(text: string, needles: string[]): TextRange[] {
   return ranges;
 }
 
+/** "With …" describes sides/add-ons, not the product — ignore through end of line. */
+function collectWithClauseIgnoreRanges(text: string): TextRange[] {
+  const ranges: TextRange[] = [];
+  const pattern = /\bwith\b[^\n]*/g;
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(text)) !== null) {
+    ranges.push({ start: match.index, end: match.index + match[0].length });
+  }
+  return ranges;
+}
+
+function collectIgnoreRanges(text: string): TextRange[] {
+  return [
+    ...collectSubstringRanges(text, productMatchIgnore),
+    ...collectWithClauseIgnoreRanges(text),
+  ];
+}
+
 function isRangeCovered(range: TextRange, covers: TextRange[]): boolean {
   return covers.some(
     (cover) => range.start >= cover.start && range.end <= cover.end,
@@ -159,7 +177,7 @@ function findProductsMatchingText(text: string): Product[] {
     return [];
   }
 
-  const ignoreRanges = collectSubstringRanges(text, productMatchIgnore);
+  const ignoreRanges = collectIgnoreRanges(text);
   const matches = productsWithIcons.filter(
     (product) => collectMatchSpans(text, product, ignoreRanges).length > 0,
   );
@@ -175,7 +193,7 @@ function suppressOverlappingMatches(
     return matches;
   }
 
-  const ignoreRanges = collectSubstringRanges(text, productMatchIgnore);
+  const ignoreRanges = collectIgnoreRanges(text);
   const spans = matches.flatMap((product) =>
     collectMatchSpans(text, product, ignoreRanges),
   );

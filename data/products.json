@@ -141,7 +141,11 @@
     {
         "name": "happy hour",
         "rank": 1,
-        "icon": "Clock"
+        "icon": "Clock",
+        "synonyms": [
+            "golden hour",
+            "mates rates"
+        ]
     },
     {
         "name": "food",
@@ -436,7 +440,10 @@
     },
     {
         "name": "trivia",
-        "icon": "CircleQuestionMark"
+        "icon": "CircleQuestionMark",
+        "synonyms": [
+            "quiz night"
+        ]
     },
     {
         "name": "kids eat free",
