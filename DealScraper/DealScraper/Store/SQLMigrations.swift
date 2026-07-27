@@ -342,6 +342,12 @@ final class SQLMigrations {
                 t.uniqueKey(["deal_id", "deal_source_id"])
             }
         }
+
+        migrator.registerMigration("v39_venue_google_user_rating_count") { db in
+            try db.alter(table: "venue") { t in
+                t.add(column: "google_user_rating_count", .integer)
+            }
+        }
     }
 }
 

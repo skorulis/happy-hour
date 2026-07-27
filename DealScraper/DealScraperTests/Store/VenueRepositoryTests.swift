@@ -103,13 +103,15 @@ struct VenueRepositoryTests {
             formattedAddress: "1 Circular Quay, Sydney NSW 2000",
             websiteUri: "https://ratedpub.example.com",
             types: ["bar"],
-            rating: 4.3
+            rating: 4.3,
+            userRatingCount: 87
         )
 
         try repository.upsert(places: [place])
 
         let found = try #require(try repository.find(googleMapId: "places/ChIJRated"))
         #expect(found.googleRating == 4.3)
+        #expect(found.googleUserRatingCount == 87)
     }
 
     @Test func upsertPlacesPrefersAddressSuburbOverCrawlSuburb() throws {

@@ -25,6 +25,7 @@ struct GooglePlacesClientTests {
           "websiteUri": "https://theroyalpub.example.com",
           "types": ["bar", "point_of_interest"],
           "rating": 4.5,
+          "userRatingCount": 128,
           "regularOpeningHours": {
             "openNow": true,
             "weekdayDescriptions": [
@@ -84,6 +85,7 @@ struct GooglePlacesClientTests {
         #expect(response.places.first?.location.latitude == -33.8688)
         #expect(response.places.first?.websiteUri == "https://theroyalpub.example.com")
         #expect(response.places.first?.rating == 4.5)
+        #expect(response.places.first?.userRatingCount == 128)
         #expect(response.places.first?.regularOpeningHours?.openNow == true)
         #expect(response.places.first?.regularOpeningHours?.weekdayDescriptions?.count == 7)
         #expect(response.places.first?.regularOpeningHours?.periods?.first?.open?.hour == 11)
@@ -106,6 +108,12 @@ struct GooglePlacesClientTests {
         #expect(GooglePlacesAPI.placeFieldMask.contains("places.rating"))
         #expect(GooglePlacesAPI.textSearchFieldMask.contains("places.rating"))
         #expect(GooglePlacesAPI.nearbySearchFieldMask.contains("places.rating"))
+    }
+
+    @Test func fieldMaskIncludesUserRatingCount() {
+        #expect(GooglePlacesAPI.placeFieldMask.contains("places.userRatingCount"))
+        #expect(GooglePlacesAPI.textSearchFieldMask.contains("places.userRatingCount"))
+        #expect(GooglePlacesAPI.nearbySearchFieldMask.contains("places.userRatingCount"))
     }
 
     @Test func placeDetailsSummariesFieldMask() {

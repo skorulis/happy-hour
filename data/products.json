@@ -117,7 +117,10 @@
     },
     {
         "name": "spirits",
-        "icon": "GlassWater"
+        "icon": "GlassWater",
+        "groups": [
+            "vodka"
+        ]
     },
     {
         "name": "spritz",
@@ -130,6 +133,10 @@
     {
         "name": "wine",
         "icon": "Wine"
+    },
+    {
+        "name": "vodka",
+        "icon": "GlassWater"
     },
     {
         "name": "whiskey",
@@ -145,7 +152,9 @@
         "icon": "Clock",
         "synonyms": [
             "golden hour",
-            "mates rates"
+            "mates rates",
+            "social hour",
+            "après hour"
         ]
     },
     {
@@ -426,7 +435,8 @@
         "name": "joker poker",
         "icon": "Club",
         "synonyms": [
-            "jag the joker"
+            "jag the joker",
+            "joker draw"
         ]
     },
     {

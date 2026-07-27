@@ -12,7 +12,7 @@ enum GooglePlacesAPI {
     }
 
     nonisolated static let placeFieldMask =
-        "places.id,places.displayName,places.location,places.formattedAddress,places.websiteUri,places.types,places.regularOpeningHours,places.businessStatus,places.rating"
+        "places.id,places.displayName,places.location,places.formattedAddress,places.websiteUri,places.types,places.regularOpeningHours,places.businessStatus,places.rating,places.userRatingCount"
     nonisolated static let textSearchFieldMask = "\(placeFieldMask),nextPageToken"
     nonisolated static let nearbySearchFieldMask = placeFieldMask
     nonisolated static let placeDetailsSummariesFieldMask =

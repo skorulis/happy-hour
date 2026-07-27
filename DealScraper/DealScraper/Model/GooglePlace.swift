@@ -52,6 +52,7 @@ nonisolated struct GooglePlace: Codable, Sendable {
     let regularOpeningHours: OpeningHours?
     let businessStatus: GooglePlaceBusinessStatus?
     let rating: Double?
+    let userRatingCount: Int?
 
     var isImportable: Bool {
         businessStatus?.isClosed != true
@@ -66,7 +67,8 @@ nonisolated struct GooglePlace: Codable, Sendable {
         types: [String]?,
         regularOpeningHours: OpeningHours? = nil,
         businessStatus: GooglePlaceBusinessStatus? = nil,
-        rating: Double? = nil
+        rating: Double? = nil,
+        userRatingCount: Int? = nil
     ) {
         self.id = id
         self.displayName = displayName
@@ -77,6 +79,7 @@ nonisolated struct GooglePlace: Codable, Sendable {
         self.regularOpeningHours = regularOpeningHours
         self.businessStatus = businessStatus
         self.rating = rating
+        self.userRatingCount = userRatingCount
     }
 
     struct LocalizedText: Codable, Sendable {

@@ -391,8 +391,8 @@ struct VenueDetailsView: View {
 
             LabeledContent("Google Place ID", value: venue.googleMapId)
 
-            if let googleRating = venue.googleRating {
-                LabeledContent("Google Rating", value: String(format: "%.1f", googleRating))
+            if let googleRatingDescription = googleRatingDescription(for: venue) {
+                LabeledContent("Google Rating", value: googleRatingDescription)
             }
 
             if !viewModel.types.isEmpty {
@@ -409,6 +409,21 @@ struct VenueDetailsView: View {
                     .font(.caption)
                     .foregroundStyle(.red)
             }
+        }
+    }
+
+    private func googleRatingDescription(for venue: Venue) -> String? {
+        switch (venue.googleRating, venue.googleUserRatingCount) {
+        case let (rating?, count?):
+            let reviewLabel = count == 1 ? "review" : "reviews"
+            return String(format: "%.1f (%d \(reviewLabel))", rating, count)
+        case let (rating?, nil):
+            return String(format: "%.1f", rating)
+        case let (nil, count?):
+            let reviewLabel = count == 1 ? "review" : "reviews"
+            return "\(count) \(reviewLabel)"
+        case (nil, nil):
+            return nil
         }
     }
 
