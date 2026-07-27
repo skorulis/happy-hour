@@ -73,7 +73,7 @@ struct JobQueueTests {
 
     private var defaultSuburbCrawler: any SuburbCrawling {
         FakeSuburbCrawler { _, _ in
-            SuburbCrawlResults(venuesFound: 0, newVenues: 0, duration: 0)
+            SuburbCrawlResults(venuesFound: 0, newVenues: 0, droppedVenues: 0, duration: 0)
         }
     }
 
@@ -278,7 +278,7 @@ struct JobQueueTests {
 
         let suburbCrawler = FakeSuburbCrawler { suburb, progress in
             await progress("Searching…")
-            return SuburbCrawlResults(venuesFound: 5, newVenues: 2, duration: 1.5)
+            return SuburbCrawlResults(venuesFound: 5, newVenues: 2, droppedVenues: 1, duration: 1.5)
         }
 
         let jobQueue = makeJobQueue(
@@ -297,6 +297,7 @@ struct JobQueueTests {
         if case let .completed(.crawlSuburb(results)) = job?.status {
             #expect(results.venuesFound == 5)
             #expect(results.newVenues == 2)
+            #expect(results.droppedVenues == 1)
         } else {
             Issue.record("Expected completed suburb crawl job")
         }
@@ -308,7 +309,7 @@ struct JobQueueTests {
 
         let suburbCrawler = FakeSuburbCrawler { _, _ in
             try await Task.sleep(for: .milliseconds(100))
-            return SuburbCrawlResults(venuesFound: 0, newVenues: 0, duration: 0)
+            return SuburbCrawlResults(venuesFound: 0, newVenues: 0, droppedVenues: 0, duration: 0)
         }
 
         let jobQueue = makeJobQueue(

@@ -66,12 +66,13 @@ final class SuburbCrawler {
 
         await progress("Saving \(response.places.count) venues…")
 
-        let newCount = try venueRepository.upsert(places: response.places, suburbId: suburbId)
+        let upsert = try venueRepository.upsert(places: response.places, suburbId: suburbId)
         try suburbRepository.updateLastCrawlDate(suburbId: suburbId, date: Date())
 
         let results = SuburbCrawlResults(
             venuesFound: response.places.count,
-            newVenues: newCount,
+            newVenues: upsert.newVenues,
+            droppedVenues: upsert.droppedVenues,
             duration: Date().timeIntervalSince(startedAt)
         )
         await progress.completed(results: results)

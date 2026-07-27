@@ -5,5 +5,6 @@ import Foundation
 struct SuburbCrawlResults: Equatable, Sendable {
     let venuesFound: Int
     let newVenues: Int
+    let droppedVenues: Int
     let duration: TimeInterval
 }

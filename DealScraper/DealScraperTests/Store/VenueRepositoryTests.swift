@@ -172,12 +172,13 @@ struct VenueRepositoryTests {
             types: ["bar"]
         )
 
-        let newCount = try repository.upsert(
+        let upsert = try repository.upsert(
             places: [missingAddress, overseas],
             suburbId: crawlSuburbId
         )
 
-        #expect(newCount == 0)
+        #expect(upsert.newVenues == 0)
+        #expect(upsert.droppedVenues == 2)
         #expect(try repository.find(googleMapId: "places/ChIJNoAddress") == nil)
         #expect(try repository.find(googleMapId: "places/ChIJOverseas") == nil)
     }
@@ -244,11 +245,13 @@ struct VenueRepositoryTests {
             types: ["bar"]
         )
 
-        let firstNewCount = try repository.upsert(places: [place])
-        #expect(firstNewCount == 1)
+        let first = try repository.upsert(places: [place])
+        #expect(first.newVenues == 1)
+        #expect(first.droppedVenues == 0)
 
-        let secondNewCount = try repository.upsert(places: [place])
-        #expect(secondNewCount == 0)
+        let second = try repository.upsert(places: [place])
+        #expect(second.newVenues == 0)
+        #expect(second.droppedVenues == 0)
     }
 
     @Test func updateStatusPersistsVenueStatus() throws {
@@ -500,8 +503,9 @@ struct VenueRepositoryTests {
             businessStatus: .closedPermanently
         )
 
-        let newCount = try repository.upsert(places: [operational, temporarilyClosed, permanentlyClosed])
-        #expect(newCount == 1)
+        let upsert = try repository.upsert(places: [operational, temporarilyClosed, permanentlyClosed])
+        #expect(upsert.newVenues == 1)
+        #expect(upsert.droppedVenues == 2)
 
         let all = try repository.all()
         #expect(all.count == 1)
@@ -532,8 +536,9 @@ struct VenueRepositoryTests {
             types: place.types,
             businessStatus: .closedPermanently
         )
-        let newCount = try repository.upsert(places: [closedPlace])
-        #expect(newCount == 0)
+        let upsert = try repository.upsert(places: [closedPlace])
+        #expect(upsert.newVenues == 0)
+        #expect(upsert.droppedVenues == 1)
         #expect(try repository.find(googleMapId: "places/ChIJWasOpen") == nil)
     }
 

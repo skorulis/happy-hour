@@ -114,8 +114,8 @@ final class GoogleImportViewModel {
                     includedType: "bar",
                     regionCode: region.isEmpty ? nil : region
                 )
-                let newCount = try venueRepository.upsert(places: response.places)
-                state = .completed(totalCount: response.places.count, newCount: newCount)
+                let upsert = try venueRepository.upsert(places: response.places)
+                state = .completed(totalCount: response.places.count, newCount: upsert.newVenues)
 
             case .nearby:
                 let lat = parsedCoordinate(latitude, name: "latitude")!
@@ -128,8 +128,8 @@ final class GoogleImportViewModel {
                     radiusMeters: radius,
                     includedTypes: VenueAreaSweep.defaultIncludedTypes
                 )
-                let newCount = try venueRepository.upsert(places: response.places)
-                state = .completed(totalCount: response.places.count, newCount: newCount)
+                let upsert = try venueRepository.upsert(places: response.places)
+                state = .completed(totalCount: response.places.count, newCount: upsert.newVenues)
 
             case .area:
                 let boundingBox = parsedBoundingBox()!
@@ -143,10 +143,10 @@ final class GoogleImportViewModel {
                         self?.state = .sweeping(progress)
                     }
                 )
-                let newCount = try venueRepository.upsert(places: result.places)
+                let upsert = try venueRepository.upsert(places: result.places)
                 state = .completed(
                     totalCount: result.places.count,
-                    newCount: newCount,
+                    newCount: upsert.newVenues,
                     saturatedCellCount: result.saturatedCells.count,
                     apiCallCount: result.apiCallCount
                 )

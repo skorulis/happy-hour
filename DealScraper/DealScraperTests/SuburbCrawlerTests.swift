@@ -96,6 +96,7 @@ struct SuburbCrawlerTests {
         #expect(capturedRegionCode == "AU")
         #expect(results.venuesFound == 2)
         #expect(results.newVenues == 2)
+        #expect(results.droppedVenues == 0)
 
         let venues = try venueRepository.all()
         #expect(venues.count == 2)
@@ -107,7 +108,7 @@ struct SuburbCrawlerTests {
 
     @Test @MainActor func crawlUsesNewZealandRegionCode() async throws {
         let store = SQLStore.inMemory()
-        let nzId = try #require(
+        let nzId = try await #require(
             try store.dbQueue.read { db in
                 try Country
                     .filter(Column("iso3") == Country.newZealand.iso3)

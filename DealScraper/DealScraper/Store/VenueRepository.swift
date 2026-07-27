@@ -79,11 +79,13 @@ final class VenueRepository {
     }
 
     @discardableResult
-    func upsert(places: [GooglePlace], suburbId: Int64? = nil) throws -> Int {
+    func upsert(places: [GooglePlace], suburbId: Int64? = nil) throws -> VenueUpsertResults {
         let parser = try addressParser(forSuburbId: suburbId)
         var newCount = 0
+        var droppedCount = 0
         for place in places {
             guard place.isImportable else {
+                droppedCount += 1
                 if place.businessStatus == .closedPermanently,
                    let existing = try find(googleMapId: place.id),
                    let existingId = existing.id
@@ -95,13 +97,14 @@ final class VenueRepository {
             guard let address = place.formattedAddress,
                   parser.parse(from: address) != nil
             else {
+                droppedCount += 1
                 continue
             }
             if try upsert(try Venue(from: place), preferredSuburbId: suburbId) {
                 newCount += 1
             }
         }
-        return newCount
+        return VenueUpsertResults(newVenues: newCount, droppedVenues: droppedCount)
     }
 
     func all() throws -> [Venue] {

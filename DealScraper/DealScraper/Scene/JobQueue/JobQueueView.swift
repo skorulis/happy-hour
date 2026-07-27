@@ -192,7 +192,7 @@ private struct JobRow: View {
         case let .extract(extractResults):
             return "Extracted \(extractResults.dealsFound) deal\(extractResults.dealsFound == 1 ? "" : "s") in \(formattedDuration(extractResults.duration))."
         case let .crawlSuburb(suburbResults):
-            return "Found \(suburbResults.venuesFound) venue\(suburbResults.venuesFound == 1 ? "" : "s"), \(suburbResults.newVenues) new in \(formattedDuration(suburbResults.duration))."
+            return "Found \(suburbResults.venuesFound) venue\(suburbResults.venuesFound == 1 ? "" : "s"), \(suburbResults.droppedVenues) dropped, \(suburbResults.newVenues) new in \(formattedDuration(suburbResults.duration))."
         }
     }
 
