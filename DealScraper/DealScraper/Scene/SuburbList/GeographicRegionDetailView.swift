@@ -74,13 +74,13 @@ struct GeographicRegionDetailView: View {
             progressRow(
                 title: "Venues crawled",
                 value: viewModel.crawledVenueCount,
-                total: viewModel.venueCount,
+                total: viewModel.nonBrokenVenueCount,
                 tint: .orange
             )
             progressRow(
                 title: "Venues extracted",
                 value: viewModel.extractedVenueCount,
-                total: viewModel.venueCount,
+                total: viewModel.venuesWithApprovedSourcesCount,
                 tint: .green
             )
         }

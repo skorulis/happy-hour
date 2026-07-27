@@ -16,7 +16,9 @@ final class GeographicRegionDetailViewModel: CoordinatorViewModel {
     private(set) var suburbCount: Int = 0
     private(set) var crawledSuburbCount: Int = 0
     private(set) var venueCount: Int = 0
+    private(set) var nonBrokenVenueCount: Int = 0
     private(set) var crawledVenueCount: Int = 0
+    private(set) var venuesWithApprovedSourcesCount: Int = 0
     private(set) var extractedVenueCount: Int = 0
     private(set) var sourceCount: Int = 0
     private(set) var dealCount: Int = 0
@@ -75,7 +77,9 @@ final class GeographicRegionDetailViewModel: CoordinatorViewModel {
             suburbCount = try geographicRegionRepository.suburbCount(regionId: regionId)
             crawledSuburbCount = try geographicRegionRepository.crawledSuburbCount(regionId: regionId)
             venueCount = try geographicRegionRepository.venueCount(regionId: regionId)
+            nonBrokenVenueCount = try geographicRegionRepository.nonBrokenVenueCount(regionId: regionId)
             crawledVenueCount = try geographicRegionRepository.crawledVenueCount(regionId: regionId)
+            venuesWithApprovedSourcesCount = try geographicRegionRepository.venuesWithApprovedSourcesCount(regionId: regionId)
             extractedVenueCount = try geographicRegionRepository.extractedVenueCount(regionId: regionId)
             sourceCount = try geographicRegionRepository.dealSourceCount(regionId: regionId)
             dealCount = try geographicRegionRepository.dealCount(regionId: regionId)
@@ -84,7 +88,9 @@ final class GeographicRegionDetailViewModel: CoordinatorViewModel {
             suburbCount = 0
             crawledSuburbCount = 0
             venueCount = 0
+            nonBrokenVenueCount = 0
             crawledVenueCount = 0
+            venuesWithApprovedSourcesCount = 0
             extractedVenueCount = 0
             sourceCount = 0
             dealCount = 0
