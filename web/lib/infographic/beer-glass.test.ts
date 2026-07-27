@@ -47,6 +47,10 @@ describe("buildBeerGlassGeometry", () => {
     expect(days.reduce((sum, day) => sum + day.percent, 0)).toBe(100);
     const geometry = buildBeerGlassGeometry(days);
     expect(geometry.segments).toHaveLength(7);
+    expect(geometry.legend).toHaveLength(7);
+    expect(geometry.legend.every((item) => item.leaderPath !== null)).toBe(
+      true,
+    );
     expect(geometry.foamPath).not.toBeNull();
     expect(geometry.outlinePath.length).toBeGreaterThan(0);
   });
@@ -57,6 +61,9 @@ describe("buildBeerGlassGeometry", () => {
     expect(geometry.segments).toHaveLength(1);
     expect(geometry.segments[0]!.dayOfWeek).toBe(5);
     expect(geometry.segments[0]!.percent).toBe(100);
+    const withLeader = geometry.legend.filter((item) => item.leaderPath);
+    expect(withLeader).toHaveLength(1);
+    expect(withLeader[0]!.dayOfWeek).toBe(5);
   });
 
   it("returns no segments when all percents are zero", () => {
@@ -64,5 +71,8 @@ describe("buildBeerGlassGeometry", () => {
     const geometry = buildBeerGlassGeometry(days);
     expect(geometry.segments).toEqual([]);
     expect(geometry.foamPath).toBeNull();
+    expect(geometry.legend.every((item) => item.leaderPath === null)).toBe(
+      true,
+    );
   });
 });

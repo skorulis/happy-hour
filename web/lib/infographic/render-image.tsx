@@ -1,8 +1,5 @@
 import { ImageResponse } from "next/og";
-import {
-  buildBeerGlassGeometry,
-  WEEKDAY_CHART_COLORS,
-} from "@/lib/infographic/beer-glass";
+import { buildBeerGlassGeometry } from "@/lib/infographic/beer-glass";
 import type {
   InfographicComposition,
   InfographicFormat,
@@ -15,7 +12,6 @@ import {
   slotHeadline,
   slotSupporting,
 } from "@/lib/infographic/copy";
-import { DAY_ABBREVIATIONS } from "@/lib/search/schedule";
 
 const COLORS = {
   bg: "#081426",
@@ -93,10 +89,8 @@ function WeekdayMixBlock({
   compact?: boolean;
 }) {
   const geometry = buildBeerGlassGeometry(slot.days);
-  const glassHeight = compact ? 200 : 280;
-  const glassWidth = Math.round(
-    (glassHeight * 100) / 160,
-  );
+  const chartHeight = compact ? 200 : 300;
+  const chartWidth = Math.round((chartHeight * 210) / 160);
 
   return (
     <div
@@ -135,13 +129,13 @@ function WeekdayMixBlock({
       </div>
 
       <svg
-        width={glassWidth}
-        height={glassHeight}
-        viewBox={geometry.viewBox}
+        width={chartWidth}
+        height={chartHeight}
+        viewBox={geometry.chartViewBox}
       >
         {geometry.segments.map((segment) => (
           <path
-            key={segment.dayOfWeek}
+            key={`seg-${segment.dayOfWeek}`}
             d={segment.d}
             fill={segment.color}
           />
@@ -155,57 +149,41 @@ function WeekdayMixBlock({
           stroke={geometry.outlineColor}
           strokeWidth="2.5"
         />
-      </svg>
-
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-          gap: compact ? 4 : 6,
-          height: glassHeight,
-        }}
-      >
-        {[...slot.days].reverse().map((day) => {
-          const isPeak = day.dayOfWeek === slot.peakDayOfWeek;
-          const color =
-            WEEKDAY_CHART_COLORS[day.dayOfWeek] ?? COLORS.accentSoft;
+        {geometry.legend.map((item) =>
+          item.leaderPath ? (
+            <path
+              key={`leader-${item.dayOfWeek}`}
+              d={item.leaderPath}
+              fill="none"
+              stroke={geometry.leaderColor}
+              strokeWidth="1.25"
+            />
+          ) : null,
+        )}
+        {geometry.legend.map((item) => {
+          const isPeak = item.dayOfWeek === slot.peakDayOfWeek;
           return (
-            <div
-              key={day.dayOfWeek}
-              style={{
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 8,
-                fontSize: compact ? 20 : 24,
-                fontWeight: isPeak ? 700 : 500,
-                color: isPeak ? COLORS.fg : COLORS.secondary,
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  width: 12,
-                  height: 12,
-                  backgroundColor: color,
-                }}
+            <g key={`legend-${item.dayOfWeek}`}>
+              <rect
+                x={item.swatchX}
+                y={item.y - item.swatchSize / 2}
+                width={item.swatchSize}
+                height={item.swatchSize}
+                fill={item.color}
               />
-              <div style={{ display: "flex", width: 48 }}>
-                {DAY_ABBREVIATIONS[day.dayOfWeek] ?? `D${day.dayOfWeek}`}
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  color: isPeak ? COLORS.accentSoft : COLORS.muted,
-                }}
+              <text
+                x={item.labelX}
+                y={item.y + 3}
+                fill={isPeak ? COLORS.fg : COLORS.secondary}
+                fontSize="11"
+                fontWeight={isPeak ? 700 : 500}
               >
-                {day.percent}%
-              </div>
-            </div>
+                {`${item.label}  ${item.percent}%`}
+              </text>
+            </g>
           );
         })}
-      </div>
+      </svg>
     </div>
   );
 }

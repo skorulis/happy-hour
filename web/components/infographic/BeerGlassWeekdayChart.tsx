@@ -1,11 +1,9 @@
 import {
   buildBeerGlassGeometry,
-  WEEKDAY_CHART_COLORS,
   weekdayMixAriaLabel,
 } from "@/lib/infographic/beer-glass";
 import { formatDayLabel } from "@/lib/infographic/copy";
 import type { RegionWeekdayShare } from "@/lib/infographic/types";
-import { DAY_ABBREVIATIONS } from "@/lib/search/schedule";
 
 type BeerGlassWeekdayChartProps = {
   days: RegionWeekdayShare[];
@@ -20,25 +18,18 @@ export function BeerGlassWeekdayChart({
 }: BeerGlassWeekdayChartProps) {
   const geometry = buildBeerGlassGeometry(days);
   const ariaLabel = weekdayMixAriaLabel(days, formatDayLabel);
-  // Glass stacks Mon→Sun bottom→top; legend reads top→bottom to match the bands.
-  const legendDays = [...days].reverse();
 
   return (
-    <div
-      className={
-        className ??
-        "flex flex-col items-center gap-6 sm:flex-row sm:items-stretch sm:justify-center sm:gap-10"
-      }
-    >
+    <div className={className ?? "flex justify-center"}>
       <svg
-        viewBox={geometry.viewBox}
-        className="h-56 w-auto shrink-0 sm:h-64"
+        viewBox={geometry.chartViewBox}
+        className="h-56 w-auto max-w-full sm:h-72"
         role="img"
         aria-label={ariaLabel}
       >
         {geometry.segments.map((segment) => (
           <path
-            key={segment.dayOfWeek}
+            key={`seg-${segment.dayOfWeek}`}
             d={segment.d}
             fill={segment.color}
           />
@@ -53,35 +44,63 @@ export function BeerGlassWeekdayChart({
           strokeWidth={2.5}
           strokeLinejoin="round"
         />
-      </svg>
 
-      <ul className="flex w-auto flex-col justify-between gap-1 py-1 sm:py-2">
-        {legendDays.map((day) => {
-          const isPeak = day.dayOfWeek === peakDayOfWeek;
-          const color =
-            WEEKDAY_CHART_COLORS[day.dayOfWeek] ?? geometry.outlineColor;
+        {geometry.legend.map((item) =>
+          item.leaderPath ? (
+            <path
+              key={`leader-${item.dayOfWeek}`}
+              d={item.leaderPath}
+              fill="none"
+              stroke={geometry.leaderColor}
+              strokeWidth={1.25}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              opacity={0.85}
+            />
+          ) : null,
+        )}
+
+        {geometry.legend.map((item) => {
+          const isPeak = item.dayOfWeek === peakDayOfWeek;
           return (
-            <li
-              key={day.dayOfWeek}
-              className={`flex items-center gap-2 text-sm ${
-                isPeak ? "font-semibold text-foreground" : "text-secondary"
-              }`}
-            >
-              <span
-                className="inline-block h-2.5 w-2.5 shrink-0 rounded-sm"
-                style={{ backgroundColor: color }}
-                aria-hidden
+            <g key={`legend-${item.dayOfWeek}`}>
+              <rect
+                x={item.swatchX}
+                y={item.y - item.swatchSize / 2}
+                width={item.swatchSize}
+                height={item.swatchSize}
+                rx={1}
+                fill={item.color}
               />
-              <span className="min-w-[2.25rem] tracking-wide uppercase">
-                {DAY_ABBREVIATIONS[day.dayOfWeek] ?? `D${day.dayOfWeek}`}
-              </span>
-              <span className={isPeak ? "text-accent-soft" : "text-muted"}>
-                {day.percent}%
-              </span>
-            </li>
+              <text
+                x={item.labelX}
+                y={item.y}
+                dominantBaseline="middle"
+                fill={isPeak ? "#f8fafc" : "#cbd5e1"}
+                style={{
+                  fontSize: 9,
+                  fontWeight: isPeak ? 700 : 500,
+                  letterSpacing: "0.06em",
+                }}
+              >
+                {item.label}
+              </text>
+              <text
+                x={item.labelX + 28}
+                y={item.y}
+                dominantBaseline="middle"
+                fill={isPeak ? "#fdba74" : "#94a3b8"}
+                style={{
+                  fontSize: 9,
+                  fontWeight: isPeak ? 700 : 500,
+                }}
+              >
+                {item.percent}%
+              </text>
+            </g>
           );
         })}
-      </ul>
+      </svg>
     </div>
   );
 }

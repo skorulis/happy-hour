@@ -1,4 +1,4 @@
-import { WEEKDAY_UI_ORDER } from "@/lib/search/schedule";
+import { DAY_ABBREVIATIONS, WEEKDAY_UI_ORDER } from "@/lib/search/schedule";
 import type {
   RegionDayCount,
   RegionWeekdayShare,
@@ -20,6 +20,12 @@ export const BEER_GLASS_VIEWBOX = {
   height: 160,
 } as const;
 
+/** Full chart including legend column + leader lines. */
+export const BEER_GLASS_CHART_VIEWBOX = {
+  width: 210,
+  height: 160,
+} as const;
+
 const CENTER_X = 50;
 const LIQUID_TOP = 30;
 const LIQUID_BOTTOM = 138;
@@ -28,6 +34,13 @@ const BOTTOM_WIDTH = 34;
 const FOAM_TOP = 20;
 const FOAM_COLOR = "#f8fafc";
 const OUTLINE_COLOR = "#cbd5e1";
+const LEADER_COLOR = "#64748b";
+const LEGEND_GUTTER_X = 92;
+const LEGEND_SWATCH_X = 118;
+const LEGEND_SWATCH_SIZE = 6;
+const LEGEND_LABEL_X = 128;
+const LEGEND_TOP = 26;
+const LEGEND_BOTTOM = 142;
 
 export type BeerGlassSegment = {
   dayOfWeek: number;
@@ -35,15 +48,36 @@ export type BeerGlassSegment = {
   color: string;
   percent: number;
   count: number;
+  yTop: number;
+  yBottom: number;
+  yMid: number;
+  xRight: number;
+};
+
+export type BeerGlassLegendItem = {
+  dayOfWeek: number;
+  label: string;
+  percent: number;
+  count: number;
+  color: string;
+  y: number;
+  swatchX: number;
+  swatchSize: number;
+  labelX: number;
+  /** Elbow path from segment edge to legend swatch; null when percent is 0. */
+  leaderPath: string | null;
 };
 
 export type BeerGlassGeometry = {
   viewBox: string;
+  chartViewBox: string;
   outlinePath: string;
   foamPath: string | null;
   segments: BeerGlassSegment[];
+  legend: BeerGlassLegendItem[];
   outlineColor: string;
   foamColor: string;
+  leaderColor: string;
 };
 
 /**
@@ -87,7 +121,6 @@ export function normalizeWeekdayPercents(
     remainder -= 1;
   }
 
-  // Prefer assigning leftover to days with counts; if still left (all zero handled above), dump on first.
   if (remainder > 0) {
     const peak = byFraction.find((row) => row.count > 0) ?? byFraction[0];
     if (peak) {
@@ -155,9 +188,24 @@ function buildFoamPath(): string {
   return bandPath(LIQUID_TOP, FOAM_TOP);
 }
 
+function leaderElbow(
+  fromX: number,
+  fromY: number,
+  toX: number,
+  toY: number,
+): string {
+  const gutterX = LEGEND_GUTTER_X;
+  return [
+    `M ${fromX.toFixed(2)} ${fromY.toFixed(2)}`,
+    `L ${gutterX.toFixed(2)} ${fromY.toFixed(2)}`,
+    `L ${gutterX.toFixed(2)} ${toY.toFixed(2)}`,
+    `L ${toX.toFixed(2)} ${toY.toFixed(2)}`,
+  ].join(" ");
+}
+
 /**
- * Build tapered stacked bands for Mon→Sun (bottom→top).
- * Zero-percent days are skipped so the glass still fills from non-zero shares.
+ * Build tapered stacked bands for Mon→Sun (bottom→top), plus legend
+ * positions (Sun→Mon top→bottom) and elbow leader lines.
  */
 export function buildBeerGlassGeometry(
   days: RegionWeekdayShare[],
@@ -170,23 +218,62 @@ export function buildBeerGlassGeometry(
   for (const day of fillDays) {
     const height = (day.percent / 100) * liquidHeight;
     const yTop = yBottom - height;
+    const yMid = (yTop + yBottom) / 2;
+    const xRight = edgesAtY(yMid).right;
     segments.push({
       dayOfWeek: day.dayOfWeek,
       d: bandPath(yBottom, yTop),
       color: WEEKDAY_CHART_COLORS[day.dayOfWeek] ?? "#f59e0b",
       percent: day.percent,
       count: day.count,
+      yTop,
+      yBottom,
+      yMid,
+      xRight,
     });
     yBottom = yTop;
   }
 
+  const segmentByDay = new Map(
+    segments.map((segment) => [segment.dayOfWeek, segment]),
+  );
+
+  // Legend top→bottom matches glass top→bottom (Sun→Mon).
+  const legendDays = [...days].reverse();
+  const legendCount = Math.max(legendDays.length, 1);
+  const legendSpan = LEGEND_BOTTOM - LEGEND_TOP;
+  const legend = legendDays.map((day, index) => {
+    const t = legendCount === 1 ? 0 : index / (legendCount - 1);
+    const y = LEGEND_TOP + t * legendSpan;
+    const segment = segmentByDay.get(day.dayOfWeek);
+    const color = WEEKDAY_CHART_COLORS[day.dayOfWeek] ?? "#f59e0b";
+    const swatchCenterX = LEGEND_SWATCH_X + LEGEND_SWATCH_SIZE / 2;
+    return {
+      dayOfWeek: day.dayOfWeek,
+      label: DAY_ABBREVIATIONS[day.dayOfWeek] ?? `D${day.dayOfWeek}`,
+      percent: day.percent,
+      count: day.count,
+      color,
+      y,
+      swatchX: LEGEND_SWATCH_X,
+      swatchSize: LEGEND_SWATCH_SIZE,
+      labelX: LEGEND_LABEL_X,
+      leaderPath: segment
+        ? leaderElbow(segment.xRight, segment.yMid, swatchCenterX, y)
+        : null,
+    };
+  });
+
   return {
     viewBox: `0 0 ${BEER_GLASS_VIEWBOX.width} ${BEER_GLASS_VIEWBOX.height}`,
+    chartViewBox: `0 0 ${BEER_GLASS_CHART_VIEWBOX.width} ${BEER_GLASS_CHART_VIEWBOX.height}`,
     outlinePath: buildOutlinePath(),
     foamPath: fillDays.length > 0 ? buildFoamPath() : null,
     segments,
+    legend,
     outlineColor: OUTLINE_COLOR,
     foamColor: FOAM_COLOR,
+    leaderColor: LEADER_COLOR,
   };
 }
 
