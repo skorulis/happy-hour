@@ -19,6 +19,7 @@ enum CrawlPolicy {
         "https://sydneybrewery.com/",
         "https://thevenuesco.au/",
         "https://theharrysfamily.com.au/",
+        "https://www.agfg.com.au/",
         "https://www.ihg.com/",
         "https://www.langhamhotels.com/",
         "https://www.liquidandlarder.com.au/",

@@ -29,32 +29,37 @@ struct NewZealandAddressParser: AddressParser {
         .map { NSRegularExpression.escapedPattern(for: $0) }
         .joined(separator: "|")
 
-    /// `street, Suburb, Town Postcode, New Zealand`
+    /// Avoid treating Australian `Suburb STATE postcode` addresses as NZ.
+    private static let australianStateMarker =
+        #/(?i)\b(?:NSW|VIC|QLD|SA|WA|TAS|NT|ACT)\s+\d{4}\b/#
+
+    /// `street, Suburb, Town Postcode(, New Zealand)?`
     private static let streetSuburbTownPattern =
-        #/,\s*([^,]+),\s*([^,]+?)\s+(\d{4})\s*,\s*New Zealand\s*$/#
+        #/,\s*([^,]+),\s*([^,]+?)\s+(\d{4})\s*(?:,\s*New Zealand)?\s*$/#
 
     /// `street, Suburb Region Postcode(, New Zealand)?`
     private static var streetSuburbRegionPattern: Regex<(Substring, Substring, Substring, Substring)> {
         try! Regex(#",\s*([^,]+?)\s+(?i)(\#(regionAlternation))\s+(\d{4})\s*(?:,\s*New Zealand)?\s*$"#)
     }
 
-    /// `street, Suburb Postcode, New Zealand`
+    /// `street, Suburb Postcode(, New Zealand)?`
     private static let streetSuburbPattern =
-        #/,\s*([^,]+?)\s+(\d{4})\s*,\s*New Zealand\s*$/#
+        #/,\s*([^,]+?)\s+(\d{4})\s*(?:,\s*New Zealand)?\s*$/#
 
     private static let standaloneSuburbTownPattern =
-        #/^([^,]+),\s*([^,]+?)\s+(\d{4})\s*,\s*New Zealand\s*$/#
+        #/^([^,]+),\s*([^,]+?)\s+(\d{4})\s*(?:,\s*New Zealand)?\s*$/#
 
     private static var standaloneSuburbRegionPattern: Regex<(Substring, Substring, Substring, Substring)> {
         try! Regex(#"^([^,]+?)\s+(?i)(\#(regionAlternation))\s+(\d{4})\s*(?:,\s*New Zealand)?\s*$"#)
     }
 
     private static let standaloneSuburbPattern =
-        #/^([^,]+?)\s+(\d{4})\s*,\s*New Zealand\s*$/#
+        #/^([^,]+?)\s+(\d{4})\s*(?:,\s*New Zealand)?\s*$/#
 
     func parse(from formattedAddress: String) -> ParsedAddress? {
         let trimmed = formattedAddress.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
+        guard trimmed.firstMatch(of: Self.australianStateMarker) == nil else { return nil }
 
         if let match = trimmed.firstMatch(of: Self.streetSuburbTownPattern) {
             return parsed(
