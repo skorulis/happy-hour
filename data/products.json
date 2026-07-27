@@ -498,7 +498,7 @@
     },
     {
         "name": "trivia",
-        "icon": "CircleQuestionMark",
+        "icon": "Brain",
         "synonyms": [
             "quiz night"
         ]
