@@ -136,6 +136,23 @@ describe("extractProducts", () => {
     ).toEqual(["lunch"]);
   });
 
+  it("ignores products after w/ shorthand on the same line", () => {
+    const steak = extractProducts({
+      title: "Steak w/ chips and salad $25",
+      details: null,
+    });
+    expect(steak.products.map((p) => p.name)).not.toContain("chips");
+    expect(steak.products.map((p) => p.name)).not.toContain("salad");
+    expect(steak.products.map((p) => p.name)).toContain("steak");
+
+    expect(
+      extractProducts({
+        title: "$30 Express lunch",
+        details: "w/ house beer or wine",
+      }).products.map((p) => p.name),
+    ).toEqual(["lunch"]);
+  });
+
   it("ignores chips in chips down", () => {
     expect(
       extractProducts({ title: "All chips down special", details: null }),

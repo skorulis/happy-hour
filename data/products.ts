@@ -135,10 +135,10 @@ function collectSubstringRanges(text: string, needles: string[]): TextRange[] {
   return ranges;
 }
 
-/** "With …" describes sides/add-ons, not the product — ignore through end of line. */
+/** "With …" / "w/ …" describes sides/add-ons, not the product — ignore through end of line. */
 function collectWithClauseIgnoreRanges(text: string): TextRange[] {
   const ranges: TextRange[] = [];
-  const pattern = /\bwith\b[^\n]*/g;
+  const pattern = /\b(?:with|w\/)[^\n]*/g;
   let match: RegExpExecArray | null;
   while ((match = pattern.exec(text)) !== null) {
     ranges.push({ start: match.index, end: match.index + match[0].length });
