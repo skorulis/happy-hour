@@ -51,8 +51,9 @@ describe("buildBeerGlassGeometry", () => {
     expect(geometry.legend.every((item) => item.leaderPath !== null)).toBe(
       true,
     );
-    expect(geometry.foamPath).not.toBeNull();
-    expect(geometry.outlinePath.length).toBeGreaterThan(0);
+    expect(geometry.foam).not.toBeNull();
+    expect(geometry.outlinePath).toContain("C");
+    expect(geometry.clipPath).toContain("C");
   });
 
   it("builds a single full body for one 100% day", () => {
@@ -70,9 +71,18 @@ describe("buildBeerGlassGeometry", () => {
     const days = normalizeWeekdayPercents([]);
     const geometry = buildBeerGlassGeometry(days);
     expect(geometry.segments).toEqual([]);
-    expect(geometry.foamPath).toBeNull();
+    expect(geometry.foam).toBeNull();
     expect(geometry.legend.every((item) => item.leaderPath === null)).toBe(
       true,
     );
+  });
+
+  it("uses cubic curves for a smooth schooner silhouette", () => {
+    const days = normalizeWeekdayPercents([{ dayOfWeek: 5, count: 12 }]);
+    const geometry = buildBeerGlassGeometry(days);
+    const cubicCount = (geometry.outlinePath.match(/C /g) ?? []).length;
+    expect(cubicCount).toBeGreaterThan(4);
+    // Base must join right→left before ascending the left wall.
+    expect(geometry.clipPath).toMatch(/C [\d.]+ [\d.]+ [\d.]+ [\d.]+ [\d.]+ [\d.]+\s+L /);
   });
 });

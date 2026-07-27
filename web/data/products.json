@@ -203,6 +203,7 @@
             "fish & chips",
             "gyros",
             "hot dog",
+            "mixed grill",
             "mussels",
             "nachos",
             "pasta",
@@ -297,6 +298,10 @@
         ]
     },
     {
+        "name": "mixed grill",
+        "icon": "EggFried"
+    },
+    {
         "name": "mussels",
         "icon": "Fish"
     },
@@ -378,6 +383,7 @@
         "name": "chicken schnitzel",
         "synonyms": [
             "chicken snitzel",
+            "chicken schnitz",
             "schnitty",
             "schnitzel"
         ],

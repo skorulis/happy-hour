@@ -28,23 +28,38 @@ export const BEER_GLASS_CHART_VIEWBOX = {
 
 const CENTER_X = 50;
 const LIQUID_TOP = 30;
-const LIQUID_BOTTOM = 138;
-const TOP_WIDTH = 56;
-const BOTTOM_WIDTH = 34;
-const FOAM_TOP = 20;
+const LIQUID_BOTTOM = 140;
+const FOAM_TOP = 18;
+const FOOT_Y = 152;
 const FOAM_COLOR = "#f8fafc";
 const OUTLINE_COLOR = "#cbd5e1";
 const LEADER_COLOR = "#64748b";
-const LEGEND_GUTTER_X = 92;
-const LEGEND_SWATCH_X = 118;
+const LEGEND_GUTTER_X = 94;
+const LEGEND_SWATCH_X = 120;
 const LEGEND_SWATCH_SIZE = 6;
-const LEGEND_LABEL_X = 128;
-const LEGEND_TOP = 26;
-const LEGEND_BOTTOM = 142;
+const LEGEND_LABEL_X = 130;
+const LEGEND_TOP = 24;
+const LEGEND_BOTTOM = 148;
+
+/**
+ * Schooner half-width keyframes (rim → bowl → taper → foot).
+ * Walls are cubic Beziers through these points; left mirrors right.
+ */
+const PROFILE: Array<{ y: number; halfWidth: number }> = [
+  { y: FOAM_TOP, halfWidth: 30 },
+  { y: 36, halfWidth: 34 },
+  { y: 58, halfWidth: 33 },
+  { y: 88, halfWidth: 26 },
+  { y: 118, halfWidth: 18 },
+  { y: LIQUID_BOTTOM, halfWidth: 14 },
+  { y: 146, halfWidth: 16 },
+  { y: FOOT_Y, halfWidth: 22 },
+];
+
+type Point = { x: number; y: number };
 
 export type BeerGlassSegment = {
   dayOfWeek: number;
-  d: string;
   color: string;
   percent: number;
   count: number;
@@ -71,13 +86,17 @@ export type BeerGlassLegendItem = {
 export type BeerGlassGeometry = {
   viewBox: string;
   chartViewBox: string;
+  /** Smooth filled schooner path used as clip for day bands + foam. */
+  clipPath: string;
+  /** Smooth stroked outline (includes foot). */
   outlinePath: string;
-  foamPath: string | null;
+  foam: { y: number; height: number } | null;
   segments: BeerGlassSegment[];
   legend: BeerGlassLegendItem[];
   outlineColor: string;
   foamColor: string;
   leaderColor: string;
+  glassWidth: number;
 };
 
 /**
@@ -138,54 +157,114 @@ export function normalizeWeekdayPercents(
   }));
 }
 
-function widthAtY(y: number): number {
-  const t = (LIQUID_BOTTOM - y) / (LIQUID_BOTTOM - LIQUID_TOP);
-  const clamped = Math.min(1, Math.max(0, t));
-  return BOTTOM_WIDTH + clamped * (TOP_WIDTH - BOTTOM_WIDTH);
+function lerp(a: number, b: number, t: number): number {
+  return a + (b - a) * t;
 }
 
-function edgesAtY(y: number): { left: number; right: number } {
-  const width = widthAtY(y);
-  return {
-    left: CENTER_X - width / 2,
-    right: CENTER_X + width / 2,
-  };
+function smoothstep(t: number): number {
+  const x = Math.min(1, Math.max(0, t));
+  return x * x * (3 - 2 * x);
 }
 
-function bandPath(yBottom: number, yTop: number): string {
-  const bottom = edgesAtY(yBottom);
-  const top = edgesAtY(yTop);
+/** Half-width of the schooner silhouette at a given y (for leader anchors). */
+function halfWidthAtY(y: number): number {
+  if (y <= PROFILE[0]!.y) return PROFILE[0]!.halfWidth;
+  const last = PROFILE[PROFILE.length - 1]!;
+  if (y >= last.y) return last.halfWidth;
+
+  for (let i = 0; i < PROFILE.length - 1; i += 1) {
+    const a = PROFILE[i]!;
+    const b = PROFILE[i + 1]!;
+    if (y >= a.y && y <= b.y) {
+      const t = smoothstep((y - a.y) / (b.y - a.y));
+      return lerp(a.halfWidth, b.halfWidth, t);
+    }
+  }
+  return last.halfWidth;
+}
+
+function rightEdgePoints(yMax: number): Point[] {
+  return PROFILE.filter((p) => p.y <= yMax + 0.001).map((p) => ({
+    x: CENTER_X + p.halfWidth,
+    y: p.y,
+  }));
+}
+
+function fmt(point: Point): string {
+  return `${point.x.toFixed(2)} ${point.y.toFixed(2)}`;
+}
+
+function mirrorX(point: Point): Point {
+  return { x: 2 * CENTER_X - point.x, y: point.y };
+}
+
+type Cubic = { c1: Point; c2: Point; end: Point };
+
+/** Open Catmull-Rom cubics through points (top → bottom on the right wall). */
+function cubicsThrough(points: Point[]): Cubic[] {
+  if (points.length < 2) return [];
+  const cubics: Cubic[] = [];
+  for (let i = 0; i < points.length - 1; i += 1) {
+    const p0 = points[i === 0 ? i : i - 1]!;
+    const p1 = points[i]!;
+    const p2 = points[i + 1]!;
+    const p3 = points[i + 2 < points.length ? i + 2 : i + 1]!;
+    cubics.push({
+      c1: {
+        x: p1.x + (p2.x - p0.x) / 6,
+        y: p1.y + (p2.y - p0.y) / 6,
+      },
+      c2: {
+        x: p2.x - (p3.x - p1.x) / 6,
+        y: p2.y - (p3.y - p1.y) / 6,
+      },
+      end: p2,
+    });
+  }
+  return cubics;
+}
+
+function cubicCommand(cubic: Cubic): string {
+  return `C ${fmt(cubic.c1)} ${fmt(cubic.c2)} ${fmt(cubic.end)}`;
+}
+
+/**
+ * Smooth symmetric schooner: rim → down right wall → across base → up left wall.
+ * Explicit base join avoids the left-wall curve starting from the wrong point
+ * (which previously sliced across the lower bands).
+ */
+function buildSilhouettePath(yMax: number): string {
+  const rightDown = rightEdgePoints(yMax);
+  if (rightDown.length < 2) return "";
+
+  const rightCubics = cubicsThrough(rightDown);
+  const bottomRight = rightDown[rightDown.length - 1]!;
+  const bottomLeft = mirrorX(bottomRight);
+  const rimRight = rightDown[0]!;
+  const rimLeft = mirrorX(rimRight);
+
+  // Mirror + reverse each right-wall cubic for the ascent up the left wall.
+  const leftUpCommands: string[] = [];
+  for (let i = rightCubics.length - 1; i >= 0; i -= 1) {
+    const cubic = rightCubics[i]!;
+    const startPt = rightDown[i]!;
+    leftUpCommands.push(
+      cubicCommand({
+        c1: mirrorX(cubic.c2),
+        c2: mirrorX(cubic.c1),
+        end: mirrorX(startPt),
+      }),
+    );
+  }
+
   return [
-    `M ${bottom.left.toFixed(2)} ${yBottom.toFixed(2)}`,
-    `L ${bottom.right.toFixed(2)} ${yBottom.toFixed(2)}`,
-    `L ${top.right.toFixed(2)} ${yTop.toFixed(2)}`,
-    `L ${top.left.toFixed(2)} ${yTop.toFixed(2)}`,
+    `M ${fmt(rimLeft)}`,
+    `L ${fmt(rimRight)}`,
+    ...rightCubics.map(cubicCommand),
+    `L ${fmt(bottomLeft)}`,
+    ...leftUpCommands,
     "Z",
   ].join(" ");
-}
-
-function buildOutlinePath(): string {
-  const rim = edgesAtY(FOAM_TOP);
-  const liquidTop = edgesAtY(LIQUID_TOP);
-  const base = edgesAtY(LIQUID_BOTTOM);
-  const footY = 148;
-  const footLeft = CENTER_X - 22;
-  const footRight = CENTER_X + 22;
-  return [
-    `M ${rim.left.toFixed(2)} ${FOAM_TOP.toFixed(2)}`,
-    `L ${rim.right.toFixed(2)} ${FOAM_TOP.toFixed(2)}`,
-    `L ${liquidTop.right.toFixed(2)} ${LIQUID_TOP.toFixed(2)}`,
-    `L ${base.right.toFixed(2)} ${LIQUID_BOTTOM.toFixed(2)}`,
-    `L ${footRight.toFixed(2)} ${footY.toFixed(2)}`,
-    `L ${footLeft.toFixed(2)} ${footY.toFixed(2)}`,
-    `L ${base.left.toFixed(2)} ${LIQUID_BOTTOM.toFixed(2)}`,
-    `L ${liquidTop.left.toFixed(2)} ${LIQUID_TOP.toFixed(2)}`,
-    "Z",
-  ].join(" ");
-}
-
-function buildFoamPath(): string {
-  return bandPath(LIQUID_TOP, FOAM_TOP);
 }
 
 function leaderElbow(
@@ -204,7 +283,7 @@ function leaderElbow(
 }
 
 /**
- * Build tapered stacked bands for Mon→Sun (bottom→top), plus legend
+ * Build stacked weekday bands (clipped to a smooth schooner), plus legend
  * positions (Sun→Mon top→bottom) and elbow leader lines.
  */
 export function buildBeerGlassGeometry(
@@ -219,17 +298,15 @@ export function buildBeerGlassGeometry(
     const height = (day.percent / 100) * liquidHeight;
     const yTop = yBottom - height;
     const yMid = (yTop + yBottom) / 2;
-    const xRight = edgesAtY(yMid).right;
     segments.push({
       dayOfWeek: day.dayOfWeek,
-      d: bandPath(yBottom, yTop),
       color: WEEKDAY_CHART_COLORS[day.dayOfWeek] ?? "#f59e0b",
       percent: day.percent,
       count: day.count,
       yTop,
       yBottom,
       yMid,
-      xRight,
+      xRight: CENTER_X + halfWidthAtY(yMid),
     });
     yBottom = yTop;
   }
@@ -238,7 +315,6 @@ export function buildBeerGlassGeometry(
     segments.map((segment) => [segment.dayOfWeek, segment]),
   );
 
-  // Legend top→bottom matches glass top→bottom (Sun→Mon).
   const legendDays = [...days].reverse();
   const legendCount = Math.max(legendDays.length, 1);
   const legendSpan = LEGEND_BOTTOM - LEGEND_TOP;
@@ -264,16 +340,24 @@ export function buildBeerGlassGeometry(
     };
   });
 
+  const clipPath = buildSilhouettePath(LIQUID_BOTTOM);
+  const outlinePath = buildSilhouettePath(FOOT_Y);
+
   return {
     viewBox: `0 0 ${BEER_GLASS_VIEWBOX.width} ${BEER_GLASS_VIEWBOX.height}`,
     chartViewBox: `0 0 ${BEER_GLASS_CHART_VIEWBOX.width} ${BEER_GLASS_CHART_VIEWBOX.height}`,
-    outlinePath: buildOutlinePath(),
-    foamPath: fillDays.length > 0 ? buildFoamPath() : null,
+    clipPath,
+    outlinePath,
+    foam:
+      fillDays.length > 0
+        ? { y: FOAM_TOP, height: LIQUID_TOP - FOAM_TOP }
+        : null,
     segments,
     legend,
     outlineColor: OUTLINE_COLOR,
     foamColor: FOAM_COLOR,
     leaderColor: LEADER_COLOR,
+    glassWidth: BEER_GLASS_VIEWBOX.width,
   };
 }
 

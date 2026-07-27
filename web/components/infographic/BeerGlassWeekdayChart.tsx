@@ -1,3 +1,4 @@
+import { useId } from "react";
 import {
   buildBeerGlassGeometry,
   weekdayMixAriaLabel,
@@ -16,6 +17,7 @@ export function BeerGlassWeekdayChart({
   peakDayOfWeek,
   className,
 }: BeerGlassWeekdayChartProps) {
+  const clipId = useId().replace(/:/g, "");
   const geometry = buildBeerGlassGeometry(days);
   const ariaLabel = weekdayMixAriaLabel(days, formatDayLabel);
 
@@ -27,21 +29,40 @@ export function BeerGlassWeekdayChart({
         role="img"
         aria-label={ariaLabel}
       >
-        {geometry.segments.map((segment) => (
-          <path
-            key={`seg-${segment.dayOfWeek}`}
-            d={segment.d}
-            fill={segment.color}
-          />
-        ))}
-        {geometry.foamPath ? (
-          <path d={geometry.foamPath} fill={geometry.foamColor} opacity={0.92} />
-        ) : null}
+        <defs>
+          <clipPath id={clipId}>
+            <path d={geometry.clipPath} />
+          </clipPath>
+        </defs>
+
+        <g clipPath={`url(#${clipId})`}>
+          {geometry.segments.map((segment) => (
+            <rect
+              key={`seg-${segment.dayOfWeek}`}
+              x={0}
+              y={segment.yTop}
+              width={geometry.glassWidth}
+              height={segment.yBottom - segment.yTop}
+              fill={segment.color}
+            />
+          ))}
+          {geometry.foam ? (
+            <rect
+              x={0}
+              y={geometry.foam.y}
+              width={geometry.glassWidth}
+              height={geometry.foam.height}
+              fill={geometry.foamColor}
+              opacity={0.92}
+            />
+          ) : null}
+        </g>
+
         <path
           d={geometry.outlinePath}
           fill="none"
           stroke={geometry.outlineColor}
-          strokeWidth={2.5}
+          strokeWidth={2.25}
           strokeLinejoin="round"
         />
 

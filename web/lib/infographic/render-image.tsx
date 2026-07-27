@@ -133,21 +133,37 @@ function WeekdayMixBlock({
         height={chartHeight}
         viewBox={geometry.chartViewBox}
       >
-        {geometry.segments.map((segment) => (
-          <path
-            key={`seg-${segment.dayOfWeek}`}
-            d={segment.d}
-            fill={segment.color}
-          />
-        ))}
-        {geometry.foamPath ? (
-          <path d={geometry.foamPath} fill={geometry.foamColor} />
-        ) : null}
+        <defs>
+          <clipPath id="beer-glass-clip">
+            <path d={geometry.clipPath} />
+          </clipPath>
+        </defs>
+        <g clipPath="url(#beer-glass-clip)">
+          {geometry.segments.map((segment) => (
+            <rect
+              key={`seg-${segment.dayOfWeek}`}
+              x={0}
+              y={segment.yTop}
+              width={geometry.glassWidth}
+              height={segment.yBottom - segment.yTop}
+              fill={segment.color}
+            />
+          ))}
+          {geometry.foam ? (
+            <rect
+              x={0}
+              y={geometry.foam.y}
+              width={geometry.glassWidth}
+              height={geometry.foam.height}
+              fill={geometry.foamColor}
+            />
+          ) : null}
+        </g>
         <path
           d={geometry.outlinePath}
           fill="none"
           stroke={geometry.outlineColor}
-          strokeWidth="2.5"
+          strokeWidth="2.25"
         />
         {geometry.legend.map((item) =>
           item.leaderPath ? (
