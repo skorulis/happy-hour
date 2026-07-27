@@ -1,5 +1,13 @@
 import { ImageResponse } from "next/og";
-import type { InfographicComposition, InfographicFormat } from "@/lib/infographic/types";
+import {
+  buildBeerGlassGeometry,
+  WEEKDAY_CHART_COLORS,
+} from "@/lib/infographic/beer-glass";
+import type {
+  InfographicComposition,
+  InfographicFormat,
+  InfographicSlot,
+} from "@/lib/infographic/types";
 import { INFOGRAPHIC_IMAGE_SIZES } from "@/lib/infographic/types";
 import {
   formatRegionInfographicTitle,
@@ -7,6 +15,7 @@ import {
   slotHeadline,
   slotSupporting,
 } from "@/lib/infographic/copy";
+import { DAY_ABBREVIATIONS } from "@/lib/search/schedule";
 
 const COLORS = {
   bg: "#081426",
@@ -76,6 +85,131 @@ function SlotBlock({
   );
 }
 
+function WeekdayMixBlock({
+  slot,
+  compact,
+}: {
+  slot: Extract<InfographicSlot, { id: "weekdayMix" }>;
+  compact?: boolean;
+}) {
+  const geometry = buildBeerGlassGeometry(slot.days);
+  const glassHeight = compact ? 200 : 280;
+  const glassWidth = Math.round(
+    (glassHeight * 100) / 160,
+  );
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "row",
+        alignItems: "center",
+        gap: compact ? 28 : 40,
+        width: "100%",
+      }}
+    >
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div
+          style={{
+            display: "flex",
+            fontSize: compact ? 18 : 22,
+            fontWeight: 600,
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
+            color: COLORS.accentSoft,
+          }}
+        >
+          {slotEyebrow(slot)}
+        </div>
+        <div
+          style={{
+            display: "flex",
+            fontSize: compact ? 28 : 34,
+            fontWeight: 600,
+            color: COLORS.secondary,
+          }}
+        >
+          {slotHeadline(slot)}
+          {slotSupporting(slot) ? ` · ${slotSupporting(slot)}` : ""}
+        </div>
+      </div>
+
+      <svg
+        width={glassWidth}
+        height={glassHeight}
+        viewBox={geometry.viewBox}
+      >
+        {geometry.segments.map((segment) => (
+          <path
+            key={segment.dayOfWeek}
+            d={segment.d}
+            fill={segment.color}
+          />
+        ))}
+        {geometry.foamPath ? (
+          <path d={geometry.foamPath} fill={geometry.foamColor} />
+        ) : null}
+        <path
+          d={geometry.outlinePath}
+          fill="none"
+          stroke={geometry.outlineColor}
+          strokeWidth="2.5"
+        />
+      </svg>
+
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+          gap: compact ? 4 : 6,
+          height: glassHeight,
+        }}
+      >
+        {[...slot.days].reverse().map((day) => {
+          const isPeak = day.dayOfWeek === slot.peakDayOfWeek;
+          const color =
+            WEEKDAY_CHART_COLORS[day.dayOfWeek] ?? COLORS.accentSoft;
+          return (
+            <div
+              key={day.dayOfWeek}
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 8,
+                fontSize: compact ? 20 : 24,
+                fontWeight: isPeak ? 700 : 500,
+                color: isPeak ? COLORS.fg : COLORS.secondary,
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  width: 12,
+                  height: 12,
+                  backgroundColor: color,
+                }}
+              />
+              <div style={{ display: "flex", width: 48 }}>
+                {DAY_ABBREVIATIONS[day.dayOfWeek] ?? `D${day.dayOfWeek}`}
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  color: isPeak ? COLORS.accentSoft : COLORS.muted,
+                }}
+              >
+                {day.percent}%
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function renderRegionInfographicImage(
   composition: InfographicComposition,
   format: Exclude<InfographicFormat, "page">,
@@ -83,7 +217,11 @@ export function renderRegionInfographicImage(
   const size = INFOGRAPHIC_IMAGE_SIZES[format];
   const isOg = format === "og";
   const isStory = format === "story";
-  const [headline, ...rest] = composition.slots;
+  const headline = composition.slots.find((slot) => slot.id === "headline");
+  const weekdayMix = composition.slots.find((slot) => slot.id === "weekdayMix");
+  const rest = composition.slots.filter(
+    (slot) => slot.id !== "headline" && slot.id !== "weekdayMix",
+  );
   const gridColumns = isOg ? 3 : 2;
 
   return new ImageResponse(
@@ -150,8 +288,8 @@ export function renderRegionInfographicImage(
               flexDirection: "column",
               gap: 8,
               borderBottom: `2px solid ${COLORS.border}`,
-              paddingBottom: isOg ? 20 : 28,
-              marginTop: isOg ? 20 : 36,
+              paddingBottom: isOg ? 16 : 24,
+              marginTop: isOg ? 16 : 28,
             }}
           >
             <SlotBlock
@@ -163,12 +301,24 @@ export function renderRegionInfographicImage(
           </div>
         ) : null}
 
+        {weekdayMix && weekdayMix.id === "weekdayMix" ? (
+          <div
+            style={{
+              display: "flex",
+              marginTop: isOg ? 20 : 28,
+              marginBottom: isOg ? 12 : 20,
+            }}
+          >
+            <WeekdayMixBlock slot={weekdayMix} compact={isOg} />
+          </div>
+        ) : null}
+
         <div
           style={{
             display: "flex",
             flexWrap: "wrap",
-            gap: isOg ? 28 : 36,
-            marginTop: isOg ? 24 : 40,
+            gap: isOg ? 24 : 36,
+            marginTop: isOg ? 8 : 16,
             flexGrow: 1,
             alignContent: isStory ? "flex-start" : "center",
           }}
@@ -179,7 +329,7 @@ export function renderRegionInfographicImage(
               style={{
                 display: "flex",
                 width: `${100 / gridColumns - 2}%`,
-                minWidth: isOg ? 220 : 280,
+                minWidth: isOg ? 200 : 260,
               }}
             >
               <SlotBlock

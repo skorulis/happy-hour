@@ -1,3 +1,4 @@
+import { normalizeWeekdayPercents } from "@/lib/infographic/beer-glass";
 import type {
   InfographicComposition,
   InfographicFormat,
@@ -9,26 +10,26 @@ import type {
 const FORMAT_SLOT_ORDER: Record<InfographicFormat, InfographicSlotId[]> = {
   page: [
     "headline",
+    "weekdayMix",
     "densest",
     "perCapita",
-    "busiestDay",
     "topProducts",
     "coverage",
   ],
-  og: ["headline", "densest", "busiestDay", "topProducts", "coverage"],
+  og: ["headline", "weekdayMix", "densest", "topProducts", "coverage"],
   square: [
     "headline",
+    "weekdayMix",
     "densest",
     "perCapita",
-    "busiestDay",
     "topProducts",
     "coverage",
   ],
   story: [
     "headline",
+    "weekdayMix",
     "densest",
     "perCapita",
-    "busiestDay",
     "topProducts",
     "coverage",
   ],
@@ -54,13 +55,15 @@ function slotFromFacts(
     case "perCapita":
       if (!facts.perCapitaSuburb) return null;
       return { id: "perCapita", suburb: facts.perCapitaSuburb };
-    case "busiestDay":
-      if (!facts.busiestDay) return null;
+    case "weekdayMix": {
+      const total = facts.dayCounts.reduce((sum, row) => sum + row.count, 0);
+      if (total <= 0 || !facts.busiestDay) return null;
       return {
-        id: "busiestDay",
-        dayOfWeek: facts.busiestDay.dayOfWeek,
-        count: facts.busiestDay.count,
+        id: "weekdayMix",
+        days: normalizeWeekdayPercents(facts.dayCounts),
+        peakDayOfWeek: facts.busiestDay.dayOfWeek,
       };
+    }
     case "topProducts":
       if (facts.topProducts.length === 0) return null;
       return { id: "topProducts", products: facts.topProducts };
@@ -88,7 +91,6 @@ export function composeRegionInfographic(
   for (const id of FORMAT_SLOT_ORDER[format]) {
     const slot = slotFromFacts(id, facts);
     if (!slot) continue;
-    // densest may fall back to dealLeader — avoid duplicate if dealLeader also requested
     const key = `${slot.id}:${"suburb" in slot ? slot.suburb.name : ""}`;
     if (seen.has(key)) continue;
     seen.add(key);

@@ -1,5 +1,6 @@
 import Image from "next/image";
-import type { InfographicComposition } from "@/lib/infographic/types";
+import { BeerGlassWeekdayChart } from "@/components/infographic/BeerGlassWeekdayChart";
+import type { InfographicComposition, InfographicSlot } from "@/lib/infographic/types";
 import {
   formatRegionInfographicTitle,
   slotEyebrow,
@@ -11,10 +12,30 @@ type RegionInfographicPosterProps = {
   composition: InfographicComposition;
 };
 
+function TextSlot({ slot }: { slot: InfographicSlot }) {
+  return (
+    <div className="space-y-1">
+      <p className="text-xs font-medium tracking-[0.16em] text-muted uppercase">
+        {slotEyebrow(slot)}
+      </p>
+      <p className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+        {slotHeadline(slot)}
+      </p>
+      {slotSupporting(slot) ? (
+        <p className="text-sm text-secondary">{slotSupporting(slot)}</p>
+      ) : null}
+    </div>
+  );
+}
+
 export function RegionInfographicPoster({
   composition,
 }: RegionInfographicPosterProps) {
-  const [headline, ...rest] = composition.slots;
+  const headline = composition.slots.find((slot) => slot.id === "headline");
+  const weekdayMix = composition.slots.find((slot) => slot.id === "weekdayMix");
+  const rest = composition.slots.filter(
+    (slot) => slot.id !== "headline" && slot.id !== "weekdayMix",
+  );
 
   return (
     <article
@@ -69,26 +90,38 @@ export function RegionInfographicPoster({
           </div>
         ) : null}
 
-        <div className="grid gap-5 sm:grid-cols-2">
-          {rest.map((slot) => (
-            <div
-              key={slot.id}
-              className={
-                slot.id === "topProducts" ? "space-y-1 sm:col-span-2" : "space-y-1"
-              }
-            >
-              <p className="text-xs font-medium tracking-[0.16em] text-muted uppercase">
-                {slotEyebrow(slot)}
+        {weekdayMix && weekdayMix.id === "weekdayMix" ? (
+          <div className="space-y-4 border-b border-border-subtle pb-8">
+            <div className="space-y-1">
+              <p className="text-xs font-medium tracking-[0.18em] text-accent-soft uppercase">
+                {slotEyebrow(weekdayMix)}
               </p>
-              <p className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
-                {slotHeadline(slot)}
+              <p className="text-lg font-medium text-secondary">
+                {slotHeadline(weekdayMix)}
+                {slotSupporting(weekdayMix)
+                  ? ` · ${slotSupporting(weekdayMix)}`
+                  : null}
               </p>
-              {slotSupporting(slot) ? (
-                <p className="text-sm text-secondary">{slotSupporting(slot)}</p>
-              ) : null}
             </div>
-          ))}
-        </div>
+            <BeerGlassWeekdayChart
+              days={weekdayMix.days}
+              peakDayOfWeek={weekdayMix.peakDayOfWeek}
+            />
+          </div>
+        ) : null}
+
+        {rest.length > 0 ? (
+          <div className="grid gap-5 sm:grid-cols-2">
+            {rest.map((slot) => (
+              <div
+                key={slot.id}
+                className={slot.id === "topProducts" ? "sm:col-span-2" : undefined}
+              >
+                <TextSlot slot={slot} />
+              </div>
+            ))}
+          </div>
+        ) : null}
       </div>
     </article>
   );

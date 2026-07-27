@@ -4,7 +4,7 @@ export type InfographicSlotId =
   | "headline"
   | "densest"
   | "perCapita"
-  | "busiestDay"
+  | "weekdayMix"
   | "topProducts"
   | "coverage"
   | "dealLeader";
@@ -19,6 +19,12 @@ export type RegionSuburbWinner = {
 export type RegionDayCount = {
   dayOfWeek: number;
   count: number;
+};
+
+export type RegionWeekdayShare = {
+  dayOfWeek: number;
+  count: number;
+  percent: number;
 };
 
 export type RegionProductHit = {
@@ -37,6 +43,7 @@ export type RegionInfographicFacts = {
   perCapitaSuburb: RegionSuburbWinner | null;
   dealLeaderSuburb: RegionSuburbWinner | null;
   busiestDay: RegionDayCount | null;
+  dayCounts: RegionDayCount[];
   topProducts: RegionProductHit[];
   coveragePercent: number | null;
 };
@@ -56,9 +63,9 @@ export type InfographicSlot =
       suburb: RegionSuburbWinner;
     }
   | {
-      id: "busiestDay";
-      dayOfWeek: number;
-      count: number;
+      id: "weekdayMix";
+      days: RegionWeekdayShare[];
+      peakDayOfWeek: number;
     }
   | {
       id: "topProducts";

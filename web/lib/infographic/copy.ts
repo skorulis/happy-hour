@@ -55,8 +55,8 @@ export function slotEyebrow(slot: InfographicSlot): string {
       return "Densest for deals";
     case "perCapita":
       return "Most deals per capita";
-    case "busiestDay":
-      return "Busiest day";
+    case "weekdayMix":
+      return "Deals by day";
     case "topProducts":
       return "What's pouring";
     case "coverage":
@@ -74,8 +74,8 @@ export function slotHeadline(slot: InfographicSlot): string {
       return formatSuburbLabel(slot.suburb);
     case "perCapita":
       return formatSuburbLabel(slot.suburb);
-    case "busiestDay":
-      return formatDayLabel(slot.dayOfWeek);
+    case "weekdayMix":
+      return `${formatDayLabel(slot.peakDayOfWeek)} leads`;
     case "topProducts":
       return formatTopProductsLine(slot.products);
     case "coverage":
@@ -93,8 +93,10 @@ export function slotSupporting(slot: InfographicSlot): string | null {
       return formatPerSqkmValue(slot.suburb.value);
     case "perCapita":
       return formatPerThousandValue(slot.suburb.value);
-    case "busiestDay":
-      return `${formatDealCount(slot.count)} scheduled deals`;
+    case "weekdayMix": {
+      const peak = slot.days.find((day) => day.dayOfWeek === slot.peakDayOfWeek);
+      return peak ? `${peak.percent}% of scheduled deals` : null;
+    }
     case "topProducts":
       return slot.products.length > 0
         ? "Most often named in deal text"

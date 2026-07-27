@@ -69,6 +69,7 @@ describe("buildRegionInfographicFacts", () => {
     expect(facts.perCapitaSuburb?.name).toBe("Parramatta");
     expect(facts.dealLeaderSuburb?.name).toBe("Parramatta");
     expect(facts.busiestDay).toEqual({ dayOfWeek: 6, count: 40 });
+    expect(facts.dayCounts).toHaveLength(2);
     expect(facts.coveragePercent).toBeCloseTo(32);
     expect(facts.topProducts).toHaveLength(2);
   });
@@ -94,6 +95,7 @@ describe("buildRegionInfographicFacts", () => {
     expect(facts.perCapitaSuburb).toBeNull();
     expect(facts.dealLeaderSuburb?.name).toBe("Nowhere");
     expect(facts.busiestDay).toBeNull();
+    expect(facts.dayCounts).toEqual([]);
     expect(facts.coveragePercent).toBe(100);
   });
 });
@@ -122,10 +124,14 @@ describe("composeRegionInfographic", () => {
     expect(ids).toContain("headline");
     expect(ids).toContain("dealLeader");
     expect(ids).not.toContain("densest");
-    expect(ids).toContain("busiestDay");
+    expect(ids).toContain("weekdayMix");
     expect(ids).toContain("topProducts");
     expect(ids).toContain("coverage");
     expect(ids).not.toContain("perCapita");
+
+    const mix = composition.slots.find((slot) => slot.id === "weekdayMix");
+    expect(mix?.id === "weekdayMix" && mix.peakDayOfWeek).toBe(6);
+    expect(mix?.id === "weekdayMix" && mix.days).toHaveLength(7);
   });
 
   it("uses a tighter slot set for og format", () => {
@@ -154,10 +160,27 @@ describe("composeRegionInfographic", () => {
     const og = composeRegionInfographic(facts, "og");
     expect(og.slots.map((slot) => slot.id)).toEqual([
       "headline",
+      "weekdayMix",
       "densest",
-      "busiestDay",
       "topProducts",
       "coverage",
     ]);
+  });
+
+  it("omits weekdayMix when there are no day counts", () => {
+    const facts = buildRegionInfographicFacts({
+      regionId: 1,
+      regionName: "Sydney",
+      venuesWithDeals: 1,
+      dayCounts: [],
+      topProducts: [],
+      suburbs: [
+        suburb({ id: 1, name: "Empty", dealCount: 1, venueCount: 1 }),
+      ],
+    });
+    const composition = composeRegionInfographic(facts, "page");
+    expect(composition.slots.map((slot) => slot.id)).not.toContain(
+      "weekdayMix",
+    );
   });
 });

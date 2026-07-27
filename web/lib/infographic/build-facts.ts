@@ -100,6 +100,7 @@ export function buildRegionInfographicFacts(
     perCapitaSuburb,
     dealLeaderSuburb,
     busiestDay: pickBusiestDay(input.dayCounts),
+    dayCounts: input.dayCounts,
     topProducts: input.topProducts.slice(0, 3),
     coveragePercent,
   };
