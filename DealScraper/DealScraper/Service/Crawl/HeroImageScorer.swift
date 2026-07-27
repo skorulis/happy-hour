@@ -32,8 +32,8 @@ nonisolated enum HeroImageScorer {
     }
 
     static func textScore(coverageRatio: CGFloat) -> CGFloat {
-        let score = 1 - min(1, coverageRatio)
-        return score * score
+        let score = max(0.2 - min(0.2, coverageRatio), 0)
+        return 5 * score
     }
 
     static func totalScore(

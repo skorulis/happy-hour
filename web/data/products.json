@@ -435,6 +435,7 @@
             "meat tray",
             "pool",
             "darts",
+            "board games",
             "raffle",
             "run club"
         ]
@@ -462,6 +463,13 @@
     {
         "name": "bingo",
         "icon": "Grid3x3"
+    },
+    {
+        "name": "board games",
+        "icon": "ChessKnight",
+        "synonyms": [
+            "board game"
+        ]
     },
     {
         "name": "comedy",
