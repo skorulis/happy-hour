@@ -9,7 +9,8 @@
             "wine",
             "whiskey",
             "champagne",
-            "saki"
+            "saki",
+            "soju"
         ]
     },
     {
@@ -127,6 +128,10 @@
     {
         "name": "schooner",
         "icon": "Beer"
+    },
+    {
+        "name": "soju",
+        "icon": "Soju"
     },
     {
         "name": "spirits",

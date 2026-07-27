@@ -29,6 +29,7 @@ describe("expandKeywords", () => {
         "whiskey",
         "champagne",
         "saki",
+        "soju",
         "schooner",
         "pint",
         "jugs",
@@ -43,7 +44,7 @@ describe("expandKeywords", () => {
         "mojito",
       ]),
     );
-    expect(expanded).toHaveLength(19);
+    expect(expanded).toHaveLength(20);
   });
 
   it("deduplicates shared descendants", () => {
