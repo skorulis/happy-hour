@@ -66,10 +66,13 @@ struct GoogleImportView: View {
                     .textFieldStyle(.roundedBorder)
                 TextField("Radius (meters)", text: $viewModel.radiusMeters)
                     .textFieldStyle(.roundedBorder)
+                TextField("Country code (optional)", text: $viewModel.regionCode)
+                    .textFieldStyle(.roundedBorder)
                 coverageHelpText(
                     """
                     Nearby search returns at most 20 venues per circle. In dense areas use \
-                    400–500 m radius and repeat on a grid, or use Area mode.
+                    400–500 m radius and repeat on a grid, or use Area mode. Country code \
+                    (e.g. AU, NZ) selects the address parser; Google may ignore it.
                     """
                 )
             case .area:

@@ -28,4 +28,12 @@ struct AddressParserRegistryTests {
         let parsed = parser.parse(from: "Glebe NSW 2037, Australia")
         #expect(parsed?.suburb == "Glebe")
     }
+
+    @Test func resolvesIso3FromPlacesRegionCode() {
+        #expect(Country.iso3(forRegionOrIso3: "AU") == Country.australia.iso3)
+        #expect(Country.iso3(forRegionOrIso3: "nz") == Country.newZealand.iso3)
+        #expect(Country.iso3(forRegionOrIso3: "NZL") == Country.newZealand.iso3)
+        #expect(Country.iso3(forRegionOrIso3: "  ") == nil)
+        #expect(Country.iso3(forRegionOrIso3: "XX") == nil)
+    }
 }

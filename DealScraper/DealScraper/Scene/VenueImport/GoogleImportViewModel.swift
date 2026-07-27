@@ -128,7 +128,10 @@ final class GoogleImportViewModel {
                     radiusMeters: radius,
                     includedTypes: VenueAreaSweep.defaultIncludedTypes
                 )
-                let upsert = try venueRepository.upsert(places: response.places)
+                let upsert = try venueRepository.upsert(
+                    places: response.places,
+                    countryIso3: selectedCountryIso3
+                )
                 state = .completed(totalCount: response.places.count, newCount: upsert.newVenues)
 
             case .area:
@@ -207,6 +210,11 @@ final class GoogleImportViewModel {
         }
 
         return boundingBox
+    }
+
+    /// ISO3 country for address parsing, derived from the region/country code field (AU → AUS).
+    private var selectedCountryIso3: String? {
+        Country.iso3(forRegionOrIso3: regionCode)
     }
 
     private func localizedMessage(for error: Error) -> String {

@@ -48,11 +48,15 @@ struct ContentBlockGrouperTests {
         """
 
         let blocks = try grouper.group(html: html, pageURL: pageURL)
-        let titles = blocks.compactMap(\.title)
+        let allText = blocks.map(\.fullText).joined(separator: "\n")
 
-        #expect(titles == ["Specials", "Monday", "Tuesday"])
-        #expect(blocks[1].text.contains("Steak $20"))
-        #expect(blocks[2].text.contains("Tacos $18"))
+        // Short day sections fold into the preceding "Specials" block.
+        #expect(blocks.count == 1)
+        #expect(blocks[0].title == "Specials")
+        #expect(allText.contains("Monday"))
+        #expect(allText.contains("Steak $20"))
+        #expect(allText.contains("Tuesday"))
+        #expect(allText.contains("Tacos $18"))
     }
 
     @Test func capturesLinksInBlock() throws {
@@ -93,11 +97,42 @@ struct ContentBlockGrouperTests {
         """
 
         let blocks = try grouper.group(html: html, pageURL: pageURL)
-        let titles = blocks.compactMap(\.title)
 
-        #expect(titles == ["HAPPY HOUR", "MONDAY"])
+        // Both blocks are under the short-block limit, so MONDAY folds into HAPPY HOUR.
+        #expect(blocks.count == 1)
+        #expect(blocks[0].title == "HAPPY HOUR")
         #expect(blocks[0].text.contains("$7 beers"))
-        #expect(blocks[1].text.contains("$20 steak"))
+        #expect(blocks[0].text.contains("MONDAY"))
+        #expect(blocks[0].text.contains("$20 steak"))
+    }
+
+    @Test func mergesShortFragmentedHeadings() throws {
+        let html = """
+        <html>
+        <body>
+          <main>
+            <h2>OUR FOOD MENU</h2>
+            <h2>H A P P Y&nbsp; &nbsp; H O U R</h2>
+            <h3>5 P M - 7 P M</h3>
+            <h4>D A I L Y</h4>
+            <p><strong>HOURS</strong></p>
+            <p>WEDNESDAY - SUNDAY</p>
+            <p>4PM - LATE</p>
+          </main>
+        </body>
+        </html>
+        """
+
+        let blocks = try grouper.group(html: html, pageURL: pageURL)
+        let combined = blocks.map(\.fullText).joined(separator: "\n")
+
+        #expect(blocks.count == 1)
+        #expect(combined.contains("H A P P Y H O U R"))
+        #expect(combined.contains("5 P M - 7 P M"))
+        #expect(combined.contains("D A I L Y"))
+        #expect(combined.contains("WEDNESDAY - SUNDAY"))
+        #expect(combined.contains("4PM - LATE"))
+        #expect(DealTextFilter().isValidDeal(combined))
     }
 
     @Test func wixInfoMemberStructure() throws {
@@ -177,14 +212,14 @@ struct ContentBlockGrouperTests {
 
         let pageURL = URL(string: "https://www.marketcitytavernsydney.com.au/")!
         let blocks = try grouper.group(html: html, pageURL: pageURL)
-        let titles = blocks.compactMap(\.title)
-        let allText = blocks.map { "\($0.title ?? "") \($0.text)" }.joined(separator: " ")
+        let allText = blocks.map(\.fullText).joined(separator: " ")
 
-        #expect(titles.contains("HAPPY HOUR"))
-        #expect(titles.contains("4PM TO 6PM EVERYDAY"))
+        // Short heading-only blocks fold into the preceding intro text.
+        #expect(allText.contains("HAPPY HOUR"))
+        #expect(allText.contains("4PM TO 6PM EVERYDAY"))
         #expect(allText.contains("$6 SELECTED TAP BEER"))
         #expect(allText.contains("Paddy's Markets"))
-        #expect(titles.contains("STELLA SPECIAL"))
+        #expect(allText.contains("STELLA SPECIAL"))
         #expect(!allText.contains("HOME"))
         #expect(!allText.contains("Contact us"))
     }
@@ -232,18 +267,18 @@ struct ContentBlockGrouperTests {
 
         let blocks = try grouper.group(html: html, pageURL: pageURL)
         let titles = blocks.compactMap(\.title)
+        let allText = blocks.map(\.fullText).joined(separator: " ")
 
         #expect(titles.contains("A Local Gem in the Heart of Surry Hills"))
         #expect(titles.contains("HAPPY HOUR"))
-        #expect(titles.contains("MONDAY"))
-        #expect(titles.contains("TUESDAY"))
-        #expect(titles.contains("WEDNESDAY"))
-        #expect(titles.contains("THURSDAY"))
-        #expect(titles.contains("FRIDAYS"))
-        #expect(titles.contains("SATURDAY"))
-        #expect(titles.contains("SUNDAY"))
-
-        let allText = blocks.map { "\($0.title ?? "") \($0.text)" }.joined(separator: " ")
+        // Short day headings fold into neighboring blocks but remain in the text.
+        #expect(allText.contains("MONDAY"))
+        #expect(allText.contains("TUESDAY"))
+        #expect(allText.contains("WEDNESDAY"))
+        #expect(allText.contains("THURSDAY"))
+        #expect(allText.contains("FRIDAYS"))
+        #expect(allText.contains("SATURDAY"))
+        #expect(allText.contains("SUNDAY"))
         #expect(allText.contains("1870"))
         #expect(allText.contains("$7 Tap Beers"))
         #expect(allText.contains("$20 RUMP STEAK"))

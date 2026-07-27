@@ -90,10 +90,64 @@ struct SuburbRepositoryTests {
 
         // NZ addresses often parse with an empty state.
         let resolvedId = try #require(
-            try repository.resolve(name: "Queenstown", postcode: "9300", state: "")
+            try repository.resolve(
+                name: "Queenstown",
+                postcode: "9300",
+                state: "",
+                countryIso3: Country.newZealand.iso3
+            )
         )
 
         #expect(resolvedId == queenstownId)
+    }
+
+    @Test func resolvePrefersNameOverWrongPostcodeForNewZealand() throws {
+        let store = SQLStore.inMemory()
+        let repository = SuburbRepository(store: store)
+        // Insert first so postcode-only fallback would pick this by id.
+        _ = try insertSuburb(
+            Suburb(name: "Other Place", postcode: "9999", state: "Otago"),
+            store: store
+        )
+        let queenstownId = try insertSuburb(
+            Suburb(name: "Queenstown", postcode: "9300", state: "Otago"),
+            store: store
+        )
+
+        let resolvedId = try #require(
+            try repository.resolve(
+                name: "Queenstown",
+                postcode: "9999",
+                state: "",
+                countryIso3: Country.newZealand.iso3
+            )
+        )
+
+        #expect(resolvedId == queenstownId)
+    }
+
+    @Test func resolveStillPrefersPostcodeOverNameWhenNotNewZealand() throws {
+        let store = SQLStore.inMemory()
+        let repository = SuburbRepository(store: store)
+        let postcodeMatchId = try insertSuburb(
+            Suburb(name: "Glebe", postcode: "2037", state: "NSW"),
+            store: store
+        )
+        _ = try insertSuburb(
+            Suburb(name: "Wrong Name", postcode: "9999", state: "NSW"),
+            store: store
+        )
+
+        let resolvedId = try #require(
+            try repository.resolve(
+                name: "Wrong Name",
+                postcode: "2037",
+                state: "VIC",
+                countryIso3: Country.australia.iso3
+            )
+        )
+
+        #expect(resolvedId == postcodeMatchId)
     }
 
     @Test func resolveFallsBackToNameOnlyWhenStateAndPostcodeMissing() throws {

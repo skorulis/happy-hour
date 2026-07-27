@@ -198,6 +198,48 @@ struct GoogleImportViewModelTests {
         }
     }
 
+    @Test func searchNearbyUsesCountryCodeForAddressParser() async {
+        let store = SQLStore.inMemory()
+        let repository = VenueRepository(store: store)
+        let assembler = DealScraperAssembly.testing()
+        let apiKeyStore = assembler.resolver.apiKeyStore()
+        apiKeyStore.googlePlacesAPIKey = "google-test-key"
+
+        let client = GooglePlacesClient { request in
+            let httpRequest = try #require(request as? HTTPJSONRequest<GooglePlacesSearchResponse>)
+            #expect(httpRequest.endpoint == "https://places.googleapis.com/v1/places:searchNearby")
+            return GooglePlacesSearchResponse(
+                places: [
+                    GooglePlace(
+                        id: "places/ChIJNearbyNZ",
+                        displayName: .init(text: "Lake Pub", languageCode: "en"),
+                        location: .init(latitude: -45.0312, longitude: 168.6626),
+                        formattedAddress: "14 Camp St, Queenstown 9300, New Zealand",
+                        websiteUri: "https://lakepub.example.com",
+                        types: ["bar"]
+                    ),
+                ],
+                nextPageToken: nil
+            )
+        }
+
+        let viewModel = GoogleImportViewModel(
+            googlePlacesClient: client,
+            venueRepository: repository,
+            apiKeyStore: apiKeyStore
+        )
+        viewModel.searchMode = .nearby
+        viewModel.latitude = "-45.0312"
+        viewModel.longitude = "168.6626"
+        viewModel.radiusMeters = "1500"
+        viewModel.regionCode = "NZ"
+
+        viewModel.search()
+        await waitForSearchCompletion(viewModel)
+
+        #expect(viewModel.state == GoogleImportViewModel.State.completed(totalCount: 1, newCount: 1))
+    }
+
     private static func samplePlace(id: String, name: String) -> GooglePlace {
         GooglePlace(
             id: id,

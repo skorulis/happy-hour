@@ -51,4 +51,16 @@ extension Country {
             return String(iso3.prefix(2))
         }
     }
+
+    /// Resolves ISO3 from a Places `regionCode` (e.g. AU) or an ISO3 code (e.g. AUS).
+    static func iso3(forRegionOrIso3 code: String) -> String? {
+        let normalized = code.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        guard !normalized.isEmpty else { return nil }
+        if let match = defaults.first(where: {
+            $0.placesRegionCode == normalized || $0.iso3 == normalized
+        }) {
+            return match.iso3
+        }
+        return normalized.count == 3 ? normalized : nil
+    }
 }

@@ -55,7 +55,8 @@ struct ContentBlockGrouper {
         try removeBoilerplate(from: document)
         let root = try findMainContentRoot(in: document)
         let segments = try collectSegments(element: root, pageURL: pageURL)
-        return enrichBlocks(buildBlocks(from: segments), with: wixGalleryBlocks)
+        let blocks = enrichBlocks(buildBlocks(from: segments), with: wixGalleryBlocks)
+        return mergeShortBlocks(blocks)
     }
 
     // MARK: - Boilerplate removal
@@ -336,6 +337,44 @@ struct ContentBlockGrouper {
         return blocks.filter { block in
             block.title != nil || !block.text.isEmpty || !block.links.isEmpty
         }
+    }
+
+    /// Short letter-spaced / heading-only fragments (e.g. "H A P P Y H O U R", "5 P M - 7 P M")
+    /// often become separate blocks that individually fail the deal text filter. Fold them into
+    /// the preceding block so related lines stay together.
+    private static let shortBlockCharacterLimit = 30
+
+    private func mergeShortBlocks(_ blocks: [ContentBlock]) -> [ContentBlock] {
+        var result: [ContentBlock] = []
+        for block in blocks {
+            let length = block.fullText
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .count
+            if length < Self.shortBlockCharacterLimit, let previous = result.last {
+                result[result.count - 1] = merge(previous, with: block)
+            } else {
+                result.append(block)
+            }
+        }
+        return result
+    }
+
+    private func merge(_ previous: ContentBlock, with short: ContentBlock) -> ContentBlock {
+        var parts: [String] = []
+        if !previous.text.isEmpty {
+            parts.append(previous.text)
+        }
+        if let title = short.title, !title.isEmpty {
+            parts.append(title)
+        }
+        if !short.text.isEmpty {
+            parts.append(short.text)
+        }
+        return ContentBlock(
+            title: previous.title,
+            text: parts.joined(separator: "\n"),
+            links: previous.links + short.links
+        )
     }
 
     // MARK: - Text normalization

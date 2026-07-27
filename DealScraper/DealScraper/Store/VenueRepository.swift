@@ -12,12 +12,17 @@ final class VenueRepository {
     }
 
     @discardableResult
-    func upsert(_ venue: Venue, preferredSuburbId: Int64? = nil) throws -> Bool {
+    func upsert(
+        _ venue: Venue,
+        preferredSuburbId: Int64? = nil,
+        countryIso3: String? = nil
+    ) throws -> Bool {
         try store.dbQueue.write { db in
             var mutableVenue = venue
             try Self.linkSuburb(
                 for: &mutableVenue,
                 preferredSuburbId: preferredSuburbId,
+                countryIso3: countryIso3,
                 in: db
             )
             if mutableVenue.suburbId == nil, let preferredSuburbId {
@@ -81,8 +86,12 @@ final class VenueRepository {
     }
 
     @discardableResult
-    func upsert(places: [GooglePlace], suburbId: Int64? = nil) throws -> VenueUpsertResults {
-        let parser = try addressParser(forSuburbId: suburbId)
+    func upsert(
+        places: [GooglePlace],
+        suburbId: Int64? = nil,
+        countryIso3: String? = nil
+    ) throws -> VenueUpsertResults {
+        let parser = try addressParser(forSuburbId: suburbId, countryIso3: countryIso3)
         var newCount = 0
         var droppedCount = 0
         for place in places {
@@ -102,7 +111,11 @@ final class VenueRepository {
                 droppedCount += 1
                 continue
             }
-            if try upsert(try Venue(from: place), preferredSuburbId: suburbId) {
+            if try upsert(
+                try Venue(from: place),
+                preferredSuburbId: suburbId,
+                countryIso3: countryIso3
+            ) {
                 newCount += 1
             }
         }
@@ -251,29 +264,55 @@ final class VenueRepository {
         }
     }
 
-    private func addressParser(forSuburbId suburbId: Int64?) throws -> any AddressParser {
+    private func addressParser(
+        forSuburbId suburbId: Int64?,
+        countryIso3: String? = nil
+    ) throws -> any AddressParser {
         guard let suburbId else {
-            return AddressParserRegistry.parser(forCountryIso3OrDefault: nil)
+            return AddressParserRegistry.parser(forCountryIso3OrDefault: countryIso3)
         }
         return try store.dbQueue.read { db in
-            try Self.addressParser(forSuburbId: suburbId, in: db)
+            try Self.addressParser(forSuburbId: suburbId, countryIso3: countryIso3, in: db)
         }
     }
 
-    private static func addressParser(forSuburbId suburbId: Int64?, in db: Database) throws -> any AddressParser {
+    private static func addressParser(
+        forSuburbId suburbId: Int64?,
+        countryIso3: String? = nil,
+        in db: Database
+    ) throws -> any AddressParser {
+        AddressParserRegistry.parser(
+            forCountryIso3OrDefault: try resolvedCountryIso3(
+                forSuburbId: suburbId,
+                fallback: countryIso3,
+                in: db
+            )
+        )
+    }
+
+    private static func countryIso3(forSuburbId suburbId: Int64?, in db: Database) throws -> String? {
         guard let suburbId,
               let suburb = try Suburb.fetchOne(db, key: suburbId),
               let countryId = suburb.countryId,
               let country = try Country.fetchOne(db, key: countryId)
         else {
-            return AddressParserRegistry.parser(forCountryIso3OrDefault: nil)
+            return nil
         }
-        return AddressParserRegistry.parser(forCountryIso3OrDefault: country.iso3)
+        return country.iso3
+    }
+
+    private static func resolvedCountryIso3(
+        forSuburbId suburbId: Int64?,
+        fallback: String?,
+        in db: Database
+    ) throws -> String? {
+        try countryIso3(forSuburbId: suburbId, in: db) ?? fallback
     }
 
     private static func linkSuburb(
         for venue: inout Venue,
         preferredSuburbId: Int64?,
+        countryIso3: String? = nil,
         in db: Database
     ) throws {
         guard let jsonData = venue.json.data(using: .utf8),
@@ -283,10 +322,13 @@ final class VenueRepository {
             return
         }
 
-        let parser = try addressParser(
-            forSuburbId: venue.suburbId ?? preferredSuburbId,
+        let suburbIdForCountry = venue.suburbId ?? preferredSuburbId
+        let resolvedCountry = try resolvedCountryIso3(
+            forSuburbId: suburbIdForCountry,
+            fallback: countryIso3,
             in: db
         )
+        let parser = AddressParserRegistry.parser(forCountryIso3OrDefault: resolvedCountry)
         guard let parsed = parser.parse(from: address) else {
             return
         }
@@ -295,6 +337,7 @@ final class VenueRepository {
             name: parsed.suburb,
             postcode: parsed.postcode,
             state: parsed.state,
+            countryIso3: resolvedCountry,
             in: db
         )
     }

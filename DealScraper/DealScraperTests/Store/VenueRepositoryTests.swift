@@ -185,6 +185,39 @@ struct VenueRepositoryTests {
         #expect(try repository.find(googleMapId: "places/ChIJOverseas") == nil)
     }
 
+    @Test func upsertPlacesUsesCountryIso3HintForAddressParser() throws {
+        let store = SQLStore.inMemory()
+        let repository = VenueRepository(store: store)
+        let queenstownId = try store.dbQueue.write { db -> Int64 in
+            var suburb = Suburb(name: "Queenstown", postcode: "9300", state: "Otago")
+            try suburb.insert(db)
+            return try #require(suburb.id)
+        }
+
+        let place = GooglePlace(
+            id: "places/ChIJQueenstown",
+            displayName: .init(text: "Lake Pub", languageCode: "en"),
+            location: .init(latitude: -45.0312, longitude: 168.6626),
+            formattedAddress: "14 Camp St, Queenstown 9300, New Zealand",
+            websiteUri: "https://lakepub.example.com",
+            types: ["bar"]
+        )
+
+        let dropped = try repository.upsert(places: [place])
+        #expect(dropped.newVenues == 0)
+        #expect(dropped.droppedVenues == 1)
+
+        let upsert = try repository.upsert(
+            places: [place],
+            countryIso3: Country.newZealand.iso3
+        )
+        #expect(upsert.newVenues == 1)
+        #expect(upsert.droppedVenues == 0)
+
+        let found = try #require(try repository.find(googleMapId: "places/ChIJQueenstown"))
+        #expect(found.suburbId == queenstownId)
+    }
+
     @Test func upsertPlacesMapsGooglePlaceToVenue() throws {
         let store = SQLStore.inMemory()
         let repository = VenueRepository(store: store)

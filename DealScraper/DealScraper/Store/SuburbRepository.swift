@@ -11,14 +11,37 @@ final class SuburbRepository {
         self.store = store
     }
 
-    func resolve(name: String, postcode: String?, state: String?) throws -> Int64? {
+    func resolve(
+        name: String,
+        postcode: String?,
+        state: String?,
+        countryIso3: String? = nil
+    ) throws -> Int64? {
         try store.dbQueue.read { db in
-            try Self.resolve(name: name, postcode: postcode, state: state, in: db)
+            try Self.resolve(
+                name: name,
+                postcode: postcode,
+                state: state,
+                countryIso3: countryIso3,
+                in: db
+            )
         }
     }
 
-    func resolve(name: String, postcode: String?, state: String?, in db: Database) throws -> Int64? {
-        try Self.resolve(name: name, postcode: postcode, state: state, in: db)
+    func resolve(
+        name: String,
+        postcode: String?,
+        state: String?,
+        countryIso3: String? = nil,
+        in db: Database
+    ) throws -> Int64? {
+        try Self.resolve(
+            name: name,
+            postcode: postcode,
+            state: state,
+            countryIso3: countryIso3,
+            in: db
+        )
     }
 
     func find(name: String, postcode: String?) throws -> Suburb? {
@@ -80,10 +103,18 @@ final class SuburbRepository {
         }
     }
 
-    static func resolve(name: String, postcode: String?, state: String?, in db: Database) throws -> Int64? {
+    static func resolve(
+        name: String,
+        postcode: String?,
+        state: String?,
+        countryIso3: String? = nil,
+        in db: Database
+    ) throws -> Int64? {
         let canonicalName = canonicalResolveName(name: name, postcode: postcode, state: state)
         let normalizedPostcode = normalized(postcode)
         let normalizedState = normalizedState(state)
+        // NZ source data often has wrong postcodes; prefer the suburb name.
+        let preferNameOverPostcode = countryIso3 == Country.newZealand.iso3
 
         if let normalizedState, let normalizedPostcode,
            let id = try exactMatch(
@@ -112,6 +143,18 @@ final class SuburbRepository {
            let id = try firstMatch(name: canonicalName, state: normalizedState, in: db)
         {
             return id
+        }
+
+        if preferNameOverPostcode {
+            if let id = try firstByName(canonicalName, in: db) {
+                return id
+            }
+            if let normalizedPostcode,
+               let id = try firstByPostcode(normalizedPostcode, in: db)
+            {
+                return id
+            }
+            return nil
         }
 
         if let normalizedPostcode,
