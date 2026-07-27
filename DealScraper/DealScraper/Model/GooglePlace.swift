@@ -5,6 +5,23 @@ import Foundation
 nonisolated struct GooglePlacesSearchResponse: Decodable, Sendable {
     let places: [GooglePlace]
     let nextPageToken: String?
+
+    init(places: [GooglePlace], nextPageToken: String?) {
+        self.places = places
+        self.nextPageToken = nextPageToken
+    }
+
+    /// Google returns `{}` when a text/nearby search has no matches, omitting `places`.
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        places = try container.decodeIfPresent([GooglePlace].self, forKey: .places) ?? []
+        nextPageToken = try container.decodeIfPresent(String.self, forKey: .nextPageToken)
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case places
+        case nextPageToken
+    }
 }
 
 nonisolated struct GooglePlaceSummaries: Decodable, Sendable {

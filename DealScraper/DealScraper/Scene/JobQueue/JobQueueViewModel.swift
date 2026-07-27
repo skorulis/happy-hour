@@ -339,10 +339,10 @@ final class JobQueueViewModel: CoordinatorViewModel {
     private func nextSuburbIdForCrawl() -> Int64? {
         guard let allSuburbs = try? suburbRepository.all() else { return nil }
 
+        // NZ LINZ localities often have no postcode; SuburbCrawler searches by name alone.
         return allSuburbs
             .filter { suburb in
-                Self.hasCrawlablePostcode(suburb)
-                    && !SuburbRepository.isExcludedFromCrawl(suburb)
+                !SuburbRepository.isExcludedFromCrawl(suburb)
                     && matchesRegionFilter(suburbRegionId: suburb.regionId)
             }
             .sorted(by: Self.suburbCrawlPrioritySort)
@@ -351,10 +351,5 @@ final class JobQueueViewModel: CoordinatorViewModel {
                 return !jobQueue.isJobActive(suburbId: suburbId, type: .crawlSuburb)
             }?
             .id
-    }
-
-    private static func hasCrawlablePostcode(_ suburb: Suburb) -> Bool {
-        guard let postcode = suburb.postcode else { return false }
-        return !postcode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 }

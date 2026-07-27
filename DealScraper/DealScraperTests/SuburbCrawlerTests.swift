@@ -157,6 +157,44 @@ struct SuburbCrawlerTests {
         #expect(capturedRegionCode == "NZ")
     }
 
+    @Test @MainActor func crawlMarksSuburbCrawledWhenGoogleReturnsNoPlaces() async throws {
+        let store = SQLStore.inMemory()
+        let suburbId = try Self.insertSuburb(
+            Suburb(name: "Devils Staircase", postcode: nil, state: "Otago"),
+            in: store
+        )
+
+        let suburbRepository = SuburbRepository(store: store)
+        let venueRepository = VenueRepository(store: store)
+        let countryRepository = CountryRepository(store: store)
+        let assembler = DealScraperAssembly.testing()
+        let apiKeyStore = assembler.resolver.apiKeyStore()
+        apiKeyStore.googlePlacesAPIKey = "google-test-key"
+
+        // Places API returns `{}` (not `{ "places": [] }`) when a query has no matches.
+        let client = GooglePlacesClient { _ in
+            try JSONDecoder().decode(GooglePlacesSearchResponse.self, from: Data("{}".utf8))
+        }
+
+        let crawler = SuburbCrawler(
+            googlePlacesClient: client,
+            venueRepository: venueRepository,
+            suburbRepository: suburbRepository,
+            countryRepository: countryRepository,
+            apiKeyStore: apiKeyStore
+        )
+
+        let suburb = try #require(try suburbRepository.find(id: suburbId))
+        let results = try await crawler.crawl(suburb: suburb)
+
+        #expect(results.venuesFound == 0)
+        #expect(results.newVenues == 0)
+        #expect(try venueRepository.all().isEmpty)
+
+        let updatedSuburb = try #require(try suburbRepository.find(id: suburbId))
+        #expect(updatedSuburb.lastCrawlDate != nil)
+    }
+
     private static func insertSuburb(_ suburb: Suburb, in store: SQLStore) throws -> Int64 {
         try store.dbQueue.write { db in
             var mutable = suburb

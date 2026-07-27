@@ -259,6 +259,15 @@ struct GooglePlacesClientTests {
         #expect(circle["radius"] as? Double == 1500)
     }
 
+    @Test func decodesEmptyObjectAsNoPlaces() throws {
+        let response = try JSONDecoder().decode(
+            GooglePlacesSearchResponse.self,
+            from: Data("{}".utf8)
+        )
+        #expect(response.places.isEmpty)
+        #expect(response.nextPageToken == nil)
+    }
+
     @Test func throwsAPIErrorOnNonSuccessStatus() async throws {
         let client = GooglePlacesClient(requestHandler: { _ in
             throw GooglePlacesAPI.Error.apiError(statusCode: 403, message: "API key not valid")
