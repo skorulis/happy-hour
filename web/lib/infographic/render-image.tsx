@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 import {
-  BEER_GLASS_CHART_VIEWBOX,
+  BEER_GLASS_VIEWBOX,
   buildBeerGlassGeometry,
 } from "@/lib/infographic/beer-glass";
 import type {
@@ -84,6 +84,10 @@ function SlotBlock({
   );
 }
 
+/**
+ * Satori (next/og) cannot reliably clip SVG via clipPath or render SVG text,
+ * so bands are filled paths and the legend is plain HTML.
+ */
 function WeekdayMixBlock({
   slot,
   compact,
@@ -92,19 +96,17 @@ function WeekdayMixBlock({
   compact?: boolean;
 }) {
   const geometry = buildBeerGlassGeometry(slot.days);
-  const chartHeight = compact ? 200 : 300;
-  const chartWidth = Math.round(
-    (chartHeight * BEER_GLASS_CHART_VIEWBOX.width) /
-      BEER_GLASS_CHART_VIEWBOX.height,
+  const glassHeight = compact ? 200 : 280;
+  const glassWidth = Math.round(
+    (glassHeight * BEER_GLASS_VIEWBOX.width) / BEER_GLASS_VIEWBOX.height,
   );
 
   return (
     <div
       style={{
         display: "flex",
-        flexDirection: "row",
-        alignItems: "center",
-        gap: compact ? 28 : 40,
+        flexDirection: "column",
+        gap: compact ? 12 : 16,
         width: "100%",
       }}
     >
@@ -134,69 +136,95 @@ function WeekdayMixBlock({
         </div>
       </div>
 
-      <svg
-        width={chartWidth}
-        height={chartHeight}
-        viewBox={geometry.chartViewBox}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          gap: compact ? 28 : 40,
+        }}
       >
-        <defs>
-          <clipPath id="beer-glass-clip">
-            <path d={geometry.clipPath} />
-          </clipPath>
-        </defs>
-        <g clipPath="url(#beer-glass-clip)">
+        <svg
+          width={glassWidth}
+          height={glassHeight}
+          viewBox={geometry.viewBox}
+        >
           {geometry.segments.map((segment) => (
-            <rect
+            <path
               key={`seg-${segment.dayOfWeek}`}
-              x={0}
-              y={segment.yTop}
-              width={geometry.glassWidth}
-              height={segment.yBottom - segment.yTop}
+              d={segment.pathD}
               fill={segment.color}
             />
           ))}
-        </g>
-        <path
-          d={geometry.outlinePath}
-          fill="none"
-          stroke={geometry.outlineColor}
-          strokeWidth="2.25"
-        />
-        {geometry.legend.map((item) =>
-          item.leaderPath ? (
-            <path
-              key={`leader-${item.dayOfWeek}`}
-              d={item.leaderPath}
-              fill="none"
-              stroke={geometry.leaderColor}
-              strokeWidth="1.25"
-            />
-          ) : null,
-        )}
-        {geometry.legend.map((item) => {
-          const isPeak = item.dayOfWeek === slot.peakDayOfWeek;
-          return (
-            <g key={`legend-${item.dayOfWeek}`}>
-              <rect
-                x={item.swatchX}
-                y={item.y - item.swatchSize / 2}
-                width={item.swatchSize}
-                height={item.swatchSize}
-                fill={item.color}
-              />
-              <text
-                x={item.labelX}
-                y={item.y + 3}
-                fill={isPeak ? COLORS.fg : COLORS.secondary}
-                fontSize="11"
-                fontWeight={isPeak ? 700 : 500}
+          <path
+            d={geometry.outlinePath}
+            fill="none"
+            stroke={geometry.outlineColor}
+            strokeWidth="2.5"
+          />
+        </svg>
+
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            height: glassHeight,
+            paddingTop: 4,
+            paddingBottom: 4,
+          }}
+        >
+          {geometry.legend.map((item) => {
+            const isPeak = item.dayOfWeek === slot.peakDayOfWeek;
+            return (
+              <div
+                key={`legend-${item.dayOfWeek}`}
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 10,
+                }}
               >
-                {`${item.label}  ${item.percent}%`}
-              </text>
-            </g>
-          );
-        })}
-      </svg>
+                <div
+                  style={{
+                    display: "flex",
+                    width: 12,
+                    height: 12,
+                    backgroundColor: item.color,
+                    border:
+                      item.color.toLowerCase() === "#f8fafc"
+                        ? `1px solid ${COLORS.border}`
+                        : "none",
+                  }}
+                />
+                <div
+                  style={{
+                    display: "flex",
+                    fontSize: compact ? 18 : 22,
+                    fontWeight: isPeak ? 700 : 500,
+                    color: isPeak ? COLORS.fg : COLORS.secondary,
+                    letterSpacing: "0.04em",
+                    width: 48,
+                  }}
+                >
+                  {item.label}
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    fontSize: compact ? 18 : 22,
+                    fontWeight: isPeak ? 700 : 500,
+                    color: isPeak ? COLORS.accentSoft : COLORS.muted,
+                  }}
+                >
+                  {`${item.percent}%`}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }

@@ -73,6 +73,8 @@ export type BeerGlassSegment = {
   yBottom: number;
   yMid: number;
   xRight: number;
+  /** Filled band path following the schooner walls (Satori-safe, no clipPath). */
+  pathD: string;
 };
 
 export type BeerGlassLegendItem = {
@@ -287,6 +289,36 @@ function leaderElbow(
 }
 
 /**
+ * Closed band path between yTop and yBottom, hugging the schooner walls.
+ * Dense enough to look smooth in ImageResponse (which cannot clip SVG).
+ */
+function bandFillPath(yTop: number, yBottom: number): string {
+  const span = Math.max(yBottom - yTop, 0.5);
+  const steps = Math.max(12, Math.ceil(span));
+  const right: Point[] = [];
+  const left: Point[] = [];
+  for (let i = 0; i <= steps; i += 1) {
+    const y = yTop + (span * i) / steps;
+    const hw = halfWidthAtY(y);
+    right.push({ x: CENTER_X + hw, y });
+    left.push({ x: CENTER_X - hw, y });
+  }
+
+  const commands = [
+    `M ${fmt(left[0]!)}`,
+    `L ${fmt(right[0]!)}`,
+    ...right.slice(1).map((point) => `L ${fmt(point)}`),
+    `L ${fmt(left[left.length - 1]!)}`,
+    ...left
+      .slice(0, -1)
+      .reverse()
+      .map((point) => `L ${fmt(point)}`),
+    "Z",
+  ];
+  return commands.join(" ");
+}
+
+/**
  * Build stacked weekday bands (clipped to a smooth schooner), plus legend
  * positions (Sun→Mon top→bottom) and elbow leader lines.
  */
@@ -311,6 +343,7 @@ export function buildBeerGlassGeometry(
       yBottom,
       yMid,
       xRight: CENTER_X + halfWidthAtY(yMid),
+      pathD: bandFillPath(yTop, yBottom),
     });
     yBottom = yTop;
   }

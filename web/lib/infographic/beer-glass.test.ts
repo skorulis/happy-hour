@@ -57,6 +57,9 @@ describe("buildBeerGlassGeometry", () => {
     );
     expect(geometry.segments[0]!.dayOfWeek).toBe(2);
     expect(geometry.segments[0]!.color).toBe("#a63e00");
+    expect(geometry.segments.every((segment) => segment.pathD.includes("Z"))).toBe(
+      true,
+    );
     expect(geometry.outlinePath).toContain("C");
     expect(geometry.clipPath).toContain("C");
   });
