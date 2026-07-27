@@ -29,7 +29,9 @@ enum URLNormalizer {
             return nil
         }
 
-        components.scheme = "https"
+        // Preserve http vs https. Many venue sites only redirect correctly over http;
+        // forcing https hits broken certs and never reaches the real destination.
+        components.scheme = scheme
         if let host = components.host {
             components.host = host.lowercased()
         }
@@ -48,7 +50,9 @@ enum URLNormalizer {
     }
 
     static func hash(_ url: URL) -> String {
-        let data = Data(url.absoluteString.utf8)
+        // Treat http/https as the same page identity for visit / cache keys.
+        let canonical = canonicalForIdentity(url) ?? url
+        let data = Data(canonical.absoluteString.utf8)
         let digest = SHA256.hash(data: data)
         return digest.map { String(format: "%02x", $0) }.joined()
     }
@@ -68,7 +72,20 @@ enum URLNormalizer {
         }
 
         return canonicalHost(host) == canonicalHost(baseHost)
-            && normalized.scheme == normalizedBase.scheme
+    }
+
+    private static func canonicalForIdentity(_ url: URL) -> URL? {
+        guard var components = URLComponents(url: url, resolvingAgainstBaseURL: true) else {
+            return nil
+        }
+        if components.scheme?.lowercased() == "http" {
+            components.scheme = "https"
+        }
+        if let host = components.host {
+            components.host = host.lowercased()
+        }
+        components.fragment = nil
+        return components.url
     }
 
     private static func canonicalHost(_ host: String) -> String {

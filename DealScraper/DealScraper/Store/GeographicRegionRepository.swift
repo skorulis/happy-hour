@@ -33,6 +33,15 @@ final class GeographicRegionRepository {
         }
     }
 
+    func crawledSuburbCount(regionId: Int64) throws -> Int {
+        try store.dbQueue.read { db in
+            try Suburb
+                .filter(Column("region_id") == regionId)
+                .filter(Column("last_crawl_date") != nil)
+                .fetchCount(db)
+        }
+    }
+
     func venueCount(regionId: Int64) throws -> Int {
         try store.dbQueue.read { db in
             try Int.fetchOne(db, sql: """
@@ -40,6 +49,30 @@ final class GeographicRegionRepository {
                 FROM venue v
                 INNER JOIN suburb s ON s.id = v.suburb_id
                 WHERE s.region_id = ?
+                """, arguments: [regionId]) ?? 0
+        }
+    }
+
+    func crawledVenueCount(regionId: Int64) throws -> Int {
+        try store.dbQueue.read { db in
+            try Int.fetchOne(db, sql: """
+                SELECT COUNT(*)
+                FROM venue v
+                INNER JOIN suburb s ON s.id = v.suburb_id
+                WHERE s.region_id = ?
+                  AND v.last_crawl_date IS NOT NULL
+                """, arguments: [regionId]) ?? 0
+        }
+    }
+
+    func extractedVenueCount(regionId: Int64) throws -> Int {
+        try store.dbQueue.read { db in
+            try Int.fetchOne(db, sql: """
+                SELECT COUNT(*)
+                FROM venue v
+                INNER JOIN suburb s ON s.id = v.suburb_id
+                WHERE s.region_id = ?
+                  AND v.last_extraction_date IS NOT NULL
                 """, arguments: [regionId]) ?? 0
         }
     }

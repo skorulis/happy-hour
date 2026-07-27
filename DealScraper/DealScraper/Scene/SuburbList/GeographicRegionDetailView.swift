@@ -23,6 +23,7 @@ struct GeographicRegionDetailView: View {
     private func regionContent(_ region: GeographicRegion) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             header(region)
+            progressSection
             Spacer(minLength: 0)
         }
     }
@@ -60,6 +61,52 @@ struct GeographicRegionDetailView: View {
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.bar)
+    }
+
+    private var progressSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            progressRow(
+                title: "Suburbs crawled",
+                value: viewModel.crawledSuburbCount,
+                total: viewModel.suburbCount,
+                tint: .blue
+            )
+            progressRow(
+                title: "Venues crawled",
+                value: viewModel.crawledVenueCount,
+                total: viewModel.venueCount,
+                tint: .orange
+            )
+            progressRow(
+                title: "Venues extracted",
+                value: viewModel.extractedVenueCount,
+                total: viewModel.venueCount,
+                tint: .green
+            )
+        }
+        .padding(.horizontal)
+        .padding(.top, 8)
+    }
+
+    private func progressRow(
+        title: String,
+        value: Int,
+        total: Int,
+        tint: Color
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text(title)
+                    .font(.subheadline)
+                Spacer()
+                Text("\(value) / \(total)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
+            }
+            ProgressView(value: Double(value), total: Double(max(total, 1)))
+                .tint(tint)
+        }
     }
 
     private var countsLabel: String {

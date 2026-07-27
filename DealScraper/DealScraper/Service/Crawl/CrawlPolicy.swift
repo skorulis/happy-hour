@@ -27,6 +27,7 @@ enum CrawlPolicy {
         "https://www.muchogroup.com.au/",
         "https://www.oakshotels.com/",
         "https://www.oddculture.group/",
+        "https://www.qthotels.com/",
         "https://www.rydges.com/",
         "https://www.star.com.au/",
     ]

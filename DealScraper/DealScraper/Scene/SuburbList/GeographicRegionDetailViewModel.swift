@@ -14,7 +14,10 @@ final class GeographicRegionDetailViewModel: CoordinatorViewModel {
     let regionId: Int64
     private(set) var region: GeographicRegion?
     private(set) var suburbCount: Int = 0
+    private(set) var crawledSuburbCount: Int = 0
     private(set) var venueCount: Int = 0
+    private(set) var crawledVenueCount: Int = 0
+    private(set) var extractedVenueCount: Int = 0
     private(set) var sourceCount: Int = 0
     private(set) var dealCount: Int = 0
 
@@ -70,13 +73,19 @@ final class GeographicRegionDetailViewModel: CoordinatorViewModel {
         do {
             region = try geographicRegionRepository.find(id: regionId)
             suburbCount = try geographicRegionRepository.suburbCount(regionId: regionId)
+            crawledSuburbCount = try geographicRegionRepository.crawledSuburbCount(regionId: regionId)
             venueCount = try geographicRegionRepository.venueCount(regionId: regionId)
+            crawledVenueCount = try geographicRegionRepository.crawledVenueCount(regionId: regionId)
+            extractedVenueCount = try geographicRegionRepository.extractedVenueCount(regionId: regionId)
             sourceCount = try geographicRegionRepository.dealSourceCount(regionId: regionId)
             dealCount = try geographicRegionRepository.dealCount(regionId: regionId)
         } catch {
             region = nil
             suburbCount = 0
+            crawledSuburbCount = 0
             venueCount = 0
+            crawledVenueCount = 0
+            extractedVenueCount = 0
             sourceCount = 0
             dealCount = 0
         }

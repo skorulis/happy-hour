@@ -27,18 +27,20 @@ struct URLNormalizerTests {
         #expect(resolved.absoluteString == "https://pub.example.com/menu.pdf")
     }
 
-    @Test func normalizeUpgradesHTTPToHTTPS() throws {
-        let httpURL = URL(string: "http://pub.example.com/menu")!
+    @Test func normalizePreservesHTTPScheme() throws {
+        let httpURL = URL(string: "http://www.mooringsrestaurant.co.nz/")!
         let normalized = try #require(URLNormalizer.normalize(httpURL))
 
-        #expect(normalized.scheme == "https")
-        #expect(normalized.absoluteString == "https://pub.example.com/menu")
+        #expect(normalized.scheme == "http")
+        #expect(normalized.absoluteString == "http://www.mooringsrestaurant.co.nz/")
     }
 
     @Test func hashIsStableForHTTPAndHTTPS() throws {
         let httpURL = try #require(URLNormalizer.normalize(URL(string: "http://pub.example.com/specials")!))
         let httpsURL = try #require(URLNormalizer.normalize(URL(string: "https://pub.example.com/specials")!))
 
+        #expect(httpURL.scheme == "http")
+        #expect(httpsURL.scheme == "https")
         #expect(URLNormalizer.hash(httpURL) == URLNormalizer.hash(httpsURL))
     }
 
@@ -60,5 +62,12 @@ struct URLNormalizerTests {
 
         #expect(URLNormalizer.isSameOrigin(withoutWWW, as: base))
         #expect(URLNormalizer.isSameOrigin(base, as: withoutWWW))
+    }
+
+    @Test func resolveRelativeURLAgainstHTTPPagePreservesHTTP() throws {
+        let pageURL = URL(string: "http://pub.example.com/whats-on")!
+        let resolved = try #require(URLNormalizer.resolve("/menu.pdf", relativeTo: pageURL))
+
+        #expect(resolved.absoluteString == "http://pub.example.com/menu.pdf")
     }
 }

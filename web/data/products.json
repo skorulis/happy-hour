@@ -390,6 +390,7 @@
             "bingo",
             "comedy",
             "karaoke",
+            "open mic",
             "jazz",
             "live music",
             "silent disco",
@@ -497,6 +498,10 @@
     {
         "name": "karaoke",
         "icon": "Mic"
+    },
+    {
+        "name": "open mic",
+        "icon": "MicVocal"
     },
     {
         "name": "live music",
