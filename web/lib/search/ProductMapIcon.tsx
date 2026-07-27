@@ -61,7 +61,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { ComponentType } from "react";
-import { chips, nachos, pool, saki, soju, taco, whisky } from "./customProductIcons";
+import { chips, nachos, pool, sake, soju, taco, whisky } from "./customProductIcons";
 
 type ProductIconProps = {
   size?: number;
@@ -142,7 +142,7 @@ const PRODUCT_ICON_REGISTRY: Record<string, ProductIcon> = {
   Percent: wrapLucideIcon(Percent),
   Pizza: wrapLucideIcon(Pizza),
   Pool: labIcon(pool),
-  Saki: labIcon(saki),
+  Sake: labIcon(sake),
   Salad: wrapLucideIcon(Salad),
   Sandwich: wrapLucideIcon(Sandwich),
   Sausage: labIcon(sausage),

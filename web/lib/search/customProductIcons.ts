@@ -1,6 +1,6 @@
 import type { IconNode } from "lucide-react";
 
-export const saki: IconNode = [
+export const sake: IconNode = [
   [
     "path",
     {
