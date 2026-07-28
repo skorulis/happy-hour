@@ -1,10 +1,13 @@
 import { DAY_LABELS } from "@/lib/search/schedule";
+import { formatHourLabel } from "@/lib/infographic/happy-hour-clock";
 import type {
   InfographicSlot,
   RegionInfographicFacts,
   RegionProductHit,
   RegionSuburbWinner,
 } from "@/lib/infographic/types";
+
+export { formatHourLabel };
 
 export function formatRegionInfographicTitle(regionName: string): string {
   return `${regionName}'s happy hour map, in numbers`;
@@ -57,6 +60,8 @@ export function slotEyebrow(slot: InfographicSlot): string {
       return "Most deals per capita";
     case "weekdayMix":
       return "Deals by day";
+    case "startHourMix":
+      return "When it kicks off";
     case "topProducts":
       return "What's pouring";
     case "coverage":
@@ -76,6 +81,8 @@ export function slotHeadline(slot: InfographicSlot): string {
       return formatSuburbLabel(slot.suburb);
     case "weekdayMix":
       return `${formatDayLabel(slot.peakDayOfWeek)} leads`;
+    case "startHourMix":
+      return `${formatHourLabel(slot.peakHour)} starts`;
     case "topProducts": {
       const leader = slot.products[0];
       return leader ? `${leader.name} leads` : "No drink matches yet";
@@ -98,6 +105,10 @@ export function slotSupporting(slot: InfographicSlot): string | null {
     case "weekdayMix": {
       const peak = slot.days.find((day) => day.dayOfWeek === slot.peakDayOfWeek);
       return peak ? `${peak.percent}% of scheduled deals` : null;
+    }
+    case "startHourMix": {
+      const peak = slot.hours.find((hour) => hour.hour === slot.peakHour);
+      return peak ? `${peak.percent}% of timed deals start then` : null;
     }
     case "topProducts": {
       const leader = slot.products[0];

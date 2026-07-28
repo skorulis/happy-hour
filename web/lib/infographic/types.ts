@@ -5,6 +5,7 @@ export type InfographicSlotId =
   | "densest"
   | "perCapita"
   | "weekdayMix"
+  | "startHourMix"
   | "topProducts"
   | "coverage"
   | "dealLeader";
@@ -34,6 +35,18 @@ export type RegionProductHit = {
   percent: number;
 };
 
+export type RegionStartHourCount = {
+  /** Hour of day 0–23 (floor of startMinute / 60). */
+  hour: number;
+  count: number;
+};
+
+export type RegionStartHourShare = {
+  hour: number;
+  count: number;
+  percent: number;
+};
+
 export type RegionInfographicFacts = {
   regionId: number;
   regionName: string;
@@ -45,6 +58,8 @@ export type RegionInfographicFacts = {
   dealLeaderSuburb: RegionSuburbWinner | null;
   busiestDay: RegionDayCount | null;
   dayCounts: RegionDayCount[];
+  peakStartHour: RegionStartHourCount | null;
+  startHourCounts: RegionStartHourCount[];
   topProducts: RegionProductHit[];
   coveragePercent: number | null;
 };
@@ -67,6 +82,11 @@ export type InfographicSlot =
       id: "weekdayMix";
       days: RegionWeekdayShare[];
       peakDayOfWeek: number;
+    }
+  | {
+      id: "startHourMix";
+      hours: RegionStartHourShare[];
+      peakHour: number;
     }
   | {
       id: "topProducts";
@@ -94,7 +114,7 @@ export const INFOGRAPHIC_IMAGE_SIZES: Record<
   { width: number; height: number }
 > = {
   og: { width: 1200, height: 630 },
-  /** Taller than 1:1 so weekday + drink charts + suburb tiles fit without clipping. */
-  square: { width: 1080, height: 1620 },
-  story: { width: 1080, height: 1920 },
+  /** Tall enough for weekday + clock + drink charts + suburb tiles. */
+  square: { width: 1080, height: 1920 },
+  story: { width: 1080, height: 2200 },
 };

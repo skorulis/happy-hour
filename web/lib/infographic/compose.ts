@@ -1,4 +1,5 @@
 import { normalizeWeekdayPercents } from "@/lib/infographic/beer-glass";
+import { normalizeStartHourShares } from "@/lib/infographic/happy-hour-clock";
 import type {
   InfographicComposition,
   InfographicFormat,
@@ -11,6 +12,7 @@ const FORMAT_SLOT_ORDER: Record<InfographicFormat, InfographicSlotId[]> = {
   page: [
     "headline",
     "weekdayMix",
+    "startHourMix",
     "densest",
     "perCapita",
     "topProducts",
@@ -20,6 +22,7 @@ const FORMAT_SLOT_ORDER: Record<InfographicFormat, InfographicSlotId[]> = {
   square: [
     "headline",
     "weekdayMix",
+    "startHourMix",
     "densest",
     "perCapita",
     "topProducts",
@@ -28,6 +31,7 @@ const FORMAT_SLOT_ORDER: Record<InfographicFormat, InfographicSlotId[]> = {
   story: [
     "headline",
     "weekdayMix",
+    "startHourMix",
     "densest",
     "perCapita",
     "topProducts",
@@ -62,6 +66,17 @@ function slotFromFacts(
         id: "weekdayMix",
         days: normalizeWeekdayPercents(facts.dayCounts),
         peakDayOfWeek: facts.busiestDay.dayOfWeek,
+      };
+    }
+    case "startHourMix": {
+      if (!facts.peakStartHour) return null;
+      const hours = normalizeStartHourShares(facts.startHourCounts);
+      const total = hours.reduce((sum, row) => sum + row.count, 0);
+      if (total <= 0) return null;
+      return {
+        id: "startHourMix",
+        hours,
+        peakHour: facts.peakStartHour.hour,
       };
     }
     case "topProducts":

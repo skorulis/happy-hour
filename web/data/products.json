@@ -364,6 +364,13 @@
         ]
     },
     {
+        "name": "sandwich",
+        "icon": "Sandwich",
+        "synonyms": [
+            "steak sandwich"
+        ]
+    },
+    {
         "name": "skewer",
         "icon": "Kebab"
     },

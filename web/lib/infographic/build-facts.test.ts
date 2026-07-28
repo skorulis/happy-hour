@@ -32,6 +32,10 @@ describe("buildRegionInfographicFacts", () => {
         { dayOfWeek: 6, count: 40 },
         { dayOfWeek: 5, count: 22 },
       ],
+      startHourCounts: [
+        { hour: 17, count: 30 },
+        { hour: 18, count: 20 },
+      ],
       topProducts: [
         { name: "Beer", count: 12 },
         { name: "Cocktails", count: 9 },
@@ -71,6 +75,8 @@ describe("buildRegionInfographicFacts", () => {
     expect(facts.dealLeaderSuburb?.name).toBe("Parramatta");
     expect(facts.busiestDay).toEqual({ dayOfWeek: 6, count: 40 });
     expect(facts.dayCounts).toHaveLength(2);
+    expect(facts.peakStartHour).toEqual({ hour: 17, count: 30 });
+    expect(facts.startHourCounts).toHaveLength(2);
     expect(facts.coveragePercent).toBeCloseTo(32);
     expect(facts.topProducts).toHaveLength(2);
     expect(facts.topProducts[0]).toMatchObject({
@@ -94,6 +100,7 @@ describe("buildRegionInfographicFacts", () => {
       regionName: "Sydney",
       venuesWithDeals: 2,
       dayCounts: [],
+      startHourCounts: [],
       topProducts: [
         { name: "Beer", count: 50 },
         { name: "Wine", count: 20 },
@@ -118,6 +125,7 @@ describe("buildRegionInfographicFacts", () => {
       regionName: "Sydney",
       venuesWithDeals: 2,
       dayCounts: [],
+      startHourCounts: [],
       topProducts: [],
       suburbs: [
         suburb({
@@ -134,6 +142,7 @@ describe("buildRegionInfographicFacts", () => {
     expect(facts.dealLeaderSuburb?.name).toBe("Nowhere");
     expect(facts.busiestDay).toBeNull();
     expect(facts.dayCounts).toEqual([]);
+    expect(facts.peakStartHour).toBeNull();
     expect(facts.coveragePercent).toBe(100);
   });
 });
@@ -145,6 +154,7 @@ describe("composeRegionInfographic", () => {
       regionName: "Sydney",
       venuesWithDeals: 2,
       dayCounts: [{ dayOfWeek: 6, count: 10 }],
+      startHourCounts: [{ hour: 17, count: 8 }],
       topProducts: [{ name: "Beer", count: 3 }],
       suburbs: [
         suburb({
@@ -163,6 +173,7 @@ describe("composeRegionInfographic", () => {
     expect(ids).toContain("dealLeader");
     expect(ids).not.toContain("densest");
     expect(ids).toContain("weekdayMix");
+    expect(ids).toContain("startHourMix");
     expect(ids).toContain("topProducts");
     expect(ids).toContain("coverage");
     expect(ids).not.toContain("perCapita");
@@ -170,6 +181,15 @@ describe("composeRegionInfographic", () => {
     const mix = composition.slots.find((slot) => slot.id === "weekdayMix");
     expect(mix?.id === "weekdayMix" && mix.peakDayOfWeek).toBe(6);
     expect(mix?.id === "weekdayMix" && mix.days).toHaveLength(7);
+
+    const clock = composition.slots.find((slot) => slot.id === "startHourMix");
+    expect(clock?.id === "startHourMix" && clock.peakHour).toBe(17);
+    expect(clock?.id === "startHourMix" && slotHeadline(clock)).toBe(
+      "5pm starts",
+    );
+    expect(clock?.id === "startHourMix" && slotSupporting(clock)).toBe(
+      "100% of timed deals start then",
+    );
 
     const drinks = composition.slots.find((slot) => slot.id === "topProducts");
     expect(drinks?.id === "topProducts" && slotHeadline(drinks)).toBe(
@@ -186,6 +206,7 @@ describe("composeRegionInfographic", () => {
       regionName: "Sydney",
       venuesWithDeals: 8,
       dayCounts: [{ dayOfWeek: 5, count: 18 }],
+      startHourCounts: [{ hour: 17, count: 10 }],
       topProducts: [{ name: "Wine", count: 4 }],
       suburbs: [
         suburb({
@@ -213,12 +234,13 @@ describe("composeRegionInfographic", () => {
     ]);
   });
 
-  it("omits weekdayMix when there are no day counts", () => {
+  it("omits weekdayMix and startHourMix when there are no schedule counts", () => {
     const facts = buildRegionInfographicFacts({
       regionId: 1,
       regionName: "Sydney",
       venuesWithDeals: 1,
       dayCounts: [],
+      startHourCounts: [],
       topProducts: [],
       suburbs: [
         suburb({ id: 1, name: "Empty", dealCount: 1, venueCount: 1 }),
@@ -227,6 +249,9 @@ describe("composeRegionInfographic", () => {
     const composition = composeRegionInfographic(facts, "page");
     expect(composition.slots.map((slot) => slot.id)).not.toContain(
       "weekdayMix",
+    );
+    expect(composition.slots.map((slot) => slot.id)).not.toContain(
+      "startHourMix",
     );
   });
 });

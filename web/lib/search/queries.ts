@@ -635,6 +635,11 @@ export type RegionDealDayCount = {
   count: number;
 };
 
+export type RegionDealStartHourCount = {
+  hour: number;
+  count: number;
+};
+
 export type RegionDealTextRow = {
   title: string | null;
   details: string | null;
@@ -680,6 +685,41 @@ export async function listRegionDealDayCounts(
     .orderBy(dealSchedule.dayOfWeek);
 
   return rows;
+}
+
+/** Start-hour histogram for approved deals, excluding all-day (0–1440) rows. */
+export async function listRegionDealStartHourCounts(
+  regionId: number,
+): Promise<RegionDealStartHourCount[]> {
+  const scheduleCount = count(dealSchedule.id);
+  const hourExpr = sql<number>`floor((${dealSchedule.startMinute} % 1440)::numeric / 60)::int`;
+
+  const rows = await db
+    .select({
+      hour: hourExpr,
+      count: scheduleCount,
+    })
+    .from(dealSchedule)
+    .innerJoin(deal, eq(deal.id, dealSchedule.dealId))
+    .innerJoin(venue, eq(venue.id, deal.venueId))
+    .innerJoin(suburb, eq(suburb.id, venue.suburbId))
+    .where(
+      and(
+        eq(suburb.regionId, regionId),
+        eq(deal.status, "approved"),
+        or(
+          ne(dealSchedule.startMinute, 0),
+          ne(dealSchedule.endMinute, 1440),
+        ),
+      ),
+    )
+    .groupBy(hourExpr)
+    .orderBy(hourExpr);
+
+  return rows.map((row) => ({
+    hour: Number(row.hour),
+    count: row.count,
+  }));
 }
 
 export async function listRegionDealTextsForMatching(

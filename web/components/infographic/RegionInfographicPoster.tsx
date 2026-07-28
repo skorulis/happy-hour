@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { BeerGlassWeekdayChart } from "@/components/infographic/BeerGlassWeekdayChart";
 import { DrinkBarsChart } from "@/components/infographic/DrinkBarsChart";
+import { HappyHourClockChart } from "@/components/infographic/HappyHourClockChart";
 import type { InfographicComposition, InfographicSlot } from "@/lib/infographic/types";
 import {
   formatRegionInfographicTitle,
@@ -34,6 +35,9 @@ export function RegionInfographicPoster({
 }: RegionInfographicPosterProps) {
   const headline = composition.slots.find((slot) => slot.id === "headline");
   const weekdayMix = composition.slots.find((slot) => slot.id === "weekdayMix");
+  const startHourMix = composition.slots.find(
+    (slot) => slot.id === "startHourMix",
+  );
   const topProducts = composition.slots.find(
     (slot) => slot.id === "topProducts",
   );
@@ -41,6 +45,7 @@ export function RegionInfographicPoster({
     (slot) =>
       slot.id !== "headline" &&
       slot.id !== "weekdayMix" &&
+      slot.id !== "startHourMix" &&
       slot.id !== "topProducts",
   );
 
@@ -113,6 +118,26 @@ export function RegionInfographicPoster({
             <BeerGlassWeekdayChart
               days={weekdayMix.days}
               peakDayOfWeek={weekdayMix.peakDayOfWeek}
+            />
+          </div>
+        ) : null}
+
+        {startHourMix && startHourMix.id === "startHourMix" ? (
+          <div className="space-y-4 border-b border-border-subtle pb-8">
+            <div className="space-y-1">
+              <p className="text-xs font-medium tracking-[0.18em] text-accent-soft uppercase">
+                {slotEyebrow(startHourMix)}
+              </p>
+              <p className="text-lg font-medium text-secondary">
+                {slotHeadline(startHourMix)}
+                {slotSupporting(startHourMix)
+                  ? ` · ${slotSupporting(startHourMix)}`
+                  : null}
+              </p>
+            </div>
+            <HappyHourClockChart
+              hours={startHourMix.hours}
+              peakHour={startHourMix.peakHour}
             />
           </div>
         ) : null}

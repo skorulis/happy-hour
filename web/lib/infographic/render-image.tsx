@@ -4,6 +4,10 @@ import {
   buildBeerGlassGeometry,
 } from "@/lib/infographic/beer-glass";
 import { buildDrinkBarRows } from "@/lib/infographic/drink-bars";
+import {
+  buildHappyHourClockGeometry,
+  formatHourLabel,
+} from "@/lib/infographic/happy-hour-clock";
 import { productIconDataUri } from "@/lib/infographic/drink-icon-data-uri";
 import { loadInfographicFonts } from "@/lib/infographic/og-fonts";
 import type {
@@ -233,6 +237,183 @@ function WeekdayMixBlock({
   );
 }
 
+/**
+ * Satori cannot reliably render SVG text, so tick labels are HTML beside the dial.
+ */
+function StartHourMixBlock({
+  slot,
+  compact,
+}: {
+  slot: Extract<InfographicSlot, { id: "startHourMix" }>;
+  compact?: boolean;
+}) {
+  const geometry = buildHappyHourClockGeometry(slot.hours, slot.peakHour);
+  const clockSize = compact ? 200 : 260;
+  const peak = slot.hours.find((row) => row.hour === slot.peakHour);
+  const legendHours = slot.hours
+    .filter((row) => row.count > 0)
+    .sort((a, b) => b.count - a.count || a.hour - b.hour)
+    .slice(0, 5);
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: compact ? 12 : 16,
+        width: "100%",
+      }}
+    >
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div
+          style={{
+            display: "flex",
+            fontSize: compact ? 18 : 22,
+            fontWeight: 600,
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
+            color: COLORS.accentSoft,
+          }}
+        >
+          {slotEyebrow(slot)}
+        </div>
+        <div
+          style={{
+            display: "flex",
+            fontSize: compact ? 28 : 34,
+            fontWeight: 600,
+            color: COLORS.secondary,
+          }}
+        >
+          {slotHeadline(slot)}
+          {slotSupporting(slot) ? ` · ${slotSupporting(slot)}` : ""}
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          gap: compact ? 28 : 40,
+        }}
+      >
+        <svg
+          width={clockSize}
+          height={clockSize}
+          viewBox={geometry.viewBox}
+        >
+          <circle
+            cx={geometry.centerX}
+            cy={geometry.centerY}
+            r={geometry.faceR}
+            fill={geometry.faceColor}
+            stroke={geometry.outlineColor}
+            strokeWidth="2"
+          />
+          {geometry.wedges.map((wedge) => (
+            <path
+              key={`wedge-${wedge.hour}`}
+              d={wedge.pathD}
+              fill={wedge.color}
+            />
+          ))}
+          <circle
+            cx={geometry.centerX}
+            cy={geometry.centerY}
+            r={geometry.innerR}
+            fill={geometry.faceColor}
+            stroke={geometry.outlineColor}
+            strokeWidth="1.5"
+          />
+        </svg>
+
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: compact ? 10 : 14,
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 4,
+              marginBottom: 4,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                fontSize: compact ? 36 : 44,
+                fontWeight: 700,
+                color: COLORS.fg,
+              }}
+            >
+              {formatHourLabel(slot.peakHour)}
+            </div>
+            <div
+              style={{
+                display: "flex",
+                fontSize: compact ? 18 : 22,
+                color: COLORS.accentSoft,
+              }}
+            >
+              {peak ? `${peak.percent}% of starts` : "Peak start"}
+            </div>
+          </div>
+          {legendHours.map((row) => {
+            const wedge = geometry.wedges.find((w) => w.hour === row.hour);
+            const isPeak = row.hour === slot.peakHour;
+            return (
+              <div
+                key={`hour-${row.hour}`}
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 10,
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    width: 12,
+                    height: 12,
+                    backgroundColor: wedge?.color ?? COLORS.border,
+                  }}
+                />
+                <div
+                  style={{
+                    display: "flex",
+                    fontSize: compact ? 18 : 22,
+                    fontWeight: isPeak ? 700 : 500,
+                    color: isPeak ? COLORS.fg : COLORS.secondary,
+                    width: 48,
+                  }}
+                >
+                  {formatHourLabel(row.hour)}
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    fontSize: compact ? 18 : 22,
+                    fontWeight: isPeak ? 700 : 500,
+                    color: isPeak ? COLORS.accentSoft : COLORS.muted,
+                  }}
+                >
+                  {`${row.percent}%`}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function DrinkMixBlock({
   slot,
   compact,
@@ -362,6 +543,9 @@ export async function renderRegionInfographicImage(
   const compact = isOg || isSquare;
   const headline = composition.slots.find((slot) => slot.id === "headline");
   const weekdayMix = composition.slots.find((slot) => slot.id === "weekdayMix");
+  const startHourMix = composition.slots.find(
+    (slot) => slot.id === "startHourMix",
+  );
   const topProducts = composition.slots.find(
     (slot) => slot.id === "topProducts",
   );
@@ -369,6 +553,7 @@ export async function renderRegionInfographicImage(
     (slot) =>
       slot.id !== "headline" &&
       slot.id !== "weekdayMix" &&
+      slot.id !== "startHourMix" &&
       slot.id !== "topProducts",
   );
   const gridColumns = isOg ? 3 : 2;
@@ -477,6 +662,18 @@ export async function renderRegionInfographicImage(
               }}
             >
               <WeekdayMixBlock slot={weekdayMix} compact={compact} />
+            </div>
+          ) : null}
+
+          {startHourMix && startHourMix.id === "startHourMix" ? (
+            <div
+              style={{
+                display: "flex",
+                marginTop: compact ? 8 : 12,
+                marginBottom: compact ? 8 : 12,
+              }}
+            >
+              <StartHourMixBlock slot={startHourMix} compact={compact} />
             </div>
           ) : null}
 

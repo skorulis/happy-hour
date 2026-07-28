@@ -4,6 +4,7 @@ import type { RegionInfographicFacts } from "@/lib/infographic/types";
 import {
   countRegionVenuesWithDeals,
   listRegionDealDayCounts,
+  listRegionDealStartHourCounts,
   listRegionDealTextsForMatching,
   listSuburbStatistics,
 } from "@/lib/search/queries";
@@ -15,12 +16,14 @@ export async function loadRegionInfographicFacts(input: {
   facts: RegionInfographicFacts;
   suburbs: Awaited<ReturnType<typeof listSuburbStatistics>>;
 }> {
-  const [suburbs, venuesWithDeals, dayCounts, dealTexts] = await Promise.all([
-    listSuburbStatistics({ regionId: input.regionId }),
-    countRegionVenuesWithDeals(input.regionId),
-    listRegionDealDayCounts(input.regionId),
-    listRegionDealTextsForMatching(input.regionId),
-  ]);
+  const [suburbs, venuesWithDeals, dayCounts, startHourCounts, dealTexts] =
+    await Promise.all([
+      listSuburbStatistics({ regionId: input.regionId }),
+      countRegionVenuesWithDeals(input.regionId),
+      listRegionDealDayCounts(input.regionId),
+      listRegionDealStartHourCounts(input.regionId),
+      listRegionDealTextsForMatching(input.regionId),
+    ]);
 
   const facts = buildRegionInfographicFacts({
     regionId: input.regionId,
@@ -28,6 +31,7 @@ export async function loadRegionInfographicFacts(input: {
     suburbs,
     venuesWithDeals,
     dayCounts,
+    startHourCounts,
     topProducts: tallyProductHitsFromDeals(dealTexts),
   });
 
