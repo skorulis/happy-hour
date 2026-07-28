@@ -271,6 +271,23 @@ struct SuburbRepositoryTests {
         #expect(found.heroR2Url == nil)
     }
 
+    @Test func updateNearbyRadiusKmPersistsAndClears() throws {
+        let store = SQLStore.inMemory()
+        let repository = SuburbRepository(store: store)
+        let suburbId = try insertSuburb(
+            Suburb(name: "Newtown", postcode: "2042", state: "NSW"),
+            store: store
+        )
+
+        try repository.updateNearbyRadiusKm(suburbId: suburbId, nearbyRadiusKm: 5.5)
+        var found = try #require(try repository.find(id: suburbId))
+        #expect(found.nearbyRadiusKm == 5.5)
+
+        try repository.updateNearbyRadiusKm(suburbId: suburbId, nearbyRadiusKm: nil)
+        found = try #require(try repository.find(id: suburbId))
+        #expect(found.nearbyRadiusKm == nil)
+    }
+
     @Test func isExcludedFromCrawlMatchesPerrysCrossing2775() {
         let excluded = Suburb(name: "Perrys Crossing", postcode: "2775", state: "NSW")
         let otherPostcode = Suburb(name: "Perrys Crossing", postcode: "2000", state: "NSW")

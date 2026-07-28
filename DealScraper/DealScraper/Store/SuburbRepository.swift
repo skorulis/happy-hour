@@ -103,6 +103,15 @@ final class SuburbRepository {
         }
     }
 
+    func updateNearbyRadiusKm(suburbId: Int64, nearbyRadiusKm: Double?) throws {
+        try store.dbQueue.write { db in
+            try db.execute(
+                sql: "UPDATE suburb SET nearby_radius_km = ? WHERE id = ?",
+                arguments: [nearbyRadiusKm, suburbId]
+            )
+        }
+    }
+
     static func resolve(
         name: String,
         postcode: String?,

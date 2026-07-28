@@ -56,6 +56,8 @@ export const suburb = pgTable(
     lat: doublePrecision("lat"),
     lng: doublePrecision("lng"),
     sqkm: doublePrecision("sqkm"),
+    // Absolute nearby-deal search radius; null = use area-based formula.
+    nearbyRadiusKm: doublePrecision("nearby_radius_km"),
     population: integer("population"),
     heroImage: text("hero_image"),
   },

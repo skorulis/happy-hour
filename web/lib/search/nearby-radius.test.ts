@@ -47,6 +47,21 @@ describe("nearbySuburbRadiusKm", () => {
     expect(fourSqkm).toBeCloseTo(Math.sqrt(4 / Math.PI) + NEARBY_SUBURB_BUFFER_KM);
     expect(fourSqkm).toBeGreaterThan(oneSqkm);
   });
+
+  it("uses a positive absolute override instead of the area formula", () => {
+    expect(nearbySuburbRadiusKm(Math.PI, 5)).toBe(5);
+    expect(nearbySuburbRadiusKm(null, 8.5)).toBe(8.5);
+  });
+
+  it("ignores null, zero, or negative overrides", () => {
+    const sqkm = Math.PI;
+    const formula = 1 + NEARBY_SUBURB_BUFFER_KM;
+
+    expect(nearbySuburbRadiusKm(sqkm, null)).toBeCloseTo(formula);
+    expect(nearbySuburbRadiusKm(sqkm, undefined)).toBeCloseTo(formula);
+    expect(nearbySuburbRadiusKm(sqkm, 0)).toBeCloseTo(formula);
+    expect(nearbySuburbRadiusKm(sqkm, -2)).toBeCloseTo(formula);
+  });
 });
 
 describe("regionMapRadiusKm", () => {

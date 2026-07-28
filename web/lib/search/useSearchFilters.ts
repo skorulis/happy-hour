@@ -342,7 +342,7 @@ export function useSearchFilters(options?: {
           const bounds = boundsFromCenterRadiusKm(
             suburb.lat,
             suburb.lng,
-            nearbySuburbRadiusKm(suburb.sqkm),
+            nearbySuburbRadiusKm(suburb.sqkm, suburb.nearbyRadiusKm),
           );
           if (!bounds || cancelled) {
             return;

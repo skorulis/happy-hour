@@ -348,6 +348,12 @@ final class SQLMigrations {
                 t.add(column: "google_user_rating_count", .integer)
             }
         }
+
+        migrator.registerMigration("v40_suburb_nearby_radius_km") { db in
+            try db.alter(table: "suburb") { t in
+                t.add(column: "nearby_radius_km", .double)
+            }
+        }
     }
 }
 

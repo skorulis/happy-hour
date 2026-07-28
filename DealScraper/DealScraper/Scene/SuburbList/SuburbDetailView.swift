@@ -6,6 +6,7 @@ struct SuburbDetailView: View {
 
     @State var viewModel: SuburbDetailViewModel
     @State private var showVenueHeroPicker = false
+    @State private var nearbyRadiusText = ""
 
     var body: some View {
         Group {
@@ -18,6 +19,12 @@ struct SuburbDetailView: View {
                     description: Text("This suburb is no longer saved locally.")
                 )
             }
+        }
+        .onAppear {
+            syncNearbyRadiusText(from: viewModel.suburb)
+        }
+        .onChange(of: viewModel.suburb?.nearbyRadiusKm) { _, _ in
+            syncNearbyRadiusText(from: viewModel.suburb)
         }
         .sheet(isPresented: $showVenueHeroPicker) {
             SuburbVenueHeroPickerView(venues: viewModel.venues) { venue in
@@ -57,6 +64,8 @@ struct SuburbDetailView: View {
                             .disabled(viewModel.venues.isEmpty)
                         }
                     }
+
+                    nearbyRadiusEditor(suburb)
 
                     if let actionMessage = viewModel.actionMessage {
                         Text(actionMessage)
@@ -123,6 +132,56 @@ struct SuburbDetailView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+        }
+    }
+
+    private func nearbyRadiusEditor(_ suburb: Suburb) -> some View {
+        HStack(spacing: 8) {
+            Text("Nearby radius (km)")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            TextField("auto", text: $nearbyRadiusText)
+                .textFieldStyle(.roundedBorder)
+                .frame(maxWidth: 100)
+                .onSubmit { saveNearbyRadius() }
+
+            Button("Save") {
+                saveNearbyRadius()
+            }
+            .disabled(!canSaveNearbyRadius)
+
+            Button("Clear") {
+                viewModel.setNearbyRadiusKm(nil)
+            }
+            .disabled(suburb.nearbyRadiusKm == nil)
+        }
+        .padding(.top, 4)
+    }
+
+    private var canSaveNearbyRadius: Bool {
+        let trimmed = nearbyRadiusText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, let value = Double(trimmed), value > 0 else {
+            return false
+        }
+        return value != viewModel.suburb?.nearbyRadiusKm
+    }
+
+    private func saveNearbyRadius() {
+        let trimmed = nearbyRadiusText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let value = Double(trimmed), value > 0 else { return }
+        viewModel.setNearbyRadiusKm(value)
+    }
+
+    private func syncNearbyRadiusText(from suburb: Suburb?) {
+        if let nearbyRadiusKm = suburb?.nearbyRadiusKm {
+            if nearbyRadiusKm == nearbyRadiusKm.rounded() {
+                nearbyRadiusText = String(Int(nearbyRadiusKm))
+            } else {
+                nearbyRadiusText = String(format: "%g", nearbyRadiusKm)
+            }
+        } else {
+            nearbyRadiusText = ""
         }
     }
 

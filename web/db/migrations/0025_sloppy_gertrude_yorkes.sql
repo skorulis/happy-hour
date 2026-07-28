@@ -1,0 +1,1 @@
+ALTER TABLE "suburb" ADD COLUMN "nearby_radius_km" double precision;

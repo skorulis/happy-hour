@@ -176,6 +176,13 @@
       "when": 1785134343396,
       "tag": "0024_jazzy_riptide",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1785216072312,
+      "tag": "0025_sloppy_gertrude_yorkes",
+      "breakpoints": true
     }
   ]
 }

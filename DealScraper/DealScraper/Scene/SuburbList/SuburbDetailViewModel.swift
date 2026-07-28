@@ -146,6 +146,23 @@ final class SuburbDetailViewModel: CoordinatorViewModel {
         }
     }
 
+    func setNearbyRadiusKm(_ value: Double?) {
+        do {
+            try suburbRepository.updateNearbyRadiusKm(
+                suburbId: suburbId,
+                nearbyRadiusKm: value
+            )
+            refreshSuburb()
+            if let value {
+                actionMessage = "Nearby radius set to \(formatKm(value)) km."
+            } else {
+                actionMessage = "Nearby radius cleared (using area formula)."
+            }
+        } catch {
+            actionMessage = "Failed to update nearby radius."
+        }
+    }
+
     func sourceCount(for venue: Venue) -> Int {
         guard let venueId = venue.id else { return 0 }
         return sourceCountsByVenueId[venueId] ?? 0
@@ -193,5 +210,12 @@ final class SuburbDetailViewModel: CoordinatorViewModel {
         } catch {
             // Keep the current UI state if refresh fails.
         }
+    }
+
+    private func formatKm(_ value: Double) -> String {
+        if value == value.rounded() {
+            return String(Int(value))
+        }
+        return String(format: "%g", value)
     }
 }

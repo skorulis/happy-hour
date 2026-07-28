@@ -13,6 +13,7 @@ nonisolated struct Suburb: Codable, Sendable {
     let lat: Double?
     let lng: Double?
     let sqkm: Double?
+    let nearbyRadiusKm: Double?
     let statisticArea: String?
     let blurb: String?
     let heroImage: String?
@@ -29,6 +30,7 @@ nonisolated struct Suburb: Codable, Sendable {
         case lat
         case lng
         case sqkm
+        case nearbyRadiusKm = "nearby_radius_km"
         case statisticArea = "statistic_area"
         case blurb
         case heroImage = "hero_image"
@@ -46,6 +48,7 @@ nonisolated struct Suburb: Codable, Sendable {
         lat: Double? = nil,
         lng: Double? = nil,
         sqkm: Double? = nil,
+        nearbyRadiusKm: Double? = nil,
         statisticArea: String? = nil,
         blurb: String? = nil,
         heroImage: String? = nil,
@@ -61,6 +64,7 @@ nonisolated struct Suburb: Codable, Sendable {
         self.lat = lat
         self.lng = lng
         self.sqkm = sqkm
+        self.nearbyRadiusKm = nearbyRadiusKm
         self.statisticArea = statisticArea
         self.blurb = blurb
         self.heroImage = heroImage

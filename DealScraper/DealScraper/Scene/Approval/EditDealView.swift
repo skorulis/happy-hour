@@ -432,8 +432,12 @@ struct EditDealView: View {
         schedules.append(EditableDealSchedule(dealId: dealId, id: newID))
     }
 
+    private var sortedProductNames: [String] {
+        ProductsCatalog.productNames.sorted()
+    }
+
     private func addProduct() {
-        let catalog = ProductsCatalog.productNames
+        let catalog = sortedProductNames
         guard let defaultProduct = catalog.first(where: { name in
             !products.contains { $0.product == name }
         }) ?? catalog.first else {
@@ -536,7 +540,7 @@ struct EditDealView: View {
     private func productEditRow(product: Binding<EditableDealProduct>) -> some View {
         HStack(spacing: 8) {
             Picker("Product", selection: product.product) {
-                ForEach(ProductsCatalog.productNames, id: \.self) { name in
+                ForEach(sortedProductNames, id: \.self) { name in
                     Text(name).tag(name)
                 }
             }

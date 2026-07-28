@@ -14,10 +14,18 @@ export const NEAR_ME_MAP_RADIUS_KM = 2;
 export const VENUE_MAP_RADIUS_KM = 1;
 
 /**
- * Radius (km) for nearby venue search: equivalent circle that fits the suburb
- * area, plus a fixed buffer.
+ * Radius (km) for nearby venue search.
+ * When `nearbyRadiusKm` is a positive absolute override, that value is used.
+ * Otherwise: equivalent circle that fits the suburb area, plus a fixed buffer.
  */
-export function nearbySuburbRadiusKm(sqkm: number | null | undefined): number {
+export function nearbySuburbRadiusKm(
+  sqkm: number | null | undefined,
+  nearbyRadiusKm?: number | null,
+): number {
+  if (nearbyRadiusKm != null && nearbyRadiusKm > 0) {
+    return nearbyRadiusKm;
+  }
+
   const areaSqkm = sqkm !== null && sqkm !== undefined && sqkm > 0 ? sqkm : 0;
   const encompassingRadiusKm = Math.sqrt(areaSqkm / Math.PI);
 

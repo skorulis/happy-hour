@@ -54,6 +54,7 @@ export type SuburbSearchResult = {
   lat?: number | null;
   lng?: number | null;
   sqkm?: number | null;
+  nearbyRadiusKm?: number | null;
   heroImage?: string | null;
 };
 
@@ -848,6 +849,7 @@ export async function findSuburbByWhereSlug(
       lat: suburb.lat,
       lng: suburb.lng,
       sqkm: suburb.sqkm,
+      nearbyRadiusKm: suburb.nearbyRadiusKm,
       heroImage: suburb.heroImage,
     })
     .from(suburb)
@@ -1189,7 +1191,12 @@ export async function searchDealsForSuburb(
   ]);
 
   const [suburbRow] = await db
-    .select({ lat: suburb.lat, lng: suburb.lng, sqkm: suburb.sqkm })
+    .select({
+      lat: suburb.lat,
+      lng: suburb.lng,
+      sqkm: suburb.sqkm,
+      nearbyRadiusKm: suburb.nearbyRadiusKm,
+    })
     .from(suburb)
     .where(eq(suburb.id, suburbId))
     .limit(1);
@@ -1206,7 +1213,7 @@ export async function searchDealsForSuburb(
     ...sharedOptions,
     lat: suburbRow.lat,
     lng: suburbRow.lng,
-    radiusKm: nearbySuburbRadiusKm(suburbRow.sqkm),
+    radiusKm: nearbySuburbRadiusKm(suburbRow.sqkm, suburbRow.nearbyRadiusKm),
     excludeSuburbId: suburbId,
   });
 
