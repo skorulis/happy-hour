@@ -266,6 +266,73 @@ struct DealRepositoryTests {
         #expect(Set(pending.compactMap(\.deal.title)) == ["New Deal A", "New Deal B"])
     }
 
+    @Test func findApprovedWithoutProductsReturnsApprovedDealsMissingProducts() throws {
+        let store = SQLStore.inMemory()
+        let venueRepository = VenueRepository(store: store)
+        let dealRepository = DealRepository(store: store)
+
+        try venueRepository.upsert(Venue(
+            googleMapId: "places/a",
+            name: "Venue A",
+            lat: 0,
+            lng: 0,
+            json: "{}"
+        ))
+        try venueRepository.upsert(Venue(
+            googleMapId: "places/b",
+            name: "Venue B",
+            lat: 0,
+            lng: 0,
+            json: "{}"
+        ))
+
+        let venueAId = try #require(try venueRepository.find(googleMapId: "places/a")?.id)
+        let venueBId = try #require(try venueRepository.find(googleMapId: "places/b")?.id)
+
+        _ = try dealRepository.replaceAll(
+            venueId: venueAId,
+            deals: [
+                DealWithSchedules(
+                    deal: Deal(venueId: venueAId, title: "Approved No Products", status: .approved),
+                    schedules: []
+                ),
+                DealWithSchedules(
+                    deal: Deal(venueId: venueAId, title: "Approved With Products", status: .approved),
+                    schedules: [],
+                    products: [DealProduct(dealId: 0, product: "beer", price: 5)]
+                ),
+                DealWithSchedules(
+                    deal: Deal(venueId: venueAId, title: "New No Products", status: .new),
+                    schedules: []
+                ),
+            ]
+        )
+        _ = try dealRepository.replaceAll(
+            venueId: venueBId,
+            deals: [
+                DealWithSchedules(
+                    deal: Deal(venueId: venueBId, title: "Approved No Products B", status: .approved),
+                    schedules: []
+                ),
+                DealWithSchedules(
+                    deal: Deal(venueId: venueBId, title: "Rejected No Products", status: .rejected),
+                    schedules: []
+                ),
+            ]
+        )
+
+        let pending = try dealRepository.findApprovedWithoutProducts()
+        #expect(pending.count == 2)
+        #expect(
+            Set(pending.compactMap(\.deal.title)) == [
+                "Approved No Products",
+                "Approved No Products B",
+            ]
+        )
+        #expect(pending.allSatisfy { $0.products.isEmpty })
+        #expect(pending.allSatisfy { $0.deal.status == .approved })
+    }
+
     @Test func updatePersistsDealTextAndStatus() throws {
         let store = SQLStore.inMemory()
         let venueRepository = VenueRepository(store: store)

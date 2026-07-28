@@ -24,6 +24,29 @@ final class DealRepository {
         }
     }
 
+    /// Approved deals that have no linked `deal_product` rows.
+    func findApprovedWithoutProducts() throws -> [DealWithSchedules] {
+        try store.dbQueue.read { db in
+            let deals = try Deal.fetchAll(
+                db,
+                sql: """
+                    SELECT d.*
+                    FROM deal d
+                    WHERE d.status = ?
+                      AND NOT EXISTS (
+                          SELECT 1 FROM deal_product dp WHERE dp.deal_id = d.id
+                      )
+                    ORDER BY d.id ASC
+                    """,
+                arguments: [DealStatus.approved.rawValue]
+            )
+
+            return try deals.map { deal in
+                try Self.dealWithRelations(db: db, deal: deal)
+            }
+        }
+    }
+
     func find(venueId: Int64) throws -> [DealWithSchedules] {
         try store.dbQueue.read { db in
             let deals = try Deal

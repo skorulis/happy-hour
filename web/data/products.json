@@ -182,7 +182,12 @@
     },
     {
         "name": "bottomless",
-        "icon": "Infinity"
+        "icon": "Infinity",
+        "synonyms": [
+            "bottomless drinks",
+            "bottomless cocktails",
+            "bottomless brunch"
+        ]
     },
     {
         "name": "all you can eat",

@@ -74,6 +74,8 @@ struct ApprovalView: View {
             return "No deal sources are waiting for approval."
         case .deals:
             return "No deals are waiting for approval."
+        case .dealProducts:
+            return "No approved deals are missing products."
         }
     }
 
@@ -84,17 +86,25 @@ struct ApprovalView: View {
             sourceReviewContent
         case .deals:
             if let item = viewModel.currentDeal {
-                EditDealView(
-                    item: item,
-                    venueName: viewModel.venueNames[item.deal.venueId] ?? "Unknown Venue",
-                    remainingCount: viewModel.remainingCount,
-                    onVenueTap: { viewModel.openVenueDetails(venueId: $0) }
-                ) { status, draft in
-                    viewModel.decideDeal(status: status, draft: draft)
-                }
-                .id(item.deal.id)
+                dealEditContent(item: item)
+            }
+        case .dealProducts:
+            if let item = viewModel.currentDealProduct {
+                dealEditContent(item: item)
             }
         }
+    }
+
+    private func dealEditContent(item: DealWithSchedules) -> some View {
+        EditDealView(
+            item: item,
+            venueName: viewModel.venueNames[item.deal.venueId] ?? "Unknown Venue",
+            remainingCount: viewModel.remainingCount,
+            onVenueTap: { viewModel.openVenueDetails(venueId: $0) }
+        ) { status, draft in
+            viewModel.decideDeal(status: status, draft: draft)
+        }
+        .id(item.deal.id)
     }
 
     private var sourceReviewContent: some View {

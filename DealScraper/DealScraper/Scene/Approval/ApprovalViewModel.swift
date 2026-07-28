@@ -14,6 +14,7 @@ final class ApprovalViewModel: CoordinatorViewModel {
     enum Mode: String, CaseIterable {
         case sources = "Sources"
         case deals = "Deals"
+        case dealProducts = "Deal products"
     }
 
     enum PreviewState: Equatable {
@@ -46,6 +47,7 @@ final class ApprovalViewModel: CoordinatorViewModel {
 
     private(set) var pendingSources: [DealSource] = []
     private(set) var pendingDeals: [DealWithSchedules] = []
+    private(set) var pendingDealProducts: [DealWithSchedules] = []
     private(set) var venueNames: [Int64: String] = [:]
     private(set) var venueGoogleMapIds: [Int64: String] = [:]
     private(set) var previewState: PreviewState = .idle
@@ -81,12 +83,18 @@ final class ApprovalViewModel: CoordinatorViewModel {
         pendingDeals.first
     }
 
+    var currentDealProduct: DealWithSchedules? {
+        pendingDealProducts.first
+    }
+
     var hasPendingItems: Bool {
         switch mode {
         case .sources:
             return currentSource != nil
         case .deals:
             return currentDeal != nil
+        case .dealProducts:
+            return currentDealProduct != nil
         }
     }
 
@@ -96,6 +104,8 @@ final class ApprovalViewModel: CoordinatorViewModel {
             return pendingSources.count
         case .deals:
             return pendingDeals.count
+        case .dealProducts:
+            return pendingDealProducts.count
         }
     }
 
@@ -136,6 +146,8 @@ final class ApprovalViewModel: CoordinatorViewModel {
                 .filter { nonBrokenVenueIds.contains($0.venueId) }
             pendingDeals = try dealRepository.findNew()
                 .filter { nonBrokenVenueIds.contains($0.deal.venueId) }
+            pendingDealProducts = try dealRepository.findApprovedWithoutProducts()
+                .filter { nonBrokenVenueIds.contains($0.deal.venueId) }
             venueNames = Dictionary(
                 uniqueKeysWithValues: venues.compactMap { venue in
                     guard let id = venue.id else { return nil }
@@ -152,6 +164,7 @@ final class ApprovalViewModel: CoordinatorViewModel {
         } catch {
             pendingSources = []
             pendingDeals = []
+            pendingDealProducts = []
             venueNames = [:]
             venueGoogleMapIds = [:]
             previewState = .failed(error.localizedDescription)
@@ -175,7 +188,16 @@ final class ApprovalViewModel: CoordinatorViewModel {
     }
 
     func decideDeal(status: DealStatus, draft: EditDealDraft) {
-        guard let item = currentDeal, let id = item.deal.id else { return }
+        let item: DealWithSchedules?
+        switch mode {
+        case .deals:
+            item = currentDeal
+        case .dealProducts:
+            item = currentDealProduct
+        case .sources:
+            return
+        }
+        guard let item, let id = item.deal.id else { return }
 
         do {
             switch status {
@@ -196,7 +218,14 @@ final class ApprovalViewModel: CoordinatorViewModel {
             case .new, .rejected:
                 try dealRepository.updateStatus(id: id, status: status)
             }
-            pendingDeals.removeFirst()
+            switch mode {
+            case .deals:
+                pendingDeals.removeFirst()
+            case .dealProducts:
+                pendingDealProducts.removeFirst()
+            case .sources:
+                break
+            }
         } catch {
             previewState = .failed(error.localizedDescription)
         }
@@ -208,7 +237,7 @@ final class ApprovalViewModel: CoordinatorViewModel {
         switch mode {
         case .sources:
             loadPreview()
-        case .deals:
+        case .deals, .dealProducts:
             previewState = .idle
         }
     }

@@ -77,7 +77,7 @@ struct URLNormalizerTests {
     }
 
     @Test func stripGoogleTrackingParametersPreservesOtherQueryItems() {
-        let url = "https://pub.example.com/menu?section=drinks&utm_source=google&utm_medium=organic"
+        let url = "https://pub.example.com/menu?section=drinks&utm_source=google&utm_medium=organic&utm_content=listing"
         #expect(URLNormalizer.stripGoogleTrackingParameters(from: url) == "https://pub.example.com/menu?section=drinks")
     }
 }

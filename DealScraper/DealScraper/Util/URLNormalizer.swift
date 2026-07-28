@@ -7,7 +7,7 @@ enum URLNormalizer {
 
     /// Query parameter names on Google Business Profile website links.
     private static let googleTrackingQueryNames: Set<String> = [
-        "utm_source", "utm_medium", "utm_campaign", "utm_term",
+        "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content",
     ]
 
     static func stripGoogleTrackingParameters(from urlString: String) -> String {
