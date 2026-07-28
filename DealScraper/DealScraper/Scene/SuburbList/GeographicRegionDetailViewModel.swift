@@ -22,6 +22,8 @@ final class GeographicRegionDetailViewModel: CoordinatorViewModel {
     private(set) var extractedVenueCount: Int = 0
     private(set) var sourceCount: Int = 0
     private(set) var dealCount: Int = 0
+    private(set) var isAutoTuningNearbyRadius = false
+    var actionMessage: String?
 
     var canClearHeroImage: Bool {
         guard let region, region.id != nil else { return false }
@@ -29,16 +31,22 @@ final class GeographicRegionDetailViewModel: CoordinatorViewModel {
     }
 
     private let geographicRegionRepository: GeographicRegionRepository
+    private let suburbRepository: SuburbRepository
+    private let nearbyRadiusAutoTuner: NearbyRadiusAutoTuner
     private let heroImageStore: RegionHeroImageStore
 
     @Resolvable<Resolver>
     init(
         @Argument regionId: Int64,
         geographicRegionRepository: GeographicRegionRepository,
+        suburbRepository: SuburbRepository,
+        nearbyRadiusAutoTuner: NearbyRadiusAutoTuner,
         heroImageStore: RegionHeroImageStore
     ) {
         self.regionId = regionId
         self.geographicRegionRepository = geographicRegionRepository
+        self.suburbRepository = suburbRepository
+        self.nearbyRadiusAutoTuner = nearbyRadiusAutoTuner
         self.heroImageStore = heroImageStore
         load()
     }
@@ -69,6 +77,39 @@ final class GeographicRegionDetailViewModel: CoordinatorViewModel {
         } catch {
             print("Failed to set region hero image: \(error.localizedDescription)")
         }
+    }
+
+    func autoTuneNearbyRadiusForAllSuburbs() {
+        guard !isAutoTuningNearbyRadius else { return }
+
+        isAutoTuningNearbyRadius = true
+        actionMessage = "Auto-tuning nearby radius…"
+
+        Task {
+            await Task.yield()
+            do {
+                let suburbs = try suburbRepository.find(regionId: regionId)
+                let summary = try nearbyRadiusAutoTuner.tuneAll(suburbs: suburbs)
+                actionMessage = Self.summaryMessage(summary)
+            } catch {
+                actionMessage = "Failed to auto-tune nearby radius."
+            }
+            isAutoTuningNearbyRadius = false
+        }
+    }
+
+    private static func summaryMessage(_ summary: NearbyRadiusTuneSummary) -> String {
+        var parts: [String] = ["Set \(summary.setCount)"]
+        if summary.missingCoordinatesCount > 0 {
+            parts.append("skipped \(summary.missingCoordinatesCount)")
+        }
+        if summary.noneFoundCount > 0 {
+            parts.append("none found \(summary.noneFoundCount)")
+        }
+        if summary.missingSuburbIdCount > 0 {
+            parts.append("invalid \(summary.missingSuburbIdCount)")
+        }
+        return parts.joined(separator: ", ") + "."
     }
 
     private func load() {

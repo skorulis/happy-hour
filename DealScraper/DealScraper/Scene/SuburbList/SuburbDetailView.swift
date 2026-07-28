@@ -151,6 +151,10 @@ struct SuburbDetailView: View {
             }
             .disabled(!canSaveNearbyRadius)
 
+            Button("Auto") {
+                viewModel.autoTuneNearbyRadius()
+            }
+
             Button("Clear") {
                 viewModel.setNearbyRadiusKm(nil)
             }

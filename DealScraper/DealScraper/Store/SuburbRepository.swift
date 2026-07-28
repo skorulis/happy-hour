@@ -56,6 +56,15 @@ final class SuburbRepository {
         }
     }
 
+    func find(regionId: Int64) throws -> [Suburb] {
+        try store.dbQueue.read { db in
+            try Suburb
+                .filter(Column("region_id") == regionId)
+                .order(Column("name"))
+                .fetchAll(db)
+        }
+    }
+
     func all() throws -> [Suburb] {
         try store.dbQueue.read { db in
             try Suburb.fetchAll(db)

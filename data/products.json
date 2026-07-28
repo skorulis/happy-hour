@@ -476,12 +476,14 @@
         "icon": "BadgeDollarSign",
         "synonyms": [
             "membership jackpot draw",
-            "members draw"
+            "members draw",
+            "members’ jackpot"
         ]
     },
     {
         "name": "bingo",
         "icon": "Grid3x3",
+        "noprice": true,
         "synonyms": [
             "music bingo",
             "muiscal bingo"
@@ -543,7 +545,8 @@
         "icon": "Coins",
         "synonyms": [
             "punters paradise",
-            "punters challenge"
+            "punters challenge",
+            "punter's challenge"
         ]
     },
     {

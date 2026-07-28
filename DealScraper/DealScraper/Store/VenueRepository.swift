@@ -151,6 +151,56 @@ final class VenueRepository {
         }
     }
 
+    /// Minimum great-circle distance (km) to a non-broken venue outside `excludingSuburbId`,
+    /// capped at `maxKm`. Returns nil when none are within that cap.
+    func minimumDistanceKm(
+        fromLat lat: Double,
+        lng: Double,
+        excludingSuburbId: Int64,
+        maxKm: Double
+    ) throws -> Double? {
+        try store.dbQueue.read { db in
+            // SQLite may not expose radians(); convert degrees inline.
+            let distanceSQL = """
+                6371.0 * acos(
+                  MIN(1.0, MAX(-1.0,
+                    cos(? * 0.017453292519943295) * cos(lat * 0.017453292519943295) *
+                    cos((lng - ?) * 0.017453292519943295) +
+                    sin(? * 0.017453292519943295) * sin(lat * 0.017453292519943295)
+                  ))
+                )
+                """
+            // Rough bounding box (~111 km per degree latitude) before haversine.
+            let latDelta = maxKm / 111.0
+            let cosLat = max(cos(lat * .pi / 180.0), 0.01)
+            let lngDelta = maxKm / (111.0 * cosLat)
+
+            return try Double.fetchOne(
+                db,
+                sql: """
+                    SELECT MIN(\(distanceSQL)) AS min_distance
+                    FROM venue
+                    WHERE status != ?
+                      AND (suburb_id IS NULL OR suburb_id != ?)
+                      AND lat BETWEEN ? AND ?
+                      AND lng BETWEEN ? AND ?
+                      AND (\(distanceSQL)) <= ?
+                    """,
+                arguments: [
+                    lat, lng, lat,
+                    VenueStatus.broken.rawValue,
+                    excludingSuburbId,
+                    lat - latDelta,
+                    lat + latDelta,
+                    lng - lngDelta,
+                    lng + lngDelta,
+                    lat, lng, lat,
+                    maxKm,
+                ]
+            )
+        }
+    }
+
     func countsBySuburbId() throws -> [Int64: Int] {
         try store.dbQueue.read { db in
             let rows = try Row.fetchAll(db, sql: """

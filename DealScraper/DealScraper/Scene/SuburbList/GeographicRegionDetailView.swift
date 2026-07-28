@@ -32,17 +32,35 @@ struct GeographicRegionDetailView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top, spacing: 24) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(region.name)
-                        .font(.title2)
-                        .fontWeight(.semibold)
+                    HStack(alignment: .top) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(region.name)
+                                .font(.title2)
+                                .fontWeight(.semibold)
 
-                    Text("\(viewModel.suburbCount) suburb\(viewModel.suburbCount == 1 ? "" : "s")")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                            Text("\(viewModel.suburbCount) suburb\(viewModel.suburbCount == 1 ? "" : "s")")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
 
-                    Text(countsLabel)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                            Text(countsLabel)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        Spacer(minLength: 16)
+
+                        Button("Auto nearby radius") {
+                            viewModel.autoTuneNearbyRadiusForAllSuburbs()
+                        }
+                        .buttonStyle(.bordered)
+                        .disabled(viewModel.isAutoTuningNearbyRadius || viewModel.suburbCount == 0)
+                    }
+
+                    if let actionMessage = viewModel.actionMessage {
+                        Text(actionMessage)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .zIndex(1)

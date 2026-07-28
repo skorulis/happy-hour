@@ -47,6 +47,7 @@ final class SuburbDetailViewModel: CoordinatorViewModel {
     private let dealSourceRepository: DealSourceRepository
     private let dealRepository: DealRepository
     private let heroImageStore: SuburbHeroImageStore
+    private let nearbyRadiusAutoTuner: NearbyRadiusAutoTuner
     private let jobQueue: JobQueue
 
     @Resolvable<Resolver>
@@ -58,6 +59,7 @@ final class SuburbDetailViewModel: CoordinatorViewModel {
         dealSourceRepository: DealSourceRepository,
         dealRepository: DealRepository,
         heroImageStore: SuburbHeroImageStore,
+        nearbyRadiusAutoTuner: NearbyRadiusAutoTuner,
         jobQueue: JobQueue
     ) {
         self.suburbId = suburbId
@@ -67,6 +69,7 @@ final class SuburbDetailViewModel: CoordinatorViewModel {
         self.dealSourceRepository = dealSourceRepository
         self.dealRepository = dealRepository
         self.heroImageStore = heroImageStore
+        self.nearbyRadiusAutoTuner = nearbyRadiusAutoTuner
         self.jobQueue = jobQueue
         load()
     }
@@ -160,6 +163,29 @@ final class SuburbDetailViewModel: CoordinatorViewModel {
             }
         } catch {
             actionMessage = "Failed to update nearby radius."
+        }
+    }
+
+    func autoTuneNearbyRadius() {
+        guard let suburb else {
+            actionMessage = "Suburb not found."
+            return
+        }
+
+        do {
+            switch try nearbyRadiusAutoTuner.tune(suburb: suburb) {
+            case .set(let km):
+                refreshSuburb()
+                actionMessage = "Nearby radius set to \(formatKm(km)) km."
+            case .unchanged(.missingCoordinates):
+                actionMessage = "Suburb is missing coordinates."
+            case .unchanged(.noVenuesWithinMax):
+                actionMessage = "No nearby venues within \(formatKm(NearbyRadiusAutoTuner.maxLadderKm)) km."
+            case .unchanged(.missingSuburbId):
+                actionMessage = "Suburb not found."
+            }
+        } catch {
+            actionMessage = "Failed to auto-tune nearby radius."
         }
     }
 

@@ -170,6 +170,8 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
 
         container.register(SuburbCrawler.self) { SuburbCrawler.make(resolver: $0) }
 
+        container.register(NearbyRadiusAutoTuner.self) { NearbyRadiusAutoTuner.make(resolver: $0) }
+
         container.register(JobQueue.self) { JobQueue.make(resolver: $0) }
             .inObjectScope(.container)
     }
