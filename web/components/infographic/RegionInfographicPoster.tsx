@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { BeerGlassWeekdayChart } from "@/components/infographic/BeerGlassWeekdayChart";
+import { DrinkBarsChart } from "@/components/infographic/DrinkBarsChart";
 import type { InfographicComposition, InfographicSlot } from "@/lib/infographic/types";
 import {
   formatRegionInfographicTitle,
@@ -33,8 +34,14 @@ export function RegionInfographicPoster({
 }: RegionInfographicPosterProps) {
   const headline = composition.slots.find((slot) => slot.id === "headline");
   const weekdayMix = composition.slots.find((slot) => slot.id === "weekdayMix");
+  const topProducts = composition.slots.find(
+    (slot) => slot.id === "topProducts",
+  );
   const rest = composition.slots.filter(
-    (slot) => slot.id !== "headline" && slot.id !== "weekdayMix",
+    (slot) =>
+      slot.id !== "headline" &&
+      slot.id !== "weekdayMix" &&
+      slot.id !== "topProducts",
   );
 
   return (
@@ -110,13 +117,27 @@ export function RegionInfographicPoster({
           </div>
         ) : null}
 
+        {topProducts && topProducts.id === "topProducts" ? (
+          <div className="space-y-4 border-b border-border-subtle pb-8">
+            <div className="space-y-1">
+              <p className="text-xs font-medium tracking-[0.18em] text-accent-soft uppercase">
+                {slotEyebrow(topProducts)}
+              </p>
+              <p className="text-lg font-medium text-secondary">
+                {slotHeadline(topProducts)}
+                {slotSupporting(topProducts)
+                  ? ` · ${slotSupporting(topProducts)}`
+                  : null}
+              </p>
+            </div>
+            <DrinkBarsChart products={topProducts.products} />
+          </div>
+        ) : null}
+
         {rest.length > 0 ? (
           <div className="grid gap-5 sm:grid-cols-2">
             {rest.map((slot) => (
-              <div
-                key={slot.id}
-                className={slot.id === "topProducts" ? "sm:col-span-2" : undefined}
-              >
+              <div key={slot.id}>
                 <TextSlot slot={slot} />
               </div>
             ))}

@@ -76,8 +76,10 @@ export function slotHeadline(slot: InfographicSlot): string {
       return formatSuburbLabel(slot.suburb);
     case "weekdayMix":
       return `${formatDayLabel(slot.peakDayOfWeek)} leads`;
-    case "topProducts":
-      return formatTopProductsLine(slot.products);
+    case "topProducts": {
+      const leader = slot.products[0];
+      return leader ? `${leader.name} leads` : "No drink matches yet";
+    }
     case "coverage":
       return formatCoveragePercent(slot.percent);
     case "dealLeader":
@@ -97,10 +99,10 @@ export function slotSupporting(slot: InfographicSlot): string | null {
       const peak = slot.days.find((day) => day.dayOfWeek === slot.peakDayOfWeek);
       return peak ? `${peak.percent}% of scheduled deals` : null;
     }
-    case "topProducts":
-      return slot.products.length > 0
-        ? "Most often named in deal text"
-        : null;
+    case "topProducts": {
+      const leader = slot.products[0];
+      return leader ? `${leader.percent}% of drink mentions` : null;
+    }
     case "coverage":
       return `${formatDealCount(slot.venuesWithDeals)} of ${formatDealCount(slot.venueCount)} venues have a deal`;
     case "dealLeader":

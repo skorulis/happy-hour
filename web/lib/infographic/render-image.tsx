@@ -3,6 +3,7 @@ import {
   BEER_GLASS_VIEWBOX,
   buildBeerGlassGeometry,
 } from "@/lib/infographic/beer-glass";
+import { buildDrinkBarRows } from "@/lib/infographic/drink-bars";
 import type {
   InfographicComposition,
   InfographicFormat,
@@ -23,6 +24,7 @@ const COLORS = {
   muted: "#94a3b8",
   accentSoft: "#fdba74",
   border: "#3b414d",
+  track: "rgba(0, 0, 0, 0.35)",
 };
 
 function SlotBlock({
@@ -229,6 +231,117 @@ function WeekdayMixBlock({
   );
 }
 
+function DrinkMixBlock({
+  slot,
+  compact,
+}: {
+  slot: Extract<InfographicSlot, { id: "topProducts" }>;
+  compact?: boolean;
+}) {
+  const rows = buildDrinkBarRows(slot.products);
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: compact ? 12 : 16,
+        width: "100%",
+      }}
+    >
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div
+          style={{
+            display: "flex",
+            fontSize: compact ? 18 : 22,
+            fontWeight: 600,
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
+            color: COLORS.accentSoft,
+          }}
+        >
+          {slotEyebrow(slot)}
+        </div>
+        <div
+          style={{
+            display: "flex",
+            fontSize: compact ? 28 : 34,
+            fontWeight: 600,
+            color: COLORS.secondary,
+          }}
+        >
+          {slotHeadline(slot)}
+          {slotSupporting(slot) ? ` · ${slotSupporting(slot)}` : ""}
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: compact ? 10 : 14,
+          width: "100%",
+        }}
+      >
+        {rows.map((row) => (
+          <div
+            key={row.name}
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              gap: compact ? 12 : 16,
+              width: "100%",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                width: compact ? 110 : 140,
+                fontSize: compact ? 18 : 22,
+                fontWeight: row.isLeader ? 700 : 500,
+                color: row.isLeader ? COLORS.fg : COLORS.secondary,
+              }}
+            >
+              {row.name}
+            </div>
+            <div
+              style={{
+                display: "flex",
+                flexGrow: 1,
+                height: compact ? 14 : 18,
+                backgroundColor: COLORS.track,
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  width: `${row.widthPercent}%`,
+                  height: "100%",
+                  backgroundColor: row.color,
+                }}
+              />
+            </div>
+            <div
+              style={{
+                display: "flex",
+                width: compact ? 48 : 56,
+                justifyContent: "flex-end",
+                fontSize: compact ? 18 : 22,
+                fontWeight: row.isLeader ? 700 : 500,
+                color: row.isLeader ? COLORS.accentSoft : COLORS.muted,
+              }}
+            >
+              {`${row.percent}%`}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function renderRegionInfographicImage(
   composition: InfographicComposition,
   format: Exclude<InfographicFormat, "page">,
@@ -238,8 +351,14 @@ export function renderRegionInfographicImage(
   const isStory = format === "story";
   const headline = composition.slots.find((slot) => slot.id === "headline");
   const weekdayMix = composition.slots.find((slot) => slot.id === "weekdayMix");
+  const topProducts = composition.slots.find(
+    (slot) => slot.id === "topProducts",
+  );
   const rest = composition.slots.filter(
-    (slot) => slot.id !== "headline" && slot.id !== "weekdayMix",
+    (slot) =>
+      slot.id !== "headline" &&
+      slot.id !== "weekdayMix" &&
+      slot.id !== "topProducts",
   );
   const gridColumns = isOg ? 3 : 2;
 
@@ -329,6 +448,18 @@ export function renderRegionInfographicImage(
             }}
           >
             <WeekdayMixBlock slot={weekdayMix} compact={isOg} />
+          </div>
+        ) : null}
+
+        {topProducts && topProducts.id === "topProducts" ? (
+          <div
+            style={{
+              display: "flex",
+              marginTop: isOg ? 12 : 16,
+              marginBottom: isOg ? 12 : 16,
+            }}
+          >
+            <DrinkMixBlock slot={topProducts} compact={isOg} />
           </div>
         ) : null}
 

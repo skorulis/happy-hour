@@ -31,6 +31,7 @@ export type RegionProductHit = {
   name: string;
   icon?: string;
   count: number;
+  percent: number;
 };
 
 export type RegionInfographicFacts = {

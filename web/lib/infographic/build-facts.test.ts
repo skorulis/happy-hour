@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildRegionInfographicFacts } from "@/lib/infographic/build-facts";
 import { composeRegionInfographic } from "@/lib/infographic/compose";
+import { slotHeadline, slotSupporting } from "@/lib/infographic/copy";
 import type { SuburbStatistics } from "@/lib/search/queries";
 
 function suburb(
@@ -72,6 +73,43 @@ describe("buildRegionInfographicFacts", () => {
     expect(facts.dayCounts).toHaveLength(2);
     expect(facts.coveragePercent).toBeCloseTo(32);
     expect(facts.topProducts).toHaveLength(2);
+    expect(facts.topProducts[0]).toMatchObject({
+      name: "Beer",
+      count: 12,
+      percent: 57,
+    });
+    expect(facts.topProducts[1]).toMatchObject({
+      name: "Cocktails",
+      count: 9,
+      percent: 43,
+    });
+    expect(facts.topProducts.reduce((sum, hit) => sum + hit.percent, 0)).toBe(
+      100,
+    );
+  });
+
+  it("caps drink hits at five with percents of all drink mentions", () => {
+    const facts = buildRegionInfographicFacts({
+      regionId: 1,
+      regionName: "Sydney",
+      venuesWithDeals: 2,
+      dayCounts: [],
+      topProducts: [
+        { name: "Beer", count: 50 },
+        { name: "Wine", count: 20 },
+        { name: "Cocktails", count: 15 },
+        { name: "Whiskey", count: 8 },
+        { name: "Prosecco", count: 4 },
+        { name: "Sake", count: 3 },
+      ],
+      suburbs: [
+        suburb({ id: 1, name: "Bondi", dealCount: 4, venueCount: 2 }),
+      ],
+    });
+
+    expect(facts.topProducts).toHaveLength(5);
+    expect(facts.topProducts.map((hit) => hit.name)).not.toContain("Sake");
+    expect(facts.topProducts[0]!.percent).toBe(50);
   });
 
   it("omits density and per-capita when geo data is missing", () => {
@@ -132,6 +170,14 @@ describe("composeRegionInfographic", () => {
     const mix = composition.slots.find((slot) => slot.id === "weekdayMix");
     expect(mix?.id === "weekdayMix" && mix.peakDayOfWeek).toBe(6);
     expect(mix?.id === "weekdayMix" && mix.days).toHaveLength(7);
+
+    const drinks = composition.slots.find((slot) => slot.id === "topProducts");
+    expect(drinks?.id === "topProducts" && slotHeadline(drinks)).toBe(
+      "Beer leads",
+    );
+    expect(drinks?.id === "topProducts" && slotSupporting(drinks)).toBe(
+      "100% of drink mentions",
+    );
   });
 
   it("uses a tighter slot set for og format", () => {
