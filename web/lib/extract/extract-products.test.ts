@@ -276,9 +276,54 @@ describe("extractProducts", () => {
       "spirits",
       "wine",
     ]);
+    expect(result.products.find((p) => p.name === "beer")?.price).toBe(7);
+    expect(result.products.find((p) => p.name === "wine")?.price).toBe(7);
+    expect(result.products.find((p) => p.name === "spirits")?.price).toBe(8);
   });
 
-  it("matches happy hour title plus drink keywords and prices in details", () => {
+  it("shares one price across and-joined products", () => {
+    const result = extractProducts({
+      title: null,
+      details:
+        "Enjoy $5 beer and house wine in the level 2 bar.",
+    });
+
+    expect(result.products.find((p) => p.name === "beer")?.price).toBe(5);
+    expect(result.products.find((p) => p.name === "wine")?.price).toBe(5);
+  });
+
+  it("shares one price across comma and and product lists", () => {
+    const result = extractProducts({
+      title: "$5 beer, wine and cocktails",
+      details: null,
+    });
+
+    expect(result.products.find((p) => p.name === "beer")?.price).toBe(5);
+    expect(result.products.find((p) => p.name === "wine")?.price).toBe(5);
+    expect(result.products.find((p) => p.name === "cocktails")?.price).toBe(5);
+  });
+
+  it("shares one price across bare and-joined catalog products", () => {
+    const result = extractProducts({
+      title: "$5 nachos and drinks all night",
+      details: null,
+    });
+
+    expect(result.products.find((p) => p.name === "nachos")?.price).toBe(5);
+    expect(result.products.find((p) => p.name === "drinks")?.price).toBe(5);
+  });
+
+  it("does not share a price past a with clause", () => {
+    const result = extractProducts({
+      title: "$12 burger with fries",
+      details: null,
+    });
+
+    expect(result.products.find((p) => p.name === "burger")?.price).toBe(12);
+    expect(result.products.map((p) => p.name)).not.toContain("fries");
+  });
+
+  it("does not share a price across separate dollar amounts", () => {
     const result = extractProducts({
       title: "Happy Hour",
       details:

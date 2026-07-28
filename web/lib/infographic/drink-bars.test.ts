@@ -3,6 +3,8 @@ import {
   barWidthPercent,
   buildDrinkBarRows,
   drinkBarColor,
+  DRINK_BAR_MAX_ICONS,
+  iconCountForWidth,
   rankTopDrinkHits,
   TOP_DRINK_LIMIT,
 } from "@/lib/infographic/drink-bars";
@@ -112,15 +114,25 @@ describe("barWidthPercent / buildDrinkBarRows", () => {
     expect(barWidthPercent(0, 40)).toBe(0);
   });
 
-  it("assigns amber colors by rank", () => {
+  it("scales icon counts with relative width", () => {
+    expect(iconCountForWidth(100)).toBe(DRINK_BAR_MAX_ICONS);
+    expect(iconCountForWidth(50)).toBe(DRINK_BAR_MAX_ICONS / 2);
+    expect(iconCountForWidth(1)).toBe(1);
+    expect(iconCountForWidth(0)).toBe(0);
+  });
+
+  it("assigns amber colors and icon counts by rank", () => {
     const rows = buildDrinkBarRows([
-      { name: "Beer", count: 40, percent: 40 },
-      { name: "Wine", count: 20, percent: 20 },
+      { name: "Beer", count: 40, percent: 40, icon: "Beer" },
+      { name: "Wine", count: 20, percent: 20, icon: "Wine" },
     ]);
     expect(rows[0]!.isLeader).toBe(true);
     expect(rows[0]!.widthPercent).toBe(100);
+    expect(rows[0]!.iconCount).toBe(DRINK_BAR_MAX_ICONS);
     expect(rows[0]!.color).toBe(drinkBarColor(0));
     expect(rows[1]!.widthPercent).toBe(50);
+    expect(rows[1]!.iconCount).toBe(DRINK_BAR_MAX_ICONS / 2);
     expect(rows[1]!.color).toBe(drinkBarColor(1));
   });
 });
+

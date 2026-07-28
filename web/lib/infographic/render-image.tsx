@@ -4,6 +4,7 @@ import {
   buildBeerGlassGeometry,
 } from "@/lib/infographic/beer-glass";
 import { buildDrinkBarRows } from "@/lib/infographic/drink-bars";
+import { productIconDataUri } from "@/lib/infographic/drink-icon-data-uri";
 import type {
   InfographicComposition,
   InfographicFormat,
@@ -24,7 +25,6 @@ const COLORS = {
   muted: "#94a3b8",
   accentSoft: "#fdba74",
   border: "#3b414d",
-  track: "rgba(0, 0, 0, 0.35)",
 };
 
 function SlotBlock({
@@ -239,6 +239,7 @@ function DrinkMixBlock({
   compact?: boolean;
 }) {
   const rows = buildDrinkBarRows(slot.products);
+  const iconSize = compact ? 16 : 20;
 
   return (
     <div
@@ -284,59 +285,62 @@ function DrinkMixBlock({
         }}
       >
         {rows.map((row) => (
-          <div
-            key={row.name}
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              gap: compact ? 12 : 16,
-              width: "100%",
-            }}
-          >
             <div
+              key={row.name}
               style={{
                 display: "flex",
-                width: compact ? 110 : 140,
-                fontSize: compact ? 18 : 22,
-                fontWeight: row.isLeader ? 700 : 500,
-                color: row.isLeader ? COLORS.fg : COLORS.secondary,
-              }}
-            >
-              {row.name}
-            </div>
-            <div
-              style={{
-                display: "flex",
-                flexGrow: 1,
-                height: compact ? 14 : 18,
-                backgroundColor: COLORS.track,
-                overflow: "hidden",
+                flexDirection: "row",
+                alignItems: "center",
+                gap: compact ? 12 : 16,
+                width: "100%",
               }}
             >
               <div
                 style={{
                   display: "flex",
-                  width: `${row.widthPercent}%`,
-                  height: "100%",
-                  backgroundColor: row.color,
+                  width: compact ? 110 : 140,
+                  fontSize: compact ? 18 : 22,
+                  fontWeight: row.isLeader ? 700 : 500,
+                  color: row.isLeader ? COLORS.fg : COLORS.secondary,
+                  textTransform: "capitalize",
                 }}
-              />
+              >
+                {row.name}
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  flexWrap: "wrap",
+                  alignItems: "center",
+                  gap: 2,
+                  flexGrow: 1,
+                }}
+              >
+                {Array.from({ length: row.iconCount }, (_, index) => (
+                  <img
+                    key={`${row.name}-${index}`}
+                    src={productIconDataUri(row.icon, row.color, iconSize)}
+                    width={iconSize}
+                    height={iconSize}
+                    alt=""
+                  />
+                ))}
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  width: compact ? 48 : 56,
+                  justifyContent: "flex-end",
+                  fontSize: compact ? 18 : 22,
+                  fontWeight: row.isLeader ? 700 : 500,
+                  color: row.isLeader ? COLORS.accentSoft : COLORS.muted,
+                }}
+              >
+                {`${row.percent}%`}
+              </div>
             </div>
-            <div
-              style={{
-                display: "flex",
-                width: compact ? 48 : 56,
-                justifyContent: "flex-end",
-                fontSize: compact ? 18 : 22,
-                fontWeight: row.isLeader ? 700 : 500,
-                color: row.isLeader ? COLORS.accentSoft : COLORS.muted,
-              }}
-            >
-              {`${row.percent}%`}
-            </div>
-          </div>
-        ))}
+          ))}
       </div>
     </div>
   );

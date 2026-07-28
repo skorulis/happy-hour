@@ -77,18 +77,35 @@ export function drinkBarColor(rankIndex: number): string {
 export type DrinkBarRow = RegionProductHit & {
   color: string;
   widthPercent: number;
+  iconCount: number;
   isLeader: boolean;
 };
+
+/** How many icons the leader’s bar uses; others scale by relative count. */
+export const DRINK_BAR_MAX_ICONS = 12;
+
+export function iconCountForWidth(
+  widthPercent: number,
+  maxIcons = DRINK_BAR_MAX_ICONS,
+): number {
+  if (widthPercent <= 0 || maxIcons <= 0) return 0;
+  return Math.max(1, Math.round((widthPercent / 100) * maxIcons));
+}
 
 export function buildDrinkBarRows(products: RegionProductHit[]): DrinkBarRow[] {
   const maxCount = products.reduce(
     (max, product) => Math.max(max, product.count),
     0,
   );
-  return products.map((product, index) => ({
-    ...product,
-    color: drinkBarColor(index),
-    widthPercent: barWidthPercent(product.count, maxCount),
-    isLeader: index === 0,
-  }));
+  return products.map((product, index) => {
+    const widthPercent = barWidthPercent(product.count, maxCount);
+    return {
+      ...product,
+      color: drinkBarColor(index),
+      widthPercent,
+      iconCount: iconCountForWidth(widthPercent),
+      isLeader: index === 0,
+    };
+  });
 }
+
