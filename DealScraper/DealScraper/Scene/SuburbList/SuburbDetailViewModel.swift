@@ -177,6 +177,9 @@ final class SuburbDetailViewModel: CoordinatorViewModel {
             case .set(let km):
                 refreshSuburb()
                 actionMessage = "Nearby radius set to \(formatKm(km)) km."
+            case .cleared:
+                refreshSuburb()
+                actionMessage = "Default radius is enough; nearby radius left blank."
             case .unchanged(.missingCoordinates):
                 actionMessage = "Suburb is missing coordinates."
             case .unchanged(.noVenuesWithinMax):

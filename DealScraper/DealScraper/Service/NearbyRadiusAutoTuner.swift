@@ -11,24 +11,36 @@ enum NearbyRadiusAutoTunerReason: Equatable, Sendable {
 }
 
 enum NearbyRadiusTuneResult: Equatable, Sendable {
+    /// Absolute override written because the default area radius found nothing.
     case set(km: Double)
+    /// Default area radius already finds nearby venues; field left blank.
+    case cleared
     case unchanged(NearbyRadiusAutoTunerReason)
 }
 
 struct NearbyRadiusTuneSummary: Equatable, Sendable {
     var setCount: Int = 0
+    var clearedCount: Int = 0
     var missingCoordinatesCount: Int = 0
     var noneFoundCount: Int = 0
     var missingSuburbIdCount: Int = 0
 
     var totalProcessed: Int {
-        setCount + missingCoordinatesCount + noneFoundCount + missingSuburbIdCount
+        setCount
+            + clearedCount
+            + missingCoordinatesCount
+            + noneFoundCount
+            + missingSuburbIdCount
     }
 }
 
 final class NearbyRadiusAutoTuner {
 
-    /// Fixed probe ladder (km). First rung ≥ min distance to a nearby venue is stored.
+    /// Matches web `NEARBY_SUBURB_BUFFER_KM`.
+    static let defaultBufferKm: Double = 0.5
+
+    /// Fixed probe ladder (km). First rung ≥ min distance to a nearby venue is stored
+    /// when the default area radius is insufficient.
     static let ladderKm: [Double] = [2, 5, 10, 15, 20, 25, 35, 50, 75, 100]
 
     static var maxLadderKm: Double { ladderKm.last ?? 100 }
@@ -45,6 +57,12 @@ final class NearbyRadiusAutoTuner {
         self.suburbRepository = suburbRepository
     }
 
+    /// Area-based default radius: √(sqkm / π) + buffer (same as web when override is nil).
+    static func defaultRadiusKm(sqkm: Double?) -> Double {
+        let areaSqkm = (sqkm ?? 0) > 0 ? (sqkm ?? 0) : 0
+        return sqrt(areaSqkm / .pi) + defaultBufferKm
+    }
+
     /// First ladder value ≥ `distanceKm`, or nil if beyond the ladder.
     static func snapToLadder(distanceKm: Double) -> Double? {
         ladderKm.first { $0 >= distanceKm }
@@ -59,14 +77,27 @@ final class NearbyRadiusAutoTuner {
             return .unchanged(.missingCoordinates)
         }
 
+        let defaultRadius = Self.defaultRadiusKm(sqkm: suburb.sqkm)
+
         guard let minDistance = try venueRepository.minimumDistanceKm(
             fromLat: lat,
             lng: lng,
             excludingSuburbId: suburbId,
             maxKm: Self.maxLadderKm
-        ),
-        let radiusKm = Self.snapToLadder(distanceKm: minDistance)
-        else {
+        ) else {
+            return .unchanged(.noVenuesWithinMax)
+        }
+
+        // Default formula already reaches a nearby venue — keep override blank.
+        if minDistance <= defaultRadius {
+            try suburbRepository.updateNearbyRadiusKm(
+                suburbId: suburbId,
+                nearbyRadiusKm: nil
+            )
+            return .cleared
+        }
+
+        guard let radiusKm = Self.snapToLadder(distanceKm: minDistance) else {
             return .unchanged(.noVenuesWithinMax)
         }
 
@@ -83,6 +114,8 @@ final class NearbyRadiusAutoTuner {
             switch try tune(suburb: suburb) {
             case .set:
                 summary.setCount += 1
+            case .cleared:
+                summary.clearedCount += 1
             case .unchanged(.missingCoordinates):
                 summary.missingCoordinatesCount += 1
             case .unchanged(.noVenuesWithinMax):

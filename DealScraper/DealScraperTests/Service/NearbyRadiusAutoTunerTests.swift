@@ -21,7 +21,16 @@ struct NearbyRadiusAutoTunerTests {
         #expect(NearbyRadiusAutoTuner.snapToLadder(distanceKm: 200) == nil)
     }
 
-    @Test func tuneSetsLadderRadiusFromNearbyVenue() throws {
+    @Test func defaultRadiusKmMatchesAreaFormula() {
+        #expect(NearbyRadiusAutoTuner.defaultRadiusKm(sqkm: nil) == NearbyRadiusAutoTuner.defaultBufferKm)
+        #expect(NearbyRadiusAutoTuner.defaultRadiusKm(sqkm: 0) == NearbyRadiusAutoTuner.defaultBufferKm)
+        #expect(
+            abs(NearbyRadiusAutoTuner.defaultRadiusKm(sqkm: .pi) - (1 + NearbyRadiusAutoTuner.defaultBufferKm))
+                < 0.0001
+        )
+    }
+
+    @Test func tuneLeavesBlankWhenDefaultRadiusFindsVenue() throws {
         let store = SQLStore.inMemory()
         let suburbRepository = SuburbRepository(store: store)
         let venueRepository = VenueRepository(store: store)
@@ -32,8 +41,53 @@ struct NearbyRadiusAutoTunerTests {
 
         let originLat = -33.8688
         let originLng = 151.2093
-        // ~3.3 km east → should snap to 5 km ladder rung.
-        let nearbyLat = originLat
+        // Suburb area π → default radius ≈ 1.5 km. Venue at ~1.0 km is inside default.
+        let nearbyLng = originLng + (1.0 / (111.0 * cos(originLat * .pi / 180.0)))
+
+        let suburbId = try insertSuburb(
+            Suburb(
+                name: "Origin",
+                postcode: "2000",
+                state: "NSW",
+                lat: originLat,
+                lng: originLng,
+                sqkm: .pi,
+                nearbyRadiusKm: 10
+            ),
+            store: store
+        )
+        let otherSuburbId = try insertSuburb(
+            Suburb(name: "Other", postcode: "2010", state: "NSW", lat: originLat, lng: nearbyLng),
+            store: store
+        )
+        try insertVenue(
+            name: "Nearby Pub",
+            googleMapId: "nearby-1",
+            lat: originLat,
+            lng: nearbyLng,
+            suburbId: otherSuburbId,
+            store: store
+        )
+
+        let suburb = try #require(try suburbRepository.find(id: suburbId))
+        #expect(try tuner.tune(suburb: suburb) == .cleared)
+
+        let updated = try #require(try suburbRepository.find(id: suburbId))
+        #expect(updated.nearbyRadiusKm == nil)
+    }
+
+    @Test func tuneSetsLadderRadiusWhenDefaultIsInsufficient() throws {
+        let store = SQLStore.inMemory()
+        let suburbRepository = SuburbRepository(store: store)
+        let venueRepository = VenueRepository(store: store)
+        let tuner = NearbyRadiusAutoTuner(
+            venueRepository: venueRepository,
+            suburbRepository: suburbRepository
+        )
+
+        let originLat = -33.8688
+        let originLng = 151.2093
+        // No sqkm → default 0.5 km. Venue at ~3.3 km → snap to 5.
         let nearbyLng = originLng + (3.3 / (111.0 * cos(originLat * .pi / 180.0)))
 
         let suburbId = try insertSuburb(
@@ -41,13 +95,13 @@ struct NearbyRadiusAutoTunerTests {
             store: store
         )
         let otherSuburbId = try insertSuburb(
-            Suburb(name: "Other", postcode: "2010", state: "NSW", lat: nearbyLat, lng: nearbyLng),
+            Suburb(name: "Other", postcode: "2010", state: "NSW", lat: originLat, lng: nearbyLng),
             store: store
         )
         try insertVenue(
             name: "Nearby Pub",
             googleMapId: "nearby-1",
-            lat: nearbyLat,
+            lat: originLat,
             lng: nearbyLng,
             suburbId: otherSuburbId,
             store: store

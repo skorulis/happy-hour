@@ -100,6 +100,9 @@ final class GeographicRegionDetailViewModel: CoordinatorViewModel {
 
     private static func summaryMessage(_ summary: NearbyRadiusTuneSummary) -> String {
         var parts: [String] = ["Set \(summary.setCount)"]
+        if summary.clearedCount > 0 {
+            parts.append("default ok \(summary.clearedCount)")
+        }
         if summary.missingCoordinatesCount > 0 {
             parts.append("skipped \(summary.missingCoordinatesCount)")
         }
