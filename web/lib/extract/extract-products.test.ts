@@ -70,7 +70,7 @@ describe("extractProducts", () => {
     });
   });
 
-  it("prefers fish & chips over overlapping chips", () => {
+  it("prefers fish & chips as the sole match", () => {
     expect(
       extractProducts({ title: "Fish & chips $18", details: null }),
     ).toEqual({
@@ -100,14 +100,13 @@ describe("extractProducts", () => {
     });
   });
 
-  it("keeps chips when it appears outside fish & chips", () => {
+  it("does not treat standalone chips as a product", () => {
     const result = extractProducts({
       title: "Fish & chips and chips",
       details: null,
     });
 
-    expect(result.products.map((product) => product.name).sort()).toEqual([
-      "chips",
+    expect(result.products.map((product) => product.name)).toEqual([
       "fish & chips",
     ]);
   });
@@ -117,7 +116,6 @@ describe("extractProducts", () => {
       title: "Steak with chips and salad $25",
       details: null,
     });
-    expect(steak.products.map((p) => p.name)).not.toContain("chips");
     expect(steak.products.map((p) => p.name)).not.toContain("salad");
     expect(steak.products.map((p) => p.name)).toContain("steak");
 
@@ -126,7 +124,7 @@ describe("extractProducts", () => {
         title: "Meal with crispy chips and a fresh garden salad",
         details: null,
       }).products.map((p) => p.name),
-    ).not.toContain("chips");
+    ).not.toContain("salad");
 
     expect(
       extractProducts({
@@ -141,7 +139,6 @@ describe("extractProducts", () => {
       title: "Steak w/ chips and salad $25",
       details: null,
     });
-    expect(steak.products.map((p) => p.name)).not.toContain("chips");
     expect(steak.products.map((p) => p.name)).not.toContain("salad");
     expect(steak.products.map((p) => p.name)).toContain("steak");
 
@@ -159,14 +156,30 @@ describe("extractProducts", () => {
     ).toEqual({ products: [] });
   });
 
-  it("still matches chips before a with clause", () => {
+  it("still matches products before a with clause", () => {
     const result = extractProducts({
-      title: "$8 Bowl of chips with salad on the side",
+      title: "$8 Nachos with salad on the side",
       details: null,
     });
-    expect(result.products.map((p) => p.name)).toContain("chips");
+    expect(result.products.map((p) => p.name)).toContain("nachos");
     expect(result.products.map((p) => p.name)).not.toContain("salad");
-    expect(result.products.find((p) => p.name === "chips")?.price).toBe(8);
+    expect(result.products.find((p) => p.name === "nachos")?.price).toBe(8);
+  });
+
+  it("maps steak cut names to steak", () => {
+    expect(
+      extractProducts({ title: "Porterhouse $35", details: null }),
+    ).toEqual({
+      products: [{ name: "steak", price: 35 }],
+    });
+  });
+
+  it("maps cheese to cheese plate", () => {
+    expect(
+      extractProducts({ title: "Cheese $18", details: null }),
+    ).toEqual({
+      products: [{ name: "cheese plate", price: 18 }],
+    });
   });
 
   it("returns an empty list when no product keyword matches", () => {

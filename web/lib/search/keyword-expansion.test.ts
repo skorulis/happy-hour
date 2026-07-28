@@ -74,12 +74,9 @@ describe("expandKeywords", () => {
         "jugs",
         "guinness",
         "craft beer",
-        "porterhouse",
-        "rump",
-        "sirloin",
       ]),
     );
-    expect(expanded).toHaveLength(10);
+    expect(expanded).toHaveLength(7);
   });
 });
 

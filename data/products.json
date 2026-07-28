@@ -155,7 +155,12 @@
     },
     {
         "name": "wine",
-        "icon": "Wine"
+        "icon": "Wine",
+        "synonyms": [
+            "red wine",
+            "white wine",
+            "rosé"
+        ]
     },
     {
         "name": "vodka",
@@ -195,9 +200,7 @@
             "bento",
             "burger",
             "calamari",
-            "cheese",
-            "chicken",
-            "chips",
+            "cheese plate",
             "curry",
             "dumplings",
             "fish & chips",
@@ -210,10 +213,8 @@
             "pie",
             "pizza",
             "poutine",
-            "porterhouse",
             "ribs",
             "roast",
-            "rump",
             "chicken parmigiana",
             "salad",
             "seafood",
@@ -258,18 +259,10 @@
         "icon": "Fish"
     },
     {
-        "name": "cheese",
-        "icon": "Cheese"
-    },
-    {
-        "name": "chicken",
-        "icon": "Drumstick"
-    },
-    {
-        "name": "chips",
-        "icon": "Chips",
+        "name": "cheese plate",
+        "icon": "Cheese",
         "synonyms": [
-            "fries"
+            "cheese"
         ]
     },
     {
@@ -337,20 +330,12 @@
         "icon": "Cheese"
     },
     {
-        "name": "porterhouse",
-        "icon": "Beef"
-    },
-    {
         "name": "ribs",
         "icon": "Beef"
     },
     {
         "name": "roast",
         "icon": "Ham"
-    },
-    {
-        "name": "rump",
-        "icon": "Beef"
     },
     {
         "name": "chicken parmigiana",
@@ -390,17 +375,11 @@
         "icon": "UtensilsCrossed"
     },
     {
-        "name": "sirloin",
-        "icon": "Beef"
-    },
-    {
         "name": "steak",
         "icon": "Beef",
         "synonyms": [
             "steak & fries",
-            "steak & chips"
-        ],
-        "groups": [
+            "steak & chips",
             "porterhouse",
             "rump",
             "sirloin"
