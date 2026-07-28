@@ -7,9 +7,9 @@
     { "name": "Darwin", "status": "future", "country": "AUS" },
     { "name": "The Sunshine Coast", "status": "in-progress", "country": "AUS" },
     { "name": "Central Coast", "status": "live", "country": "AUS" },
-    { "name": "Blue Mountains", "status": "future", "country": "AUS" },
-    { "name": "Hawkesbury", "status": "future", "country": "AUS" },
-    { "name": "Wollondilly", "status": "future", "country": "AUS" },
+    { "name": "Blue Mountains", "status": "live", "country": "AUS" },
+    { "name": "Hawkesbury", "status": "live", "country": "AUS" },
+    { "name": "Wollondilly", "status": "live", "country": "AUS" },
     { "name": "Regional NSW", "status": "future", "country": "AUS" },
     { "name": "Queenstown Lakes", "status": "live", "country": "NZL" }
 ]

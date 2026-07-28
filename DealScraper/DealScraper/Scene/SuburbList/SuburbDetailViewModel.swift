@@ -14,6 +14,7 @@ final class SuburbDetailViewModel: CoordinatorViewModel {
     let suburbId: Int64
     private(set) var suburb: Suburb?
     private(set) var venues: [Venue] = []
+    private(set) var regionName: String?
     private(set) var countryName: String?
     private(set) var sourceCountsByVenueId: [Int64: Int] = [:]
     private(set) var dealCountsByVenueId: [Int64: Int] = [:]
@@ -43,6 +44,7 @@ final class SuburbDetailViewModel: CoordinatorViewModel {
 
     private let suburbRepository: SuburbRepository
     private let venueRepository: VenueRepository
+    private let geographicRegionRepository: GeographicRegionRepository
     private let countryRepository: CountryRepository
     private let dealSourceRepository: DealSourceRepository
     private let dealRepository: DealRepository
@@ -55,6 +57,7 @@ final class SuburbDetailViewModel: CoordinatorViewModel {
         @Argument suburbId: Int64,
         suburbRepository: SuburbRepository,
         venueRepository: VenueRepository,
+        geographicRegionRepository: GeographicRegionRepository,
         countryRepository: CountryRepository,
         dealSourceRepository: DealSourceRepository,
         dealRepository: DealRepository,
@@ -65,6 +68,7 @@ final class SuburbDetailViewModel: CoordinatorViewModel {
         self.suburbId = suburbId
         self.suburbRepository = suburbRepository
         self.venueRepository = venueRepository
+        self.geographicRegionRepository = geographicRegionRepository
         self.countryRepository = countryRepository
         self.dealSourceRepository = dealSourceRepository
         self.dealRepository = dealRepository
@@ -211,6 +215,7 @@ final class SuburbDetailViewModel: CoordinatorViewModel {
             suburb = try suburbRepository.find(id: suburbId)
             guard let suburb else {
                 venues = []
+                regionName = nil
                 countryName = nil
                 sourceCountsByVenueId = [:]
                 dealCountsByVenueId = [:]
@@ -219,6 +224,11 @@ final class SuburbDetailViewModel: CoordinatorViewModel {
             venues = try venueRepository.find(suburbId: suburbId)
             sourceCountsByVenueId = try dealSourceRepository.countsByVenueId()
             dealCountsByVenueId = try dealRepository.countsByVenueId()
+            if let regionId = suburb.regionId {
+                regionName = try geographicRegionRepository.find(id: regionId)?.name
+            } else {
+                regionName = nil
+            }
             if let countryId = suburb.countryId {
                 countryName = try countryRepository.find(id: countryId)?.name
             } else {
@@ -227,6 +237,7 @@ final class SuburbDetailViewModel: CoordinatorViewModel {
         } catch {
             suburb = nil
             venues = []
+            regionName = nil
             countryName = nil
             sourceCountsByVenueId = [:]
             dealCountsByVenueId = [:]

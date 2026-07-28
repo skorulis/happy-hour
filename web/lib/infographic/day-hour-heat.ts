@@ -2,7 +2,6 @@ import {
   findMatchingProductsForDeals,
   type DealTextFields,
 } from "@data/products";
-import { HAPPY_HOUR_CLOCK_HOURS } from "@/lib/infographic/happy-hour-clock";
 import type { RegionDayHourCount } from "@/lib/infographic/types";
 import type { RegionDealScheduleMatchRow } from "@/lib/search/queries";
 import {
@@ -12,7 +11,10 @@ import {
 } from "@/lib/search/schedule";
 import { appendFiltersToPath } from "@/lib/search/what-path";
 
-export const HAPPY_HOUR_HEAT_HOURS = HAPPY_HOUR_CLOCK_HOURS;
+/** Noon → 11pm window used by the happy-hour heat map. */
+export const HAPPY_HOUR_HEAT_HOURS = [
+  12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
+] as const;
 
 /** Empty cells stay near the poster background. */
 export const DAY_HOUR_HEAT_EMPTY_COLOR = "#1a2230";

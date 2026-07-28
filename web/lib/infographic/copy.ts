@@ -1,5 +1,4 @@
 import { DAY_ABBREVIATIONS, DAY_LABELS } from "@/lib/search/schedule";
-import { formatHourLabel } from "@/lib/infographic/happy-hour-clock";
 import type {
   InfographicSlot,
   RegionInfographicFacts,
@@ -7,7 +6,12 @@ import type {
   RegionSuburbWinner,
 } from "@/lib/infographic/types";
 
-export { formatHourLabel };
+export function formatHourLabel(hour: number): string {
+  const h = ((Math.floor(hour) % 24) + 24) % 24;
+  const suffix = h >= 12 ? "pm" : "am";
+  const h12 = h % 12 || 12;
+  return `${h12}${suffix}`;
+}
 
 export function formatRegionInfographicTitle(regionName: string): string {
   return `${regionName}'s happy hour map, in numbers`;
@@ -71,8 +75,6 @@ export function slotEyebrow(slot: InfographicSlot): string {
       return "Most deals per capita";
     case "weekdayMix":
       return "Deals by day";
-    case "startHourMix":
-      return "When it kicks off";
     case "dayHourHeat":
       return "Happy hour heat";
     case "topProducts":
@@ -94,8 +96,6 @@ export function slotHeadline(slot: InfographicSlot): string {
       return formatSuburbLabel(slot.suburb);
     case "weekdayMix":
       return `${formatDayLabel(slot.peakDayOfWeek)} leads`;
-    case "startHourMix":
-      return `${formatHourLabel(slot.peakHour)} starts`;
     case "dayHourHeat":
       return `${formatDayHourPeakLabel(slot.peakDayOfWeek, slot.peakHour)} peaks`;
     case "topProducts": {
@@ -120,10 +120,6 @@ export function slotSupporting(slot: InfographicSlot): string | null {
     case "weekdayMix": {
       const peak = slot.days.find((day) => day.dayOfWeek === slot.peakDayOfWeek);
       return peak ? `${peak.percent}% of scheduled deals` : null;
-    }
-    case "startHourMix": {
-      const peak = slot.hours.find((hour) => hour.hour === slot.peakHour);
-      return peak ? `${peak.percent}% of timed deals start then` : null;
     }
     case "dayHourHeat": {
       if (slot.total <= 0) return null;

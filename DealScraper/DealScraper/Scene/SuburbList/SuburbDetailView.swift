@@ -105,6 +105,12 @@ struct SuburbDetailView: View {
                 .font(.title2)
                 .fontWeight(.semibold)
 
+            if let regionName = viewModel.regionName, !regionName.isEmpty {
+                Text(regionName)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+
             if let state = suburb.state, !state.isEmpty {
                 Text(state)
                     .font(.subheadline)

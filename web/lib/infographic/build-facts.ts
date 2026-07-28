@@ -2,13 +2,11 @@ import type { SuburbStatistics } from "@/lib/search/queries";
 import { sortSuburbStatistics } from "@/lib/search/suburb-statistics";
 import { rankTopDrinkHits } from "@/lib/infographic/drink-bars";
 import { pickPeakDayHour } from "@/lib/infographic/day-hour-heat";
-import { pickPeakStartHour } from "@/lib/infographic/happy-hour-clock";
 import type { RegionProductCount } from "@/lib/infographic/product-tally";
 import type {
   RegionDayCount,
   RegionDayHourCount,
   RegionInfographicFacts,
-  RegionStartHourCount,
   RegionSuburbWinner,
 } from "@/lib/infographic/types";
 
@@ -18,7 +16,6 @@ export type RegionInfographicInputs = {
   suburbs: SuburbStatistics[];
   venuesWithDeals: number;
   dayCounts: RegionDayCount[];
-  startHourCounts: RegionStartHourCount[];
   dayHourCounts: RegionDayHourCount[];
   topProducts: RegionProductCount[];
 };
@@ -108,8 +105,6 @@ export function buildRegionInfographicFacts(
     dealLeaderSuburb,
     busiestDay: pickBusiestDay(input.dayCounts),
     dayCounts: input.dayCounts,
-    peakStartHour: pickPeakStartHour(input.startHourCounts),
-    startHourCounts: input.startHourCounts,
     peakDayHour: pickPeakDayHour(input.dayHourCounts),
     dayHourCounts: input.dayHourCounts,
     topProducts: rankTopDrinkHits(input.topProducts),
