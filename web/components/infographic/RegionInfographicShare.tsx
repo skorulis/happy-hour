@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore, useState } from "react";
 import { Check, Download, Link2, Share2 } from "lucide-react";
 
 type RegionInfographicShareProps = {
@@ -18,12 +18,11 @@ export function RegionInfographicShare({
 }: RegionInfographicShareProps) {
   const [copied, setCopied] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
-  // Detect Web Share after mount — navigator.share differs between SSR and client.
-  const [canShare, setCanShare] = useState(false);
-
-  useEffect(() => {
-    setCanShare(typeof navigator.share === "function");
-  }, []);
+  const canShare = useSyncExternalStore(
+    () => () => {},
+    () => typeof navigator.share === "function",
+    () => false,
+  );
 
   async function copyLink() {
     try {

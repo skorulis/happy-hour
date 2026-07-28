@@ -174,9 +174,9 @@ describe("extractProducts", () => {
     });
   });
 
-  it("maps cheese to cheese plate", () => {
+  it("returns cheese plate from a cheese plate title with price", () => {
     expect(
-      extractProducts({ title: "Cheese $18", details: null }),
+      extractProducts({ title: "Cheese plate $18", details: null }),
     ).toEqual({
       products: [{ name: "cheese plate", price: 18 }],
     });

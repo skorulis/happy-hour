@@ -5,6 +5,31 @@ import Foundation
 
 enum URLNormalizer {
 
+    /// Query parameter names on Google Business Profile website links.
+    private static let googleTrackingQueryNames: Set<String> = [
+        "utm_source", "utm_medium", "utm_campaign", "utm_term",
+    ]
+
+    static func stripGoogleTrackingParameters(from urlString: String) -> String {
+        guard var components = URLComponents(string: urlString),
+              let queryItems = components.queryItems,
+              !queryItems.isEmpty
+        else {
+            return urlString
+        }
+
+        let filtered = queryItems.filter {
+            !googleTrackingQueryNames.contains($0.name.lowercased())
+        }
+
+        if filtered.count == queryItems.count {
+            return urlString
+        }
+
+        components.queryItems = filtered.isEmpty ? nil : filtered
+        return components.url?.absoluteString ?? urlString
+    }
+
     static func resolve(_ urlString: String, relativeTo baseURL: URL) -> URL? {
         let trimmed = urlString.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }

@@ -355,6 +355,7 @@ function DayHourHeatBlock({
                   }}
                 >
                   {cell.isPeak ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- inline SVG data URIs for OG image render
                     <img
                       src={flameIconDataUri("#081426", iconSize)}
                       width={iconSize}
@@ -461,6 +462,7 @@ function DrinkMixBlock({
                 }}
               >
                 {Array.from({ length: row.iconCount }, (_, index) => (
+                  // eslint-disable-next-line @next/next/no-img-element -- inline SVG data URIs for OG image render
                   <img
                     key={`${row.name}-${index}`}
                     src={productIconDataUri(row.icon, row.color, iconSize)}

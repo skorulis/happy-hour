@@ -249,6 +249,24 @@ struct VenueRepositoryTests {
         #expect(found.suburbId == suburbId)
     }
 
+    @Test func upsertPlacesStripsGoogleTrackingFromWebsiteUri() throws {
+        let repository = VenueRepository(store: SQLStore.inMemory())
+
+        let place = GooglePlace(
+            id: "places/ChIJTracked",
+            displayName: .init(text: "Tracked Pub", languageCode: "en"),
+            location: .init(latitude: -33.8600, longitude: 151.2100),
+            formattedAddress: "1 Circular Quay, Sydney NSW 2000",
+            websiteUri: "https://trackedpub.example.com/?utm_source=google&utm_medium=organic&utm_campaign=gmb&utm_term=plcid_8384449097513870665",
+            types: ["bar"]
+        )
+
+        try repository.upsert(places: [place])
+
+        let found = try #require(try repository.find(googleMapId: "places/ChIJTracked"))
+        #expect(found.websiteUri == "https://trackedpub.example.com/")
+    }
+
     @Test func upsertPlacesMarksVenueBrokenWhenWebsiteMissing() throws {
         let repository = VenueRepository(store: SQLStore.inMemory())
 

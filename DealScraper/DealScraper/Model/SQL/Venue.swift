@@ -78,7 +78,7 @@ nonisolated struct Venue: Codable, Sendable {
         self.name = name
         self.lat = lat
         self.lng = lng
-        self.websiteUri = websiteUri
+        self.websiteUri = Self.cleanedWebsiteUri(websiteUri)
         self.heroImage = heroImage
         self.heroR2Url = heroR2Url
         self.blurb = blurb
@@ -116,6 +116,13 @@ nonisolated struct Venue: Codable, Sendable {
             status: Self.statusWhenImported(from: place.websiteUri),
             json: jsonString
         )
+    }
+
+    static func cleanedWebsiteUri(_ raw: String?) -> String? {
+        guard let raw else { return nil }
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        return URLNormalizer.stripGoogleTrackingParameters(from: trimmed)
     }
 
     static func statusWhenImported(from websiteUri: String?) -> VenueStatus {

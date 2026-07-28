@@ -195,6 +195,14 @@ struct SuburbDetailView: View {
         }
     }
 
+    private var activeVenues: [Venue] {
+        viewModel.venues.filter { $0.status != .broken }
+    }
+
+    private var brokenVenues: [Venue] {
+        viewModel.venues.filter { $0.status == .broken }
+    }
+
     @ViewBuilder
     private var venueList: some View {
         if viewModel.venues.isEmpty {
@@ -206,31 +214,48 @@ struct SuburbDetailView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
             List {
-                Section(venueListSectionTitle) {
-                    ForEach(viewModel.venues, id: \.googleMapId) { venue in
-                        Button {
-                            viewModel.openVenueDetails(googleMapId: venue.googleMapId)
-                        } label: {
-                            VenueRow(
-                                venue: venue,
-                                sourceCount: viewModel.sourceCount(for: venue),
-                                dealCount: viewModel.dealCount(for: venue)
-                            )
-                        }
-                        .buttonStyle(.plain)
+                if !activeVenues.isEmpty {
+                    Section(venueListSectionTitle) {
+                        venueRows(activeVenues)
+                    }
+                }
+                if !brokenVenues.isEmpty {
+                    Section(brokenVenuesSectionTitle) {
+                        venueRows(brokenVenues)
                     }
                 }
             }
         }
     }
 
+    @ViewBuilder
+    private func venueRows(_ venues: [Venue]) -> some View {
+        ForEach(venues, id: \.googleMapId) { venue in
+            Button {
+                viewModel.openVenueDetails(googleMapId: venue.googleMapId)
+            } label: {
+                VenueRow(
+                    venue: venue,
+                    sourceCount: viewModel.sourceCount(for: venue),
+                    dealCount: viewModel.dealCount(for: venue)
+                )
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
     private var venueListSectionTitle: String {
-        let venueCount = viewModel.venues.count
-        let sourceCount = viewModel.totalSourceCount
-        let dealCount = viewModel.totalDealCount
+        let venueCount = activeVenues.count
+        let sourceCount = activeVenues.reduce(0) { $0 + viewModel.sourceCount(for: $1) }
+        let dealCount = activeVenues.reduce(0) { $0 + viewModel.dealCount(for: $1) }
         let venues = "\(venueCount) venue\(venueCount == 1 ? "" : "s")"
         let sources = "\(sourceCount) source\(sourceCount == 1 ? "" : "s")"
         let deals = "\(dealCount) deal\(dealCount == 1 ? "" : "s")"
         return "\(venues) · \(sources) · \(deals)"
+    }
+
+    private var brokenVenuesSectionTitle: String {
+        let count = brokenVenues.count
+        return "Broken · \(count) venue\(count == 1 ? "" : "s")"
     }
 }

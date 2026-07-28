@@ -61,7 +61,7 @@ function endWithOptionalPlural(
   start: number,
   needleLength: number,
 ): number {
-  let end = start + needleLength;
+  const end = start + needleLength;
   if (text.startsWith("es", end) && !/[a-z0-9]/i.test(text[end + 2] ?? "")) {
     return end + 2;
   }

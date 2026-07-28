@@ -70,4 +70,14 @@ struct URLNormalizerTests {
 
         #expect(resolved.absoluteString == "http://pub.example.com/menu.pdf")
     }
+
+    @Test func stripGoogleTrackingParametersRemovesGMBQueryString() {
+        let tracked = "https://pub.example.com/?utm_source=google&utm_medium=organic&utm_campaign=gmb&utm_term=plcid_8384449097513870665"
+        #expect(URLNormalizer.stripGoogleTrackingParameters(from: tracked) == "https://pub.example.com/")
+    }
+
+    @Test func stripGoogleTrackingParametersPreservesOtherQueryItems() {
+        let url = "https://pub.example.com/menu?section=drinks&utm_source=google&utm_medium=organic"
+        #expect(URLNormalizer.stripGoogleTrackingParameters(from: url) == "https://pub.example.com/menu?section=drinks")
+    }
 }
