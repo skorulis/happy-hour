@@ -30,7 +30,7 @@ struct NearbyRadiusAutoTunerTests {
         )
     }
 
-    @Test func tuneLeavesBlankWhenDefaultRadiusFindsVenue() throws {
+    @Test func tuneLeavesBlankWhenDefaultRadiusFindsApprovedDeal() throws {
         let store = SQLStore.inMemory()
         let suburbRepository = SuburbRepository(store: store)
         let venueRepository = VenueRepository(store: store)
@@ -41,7 +41,6 @@ struct NearbyRadiusAutoTunerTests {
 
         let originLat = -33.8688
         let originLng = 151.2093
-        // Suburb area π → default radius ≈ 1.5 km. Venue at ~1.0 km is inside default.
         let nearbyLng = originLng + (1.0 / (111.0 * cos(originLat * .pi / 180.0)))
 
         let suburbId = try insertSuburb(
@@ -60,7 +59,7 @@ struct NearbyRadiusAutoTunerTests {
             Suburb(name: "Other", postcode: "2010", state: "NSW", lat: originLat, lng: nearbyLng),
             store: store
         )
-        try insertVenue(
+        let venueId = try insertVenue(
             name: "Nearby Pub",
             googleMapId: "nearby-1",
             lat: originLat,
@@ -68,6 +67,7 @@ struct NearbyRadiusAutoTunerTests {
             suburbId: otherSuburbId,
             store: store
         )
+        try insertApprovedDeal(venueId: venueId, store: store)
 
         let suburb = try #require(try suburbRepository.find(id: suburbId))
         #expect(try tuner.tune(suburb: suburb) == .cleared)
@@ -87,7 +87,6 @@ struct NearbyRadiusAutoTunerTests {
 
         let originLat = -33.8688
         let originLng = 151.2093
-        // No sqkm → default 0.5 km. Venue at ~3.3 km → snap to 5.
         let nearbyLng = originLng + (3.3 / (111.0 * cos(originLat * .pi / 180.0)))
 
         let suburbId = try insertSuburb(
@@ -98,7 +97,7 @@ struct NearbyRadiusAutoTunerTests {
             Suburb(name: "Other", postcode: "2010", state: "NSW", lat: originLat, lng: nearbyLng),
             store: store
         )
-        try insertVenue(
+        let venueId = try insertVenue(
             name: "Nearby Pub",
             googleMapId: "nearby-1",
             lat: originLat,
@@ -106,8 +105,8 @@ struct NearbyRadiusAutoTunerTests {
             suburbId: otherSuburbId,
             store: store
         )
-        // Same-suburb venue should be ignored.
-        try insertVenue(
+        try insertApprovedDeal(venueId: venueId, store: store)
+        let localVenueId = try insertVenue(
             name: "Local Pub",
             googleMapId: "local-1",
             lat: originLat + 0.001,
@@ -115,6 +114,7 @@ struct NearbyRadiusAutoTunerTests {
             suburbId: suburbId,
             store: store
         )
+        try insertApprovedDeal(venueId: localVenueId, store: store)
 
         let suburb = try #require(try suburbRepository.find(id: suburbId))
         let result = try tuner.tune(suburb: suburb)
@@ -122,6 +122,41 @@ struct NearbyRadiusAutoTunerTests {
 
         let updated = try #require(try suburbRepository.find(id: suburbId))
         #expect(updated.nearbyRadiusKm == 5)
+    }
+
+    @Test func tuneIgnoresVenuesWithoutApprovedDeals() throws {
+        let store = SQLStore.inMemory()
+        let suburbRepository = SuburbRepository(store: store)
+        let venueRepository = VenueRepository(store: store)
+        let tuner = NearbyRadiusAutoTuner(
+            venueRepository: venueRepository,
+            suburbRepository: suburbRepository
+        )
+
+        let originLat = -33.8688
+        let originLng = 151.2093
+        let nearbyLng = originLng + (3.0 / (111.0 * cos(originLat * .pi / 180.0)))
+
+        let suburbId = try insertSuburb(
+            Suburb(name: "Origin", postcode: "2000", state: "NSW", lat: originLat, lng: originLng),
+            store: store
+        )
+        let otherSuburbId = try insertSuburb(
+            Suburb(name: "Other", postcode: "2010", state: "NSW", lat: originLat, lng: nearbyLng),
+            store: store
+        )
+        _ = try insertVenue(
+            name: "No Deals Pub",
+            googleMapId: "nodeals-1",
+            lat: originLat,
+            lng: nearbyLng,
+            suburbId: otherSuburbId,
+            store: store
+        )
+
+        let suburb = try #require(try suburbRepository.find(id: suburbId))
+        #expect(try tuner.tune(suburb: suburb) == .unchanged(.noDealsWithinMax))
+        #expect(try suburbRepository.find(id: suburbId)?.nearbyRadiusKm == nil)
     }
 
     @Test func tuneIgnoresBrokenVenuesAndReportsNoneWithinMax() throws {
@@ -135,7 +170,6 @@ struct NearbyRadiusAutoTunerTests {
 
         let originLat = -33.8688
         let originLng = 151.2093
-        let nearbyLat = originLat
         let nearbyLng = originLng + (3.0 / (111.0 * cos(originLat * .pi / 180.0)))
 
         let suburbId = try insertSuburb(
@@ -143,21 +177,22 @@ struct NearbyRadiusAutoTunerTests {
             store: store
         )
         let otherSuburbId = try insertSuburb(
-            Suburb(name: "Other", postcode: "2010", state: "NSW", lat: nearbyLat, lng: nearbyLng),
+            Suburb(name: "Other", postcode: "2010", state: "NSW", lat: originLat, lng: nearbyLng),
             store: store
         )
-        try insertVenue(
+        let venueId = try insertVenue(
             name: "Broken Pub",
             googleMapId: "broken-1",
-            lat: nearbyLat,
+            lat: originLat,
             lng: nearbyLng,
             suburbId: otherSuburbId,
             status: .broken,
             store: store
         )
+        try insertApprovedDeal(venueId: venueId, store: store)
 
         let suburb = try #require(try suburbRepository.find(id: suburbId))
-        #expect(try tuner.tune(suburb: suburb) == .unchanged(.noVenuesWithinMax))
+        #expect(try tuner.tune(suburb: suburb) == .unchanged(.noDealsWithinMax))
         #expect(try suburbRepository.find(id: suburbId)?.nearbyRadiusKm == nil)
     }
 
@@ -178,7 +213,7 @@ struct NearbyRadiusAutoTunerTests {
         #expect(try tuner.tune(suburb: suburb) == .unchanged(.missingCoordinates))
     }
 
-    @Test func minimumDistanceKmReturnsClosestOutsideVenue() throws {
+    @Test func minimumApprovedDealDistanceKmReturnsClosestOutsideDeal() throws {
         let store = SQLStore.inMemory()
         let venueRepository = VenueRepository(store: store)
 
@@ -197,7 +232,7 @@ struct NearbyRadiusAutoTunerTests {
             Suburb(name: "Other", postcode: "2010", state: "NSW", lat: originLat, lng: nearLng),
             store: store
         )
-        try insertVenue(
+        let nearVenueId = try insertVenue(
             name: "Near",
             googleMapId: "near",
             lat: originLat,
@@ -205,7 +240,7 @@ struct NearbyRadiusAutoTunerTests {
             suburbId: otherId,
             store: store
         )
-        try insertVenue(
+        let farVenueId = try insertVenue(
             name: "Far",
             googleMapId: "far",
             lat: originLat,
@@ -213,9 +248,11 @@ struct NearbyRadiusAutoTunerTests {
             suburbId: otherId,
             store: store
         )
+        try insertApprovedDeal(venueId: nearVenueId, store: store)
+        try insertApprovedDeal(venueId: farVenueId, store: store)
 
         let distance = try #require(
-            try venueRepository.minimumDistanceKm(
+            try venueRepository.minimumApprovedDealDistanceKm(
                 fromLat: originLat,
                 lng: originLng,
                 excludingSuburbId: suburbId,
@@ -264,6 +301,7 @@ struct NearbyRadiusAutoTunerTests {
         }
     }
 
+    @discardableResult
     private func insertVenue(
         name: String,
         googleMapId: String,
@@ -272,7 +310,7 @@ struct NearbyRadiusAutoTunerTests {
         suburbId: Int64,
         status: VenueStatus = .normal,
         store: SQLStore
-    ) throws {
+    ) throws -> Int64 {
         try store.dbQueue.write { db in
             var venue = Venue(
                 suburbId: suburbId,
@@ -284,6 +322,14 @@ struct NearbyRadiusAutoTunerTests {
                 json: "{}"
             )
             try venue.insert(db)
+            return try #require(venue.id)
+        }
+    }
+
+    private func insertApprovedDeal(venueId: Int64, store: SQLStore) throws {
+        try store.dbQueue.write { db in
+            var deal = Deal(venueId: venueId, title: "Happy hour", status: .approved)
+            try deal.insert(db)
         }
     }
 }

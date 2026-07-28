@@ -6,14 +6,14 @@ import KnitMacros
 
 enum NearbyRadiusAutoTunerReason: Equatable, Sendable {
     case missingCoordinates
-    case noVenuesWithinMax
+    case noDealsWithinMax
     case missingSuburbId
 }
 
 enum NearbyRadiusTuneResult: Equatable, Sendable {
     /// Absolute override written because the default area radius found nothing.
     case set(km: Double)
-    /// Default area radius already finds nearby venues; field left blank.
+    /// Default area radius already finds nearby approved deals; field left blank.
     case cleared
     case unchanged(NearbyRadiusAutoTunerReason)
 }
@@ -39,7 +39,7 @@ final class NearbyRadiusAutoTuner {
     /// Matches web `NEARBY_SUBURB_BUFFER_KM`.
     static let defaultBufferKm: Double = 0.5
 
-    /// Fixed probe ladder (km). First rung ≥ min distance to a nearby venue is stored
+    /// Fixed probe ladder (km). First rung ≥ min distance to a nearby approved deal is stored
     /// when the default area radius is insufficient.
     static let ladderKm: [Double] = [2, 5, 10, 15, 20, 25, 35, 50, 75, 100]
 
@@ -79,16 +79,16 @@ final class NearbyRadiusAutoTuner {
 
         let defaultRadius = Self.defaultRadiusKm(sqkm: suburb.sqkm)
 
-        guard let minDistance = try venueRepository.minimumDistanceKm(
+        guard let minDistance = try venueRepository.minimumApprovedDealDistanceKm(
             fromLat: lat,
             lng: lng,
             excludingSuburbId: suburbId,
             maxKm: Self.maxLadderKm
         ) else {
-            return .unchanged(.noVenuesWithinMax)
+            return .unchanged(.noDealsWithinMax)
         }
 
-        // Default formula already reaches a nearby venue — keep override blank.
+        // Default formula already reaches a nearby approved deal — keep override blank.
         if minDistance <= defaultRadius {
             try suburbRepository.updateNearbyRadiusKm(
                 suburbId: suburbId,
@@ -98,7 +98,7 @@ final class NearbyRadiusAutoTuner {
         }
 
         guard let radiusKm = Self.snapToLadder(distanceKm: minDistance) else {
-            return .unchanged(.noVenuesWithinMax)
+            return .unchanged(.noDealsWithinMax)
         }
 
         try suburbRepository.updateNearbyRadiusKm(
@@ -118,7 +118,7 @@ final class NearbyRadiusAutoTuner {
                 summary.clearedCount += 1
             case .unchanged(.missingCoordinates):
                 summary.missingCoordinatesCount += 1
-            case .unchanged(.noVenuesWithinMax):
+            case .unchanged(.noDealsWithinMax):
                 summary.noneFoundCount += 1
             case .unchanged(.missingSuburbId):
                 summary.missingSuburbIdCount += 1

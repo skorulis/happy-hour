@@ -186,8 +186,8 @@ final class SuburbDetailViewModel: CoordinatorViewModel {
                 actionMessage = "Default radius is enough; nearby radius left blank."
             case .unchanged(.missingCoordinates):
                 actionMessage = "Suburb is missing coordinates."
-            case .unchanged(.noVenuesWithinMax):
-                actionMessage = "No nearby venues within \(formatKm(NearbyRadiusAutoTuner.maxLadderKm)) km."
+            case .unchanged(.noDealsWithinMax):
+                actionMessage = "No nearby deals within \(formatKm(NearbyRadiusAutoTuner.maxLadderKm)) km."
             case .unchanged(.missingSuburbId):
                 actionMessage = "Suburb not found."
             }
