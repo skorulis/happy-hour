@@ -1,8 +1,10 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { ImageResponseOptions } from "next/og";
+import type { ImageResponse } from "next/og";
 
-type OgFont = NonNullable<ImageResponseOptions["fonts"]>[number];
+type OgFont = NonNullable<
+  NonNullable<ConstructorParameters<typeof ImageResponse>[1]>["fonts"]
+>[number];
 
 const GEIST_CDN = {
   400: "https://cdn.jsdelivr.net/fontsource/fonts/geist-sans@5.2.5/latin-400-normal.woff",
