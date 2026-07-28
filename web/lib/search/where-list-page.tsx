@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SearchPage } from "@/components/SearchPage";
 import { SearchUrlRedirect } from "@/components/SearchUrlRedirect";
+import type { TimeRange } from "@/components/search/DayPicker";
 import {
   findRegionBySlug,
   findSuburbByWhereSlug,
@@ -113,6 +114,7 @@ export async function renderWhereListPage(
   whereSlug: string,
   days: number[],
   what: string[],
+  timeRange: TimeRange = null,
 ): Promise<ReactNode> {
   if (whereSlug === NEARBY_WHERE_SLUG) {
     return (
@@ -131,6 +133,7 @@ export async function renderWhereListPage(
           initialWhere={{ kind: "nearMe" }}
           initialDays={days}
           initialWhat={what}
+          initialTimeRange={timeRange}
         />
       </Suspense>
     );
@@ -146,6 +149,12 @@ export async function renderWhereListPage(
       suburbId: suburb.id,
       ...(days.length > 0 ? { days } : {}),
       ...(what.length > 0 ? { query: what.join(",") } : {}),
+      ...(timeRange?.startMinute !== undefined
+        ? { startMinute: timeRange.startMinute }
+        : {}),
+      ...(timeRange?.endMinute !== undefined
+        ? { endMinute: timeRange.endMinute }
+        : {}),
       limit: SUBURB_SSR_DEAL_LIMIT,
     });
 
@@ -161,6 +170,7 @@ export async function renderWhereListPage(
         initialWhere={initialWhere}
         initialDays={days}
         initialWhat={what}
+        initialTimeRange={timeRange}
         initialDeals={initialDeals}
         initialNearbyDeals={initialNearbyDeals}
         initialVenuesWithoutApplicableDeals={
@@ -191,6 +201,7 @@ export async function renderWhereListPage(
         popularSuburbs={popularSuburbs}
         initialDays={days}
         initialWhat={what}
+        initialTimeRange={timeRange}
         pageTitle={`Pub Specials in ${region.name}`}
         listBasePath={regionPath(region.name)}
         regionId={region.id}

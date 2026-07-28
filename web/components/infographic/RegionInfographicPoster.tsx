@@ -160,7 +160,10 @@ export function RegionInfographicPoster({
                   : null}
               </p>
             </div>
-            <DayHourHeatChart cells={dayHourHeat.cells} />
+            <DayHourHeatChart
+              cells={dayHourHeat.cells}
+              regionName={composition.regionName}
+            />
           </div>
         ) : null}
 

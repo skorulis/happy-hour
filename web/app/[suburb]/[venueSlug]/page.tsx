@@ -18,6 +18,7 @@ import {
   appendFiltersToPath,
   legacyDaysRedirectHref,
   parseDaysParam,
+  parseTimeRange,
   parseWhatTokens,
 } from "@/lib/search/url";
 import {
@@ -31,7 +32,12 @@ import {
 
 type VenuePageProps = {
   params: Promise<{ suburb: string; venueSlug: string }>;
-  searchParams: Promise<{ days?: string; q?: string }>;
+  searchParams: Promise<{
+    days?: string;
+    q?: string;
+    startMinute?: string;
+    endMinute?: string;
+  }>;
 };
 
 export async function generateMetadata({
@@ -98,7 +104,12 @@ export async function generateMetadata({
 export default async function VenuePage({ params, searchParams }: VenuePageProps) {
   const { suburb, venueSlug: rawVenueSlug } = await params;
   const resolvedSearchParams = await searchParams;
-  const { days: daysParam, q: whatParam } = resolvedSearchParams;
+  const {
+    days: daysParam,
+    q: whatParam,
+    startMinute,
+    endMinute,
+  } = resolvedSearchParams;
   const filter = parseFilterSegment(rawVenueSlug);
 
   // `/{where}/{filter}` list URLs share this dynamic segment with venues.
@@ -109,6 +120,12 @@ export default async function VenuePage({ params, searchParams }: VenuePageProps
     }
     if (whatParam) {
       search.set("q", whatParam);
+    }
+    if (startMinute) {
+      search.set("startMinute", startMinute);
+    }
+    if (endMinute) {
+      search.set("endMinute", endMinute);
     }
 
     const daysRedirect = legacyDaysRedirectHref(
@@ -136,6 +153,12 @@ export default async function VenuePage({ params, searchParams }: VenuePageProps
       if (queryTokens.length > 0) {
         cleaned.set("q", queryTokens.join(","));
       }
+      if (startMinute) {
+        cleaned.set("startMinute", startMinute);
+      }
+      if (endMinute) {
+        cleaned.set("endMinute", endMinute);
+      }
       const qs = cleaned.toString();
       permanentRedirect(qs ? `${path}?${qs}` : path);
     }
@@ -156,7 +179,11 @@ export default async function VenuePage({ params, searchParams }: VenuePageProps
         what.push(token);
       }
     }
-    return renderWhereListPage(suburb, days, what);
+    const timeRange = parseTimeRange(
+      startMinute ?? null,
+      endMinute ?? null,
+    );
+    return renderWhereListPage(suburb, days, what, timeRange);
   }
 
   const { base: pathBase, day: pathDay } = stripDaySuffix(rawVenueSlug);

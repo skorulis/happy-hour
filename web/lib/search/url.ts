@@ -356,7 +356,7 @@ export function legacyDaysRedirectHref(
   return hrefWithQuery(withFilters, cleaned);
 }
 
-function parseTimeRange(
+export function parseTimeRange(
   startMinuteParam: string | null,
   endMinuteParam: string | null,
 ): TimeRange {

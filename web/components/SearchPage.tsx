@@ -6,6 +6,7 @@ import { PopularSuburbs } from "@/components/PopularSuburbs";
 import { RegionFocusNotice } from "@/components/RegionFocusNotice";
 import { VenueSearchCard } from "@/components/VenueSearchCard";
 import { SearchBar } from "@/components/search/SearchBar";
+import type { TimeRange } from "@/components/search/DayPicker";
 import type { WhereFilter } from "@/components/search/SuburbSelect";
 import type {
   DealSearchResult,
@@ -19,6 +20,7 @@ type SearchPageProps = {
   initialWhere?: WhereFilter;
   initialDays?: number[];
   initialWhat?: string[];
+  initialTimeRange?: TimeRange;
   initialDeals?: DealSearchResult[];
   initialNearbyDeals?: DealSearchResult[];
   initialVenuesWithoutApplicableDeals?: VenueListResult[];
@@ -36,6 +38,7 @@ export function SearchPage({
   initialWhere,
   initialDays,
   initialWhat,
+  initialTimeRange,
   initialDeals,
   initialNearbyDeals,
   initialVenuesWithoutApplicableDeals,
@@ -71,6 +74,7 @@ export function SearchPage({
     initialWhere,
     initialDays,
     initialWhat,
+    initialTimeRange,
     initialDeals,
     initialNearbyDeals,
     initialVenuesWithoutApplicableDeals,

@@ -176,6 +176,16 @@ describe("searchParamsToInitialFilters", () => {
     expect(filters.days).toEqual([5]);
     expect(filters.what).toEqual(["beer", "obscure snack"]);
   });
+
+  it("parses equal startMinute and endMinute as a point-in-time range", () => {
+    const filters = searchParamsToInitialFilters(
+      new URLSearchParams("startMinute=1320&endMinute=1320"),
+    );
+    expect(filters.timeRange).toEqual({
+      startMinute: 1320,
+      endMinute: 1320,
+    });
+  });
 });
 
 describe("appendDayToPath", () => {

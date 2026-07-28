@@ -11,6 +11,7 @@ import {
 import {
   appendFiltersToPath,
   legacyDaysRedirectHref,
+  parseTimeRange,
   parseWhatTokens,
   stripCatalogWhatFromParams,
 } from "@/lib/search/url";
@@ -22,7 +23,12 @@ import {
 
 type SuburbSearchPageProps = {
   params: Promise<{ suburb: string }>;
-  searchParams: Promise<{ days?: string; q?: string }>;
+  searchParams: Promise<{
+    days?: string;
+    q?: string;
+    startMinute?: string;
+    endMinute?: string;
+  }>;
 };
 
 export async function generateMetadata({
@@ -43,7 +49,12 @@ export default async function SuburbSearchPage({
 }: SuburbSearchPageProps) {
   const { suburb: rawWhereSlug } = await params;
   const resolvedSearchParams = await searchParams;
-  const { days: daysParam, q: whatParam } = resolvedSearchParams;
+  const {
+    days: daysParam,
+    q: whatParam,
+    startMinute,
+    endMinute,
+  } = resolvedSearchParams;
   const { base: whereSlug, day: pathDay } = stripDaySuffix(rawWhereSlug);
 
   const search = new URLSearchParams();
@@ -52,6 +63,12 @@ export default async function SuburbSearchPage({
   }
   if (whatParam) {
     search.set("q", whatParam);
+  }
+  if (startMinute) {
+    search.set("startMinute", startMinute);
+  }
+  if (endMinute) {
+    search.set("endMinute", endMinute);
   }
 
   const daysRedirect = legacyDaysRedirectHref(`/${rawWhereSlug}`, search);
@@ -70,6 +87,12 @@ export default async function SuburbSearchPage({
       const cleaned = new URLSearchParams();
       if (whatParam) {
         cleaned.set("q", whatParam);
+      }
+      if (startMinute) {
+        cleaned.set("startMinute", startMinute);
+      }
+      if (endMinute) {
+        cleaned.set("endMinute", endMinute);
       }
       const qs = cleaned.toString();
       permanentRedirect(qs ? `/map?${qs}` : "/map");
@@ -90,6 +113,12 @@ export default async function SuburbSearchPage({
     const cleaned = new URLSearchParams();
     if (queryTokens.length > 0) {
       cleaned.set("q", queryTokens.join(","));
+    }
+    if (startMinute) {
+      cleaned.set("startMinute", startMinute);
+    }
+    if (endMinute) {
+      cleaned.set("endMinute", endMinute);
     }
     const qs = cleaned.toString();
     permanentRedirect(qs ? `${path}?${qs}` : path);
@@ -128,5 +157,6 @@ export default async function SuburbSearchPage({
   }
 
   const what = whatParam ? parseWhatTokens(whatParam) : [];
-  return renderWhereListPage(whereSlug, [], what);
+  const timeRange = parseTimeRange(startMinute ?? null, endMinute ?? null);
+  return renderWhereListPage(whereSlug, [], what, timeRange);
 }

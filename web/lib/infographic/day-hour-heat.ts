@@ -10,6 +10,7 @@ import {
   minutesWithinDay,
   WEEKDAY_UI_ORDER,
 } from "@/lib/search/schedule";
+import { appendFiltersToPath } from "@/lib/search/what-path";
 
 export const HAPPY_HOUR_HEAT_HOURS = HAPPY_HOUR_CLOCK_HOURS;
 
@@ -236,4 +237,23 @@ export function dayHourHeatAriaLabel(
     return `Happy hour heat map. Tied peaks at ${labels}, each with ${peakShare}% of covered hours.`;
   }
   return `Happy hour heat map. Peak at ${formatDay(grid.peak.dayOfWeek)} ${formatHour(grid.peak.hour)} with ${peakShare}% of covered hours.`;
+}
+
+/**
+ * Region list href for a heat cell: day + happy hour in the path, and a
+ * point-in-time filter at the top of that hour (`startMinute === endMinute`).
+ * Example: `/sydney/monday-happyhour?startMinute=1020&endMinute=1020`
+ */
+export function happyHourHeatCellHref(
+  regionListPath: string,
+  dayOfWeek: number,
+  hour: number,
+): string {
+  const path = appendFiltersToPath(regionListPath, [dayOfWeek], ["happy hour"]);
+  const minute = (((Math.floor(hour) % 24) + 24) % 24) * 60;
+  const params = new URLSearchParams({
+    startMinute: String(minute),
+    endMinute: String(minute),
+  });
+  return `${path}?${params.toString()}`;
 }

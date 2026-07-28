@@ -4,6 +4,7 @@ import {
   DAY_HOUR_HEAT_COLORS,
   DAY_HOUR_HEAT_EMPTY_COLOR,
   dealMatchesHappyHour,
+  happyHourHeatCellHref,
   hoursCoveredOnScheduleDay,
   pickPeakDayHour,
   tallyHappyHourDayHourCounts,
@@ -185,6 +186,17 @@ describe("pickPeakDayHour / buildDayHourHeatGrid", () => {
     ]);
     expect(grid.cells.find((cell) => cell.dayOfWeek === 4 && cell.hour === 16)?.isPeak).toBe(
       false,
+    );
+  });
+});
+
+describe("happyHourHeatCellHref", () => {
+  it("builds day + happy hour path with point-in-time minutes", () => {
+    expect(happyHourHeatCellHref("/sydney", 2, 22)).toBe(
+      "/sydney/monday-happyhour?startMinute=1320&endMinute=1320",
+    );
+    expect(happyHourHeatCellHref("/sydney", 5, 17)).toBe(
+      "/sydney/thursday-happyhour?startMinute=1020&endMinute=1020",
     );
   });
 });

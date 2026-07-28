@@ -1,21 +1,29 @@
+import Link from "next/link";
 import { Flame } from "lucide-react";
 import {
   buildDayHourHeatGrid,
   dayHourHeatAriaLabel,
+  happyHourHeatCellHref,
 } from "@/lib/infographic/day-hour-heat";
 import {
   formatDayAbbrev,
   formatDayLabel,
   formatHourLabel,
 } from "@/lib/infographic/copy";
+import { regionPath } from "@/lib/search/slugs";
 import type { RegionDayHourCount } from "@/lib/infographic/types";
 
 type DayHourHeatChartProps = {
   cells: RegionDayHourCount[];
+  regionName: string;
   className?: string;
 };
 
-export function DayHourHeatChart({ cells, className }: DayHourHeatChartProps) {
+export function DayHourHeatChart({
+  cells,
+  regionName,
+  className,
+}: DayHourHeatChartProps) {
   const grid = buildDayHourHeatGrid(cells);
   const ariaLabel = dayHourHeatAriaLabel(
     grid,
@@ -26,6 +34,7 @@ export function DayHourHeatChart({ cells, className }: DayHourHeatChartProps) {
   const cellByKey = new Map(
     grid.cells.map((cell) => [`${cell.dayOfWeek}:${cell.hour}`, cell] as const),
   );
+  const listPath = regionPath(regionName);
 
   return (
     <div className={className ?? "w-full max-w-xl"}>
@@ -53,11 +62,15 @@ export function DayHourHeatChart({ cells, className }: DayHourHeatChartProps) {
               </div>
               {grid.hours.map((hour) => {
                 const cell = cellByKey.get(`${dayOfWeek}:${hour}`)!;
+                const href = happyHourHeatCellHref(listPath, dayOfWeek, hour);
+                const label = `${formatDayAbbrev(dayOfWeek)} ${formatHourLabel(hour)}: ${cell.count} — open search`;
                 return (
-                  <div
+                  <Link
                     key={`c-${dayOfWeek}-${hour}`}
-                    title={`${formatDayAbbrev(dayOfWeek)} ${formatHourLabel(hour)}: ${cell.count}`}
-                    className="relative flex aspect-square min-h-4 items-center justify-center rounded-[3px]"
+                    href={href}
+                    title={label}
+                    aria-label={label}
+                    className="relative flex aspect-square min-h-4 items-center justify-center rounded-[3px] outline-offset-2 transition-[filter] hover:brightness-125 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-soft"
                     style={{ backgroundColor: cell.color }}
                   >
                     {cell.isPeak ? (
@@ -67,7 +80,7 @@ export function DayHourHeatChart({ cells, className }: DayHourHeatChartProps) {
                         strokeWidth={2.5}
                       />
                     ) : null}
-                  </div>
+                  </Link>
                 );
               })}
             </div>

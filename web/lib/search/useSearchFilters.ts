@@ -67,10 +67,11 @@ function filtersFromSeed(
   where: WhereFilter,
   days?: number[],
   what?: string[],
+  timeRange?: TimeRange,
 ): SearchFilters {
   return {
     days: days ?? [],
-    timeRange: null,
+    timeRange: timeRange ?? null,
     where,
     what: what ?? [],
   };
@@ -170,6 +171,7 @@ export function useSearchFilters(options?: {
   initialWhere?: WhereFilter;
   initialDays?: number[];
   initialWhat?: string[];
+  initialTimeRange?: TimeRange;
   initialDeals?: DealSearchResult[];
   initialNearbyDeals?: DealSearchResult[];
   initialVenuesWithoutApplicableDeals?: VenueListResult[];
@@ -191,6 +193,7 @@ export function useSearchFilters(options?: {
     initialWhere,
     options?.initialDays,
     options?.initialWhat,
+    options?.initialTimeRange,
   );
   const pathname = usePathname();
   const router = useRouter();
@@ -515,10 +518,20 @@ export function useSearchFilters(options?: {
         void (async () => {
           try {
             const suburb = await fetchSuburbBySlug(slug);
-            if (!suburb) {
+            if (currentPathname() !== path) {
               return;
             }
-            if (currentPathname() !== path) {
+            if (!suburb) {
+              // Region (or unknown) slug parsed as suburb — keep anywhere and
+              // still apply day/what/time from the URL.
+              const fromUrl = searchParamsToInitialFilters(
+                params,
+                { kind: "anywhere" },
+                days,
+                pathWhat,
+              );
+              setFilters(fromUrl);
+              setDebouncedWhat(fromUrl.what);
               return;
             }
             const where: WhereFilter = {
