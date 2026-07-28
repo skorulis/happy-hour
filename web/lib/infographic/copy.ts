@@ -1,4 +1,4 @@
-import { DAY_LABELS } from "@/lib/search/schedule";
+import { DAY_ABBREVIATIONS, DAY_LABELS } from "@/lib/search/schedule";
 import { formatHourLabel } from "@/lib/infographic/happy-hour-clock";
 import type {
   InfographicSlot,
@@ -39,6 +39,10 @@ export function formatDayLabel(dayOfWeek: number): string {
   return DAY_LABELS[dayOfWeek] ?? `Day ${dayOfWeek}`;
 }
 
+export function formatDayAbbrev(dayOfWeek: number): string {
+  return DAY_ABBREVIATIONS[dayOfWeek] ?? `D${dayOfWeek}`;
+}
+
 export function formatSuburbLabel(suburb: RegionSuburbWinner): string {
   return suburb.postcode ? `${suburb.name} (${suburb.postcode})` : suburb.name;
 }
@@ -48,6 +52,13 @@ export function formatTopProductsLine(products: RegionProductHit[]): string {
     return "No product matches yet";
   }
   return products.map((product) => product.name).join(" · ");
+}
+
+export function formatDayHourPeakLabel(
+  dayOfWeek: number,
+  hour: number,
+): string {
+  return `${formatDayLabel(dayOfWeek)} ${formatHourLabel(hour)}`;
 }
 
 export function slotEyebrow(slot: InfographicSlot): string {
@@ -62,6 +73,8 @@ export function slotEyebrow(slot: InfographicSlot): string {
       return "Deals by day";
     case "startHourMix":
       return "When it kicks off";
+    case "dayHourHeat":
+      return "Happy hour heat";
     case "topProducts":
       return "What's pouring";
     case "coverage":
@@ -83,6 +96,8 @@ export function slotHeadline(slot: InfographicSlot): string {
       return `${formatDayLabel(slot.peakDayOfWeek)} leads`;
     case "startHourMix":
       return `${formatHourLabel(slot.peakHour)} starts`;
+    case "dayHourHeat":
+      return `${formatDayHourPeakLabel(slot.peakDayOfWeek, slot.peakHour)} peaks`;
     case "topProducts": {
       const leader = slot.products[0];
       return leader ? `${leader.name} leads` : "No drink matches yet";
@@ -109,6 +124,11 @@ export function slotSupporting(slot: InfographicSlot): string | null {
     case "startHourMix": {
       const peak = slot.hours.find((hour) => hour.hour === slot.peakHour);
       return peak ? `${peak.percent}% of timed deals start then` : null;
+    }
+    case "dayHourHeat": {
+      if (slot.total <= 0) return null;
+      const percent = Math.round((slot.peakCount / slot.total) * 100);
+      return `${percent}% of happy hour coverage`;
     }
     case "topProducts": {
       const leader = slot.products[0];

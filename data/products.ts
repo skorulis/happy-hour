@@ -9,6 +9,8 @@ export type Product = {
   hidden?: boolean;
   /** When false, skip extract / map-icon text matching for this product. */
   match?: boolean;
+  /** When true, never associate a $ amount with this product. */
+  noprice?: boolean;
   icon?: string;
 };
 
@@ -33,6 +35,7 @@ function mergeProducts(raw: Product[]): Product[] {
         synonyms: product.synonyms ? [...new Set(product.synonyms)] : undefined,
         hidden: product.hidden,
         match: product.match,
+        noprice: product.noprice,
         icon: product.icon,
       });
       continue;
@@ -53,6 +56,7 @@ function mergeProducts(raw: Product[]): Product[] {
       hidden: existing.hidden || product.hidden,
       match:
         existing.match === false || product.match === false ? false : existing.match ?? product.match,
+      noprice: existing.noprice || product.noprice,
       icon: existing.icon ?? product.icon,
     });
   }

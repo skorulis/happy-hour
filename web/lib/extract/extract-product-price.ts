@@ -38,9 +38,12 @@ function matchTermsForProducts(productNames: string[]): ProductMatchTerm[] {
   const terms: ProductMatchTerm[] = [];
 
   for (const name of productNames) {
+    const product = findProductByName(name);
+    if (product?.noprice) {
+      continue;
+    }
     const canonicalName = name;
     const needles = new Set<string>([name.toLowerCase()]);
-    const product = findProductByName(name);
     for (const synonym of product?.synonyms ?? []) {
       needles.add(synonym.toLowerCase());
     }

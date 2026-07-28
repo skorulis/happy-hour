@@ -640,6 +640,16 @@ export type RegionDealStartHourCount = {
   count: number;
 };
 
+export type RegionDealScheduleMatchRow = {
+  dealId: number;
+  title: string | null;
+  details: string | null;
+  conditions: string | null;
+  dayOfWeek: number;
+  startMinute: number;
+  endMinute: number;
+};
+
 export type RegionDealTextRow = {
   title: string | null;
   details: string | null;
@@ -720,6 +730,32 @@ export async function listRegionDealStartHourCounts(
     hour: Number(row.hour),
     count: row.count,
   }));
+}
+
+/** Schedule rows with deal text for product matching (e.g. happy-hour heat map). */
+export async function listRegionDealSchedulesForMatching(
+  regionId: number,
+  limit = 5000,
+): Promise<RegionDealScheduleMatchRow[]> {
+  return db
+    .select({
+      dealId: deal.id,
+      title: deal.title,
+      details: deal.details,
+      conditions: deal.conditions,
+      dayOfWeek: dealSchedule.dayOfWeek,
+      startMinute: dealSchedule.startMinute,
+      endMinute: dealSchedule.endMinute,
+    })
+    .from(dealSchedule)
+    .innerJoin(deal, eq(deal.id, dealSchedule.dealId))
+    .innerJoin(venue, eq(venue.id, deal.venueId))
+    .innerJoin(suburb, eq(suburb.id, venue.suburbId))
+    .where(
+      and(eq(suburb.regionId, regionId), eq(deal.status, "approved")),
+    )
+    .orderBy(desc(deal.id), dealSchedule.dayOfWeek, dealSchedule.startMinute)
+    .limit(limit);
 }
 
 export async function listRegionDealTextsForMatching(

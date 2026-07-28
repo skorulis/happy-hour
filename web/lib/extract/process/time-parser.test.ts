@@ -240,6 +240,9 @@ describe("parseTimes", () => {
     expect(parseTimes(["6PM REGO FOR 6:30PM START"])).toEqual([
       between(18 * 60, 24 * 60),
     ]);
+    expect(parseTimes(["6PM REGO, 6.30PM START"])).toEqual([
+      between(18 * 60, 24 * 60),
+    ]);
   });
 
   it("parses hyphen-continued split time range", () => {

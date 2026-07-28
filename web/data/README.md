@@ -11,6 +11,7 @@ Shared keyword list used for search suggestions and query expansion. Defined in 
 | `groups` | no | Other keyword `name` values implicitly included when this keyword is used in search. For example, selecting `beer` also matches deals mentioning `schooner`, `pint`, or `jugs`. Group expansion happens at search time only — child keywords are not shown as extra chips. |
 | `synonyms` | no | Alternate substrings that map to this product when matching deal title/details text (e.g. `cocktail` → `cocktails`). Unlike `groups`, synonyms are not separate catalog keywords and are not used for search-group expansion. |
 | `match` | no | When `false`, this product is never searched during extract / map-icon text matching. Use for top-level category keywords (e.g. `drinks`, `food`, `events`) that exist for search suggestions and group expansion only. Omit or `true` to allow matching. |
+| `noprice` | no | When `true`, extract never associates a `$` amount with this product (price is always `null`). Use for non-priced promotions such as `raffle` and `meat tray`. |
 | `icon` | no | Registered icon name (PascalCase, e.g. `Beer`, `Pizza`) used as the map marker when deal text matches this keyword. Icons may come from Lucide, Lucide Lab, or custom icons — each name must exist in the web `ProductMapIcon` registry. Omit when no suitable icon exists. |
 
 ## Example

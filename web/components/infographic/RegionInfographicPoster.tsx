@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { BeerGlassWeekdayChart } from "@/components/infographic/BeerGlassWeekdayChart";
+import { DayHourHeatChart } from "@/components/infographic/DayHourHeatChart";
 import { DrinkBarsChart } from "@/components/infographic/DrinkBarsChart";
 import { HappyHourClockChart } from "@/components/infographic/HappyHourClockChart";
 import type { InfographicComposition, InfographicSlot } from "@/lib/infographic/types";
@@ -38,6 +39,9 @@ export function RegionInfographicPoster({
   const startHourMix = composition.slots.find(
     (slot) => slot.id === "startHourMix",
   );
+  const dayHourHeat = composition.slots.find(
+    (slot) => slot.id === "dayHourHeat",
+  );
   const topProducts = composition.slots.find(
     (slot) => slot.id === "topProducts",
   );
@@ -46,6 +50,7 @@ export function RegionInfographicPoster({
       slot.id !== "headline" &&
       slot.id !== "weekdayMix" &&
       slot.id !== "startHourMix" &&
+      slot.id !== "dayHourHeat" &&
       slot.id !== "topProducts",
   );
 
@@ -139,6 +144,23 @@ export function RegionInfographicPoster({
               hours={startHourMix.hours}
               peakHour={startHourMix.peakHour}
             />
+          </div>
+        ) : null}
+
+        {dayHourHeat && dayHourHeat.id === "dayHourHeat" ? (
+          <div className="space-y-4 border-b border-border-subtle pb-8">
+            <div className="space-y-1">
+              <p className="text-xs font-medium tracking-[0.18em] text-accent-soft uppercase">
+                {slotEyebrow(dayHourHeat)}
+              </p>
+              <p className="text-lg font-medium text-secondary">
+                {slotHeadline(dayHourHeat)}
+                {slotSupporting(dayHourHeat)
+                  ? ` · ${slotSupporting(dayHourHeat)}`
+                  : null}
+              </p>
+            </div>
+            <DayHourHeatChart cells={dayHourHeat.cells} />
           </div>
         ) : null}
 

@@ -181,6 +181,14 @@
         "icon": "Infinity"
     },
     {
+        "name": "all you can eat",
+        "icon": "Infinity",
+        "synonyms": [
+            "ayce",
+            "all-you-can-eat"
+        ]
+    },
+    {
         "name": "happy hour",
         "rank": 1,
         "icon": "Clock",
@@ -318,7 +326,8 @@
         "name": "pasta",
         "icon": "CookingPot",
         "synonyms": [
-            "spaghetti"
+            "spaghetti",
+            "gnocchi"
         ]
     },
     {
@@ -342,7 +351,11 @@
     },
     {
         "name": "roast",
-        "icon": "Ham"
+        "icon": "Ham",
+        "synonyms": [
+            "sunday roast dinner",
+            "sunday roast"
+        ]
     },
     {
         "name": "chicken parmigiana",
@@ -396,7 +409,8 @@
             "steak & chips",
             "porterhouse",
             "rump",
-            "sirloin"
+            "sirloin",
+            "t-bone"
         ]
     },
     {
@@ -528,7 +542,8 @@
     },
     {
         "name": "raffle",
-        "icon": "Ticket"
+        "icon": "Ticket",
+        "noprice": true
     },
     {
         "name": "tarot",
@@ -570,7 +585,8 @@
     },
     {
         "name": "meat tray",
-        "icon": "ChairsTablePlatter"
+        "icon": "ChairsTablePlatter",
+        "noprice": true
     },
     {
         "name": "pool",
@@ -586,7 +602,10 @@
     },
     {
         "name": "student night",
-        "icon": "GraduationCap"
+        "icon": "GraduationCap",
+        "synonyms": [
+            "uni night"
+        ]
     },
     {
         "name": "locals night",

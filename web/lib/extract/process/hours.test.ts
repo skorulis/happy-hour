@@ -126,6 +126,9 @@ describe("parseDealHours", () => {
     expect(parseDealHours("6pm rego for 6.30pm start")).toEqual(
       between(18 * 60, 24 * 60),
     );
+    expect(parseDealHours("6PM REGO, 6.30PM START")).toEqual(
+      between(18 * 60, 24 * 60),
+    );
   });
 
   it("returns null for unparseable input", () => {

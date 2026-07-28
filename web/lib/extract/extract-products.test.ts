@@ -357,4 +357,24 @@ describe("extractProducts", () => {
       { name: "wine", price: 8 },
     ]);
   });
+
+  it("never associates a price with noprice products", () => {
+    expect(
+      extractProducts({
+        title: "$5 raffle",
+        details: null,
+      }),
+    ).toEqual({
+      products: [{ name: "raffle", price: null }],
+    });
+
+    expect(
+      extractProducts({
+        title: "Meat tray $20",
+        details: null,
+      }),
+    ).toEqual({
+      products: [{ name: "meat tray", price: null }],
+    });
+  });
 });

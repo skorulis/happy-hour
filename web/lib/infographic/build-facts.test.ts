@@ -36,6 +36,10 @@ describe("buildRegionInfographicFacts", () => {
         { hour: 17, count: 30 },
         { hour: 18, count: 20 },
       ],
+      dayHourCounts: [
+        { dayOfWeek: 6, hour: 17, count: 12 },
+        { dayOfWeek: 5, hour: 17, count: 8 },
+      ],
       topProducts: [
         { name: "Beer", count: 12 },
         { name: "Cocktails", count: 9 },
@@ -77,6 +81,8 @@ describe("buildRegionInfographicFacts", () => {
     expect(facts.dayCounts).toHaveLength(2);
     expect(facts.peakStartHour).toEqual({ hour: 17, count: 30 });
     expect(facts.startHourCounts).toHaveLength(2);
+    expect(facts.peakDayHour).toEqual({ dayOfWeek: 6, hour: 17, count: 12 });
+    expect(facts.dayHourCounts).toHaveLength(2);
     expect(facts.coveragePercent).toBeCloseTo(32);
     expect(facts.topProducts).toHaveLength(2);
     expect(facts.topProducts[0]).toMatchObject({
@@ -101,6 +107,7 @@ describe("buildRegionInfographicFacts", () => {
       venuesWithDeals: 2,
       dayCounts: [],
       startHourCounts: [],
+      dayHourCounts: [],
       topProducts: [
         { name: "Beer", count: 50 },
         { name: "Wine", count: 20 },
@@ -126,6 +133,7 @@ describe("buildRegionInfographicFacts", () => {
       venuesWithDeals: 2,
       dayCounts: [],
       startHourCounts: [],
+      dayHourCounts: [],
       topProducts: [],
       suburbs: [
         suburb({
@@ -143,6 +151,7 @@ describe("buildRegionInfographicFacts", () => {
     expect(facts.busiestDay).toBeNull();
     expect(facts.dayCounts).toEqual([]);
     expect(facts.peakStartHour).toBeNull();
+    expect(facts.peakDayHour).toBeNull();
     expect(facts.coveragePercent).toBe(100);
   });
 });
@@ -155,6 +164,7 @@ describe("composeRegionInfographic", () => {
       venuesWithDeals: 2,
       dayCounts: [{ dayOfWeek: 6, count: 10 }],
       startHourCounts: [{ hour: 17, count: 8 }],
+      dayHourCounts: [{ dayOfWeek: 6, hour: 17, count: 5 }],
       topProducts: [{ name: "Beer", count: 3 }],
       suburbs: [
         suburb({
@@ -174,6 +184,7 @@ describe("composeRegionInfographic", () => {
     expect(ids).not.toContain("densest");
     expect(ids).toContain("weekdayMix");
     expect(ids).toContain("startHourMix");
+    expect(ids).toContain("dayHourHeat");
     expect(ids).toContain("topProducts");
     expect(ids).toContain("coverage");
     expect(ids).not.toContain("perCapita");
@@ -189,6 +200,14 @@ describe("composeRegionInfographic", () => {
     );
     expect(clock?.id === "startHourMix" && slotSupporting(clock)).toBe(
       "100% of timed deals start then",
+    );
+
+    const heat = composition.slots.find((slot) => slot.id === "dayHourHeat");
+    expect(heat?.id === "dayHourHeat" && slotHeadline(heat)).toBe(
+      "Friday 5pm peaks",
+    );
+    expect(heat?.id === "dayHourHeat" && slotSupporting(heat)).toBe(
+      "100% of happy hour coverage",
     );
 
     const drinks = composition.slots.find((slot) => slot.id === "topProducts");
@@ -207,6 +226,7 @@ describe("composeRegionInfographic", () => {
       venuesWithDeals: 8,
       dayCounts: [{ dayOfWeek: 5, count: 18 }],
       startHourCounts: [{ hour: 17, count: 10 }],
+      dayHourCounts: [{ dayOfWeek: 5, hour: 17, count: 4 }],
       topProducts: [{ name: "Wine", count: 4 }],
       suburbs: [
         suburb({
@@ -234,13 +254,14 @@ describe("composeRegionInfographic", () => {
     ]);
   });
 
-  it("omits weekdayMix and startHourMix when there are no schedule counts", () => {
+  it("omits weekdayMix, startHourMix, and dayHourHeat when there are no schedule counts", () => {
     const facts = buildRegionInfographicFacts({
       regionId: 1,
       regionName: "Sydney",
       venuesWithDeals: 1,
       dayCounts: [],
       startHourCounts: [],
+      dayHourCounts: [],
       topProducts: [],
       suburbs: [
         suburb({ id: 1, name: "Empty", dealCount: 1, venueCount: 1 }),
@@ -252,6 +273,9 @@ describe("composeRegionInfographic", () => {
     );
     expect(composition.slots.map((slot) => slot.id)).not.toContain(
       "startHourMix",
+    );
+    expect(composition.slots.map((slot) => slot.id)).not.toContain(
+      "dayHourHeat",
     );
   });
 });

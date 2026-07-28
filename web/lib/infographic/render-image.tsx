@@ -8,6 +8,7 @@ import {
   buildHappyHourClockGeometry,
   formatHourLabel,
 } from "@/lib/infographic/happy-hour-clock";
+import { buildDayHourHeatGrid } from "@/lib/infographic/day-hour-heat";
 import { productIconDataUri } from "@/lib/infographic/drink-icon-data-uri";
 import { loadInfographicFonts } from "@/lib/infographic/og-fonts";
 import type {
@@ -17,6 +18,7 @@ import type {
 } from "@/lib/infographic/types";
 import { INFOGRAPHIC_IMAGE_SIZES } from "@/lib/infographic/types";
 import {
+  formatDayAbbrev,
   formatRegionInfographicTitle,
   slotEyebrow,
   slotHeadline,
@@ -414,6 +416,133 @@ function StartHourMixBlock({
   );
 }
 
+function DayHourHeatBlock({
+  slot,
+  compact,
+}: {
+  slot: Extract<InfographicSlot, { id: "dayHourHeat" }>;
+  compact?: boolean;
+}) {
+  const grid = buildDayHourHeatGrid(slot.cells);
+  const cellSize = compact ? 18 : 22;
+  const labelWidth = compact ? 36 : 42;
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: compact ? 12 : 16,
+        width: "100%",
+      }}
+    >
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div
+          style={{
+            display: "flex",
+            fontSize: compact ? 18 : 22,
+            fontWeight: 600,
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
+            color: COLORS.accentSoft,
+          }}
+        >
+          {slotEyebrow(slot)}
+        </div>
+        <div
+          style={{
+            display: "flex",
+            fontSize: compact ? 28 : 34,
+            fontWeight: 600,
+            color: COLORS.secondary,
+          }}
+        >
+          {slotHeadline(slot)}
+          {slotSupporting(slot) ? ` · ${slotSupporting(slot)}` : ""}
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 4,
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            gap: 4,
+            paddingLeft: labelWidth,
+          }}
+        >
+          {grid.hours.map((hour) => (
+            <div
+              key={`hh-${hour}`}
+              style={{
+                display: "flex",
+                width: cellSize,
+                height: 18,
+                alignItems: "flex-end",
+                justifyContent: "center",
+                fontSize: 11,
+                color: COLORS.muted,
+              }}
+            >
+              {hour % 3 === 0 ? formatHourLabel(hour) : ""}
+            </div>
+          ))}
+        </div>
+        {grid.days.map((dayOfWeek) => (
+          <div
+            key={`hd-${dayOfWeek}`}
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 4,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                width: labelWidth,
+                fontSize: compact ? 14 : 16,
+                fontWeight: 600,
+                color: COLORS.secondary,
+              }}
+            >
+              {formatDayAbbrev(dayOfWeek)}
+            </div>
+            {grid.hours.map((hour) => {
+              const cell = grid.cells.find(
+                (entry) =>
+                  entry.dayOfWeek === dayOfWeek && entry.hour === hour,
+              )!;
+              return (
+                <div
+                  key={`hc-${dayOfWeek}-${hour}`}
+                  style={{
+                    display: "flex",
+                    width: cellSize,
+                    height: cellSize,
+                    borderRadius: 3,
+                    backgroundColor: cell.color,
+                    border: cell.isPeak
+                      ? `2px solid ${COLORS.accentSoft}`
+                      : "2px solid transparent",
+                  }}
+                />
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function DrinkMixBlock({
   slot,
   compact,
@@ -546,6 +675,9 @@ export async function renderRegionInfographicImage(
   const startHourMix = composition.slots.find(
     (slot) => slot.id === "startHourMix",
   );
+  const dayHourHeat = composition.slots.find(
+    (slot) => slot.id === "dayHourHeat",
+  );
   const topProducts = composition.slots.find(
     (slot) => slot.id === "topProducts",
   );
@@ -554,6 +686,7 @@ export async function renderRegionInfographicImage(
       slot.id !== "headline" &&
       slot.id !== "weekdayMix" &&
       slot.id !== "startHourMix" &&
+      slot.id !== "dayHourHeat" &&
       slot.id !== "topProducts",
   );
   const gridColumns = isOg ? 3 : 2;
@@ -674,6 +807,18 @@ export async function renderRegionInfographicImage(
               }}
             >
               <StartHourMixBlock slot={startHourMix} compact={compact} />
+            </div>
+          ) : null}
+
+          {dayHourHeat && dayHourHeat.id === "dayHourHeat" ? (
+            <div
+              style={{
+                display: "flex",
+                marginTop: compact ? 8 : 12,
+                marginBottom: compact ? 8 : 12,
+              }}
+            >
+              <DayHourHeatBlock slot={dayHourHeat} compact={compact} />
             </div>
           ) : null}
 

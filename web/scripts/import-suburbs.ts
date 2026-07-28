@@ -14,6 +14,10 @@ const REQUIRED_REGION_NAMES = [
   "Adelaide",
   "Darwin",
   "The Sunshine Coast",
+  "Central Coast",
+  "Blue Mountains",
+  "Hawkesbury",
+  "Wollondilly",
   "Regional NSW",
 ] as const;
 
@@ -204,6 +208,25 @@ function resolveRegionId(
   if (entry.local_goverment_area === "Sunshine Coast (Regional Council)") {
     return regionIdsByName.get("The Sunshine Coast") ?? null;
   }
+  // Prefer Central Coast LGA over Greater Sydney.
+  if (
+    entry.local_goverment_area === "Central Coast (City)" &&
+    entry.state === "NSW"
+  ) {
+    return regionIdsByName.get("Central Coast") ?? null;
+  }
+  // Prefer Blue Mountains LGA over Greater Sydney.
+  if (entry.local_goverment_area === "Blue Mountains (City)") {
+    return regionIdsByName.get("Blue Mountains") ?? null;
+  }
+  // Prefer Hawkesbury LGA over Greater Sydney.
+  if (entry.local_goverment_area === "Hawkesbury (City)") {
+    return regionIdsByName.get("Hawkesbury") ?? null;
+  }
+  // Prefer Wollondilly LGA over Greater Sydney.
+  if (entry.local_goverment_area === "Wollondilly (Area)") {
+    return regionIdsByName.get("Wollondilly") ?? null;
+  }
   const greaterRegion = GREATER_STATISTIC_AREA_REGIONS[entry.statistic_area];
   if (greaterRegion) {
     return regionIdsByName.get(greaterRegion) ?? null;
@@ -226,7 +249,7 @@ function hasMissingFields(
     (existing.sqkm == null && entry.sqkm != null) ||
     (existing.population == null && entry.population != null) ||
     (existing.statistic_area == null && entry.statistic_area != null) ||
-    (existing.region_id == null && regionId != null)
+    existing.region_id !== regionId
   );
 }
 
@@ -296,6 +319,8 @@ function upsertCatalog(
     `,
   );
 
+  // Region is derived from ABS LGA / statistic area rules; always sync so a
+  // prior Greater Sydney assignment can be corrected to Central Coast, etc.
   const updateStmt = db.prepare(
     `
     UPDATE suburb
@@ -306,7 +331,7 @@ function upsertCatalog(
         sqkm = COALESCE(sqkm, ?),
         population = COALESCE(population, ?),
         statistic_area = COALESCE(statistic_area, ?),
-        region_id = COALESCE(region_id, ?)
+        region_id = ?
     WHERE id = ?
     `,
   );
@@ -367,7 +392,7 @@ function upsertCatalog(
       }
 
       stats.updated += 1;
-      if (existing.region_id == null && regionId != null) {
+      if (existing.region_id !== regionId && regionId != null) {
         stats.regionsAssigned += 1;
       }
       run(() => {

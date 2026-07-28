@@ -135,10 +135,10 @@ export function parseDealHours(str: string): DealHours | null {
     return makeBetween(12 * 60, 14 * 60);
   }
 
-  // "6PM REGO FOR 6:30PM START" → from registration through midnight.
+  // "6PM REGO FOR 6:30PM START" / "6PM REGO, 6.30PM START" → rego through midnight.
   {
     const regoMatch = new RegExp(
-      `^(${TIME_TOKEN})\\s+rego(?:\\s+for\\s+${TIME_TOKEN}\\s+start)?$`,
+      `^(${TIME_TOKEN})\\s+rego(?:\\s*(?:for|,)\\s*${TIME_TOKEN}\\s+start)?$`,
       "i",
     ).exec(normalized);
     if (regoMatch) {

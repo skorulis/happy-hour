@@ -13,6 +13,7 @@ const FORMAT_SLOT_ORDER: Record<InfographicFormat, InfographicSlotId[]> = {
     "headline",
     "weekdayMix",
     "startHourMix",
+    "dayHourHeat",
     "densest",
     "perCapita",
     "topProducts",
@@ -23,6 +24,7 @@ const FORMAT_SLOT_ORDER: Record<InfographicFormat, InfographicSlotId[]> = {
     "headline",
     "weekdayMix",
     "startHourMix",
+    "dayHourHeat",
     "densest",
     "perCapita",
     "topProducts",
@@ -32,6 +34,7 @@ const FORMAT_SLOT_ORDER: Record<InfographicFormat, InfographicSlotId[]> = {
     "headline",
     "weekdayMix",
     "startHourMix",
+    "dayHourHeat",
     "densest",
     "perCapita",
     "topProducts",
@@ -77,6 +80,22 @@ function slotFromFacts(
         id: "startHourMix",
         hours,
         peakHour: facts.peakStartHour.hour,
+      };
+    }
+    case "dayHourHeat": {
+      if (!facts.peakDayHour) return null;
+      const total = facts.dayHourCounts.reduce(
+        (sum, cell) => sum + cell.count,
+        0,
+      );
+      if (total <= 0) return null;
+      return {
+        id: "dayHourHeat",
+        cells: facts.dayHourCounts,
+        peakDayOfWeek: facts.peakDayHour.dayOfWeek,
+        peakHour: facts.peakDayHour.hour,
+        peakCount: facts.peakDayHour.count,
+        total,
       };
     }
     case "topProducts":
