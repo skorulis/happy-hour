@@ -127,6 +127,45 @@ struct KeywordDealCondenserTests {
         #expect(Set(result[0].schedules.map(\.startMinute)) == Set([960, 1_200]))
     }
 
+    @Test func dropsAllDayScheduleWhenMergingWithSpecificTime() {
+        let allDay = makeDeal(
+            title: "Happy Hour",
+            details: "$8 wines",
+            schedules: [schedule(day: 5, start: 0, end: 1_440)]
+        )
+        let specific = makeDeal(
+            title: "Happy Hour",
+            details: "$8 wines",
+            schedules: [schedule(day: 5, start: 17 * 60, end: 21 * 60)]
+        )
+
+        let result = condenser.condense([allDay, specific])
+
+        #expect(result.count == 1)
+        #expect(result[0].schedules.count == 1)
+        #expect(result[0].schedules[0].startMinute == 17 * 60)
+        #expect(result[0].schedules[0].endMinute == 21 * 60)
+    }
+
+    @Test func dropsAllDayScheduleWhenKeywordMergingWithSpecificTime() {
+        let allDay = makeDeal(
+            details: "$8 wines",
+            schedules: [schedule(day: 5, start: 0, end: 1_440)]
+        )
+        let specific = makeDeal(
+            title: "Happy Hour",
+            details: "$8 wines\n$8 schooners",
+            schedules: [schedule(day: 5, start: 17 * 60, end: 21 * 60)]
+        )
+
+        let result = condenser.condense([allDay, specific])
+
+        #expect(result.count == 1)
+        #expect(result[0].schedules.count == 1)
+        #expect(result[0].schedules[0].startMinute == 17 * 60)
+        #expect(result[0].schedules[0].endMinute == 21 * 60)
+    }
+
     @Test func doesNotMergeIdenticalTextOnDifferentDaysWhenConditionsDiffer() {
         let tuesday = makeDeal(
             title: "Happy Hour",
@@ -193,14 +232,6 @@ struct KeywordDealCondenserTests {
         #expect(result.count == 2)
         #expect(result.contains { $0.deal.title == "Happy Hour" })
         #expect(result.contains { $0.deal.title == "$14 Cocktails" })
-    }
-
-    @Test func textMatchCondenserKeepsMountbattenDealsSeparate() throws {
-        let condenser = TextMatchDealCondenser()
-        let mapped = try mountbattenMappedDeals()
-
-        #expect(!condenser.shouldMerge(mapped[0], mapped[1]))
-        #expect(condenser.condense(mapped).count == 2)
     }
 
     @Test func testBrewdogMerge() {

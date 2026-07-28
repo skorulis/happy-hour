@@ -10,6 +10,7 @@ Shared keyword list used for search suggestions and query expansion. Defined in 
 | `rank` | no | Lower number = higher priority for **initial** suggestions when the What field is focused with no typed text (e.g. `happy hour` → 1, `drinks` → 2, `food` → 3). |
 | `groups` | no | Other keyword `name` values implicitly included when this keyword is used in search. For example, selecting `beer` also matches deals mentioning `schooner`, `pint`, or `jugs`. Group expansion happens at search time only — child keywords are not shown as extra chips. |
 | `synonyms` | no | Alternate substrings that map to this product when matching deal title/details text (e.g. `cocktail` → `cocktails`). Unlike `groups`, synonyms are not separate catalog keywords and are not used for search-group expansion. |
+| `match` | no | When `false`, this product is never searched during extract / map-icon text matching. Use for top-level category keywords (e.g. `drinks`, `food`, `events`) that exist for search suggestions and group expansion only. Omit or `true` to allow matching. |
 | `icon` | no | Registered icon name (PascalCase, e.g. `Beer`, `Pizza`) used as the map marker when deal text matches this keyword. Icons may come from Lucide, Lucide Lab, or custom icons — each name must exist in the web `ProductMapIcon` registry. Omit when no suitable icon exists. |
 
 ## Example
@@ -33,6 +34,18 @@ Searching for `beer` will also match deals containing any of `schooner`, `pint`,
 ```
 
 Deal text containing `cocktail` (singular) matches the `cocktails` product during extract and map-icon matching.
+
+```json
+{
+  "name": "drinks",
+  "rank": 2,
+  "icon": "Wine",
+  "match": false,
+  "groups": ["beer", "cocktails", "wine"]
+}
+```
+
+`drinks` stays available as a search suggestion and expands to its groups, but deal text mentioning “drinks” does not extract or map-icon-match the `drinks` product itself.
 
 ## Match ignore phrases
 

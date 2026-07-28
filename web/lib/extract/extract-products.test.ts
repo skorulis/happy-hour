@@ -305,12 +305,28 @@ describe("extractProducts", () => {
 
   it("shares one price across bare and-joined catalog products", () => {
     const result = extractProducts({
-      title: "$5 nachos and drinks all night",
+      title: "$5 nachos and beer all night",
       details: null,
     });
 
     expect(result.products.find((p) => p.name === "nachos")?.price).toBe(5);
-    expect(result.products.find((p) => p.name === "drinks")?.price).toBe(5);
+    expect(result.products.find((p) => p.name === "beer")?.price).toBe(5);
+  });
+
+  it("does not extract top-level category products", () => {
+    expect(
+      extractProducts({
+        title: "$5 nachos and drinks all night",
+        details: null,
+      }).products.map((p) => p.name),
+    ).toEqual(["nachos"]);
+
+    expect(
+      extractProducts({
+        title: "Food specials and events tonight",
+        details: null,
+      }).products.map((p) => p.name),
+    ).toEqual([]);
   });
 
   it("does not share a price past a with clause", () => {
@@ -332,7 +348,6 @@ describe("extractProducts", () => {
 
     expect(result.products).toEqual([
       { name: "happy hour", price: null },
-      { name: "drinks", price: null },
       { name: "beer", price: null },
       { name: "cocktails", price: 19 },
       { name: "schooner", price: 8 },

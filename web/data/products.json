@@ -3,6 +3,7 @@
         "name": "drinks",
         "rank": 2,
         "icon": "Wine",
+        "match": false,
         "groups": [
             "beer",
             "cocktails",
@@ -59,7 +60,10 @@
     },
     {
         "name": "champagne",
-        "icon": "BottleWine"
+        "icon": "BottleWine",
+        "synonyms": [
+            "champers"
+        ]
     },
     {
         "name": "prosecco",
@@ -192,6 +196,7 @@
     {
         "name": "food",
         "rank": 3,
+        "match": false,
         "synonyms": [
             "meal",
             "pub classics"
@@ -409,6 +414,7 @@
     },
     {
         "name": "events",
+        "match": false,
         "icon": "CalendarDays",
         "groups": [
             "trivia",

@@ -7,6 +7,8 @@ export type Product = {
   groups?: string[];
   synonyms?: string[];
   hidden?: boolean;
+  /** When false, skip extract / map-icon text matching for this product. */
+  match?: boolean;
   icon?: string;
 };
 
@@ -30,6 +32,7 @@ function mergeProducts(raw: Product[]): Product[] {
         groups: product.groups ? [...new Set(product.groups)] : undefined,
         synonyms: product.synonyms ? [...new Set(product.synonyms)] : undefined,
         hidden: product.hidden,
+        match: product.match,
         icon: product.icon,
       });
       continue;
@@ -48,6 +51,8 @@ function mergeProducts(raw: Product[]): Product[] {
       groups: groups.length > 0 ? groups : undefined,
       synonyms: synonyms.length > 0 ? synonyms : undefined,
       hidden: existing.hidden || product.hidden,
+      match:
+        existing.match === false || product.match === false ? false : existing.match ?? product.match,
       icon: existing.icon ?? product.icon,
     });
   }
@@ -67,6 +72,10 @@ const productsByName = new Map(
 
 const productsWithIcons = products.filter(
   (product): product is Product & { icon: string } => !!product.icon,
+);
+
+const matchableProductsWithIcons = productsWithIcons.filter(
+  (product) => product.match !== false,
 );
 
 function isExcluded(name: string, exclude: Set<string>): boolean {
@@ -207,7 +216,7 @@ function findProductsMatchingText(text: string): Product[] {
   }
 
   const ignoreRanges = collectIgnoreRanges(text);
-  const matches = productsWithIcons.filter(
+  const matches = matchableProductsWithIcons.filter(
     (product) => collectMatchSpans(text, product, ignoreRanges).length > 0,
   );
 
