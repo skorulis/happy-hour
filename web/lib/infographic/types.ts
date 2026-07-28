@@ -94,6 +94,7 @@ export const INFOGRAPHIC_IMAGE_SIZES: Record<
   { width: number; height: number }
 > = {
   og: { width: 1200, height: 630 },
-  square: { width: 1080, height: 1080 },
+  /** Taller than 1:1 so weekday + drink charts + suburb tiles fit without clipping. */
+  square: { width: 1080, height: 1620 },
   story: { width: 1080, height: 1920 },
 };

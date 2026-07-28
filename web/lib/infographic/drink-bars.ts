@@ -92,7 +92,11 @@ export function iconCountForWidth(
   return Math.max(1, Math.round((widthPercent / 100) * maxIcons));
 }
 
-export function buildDrinkBarRows(products: RegionProductHit[]): DrinkBarRow[] {
+export function buildDrinkBarRows(
+  products: RegionProductHit[],
+  options?: { maxIcons?: number },
+): DrinkBarRow[] {
+  const maxIcons = options?.maxIcons ?? DRINK_BAR_MAX_ICONS;
   const maxCount = products.reduce(
     (max, product) => Math.max(max, product.count),
     0,
@@ -103,7 +107,7 @@ export function buildDrinkBarRows(products: RegionProductHit[]): DrinkBarRow[] {
       ...product,
       color: drinkBarColor(index),
       widthPercent,
-      iconCount: iconCountForWidth(widthPercent),
+      iconCount: iconCountForWidth(widthPercent, maxIcons),
       isLeader: index === 0,
     };
   });

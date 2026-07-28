@@ -267,10 +267,7 @@
     },
     {
         "name": "cheese plate",
-        "icon": "Cheese",
-        "synonyms": [
-            "cheese"
-        ]
+        "icon": "Cheese"
     },
     {
         "name": "fish & chips",
@@ -319,7 +316,10 @@
     },
     {
         "name": "pasta",
-        "icon": "CookingPot"
+        "icon": "CookingPot",
+        "synonyms": [
+            "spaghetti"
+        ]
     },
     {
         "name": "pie",

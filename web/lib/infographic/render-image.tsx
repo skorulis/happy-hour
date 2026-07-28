@@ -5,6 +5,7 @@ import {
 } from "@/lib/infographic/beer-glass";
 import { buildDrinkBarRows } from "@/lib/infographic/drink-bars";
 import { productIconDataUri } from "@/lib/infographic/drink-icon-data-uri";
+import { loadInfographicFonts } from "@/lib/infographic/og-fonts";
 import type {
   InfographicComposition,
   InfographicFormat,
@@ -19,7 +20,8 @@ import {
 } from "@/lib/infographic/copy";
 
 const COLORS = {
-  bg: "#081426",
+  pageBg: "#081426",
+  cardBg: "#1c202a",
   fg: "#f8fafc",
   secondary: "#cbd5e1",
   muted: "#94a3b8",
@@ -238,7 +240,9 @@ function DrinkMixBlock({
   slot: Extract<InfographicSlot, { id: "topProducts" }>;
   compact?: boolean;
 }) {
-  const rows = buildDrinkBarRows(slot.products);
+  const rows = buildDrinkBarRows(slot.products, {
+    maxIcons: compact ? 8 : 12,
+  });
   const iconSize = compact ? 16 : 20;
 
   return (
@@ -346,13 +350,16 @@ function DrinkMixBlock({
   );
 }
 
-export function renderRegionInfographicImage(
+export async function renderRegionInfographicImage(
   composition: InfographicComposition,
   format: Exclude<InfographicFormat, "page">,
-): ImageResponse {
+): Promise<ImageResponse> {
   const size = INFOGRAPHIC_IMAGE_SIZES[format];
+  const fonts = await loadInfographicFonts();
   const isOg = format === "og";
   const isStory = format === "story";
+  const isSquare = format === "square";
+  const compact = isOg || isSquare;
   const headline = composition.slots.find((slot) => slot.id === "headline");
   const weekdayMix = composition.slots.find((slot) => slot.id === "weekdayMix");
   const topProducts = composition.slots.find(
@@ -365,6 +372,11 @@ export function renderRegionInfographicImage(
       slot.id !== "topProducts",
   );
   const gridColumns = isOg ? 3 : 2;
+  const outerPad = isOg ? 24 : isStory ? 44 : 32;
+  const innerPad = isStory ? 52 : isOg ? 36 : 44;
+  const cardRadius = isOg ? 24 : 32;
+  const cardWidth = size.width - outerPad * 2;
+  const cardHeight = size.height - outerPad * 2;
 
   return new ImageResponse(
     (
@@ -373,135 +385,150 @@ export function renderRegionInfographicImage(
           width: "100%",
           height: "100%",
           display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-          padding: isStory ? 72 : isOg ? 48 : 64,
-          backgroundColor: COLORS.bg,
-          backgroundImage:
-            "radial-gradient(ellipse 100% 80% at 15% -10%, rgba(124, 58, 87, 0.55) 0%, transparent 55%), radial-gradient(ellipse 70% 50% at 100% 0%, rgba(245, 158, 11, 0.2) 0%, transparent 50%)",
-          color: COLORS.fg,
-          fontFamily: "sans-serif",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: COLORS.pageBg,
+          fontFamily: "Geist",
         }}
       >
         <div
           style={{
+            width: cardWidth,
+            height: cardHeight,
             display: "flex",
             flexDirection: "column",
-            gap: isOg ? 12 : 20,
+            justifyContent: "flex-start",
+            padding: innerPad,
+            borderRadius: cardRadius,
+            border: `3px solid ${COLORS.border}`,
+            overflow: "hidden",
+            backgroundColor: COLORS.cardBg,
+            backgroundImage:
+              "radial-gradient(ellipse 100% 80% at 15% -10%, rgba(124, 58, 87, 0.55) 0%, transparent 55%), radial-gradient(ellipse 70% 50% at 100% 0%, rgba(245, 158, 11, 0.2) 0%, transparent 50%)",
+            color: COLORS.fg,
           }}
         >
-          <div
-            style={{
-              display: "flex",
-              fontSize: isOg ? 22 : 28,
-              fontWeight: 600,
-              letterSpacing: "0.22em",
-              textTransform: "uppercase",
-              color: COLORS.accentSoft,
-            }}
-          >
-            DuskRoute
-          </div>
-          <div
-            style={{
-              display: "flex",
-              fontSize: isOg ? 56 : isStory ? 84 : 72,
-              fontWeight: 700,
-              lineHeight: 1.05,
-            }}
-          >
-            {composition.regionName}
-          </div>
-          <div
-            style={{
-              display: "flex",
-              fontSize: isOg ? 26 : 32,
-              color: COLORS.secondary,
-            }}
-          >
-            {formatRegionInfographicTitle(composition.regionName)}
-          </div>
-        </div>
-
-        {headline ? (
           <div
             style={{
               display: "flex",
               flexDirection: "column",
-              gap: 8,
-              borderBottom: `2px solid ${COLORS.border}`,
-              paddingBottom: isOg ? 16 : 24,
-              marginTop: isOg ? 16 : 28,
+              gap: compact ? 10 : 16,
             }}
           >
-            <SlotBlock
-              eyebrow={slotEyebrow(headline)}
-              headline={slotHeadline(headline)}
-              supporting={slotSupporting(headline)}
-              compact={isOg}
-            />
-          </div>
-        ) : null}
-
-        {weekdayMix && weekdayMix.id === "weekdayMix" ? (
-          <div
-            style={{
-              display: "flex",
-              marginTop: isOg ? 20 : 28,
-              marginBottom: isOg ? 12 : 20,
-            }}
-          >
-            <WeekdayMixBlock slot={weekdayMix} compact={isOg} />
-          </div>
-        ) : null}
-
-        {topProducts && topProducts.id === "topProducts" ? (
-          <div
-            style={{
-              display: "flex",
-              marginTop: isOg ? 12 : 16,
-              marginBottom: isOg ? 12 : 16,
-            }}
-          >
-            <DrinkMixBlock slot={topProducts} compact={isOg} />
-          </div>
-        ) : null}
-
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: isOg ? 24 : 36,
-            marginTop: isOg ? 8 : 16,
-            flexGrow: 1,
-            alignContent: isStory ? "flex-start" : "center",
-          }}
-        >
-          {rest.map((slot) => (
             <div
-              key={slot.id}
               style={{
                 display: "flex",
-                width: `${100 / gridColumns - 2}%`,
-                minWidth: isOg ? 200 : 260,
+                fontSize: isOg ? 22 : 26,
+                fontWeight: 600,
+                letterSpacing: "0.22em",
+                textTransform: "uppercase",
+                color: COLORS.accentSoft,
+              }}
+            >
+              DuskRoute
+            </div>
+            <div
+              style={{
+                display: "flex",
+                fontSize: isOg ? 52 : isStory ? 76 : 64,
+                fontWeight: 700,
+                lineHeight: 1.05,
+              }}
+            >
+              {composition.regionName}
+            </div>
+            <div
+              style={{
+                display: "flex",
+                fontSize: isOg ? 24 : 28,
+                color: COLORS.secondary,
+              }}
+            >
+              {formatRegionInfographicTitle(composition.regionName)}
+            </div>
+          </div>
+
+          {headline ? (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 6,
+                borderBottom: `2px solid ${COLORS.border}`,
+                paddingBottom: compact ? 14 : 20,
+                marginTop: compact ? 14 : 22,
               }}
             >
               <SlotBlock
-                eyebrow={slotEyebrow(slot)}
-                headline={slotHeadline(slot)}
-                supporting={slotSupporting(slot)}
-                compact={isOg || format === "square"}
+                eyebrow={slotEyebrow(headline)}
+                headline={slotHeadline(headline)}
+                supporting={slotSupporting(headline)}
+                compact={compact}
               />
             </div>
-          ))}
+          ) : null}
+
+          {weekdayMix && weekdayMix.id === "weekdayMix" ? (
+            <div
+              style={{
+                display: "flex",
+                marginTop: compact ? 16 : 22,
+                marginBottom: compact ? 8 : 14,
+              }}
+            >
+              <WeekdayMixBlock slot={weekdayMix} compact={compact} />
+            </div>
+          ) : null}
+
+          {topProducts && topProducts.id === "topProducts" ? (
+            <div
+              style={{
+                display: "flex",
+                marginTop: compact ? 8 : 12,
+                marginBottom: compact ? 8 : 12,
+              }}
+            >
+              <DrinkMixBlock slot={topProducts} compact={compact} />
+            </div>
+          ) : null}
+
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: compact ? 20 : 28,
+              marginTop: compact ? 8 : 12,
+              alignContent: "flex-start",
+            }}
+          >
+            {rest.map((slot) => (
+              <div
+                key={slot.id}
+                style={{
+                  display: "flex",
+                  width: `${100 / gridColumns - 2}%`,
+                  minWidth: isOg ? 180 : 240,
+                }}
+              >
+                <SlotBlock
+                  eyebrow={slotEyebrow(slot)}
+                  headline={slotHeadline(slot)}
+                  supporting={slotSupporting(slot)}
+                  compact={compact}
+                />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     ),
     {
       ...size,
+      fonts,
       headers: {
         "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
       },
     },
   );
 }
+
