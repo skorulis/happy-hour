@@ -1,3 +1,4 @@
+import { Flame } from "lucide-react";
 import {
   buildDayHourHeatGrid,
   dayHourHeatAriaLabel,
@@ -56,14 +57,17 @@ export function DayHourHeatChart({ cells, className }: DayHourHeatChartProps) {
                   <div
                     key={`c-${dayOfWeek}-${hour}`}
                     title={`${formatDayAbbrev(dayOfWeek)} ${formatHourLabel(hour)}: ${cell.count}`}
-                    className={[
-                      "aspect-square min-h-4 rounded-[3px]",
-                      cell.isPeak
-                        ? "ring-2 ring-accent-soft ring-offset-1 ring-offset-[#081426]"
-                        : "",
-                    ].join(" ")}
+                    className="relative flex aspect-square min-h-4 items-center justify-center rounded-[3px]"
                     style={{ backgroundColor: cell.color }}
-                  />
+                  >
+                    {cell.isPeak ? (
+                      <Flame
+                        aria-hidden
+                        className="h-[72%] w-[72%] text-[#081426]"
+                        strokeWidth={2.5}
+                      />
+                    ) : null}
+                  </div>
                 );
               })}
             </div>

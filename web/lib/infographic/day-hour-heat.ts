@@ -13,24 +13,30 @@ import {
 
 export const HAPPY_HOUR_HEAT_HOURS = HAPPY_HOUR_CLOCK_HOURS;
 
-/** Amber intensity ramp for heat cells (empty → peak). */
+/** Empty cells stay near the poster background. */
+export const DAY_HOUR_HEAT_EMPTY_COLOR = "#1a2230";
+
+/**
+ * Dark amber ramp for cells with count > 0. Low values sit near-grey but
+ * stay warm (not slate); peak stays bright gold.
+ */
 export const DAY_HOUR_HEAT_COLORS = [
-  "#1a2230", // empty
-  "#3b414d",
-  "#7c3a28",
-  "#a63e00",
-  "#bb5100",
-  "#cf6900",
-  "#e58500",
-  "#f8a600",
-  "#ffd878",
+  "#3d342c", // near-grey amber
+  "#4a3728",
+  "#5c3d22",
+  "#6e4420",
+  "#85531c",
+  "#a05f14",
+  "#c4740a",
+  "#e09420",
+  "#f0c060",
 ] as const;
 
 export type DayHourHeatCell = {
   dayOfWeek: number;
   hour: number;
   count: number;
-  /** 0–1 relative to max cell count in the grid. */
+  /** 0–1 display intensity (sqrt-scaled vs max). */
   intensity: number;
   color: string;
   isPeak: boolean;
@@ -72,13 +78,25 @@ export function hoursCoveredOnScheduleDay(
   return hours;
 }
 
-function colorForIntensity(intensity: number): string {
-  if (intensity <= 0) {
-    return DAY_HOUR_HEAT_COLORS[0]!;
+/**
+ * Soften linear drop-off so mid values stay visibly warm. Peak stays 1;
+ * a cell at 25% of peak still lands around 0.5.
+ */
+export function heatDisplayIntensity(count: number, maxCount: number): number {
+  if (count <= 0 || maxCount <= 0) {
+    return 0;
   }
+  return Math.sqrt(count / maxCount);
+}
+
+export function colorForHeatIntensity(intensity: number): string {
+  if (intensity <= 0) {
+    return DAY_HOUR_HEAT_EMPTY_COLOR;
+  }
+  const scaled = Math.min(1, intensity) * (DAY_HOUR_HEAT_COLORS.length - 1);
   const index = Math.min(
     DAY_HOUR_HEAT_COLORS.length - 1,
-    Math.max(1, Math.round(intensity * (DAY_HOUR_HEAT_COLORS.length - 1))),
+    Math.max(0, Math.round(scaled)),
   );
   return DAY_HOUR_HEAT_COLORS[index]!;
 }
@@ -174,18 +192,14 @@ export function buildDayHourHeatGrid(
   for (const dayOfWeek of WEEKDAY_UI_ORDER) {
     for (const hour of HAPPY_HOUR_HEAT_HOURS) {
       const count = byKey.get(`${dayOfWeek}:${hour}`) ?? 0;
-      const intensity = maxCount > 0 ? count / maxCount : 0;
-      const isPeak =
-        peak !== null &&
-        peak.dayOfWeek === dayOfWeek &&
-        peak.hour === hour &&
-        count > 0;
+      const intensity = heatDisplayIntensity(count, maxCount);
+      const isPeak = maxCount > 0 && count === maxCount;
       cells.push({
         dayOfWeek,
         hour,
         count,
         intensity,
-        color: colorForIntensity(intensity),
+        color: colorForHeatIntensity(intensity),
         isPeak,
       });
     }
@@ -210,6 +224,16 @@ export function dayHourHeatAriaLabel(
   if (!grid.peak || grid.total <= 0) {
     return "No happy hour schedule coverage in the heat map.";
   }
+  const peaks = grid.cells.filter((cell) => cell.isPeak);
   const peakShare = Math.round((grid.peak.count / grid.total) * 100);
+  if (peaks.length > 1) {
+    const labels = peaks
+      .map(
+        (cell) =>
+          `${formatDay(cell.dayOfWeek)} ${formatHour(cell.hour)}`,
+      )
+      .join(", ");
+    return `Happy hour heat map. Tied peaks at ${labels}, each with ${peakShare}% of covered hours.`;
+  }
   return `Happy hour heat map. Peak at ${formatDay(grid.peak.dayOfWeek)} ${formatHour(grid.peak.hour)} with ${peakShare}% of covered hours.`;
 }

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   buildDayHourHeatGrid,
+  DAY_HOUR_HEAT_COLORS,
+  DAY_HOUR_HEAT_EMPTY_COLOR,
   dealMatchesHappyHour,
   hoursCoveredOnScheduleDay,
   pickPeakDayHour,
@@ -141,5 +143,48 @@ describe("pickPeakDayHour / buildDayHourHeatGrid", () => {
     );
     expect(peakCell?.isPeak).toBe(true);
     expect(peakCell?.intensity).toBe(1);
+  });
+
+  it("lifts mid values above a linear grey floor", () => {
+    const grid = buildDayHourHeatGrid([
+      { dayOfWeek: 6, hour: 17, count: 16 },
+      { dayOfWeek: 5, hour: 17, count: 4 },
+      { dayOfWeek: 4, hour: 15, count: 1 },
+    ]);
+    const quarter = grid.cells.find(
+      (cell) => cell.dayOfWeek === 5 && cell.hour === 17,
+    );
+    const low = grid.cells.find(
+      (cell) => cell.dayOfWeek === 4 && cell.hour === 15,
+    );
+    const empty = grid.cells.find(
+      (cell) => cell.dayOfWeek === 2 && cell.hour === 12,
+    );
+
+    expect(quarter?.intensity).toBeCloseTo(0.5);
+    expect(quarter?.color).not.toBe(DAY_HOUR_HEAT_EMPTY_COLOR);
+    expect(low?.intensity).toBeCloseTo(0.25);
+    expect(low?.color).not.toBe(DAY_HOUR_HEAT_EMPTY_COLOR);
+    expect(DAY_HOUR_HEAT_COLORS.includes(low!.color as (typeof DAY_HOUR_HEAT_COLORS)[number])).toBe(
+      true,
+    );
+    expect(empty?.color).toBe(DAY_HOUR_HEAT_EMPTY_COLOR);
+  });
+
+  it("marks every tied max cell as a peak", () => {
+    const grid = buildDayHourHeatGrid([
+      { dayOfWeek: 5, hour: 17, count: 8 },
+      { dayOfWeek: 6, hour: 17, count: 8 },
+      { dayOfWeek: 4, hour: 16, count: 3 },
+    ]);
+    const peaks = grid.cells.filter((cell) => cell.isPeak);
+    expect(peaks).toHaveLength(2);
+    expect(peaks.map((cell) => `${cell.dayOfWeek}:${cell.hour}`).sort()).toEqual([
+      "5:17",
+      "6:17",
+    ]);
+    expect(grid.cells.find((cell) => cell.dayOfWeek === 4 && cell.hour === 16)?.isPeak).toBe(
+      false,
+    );
   });
 });

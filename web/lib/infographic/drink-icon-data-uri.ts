@@ -24,6 +24,9 @@ const STROKE_ICONS: Record<string, IconPaths> = {
     "M10 3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a6 6 0 0 0 1.2 3.6l.6.8A6 6 0 0 1 17 13v8a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1v-8a6 6 0 0 1 1.2-3.6l.6-.8A6 6 0 0 0 10 5z",
     "M17 13h-4a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1h4",
   ],
+  Flame: [
+    "M12 3q1 4 4 6.5t3 5.5a1 1 0 0 1-14 0 5 5 0 0 1 1-3 1 1 0 0 0 5 0c0-2-1.5-3-1.5-5q0-2 2.5-4",
+  ],
 };
 
 /** Custom filled icons → closest Lucide stroke stand-in for Satori cards. */
@@ -66,4 +69,9 @@ export function productIconDataUri(
   const uri = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
   cache.set(cacheKey, uri);
   return uri;
+}
+
+/** Lucide Flame mark for the peak heat-map cell in share images. */
+export function flameIconDataUri(color: string, size: number): string {
+  return productIconDataUri("Flame", color, size);
 }

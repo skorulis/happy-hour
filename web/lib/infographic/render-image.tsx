@@ -9,7 +9,7 @@ import {
   formatHourLabel,
 } from "@/lib/infographic/happy-hour-clock";
 import { buildDayHourHeatGrid } from "@/lib/infographic/day-hour-heat";
-import { productIconDataUri } from "@/lib/infographic/drink-icon-data-uri";
+import { productIconDataUri, flameIconDataUri } from "@/lib/infographic/drink-icon-data-uri";
 import { loadInfographicFonts } from "@/lib/infographic/og-fonts";
 import type {
   InfographicComposition,
@@ -520,6 +520,7 @@ function DayHourHeatBlock({
                 (entry) =>
                   entry.dayOfWeek === dayOfWeek && entry.hour === hour,
               )!;
+              const iconSize = Math.max(10, Math.round(cellSize * 0.7));
               return (
                 <div
                   key={`hc-${dayOfWeek}-${hour}`}
@@ -529,11 +530,19 @@ function DayHourHeatBlock({
                     height: cellSize,
                     borderRadius: 3,
                     backgroundColor: cell.color,
-                    border: cell.isPeak
-                      ? `2px solid ${COLORS.accentSoft}`
-                      : "2px solid transparent",
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
-                />
+                >
+                  {cell.isPeak ? (
+                    <img
+                      src={flameIconDataUri("#081426", iconSize)}
+                      width={iconSize}
+                      height={iconSize}
+                      alt=""
+                    />
+                  ) : null}
+                </div>
               );
             })}
           </div>

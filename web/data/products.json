@@ -146,6 +146,10 @@
     {
         "name": "spirits",
         "icon": "GlassWater",
+        "synonyms": [
+            "fireball",
+            "spirits & mixers"
+        ],
         "groups": [
             "vodka"
         ]
@@ -198,7 +202,8 @@
             "social hour",
             "après hour",
             "aprés hour",
-            "happiest hour"
+            "happiest hour",
+            "sunset hour"
         ]
     },
     {
@@ -590,7 +595,11 @@
     },
     {
         "name": "pool",
-        "icon": "Pool"
+        "icon": "Pool",
+        "synonyms": [
+            "snooker",
+            "billiards"
+        ]
     },
     {
         "name": "darts",
