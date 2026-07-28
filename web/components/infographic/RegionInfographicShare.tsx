@@ -1,7 +1,7 @@
 "use client";
 
 import { useSyncExternalStore, useState } from "react";
-import { Check, Download, Link2, Share2 } from "lucide-react";
+import { Check, Download, Link2, Loader2, Share2 } from "lucide-react";
 
 type RegionInfographicShareProps = {
   url: string;
@@ -17,6 +17,7 @@ export function RegionInfographicShare({
   downloadPath,
 }: RegionInfographicShareProps) {
   const [copied, setCopied] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const canShare = useSyncExternalStore(
     () => () => {},
@@ -48,6 +49,9 @@ export function RegionInfographicShare({
   }
 
   async function downloadImage() {
+    if (downloading) return;
+    setDownloading(true);
+    setStatus(null);
     try {
       const response = await fetch(downloadPath);
       if (!response.ok) {
@@ -62,9 +66,10 @@ export function RegionInfographicShare({
       anchor.click();
       anchor.remove();
       URL.revokeObjectURL(objectUrl);
-      setStatus(null);
     } catch {
       setStatus("Couldn’t download the image");
+    } finally {
+      setDownloading(false);
     }
   }
 
@@ -98,10 +103,16 @@ export function RegionInfographicShare({
         <button
           type="button"
           onClick={() => void downloadImage()}
-          className="inline-flex items-center gap-2 rounded-lg bg-accent px-3 py-2 text-sm font-medium text-accent-fg transition-colors hover:bg-accent-hover"
+          disabled={downloading}
+          aria-busy={downloading}
+          className="inline-flex items-center gap-2 rounded-lg bg-accent px-3 py-2 text-sm font-medium text-accent-fg transition-colors hover:bg-accent-hover disabled:opacity-80"
         >
-          <Download aria-hidden className="h-4 w-4" />
-          Download image
+          {downloading ? (
+            <Loader2 aria-hidden className="h-4 w-4 animate-spin" />
+          ) : (
+            <Download aria-hidden className="h-4 w-4" />
+          )}
+          {downloading ? "Downloading…" : "Download image"}
         </button>
       </div>
       {status ? <p className="text-sm text-danger">{status}</p> : null}

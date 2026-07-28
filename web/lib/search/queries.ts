@@ -40,6 +40,7 @@ import {
 import {
   deal,
   dealSchedule,
+  dealSearchVector,
   geographicRegion,
   suburb,
   venue,
@@ -316,9 +317,6 @@ function dealContentFilters(options: {
 
   return filters;
 }
-
-const dealSearchVector = sql`to_tsvector('english', coalesce(${deal.title}, '') || ' ' || coalesce(${deal.details}, '') || ' ' || coalesce(${deal.conditions}, ''))`;
-
 
 function distanceKmExpression(lat: number, lng: number): SQL {
   return sql`(

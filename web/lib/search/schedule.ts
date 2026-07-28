@@ -401,26 +401,58 @@ export function formatCompactTimeRange(startMinute: number, endMinute: number): 
   return `${start}-${end}`;
 }
 
+function timeRangeKey(startMinute: number, endMinute: number): string {
+  return `${startMinute}-${endMinute}`;
+}
+
+function sortedTimeRangeKeys(keys: Iterable<string>): string[] {
+  return [...keys].sort((a, b) => Number(a.split("-")[0]!) - Number(b.split("-")[0]!));
+}
+
+function formatTimeRangeKey(key: string): string {
+  const [startMinute, endMinute] = key.split("-").map(Number);
+  if (isAllDaySchedule(startMinute, endMinute)) {
+    return "";
+  }
+  return formatCompactTimeRange(startMinute, endMinute);
+}
+
 export function formatDealTimeBadge(schedules: ScheduleSlice[]): string {
   if (schedules.length === 0) {
     return "—";
   }
 
-  const timeRanges = new Set(
-    schedules.map(
-      (schedule) => `${schedule.startMinute}-${schedule.endMinute}`,
-    ),
-  );
-
-  if (timeRanges.size === 1) {
-    const schedule = schedules[0];
-    if (isAllDaySchedule(schedule.startMinute, schedule.endMinute)) {
-      return "";
-    }
-    return formatCompactTimeRange(schedule.startMinute, schedule.endMinute);
+  const timeRangesByDay = new Map<number, Set<string>>();
+  for (const schedule of schedules) {
+    const key = timeRangeKey(schedule.startMinute, schedule.endMinute);
+    const dayRanges = timeRangesByDay.get(schedule.dayOfWeek) ?? new Set();
+    dayRanges.add(key);
+    timeRangesByDay.set(schedule.dayOfWeek, dayRanges);
   }
 
-  return "Various";
+  const sortedRangeKeysPerDay = [...timeRangesByDay.values()].map((ranges) =>
+    sortedTimeRangeKeys(ranges),
+  );
+  const firstDayRanges = sortedRangeKeysPerDay[0]!;
+  const allDaysShareSameRanges = sortedRangeKeysPerDay.every(
+    (ranges) =>
+      ranges.length === firstDayRanges.length &&
+      ranges.every((key, index) => key === firstDayRanges[index]),
+  );
+
+  if (!allDaysShareSameRanges) {
+    return "Various";
+  }
+
+  const formattedRanges = firstDayRanges
+    .map((key) => formatTimeRangeKey(key))
+    .filter(Boolean);
+
+  if (formattedRanges.length === 0) {
+    return "";
+  }
+
+  return formattedRanges.join(", ");
 }
 
 export function formatScheduleSummary(

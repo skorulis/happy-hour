@@ -159,6 +159,35 @@ describe("formatDealTimeBadge", () => {
       ]),
     ).toBe("From 7:30pm");
   });
+
+  it("lists multiple time brackets on the same day", () => {
+    expect(
+      formatDealTimeBadge([
+        { dayOfWeek: 5, startMinute: 16 * 60, endMinute: 18 * 60 },
+        { dayOfWeek: 5, startMinute: 21 * 60, endMinute: 22 * 60 },
+      ]),
+    ).toBe("4-6pm, 9-10pm");
+  });
+
+  it("lists shared time brackets across days", () => {
+    expect(
+      formatDealTimeBadge([
+        { dayOfWeek: 2, startMinute: 16 * 60, endMinute: 18 * 60 },
+        { dayOfWeek: 2, startMinute: 21 * 60, endMinute: 22 * 60 },
+        { dayOfWeek: 3, startMinute: 16 * 60, endMinute: 18 * 60 },
+        { dayOfWeek: 3, startMinute: 21 * 60, endMinute: 22 * 60 },
+      ]),
+    ).toBe("4-6pm, 9-10pm");
+  });
+
+  it("uses Various when times differ by day", () => {
+    expect(
+      formatDealTimeBadge([
+        { dayOfWeek: 2, startMinute: 16 * 60, endMinute: 18 * 60 },
+        { dayOfWeek: 3, startMinute: 17 * 60, endMinute: 19 * 60 },
+      ]),
+    ).toBe("Various");
+  });
 });
 
 describe("isScheduleActiveNow", () => {
@@ -339,6 +368,15 @@ describe("formatDealScheduleLine", () => {
         { dayOfWeek: 4, startMinute: 16 * 60, endMinute: 19 * 60 },
       ]),
     ).toBe("Wed · 4-7pm");
+  });
+
+  it("lists multiple time brackets for a single day", () => {
+    expect(
+      formatDealScheduleLine([
+        { dayOfWeek: 5, startMinute: 16 * 60, endMinute: 18 * 60 },
+        { dayOfWeek: 5, startMinute: 21 * 60, endMinute: 22 * 60 },
+      ]),
+    ).toBe("Thu · 4-6pm, 9-10pm");
   });
 
   it("includes date ranges before schedule details", () => {

@@ -390,5 +390,5 @@ export type VenueOwnership = typeof venueOwnership.$inferSelect;
 export type SyncRun = typeof syncRun.$inferSelect;
 export type SearchQuery = typeof searchQueries.$inferSelect;
 
-/** Full-text search vector for deals (used in raw SQL queries). */
-export const dealSearchVector = sql`to_tsvector('english', coalesce(${deal.title}, '') || ' ' || coalesce(${deal.details}, '') || ' ' || coalesce(${deal.conditions}, ''))`;
+/** Full-text search vector for deals (title + details only; conditions excluded). */
+export const dealSearchVector = sql`to_tsvector('english', coalesce(${deal.title}, '') || ' ' || coalesce(${deal.details}, ''))`;
