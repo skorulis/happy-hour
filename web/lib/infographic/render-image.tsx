@@ -612,27 +612,49 @@ export async function renderRegionInfographicImage(
             </div>
           ) : null}
 
-          {weekdayMix && weekdayMix.id === "weekdayMix" ? (
+          {weekdayMix || dayHourHeat ? (
             <div
               style={{
                 display: "flex",
+                flexDirection:
+                  weekdayMix && dayHourHeat ? "row" : "column",
+                alignItems: "flex-start",
+                gap: compact ? 24 : 32,
+                width: "100%",
                 marginTop: compact ? 16 : 22,
                 marginBottom: compact ? 8 : 14,
+                borderBottom: `2px solid ${COLORS.border}`,
+                paddingBottom: compact ? 16 : 22,
               }}
             >
-              <WeekdayMixBlock slot={weekdayMix} compact={compact} />
-            </div>
-          ) : null}
-
-          {dayHourHeat && dayHourHeat.id === "dayHourHeat" ? (
-            <div
-              style={{
-                display: "flex",
-                marginTop: compact ? 8 : 12,
-                marginBottom: compact ? 8 : 12,
-              }}
-            >
-              <DayHourHeatBlock slot={dayHourHeat} compact={compact} />
+              {weekdayMix && weekdayMix.id === "weekdayMix" ? (
+                <div
+                  style={{
+                    display: "flex",
+                    width: dayHourHeat ? "42%" : "100%",
+                    flexShrink: 0,
+                  }}
+                >
+                  <WeekdayMixBlock slot={weekdayMix} compact={compact} />
+                </div>
+              ) : null}
+              {dayHourHeat && dayHourHeat.id === "dayHourHeat" ? (
+                <div
+                  style={{
+                    display: "flex",
+                    flex: 1,
+                    minWidth: 0,
+                    marginTop:
+                      weekdayMix && dayHourHeat
+                        ? compact
+                          ? 40
+                          : 56
+                        : 0,
+                  }}
+                >
+                  <DayHourHeatBlock slot={dayHourHeat} compact={compact} />
+                </div>
+              ) : null}
             </div>
           ) : null}
 

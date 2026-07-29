@@ -95,43 +95,47 @@ export function RegionInfographicPoster({
           </div>
         ) : null}
 
-        {weekdayMix && weekdayMix.id === "weekdayMix" ? (
-          <div className="space-y-4 border-b border-border-subtle pb-8">
-            <div className="space-y-1">
-              <p className="text-xs font-medium tracking-[0.18em] text-accent-soft uppercase">
-                {slotEyebrow(weekdayMix)}
-              </p>
-              <p className="text-lg font-medium text-secondary">
-                {slotHeadline(weekdayMix)}
-                {slotSupporting(weekdayMix)
-                  ? ` · ${slotSupporting(weekdayMix)}`
-                  : null}
-              </p>
-            </div>
-            <BeerGlassWeekdayChart
-              days={weekdayMix.days}
-              peakDayOfWeek={weekdayMix.peakDayOfWeek}
-            />
-          </div>
-        ) : null}
-
-        {dayHourHeat && dayHourHeat.id === "dayHourHeat" ? (
-          <div className="space-y-4 border-b border-border-subtle pb-8">
-            <div className="space-y-1">
-              <p className="text-xs font-medium tracking-[0.18em] text-accent-soft uppercase">
-                {slotEyebrow(dayHourHeat)}
-              </p>
-              <p className="text-lg font-medium text-secondary">
-                {slotHeadline(dayHourHeat)}
-                {slotSupporting(dayHourHeat)
-                  ? ` · ${slotSupporting(dayHourHeat)}`
-                  : null}
-              </p>
-            </div>
-            <DayHourHeatChart
-              cells={dayHourHeat.cells}
-              regionName={composition.regionName}
-            />
+        {weekdayMix || dayHourHeat ? (
+          <div className="flex flex-col gap-8 border-b border-border-subtle pb-8 md:flex-row md:items-start md:gap-8">
+            {weekdayMix && weekdayMix.id === "weekdayMix" ? (
+              <div className="min-w-0 space-y-4 md:w-[42%] md:shrink-0">
+                <div className="space-y-1">
+                  <p className="text-xs font-medium tracking-[0.18em] text-accent-soft uppercase">
+                    {slotEyebrow(weekdayMix)}
+                  </p>
+                  <p className="text-lg font-medium text-secondary">
+                    {slotHeadline(weekdayMix)}
+                    {slotSupporting(weekdayMix)
+                      ? ` · ${slotSupporting(weekdayMix)}`
+                      : null}
+                  </p>
+                </div>
+                <BeerGlassWeekdayChart
+                  days={weekdayMix.days}
+                  peakDayOfWeek={weekdayMix.peakDayOfWeek}
+                />
+              </div>
+            ) : null}
+            {dayHourHeat && dayHourHeat.id === "dayHourHeat" ? (
+              <div className="min-w-0 flex-1 space-y-4 md:mt-14">
+                <div className="space-y-1">
+                  <p className="text-xs font-medium tracking-[0.18em] text-accent-soft uppercase">
+                    {slotEyebrow(dayHourHeat)}
+                  </p>
+                  <p className="text-lg font-medium text-secondary">
+                    {slotHeadline(dayHourHeat)}
+                    {slotSupporting(dayHourHeat)
+                      ? ` · ${slotSupporting(dayHourHeat)}`
+                      : null}
+                  </p>
+                </div>
+                <DayHourHeatChart
+                  cells={dayHourHeat.cells}
+                  regionName={composition.regionName}
+                  className="w-full max-w-xl md:max-w-none"
+                />
+              </div>
+            ) : null}
           </div>
         ) : null}
 
