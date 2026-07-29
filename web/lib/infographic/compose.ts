@@ -15,8 +15,10 @@ const FORMAT_SLOT_ORDER: Record<InfographicFormat, InfographicSlotId[]> = {
     "densest",
     "perCapita",
     "topProducts",
+    "topFood",
     "coverage",
   ],
+  /** OG stays tight — drinks only, no heat/food. */
   og: ["headline", "weekdayMix", "densest", "topProducts", "coverage"],
   square: [
     "headline",
@@ -25,6 +27,7 @@ const FORMAT_SLOT_ORDER: Record<InfographicFormat, InfographicSlotId[]> = {
     "densest",
     "perCapita",
     "topProducts",
+    "topFood",
     "coverage",
   ],
   story: [
@@ -34,6 +37,7 @@ const FORMAT_SLOT_ORDER: Record<InfographicFormat, InfographicSlotId[]> = {
     "densest",
     "perCapita",
     "topProducts",
+    "topFood",
     "coverage",
   ],
 };
@@ -86,6 +90,9 @@ function slotFromFacts(
     case "topProducts":
       if (facts.topProducts.length === 0) return null;
       return { id: "topProducts", products: facts.topProducts };
+    case "topFood":
+      if (facts.topFood.length === 0) return null;
+      return { id: "topFood", products: facts.topFood };
     case "coverage":
       if (facts.coveragePercent === null || facts.venueCount === 0) return null;
       return {

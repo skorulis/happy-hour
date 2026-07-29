@@ -375,12 +375,14 @@ function DayHourHeatBlock({
   );
 }
 
-function DrinkMixBlock({
+function ProductMixBlock({
   slot,
   compact,
+  fallbackIcon = "Beer",
 }: {
-  slot: Extract<InfographicSlot, { id: "topProducts" }>;
+  slot: Extract<InfographicSlot, { id: "topProducts" | "topFood" }>;
   compact?: boolean;
+  fallbackIcon?: "Beer" | "UtensilsCrossed";
 }) {
   const rows = buildDrinkBarRows(slot.products, {
     maxIcons: compact ? 8 : 12,
@@ -467,7 +469,12 @@ function DrinkMixBlock({
                   // eslint-disable-next-line @next/next/no-img-element -- inline SVG data URIs for OG image render
                   <img
                     key={`${row.name}-${index}`}
-                    src={productIconDataUri(row.icon, row.color, iconSize)}
+                    src={productIconDataUri(
+                      row.icon,
+                      row.color,
+                      iconSize,
+                      fallbackIcon,
+                    )}
                     width={iconSize}
                     height={iconSize}
                     alt=""
@@ -511,12 +518,14 @@ export async function renderRegionInfographicImage(
   const topProducts = composition.slots.find(
     (slot) => slot.id === "topProducts",
   );
+  const topFood = composition.slots.find((slot) => slot.id === "topFood");
   const rest = composition.slots.filter(
     (slot) =>
       slot.id !== "headline" &&
       slot.id !== "weekdayMix" &&
       slot.id !== "dayHourHeat" &&
-      slot.id !== "topProducts",
+      slot.id !== "topProducts" &&
+      slot.id !== "topFood",
   );
   const gridColumns = isOg ? 3 : 2;
   const outerPad = isOg ? 24 : isStory ? 44 : 32;
@@ -666,7 +675,23 @@ export async function renderRegionInfographicImage(
                 marginBottom: compact ? 8 : 12,
               }}
             >
-              <DrinkMixBlock slot={topProducts} compact={compact} />
+              <ProductMixBlock slot={topProducts} compact={compact} />
+            </div>
+          ) : null}
+
+          {topFood && topFood.id === "topFood" ? (
+            <div
+              style={{
+                display: "flex",
+                marginTop: compact ? 8 : 12,
+                marginBottom: compact ? 8 : 12,
+              }}
+            >
+              <ProductMixBlock
+                slot={topFood}
+                compact={compact}
+                fallbackIcon="UtensilsCrossed"
+              />
             </div>
           ) : null}
 

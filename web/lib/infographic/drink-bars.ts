@@ -13,10 +13,10 @@ export const DRINK_BAR_COLORS = [
 export const TOP_DRINK_LIMIT = 5;
 
 /**
- * Largest-remainder percentages over the full drink-hit list (sums to 100 when
+ * Largest-remainder percentages over the full hit list (sums to 100 when
  * total count > 0). Then keep the top N for the chart.
  */
-export function rankTopDrinkHits(
+export function rankTopProductHits(
   hits: RegionProductCount[],
   limit = TOP_DRINK_LIMIT,
 ): RegionProductHit[] {
@@ -60,6 +60,8 @@ export function rankTopDrinkHits(
     percent: hit.percent,
   }));
 }
+
+export const rankTopDrinkHits = rankTopProductHits;
 
 /** Bar fill width as percent of the leader’s count (leader = 100). */
 export function barWidthPercent(count: number, maxCount: number): number {

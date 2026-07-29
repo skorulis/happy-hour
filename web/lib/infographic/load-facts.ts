@@ -1,6 +1,6 @@
 import { buildRegionInfographicFacts } from "@/lib/infographic/build-facts";
 import { tallyHappyHourDayHourCounts } from "@/lib/infographic/day-hour-heat";
-import { tallyProductHitsFromDeals } from "@/lib/infographic/product-tally";
+import { tallyDrinkAndFoodHitsFromDeals } from "@/lib/infographic/product-tally";
 import type { RegionInfographicFacts } from "@/lib/infographic/types";
 import {
   countRegionVenuesWithDeals,
@@ -26,6 +26,8 @@ export async function loadRegionInfographicFacts(input: {
       listRegionDealTextsForMatching(input.regionId),
     ]);
 
+  const productHits = tallyDrinkAndFoodHitsFromDeals(dealTexts);
+
   const facts = buildRegionInfographicFacts({
     regionId: input.regionId,
     regionName: input.regionName,
@@ -33,7 +35,8 @@ export async function loadRegionInfographicFacts(input: {
     venuesWithDeals,
     dayCounts,
     dayHourCounts: tallyHappyHourDayHourCounts(dealSchedules),
-    topProducts: tallyProductHitsFromDeals(dealTexts),
+    topProducts: productHits.drinks,
+    topFood: productHits.food,
   });
 
   return { facts, suburbs };

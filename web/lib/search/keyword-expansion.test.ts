@@ -10,12 +10,13 @@ describe("expandKeywords", () => {
         "beer",
         "schooner",
         "pint",
+        "pot",
         "jugs",
         "guinness",
         "craft beer",
       ]),
     );
-    expect(expanded).toHaveLength(6);
+    expect(expanded).toHaveLength(7);
   });
 
   it("expands groups recursively", () => {
@@ -35,6 +36,7 @@ describe("expandKeywords", () => {
         "cider",
         "schooner",
         "pint",
+        "pot",
         "jugs",
         "guinness",
         "craft beer",
@@ -47,7 +49,7 @@ describe("expandKeywords", () => {
         "mojito",
       ]),
     );
-    expect(expanded).toHaveLength(23);
+    expect(expanded).toHaveLength(24);
   });
 
   it("deduplicates shared descendants", () => {
@@ -58,11 +60,12 @@ describe("expandKeywords", () => {
         "jugs",
         "schooner",
         "pint",
+        "pot",
         "guinness",
         "craft beer",
       ]),
     );
-    expect(expanded).toHaveLength(6);
+    expect(expanded).toHaveLength(7);
   });
 
   it("merges expansions from multiple selected tags for OR search", () => {
@@ -73,19 +76,20 @@ describe("expandKeywords", () => {
         "steak",
         "schooner",
         "pint",
+        "pot",
         "jugs",
         "guinness",
         "craft beer",
       ]),
     );
-    expect(expanded).toHaveLength(7);
+    expect(expanded).toHaveLength(8);
   });
 });
 
 describe("expandKeywordGroups", () => {
   it("keeps each selected token in its own group", () => {
     expect(expandKeywordGroups(["beer", "burger"])).toEqual([
-      ["beer", "schooner", "pint", "jugs", "guinness", "craft beer"],
+      ["beer", "schooner", "pint", "pot", "jugs", "guinness", "craft beer"],
       ["burger"],
     ]);
   });

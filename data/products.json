@@ -28,6 +28,7 @@
         "groups": [
             "schooner",
             "pint",
+            "pot",
             "jugs",
             "guinness",
             "craft beer"
@@ -140,6 +141,14 @@
     {
         "name": "porter",
         "icon": "Beer"
+    },
+    {
+        "name": "pot",
+        "icon": "Beer",
+        "synonyms": [
+            "middy",
+            "half pint"
+        ]
     },
     {
         "name": "sake",

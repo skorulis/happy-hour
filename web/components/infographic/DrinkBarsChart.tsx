@@ -2,22 +2,27 @@ import { ProductMapIcon, isRegisteredProductIcon } from "@/lib/search/ProductMap
 import { buildDrinkBarRows } from "@/lib/infographic/drink-bars";
 import type { RegionProductHit } from "@/lib/infographic/types";
 
-type DrinkBarsChartProps = {
+type ProductBarsChartProps = {
   products: RegionProductHit[];
   className?: string;
+  ariaLabel?: string;
+  /** Fallback when a product has no registered icon (drinks → Beer, food → UtensilsCrossed). */
+  fallbackIcon?: string;
 };
 
-function DrinkIconStrip({
+function ProductIconStrip({
   icon,
   color,
   count,
+  fallbackIcon,
 }: {
   icon?: string;
   color: string;
   count: number;
+  fallbackIcon: string;
 }) {
   const iconName =
-    icon && isRegisteredProductIcon(icon) ? icon : "Beer";
+    icon && isRegisteredProductIcon(icon) ? icon : fallbackIcon;
 
   return (
     <div
@@ -37,13 +42,18 @@ function DrinkIconStrip({
   );
 }
 
-export function DrinkBarsChart({ products, className }: DrinkBarsChartProps) {
+export function ProductBarsChart({
+  products,
+  className,
+  ariaLabel = "Top product mentions",
+  fallbackIcon = "Beer",
+}: ProductBarsChartProps) {
   const rows = buildDrinkBarRows(products);
   if (rows.length === 0) return null;
 
   return (
     <div className={className ?? "w-full max-w-2xl"}>
-      <ul className="flex flex-col gap-3.5" aria-label="Top drink mentions">
+      <ul className="flex flex-col gap-3.5" aria-label={ariaLabel}>
         {rows.map((row) => (
           <li
             key={row.name}
@@ -58,10 +68,11 @@ export function DrinkBarsChart({ products, className }: DrinkBarsChartProps) {
             >
               {row.name}
             </span>
-            <DrinkIconStrip
+            <ProductIconStrip
               icon={row.icon}
               color={row.color}
               count={row.iconCount}
+              fallbackIcon={fallbackIcon}
             />
             <span
               className={`text-right text-sm tabular-nums ${
@@ -74,5 +85,20 @@ export function DrinkBarsChart({ products, className }: DrinkBarsChartProps) {
         ))}
       </ul>
     </div>
+  );
+}
+
+export function DrinkBarsChart(
+  props: Omit<ProductBarsChartProps, "ariaLabel" | "fallbackIcon"> & {
+    ariaLabel?: string;
+    fallbackIcon?: string;
+  },
+) {
+  return (
+    <ProductBarsChart
+      ariaLabel="Top drink mentions"
+      fallbackIcon="Beer"
+      {...props}
+    />
   );
 }

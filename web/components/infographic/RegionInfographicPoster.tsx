@@ -1,7 +1,10 @@
 import Image from "next/image";
 import { BeerGlassWeekdayChart } from "@/components/infographic/BeerGlassWeekdayChart";
 import { DayHourHeatChart } from "@/components/infographic/DayHourHeatChart";
-import { DrinkBarsChart } from "@/components/infographic/DrinkBarsChart";
+import {
+  DrinkBarsChart,
+  ProductBarsChart,
+} from "@/components/infographic/DrinkBarsChart";
 import type { InfographicComposition, InfographicSlot } from "@/lib/infographic/types";
 import {
   formatRegionInfographicTitle,
@@ -45,12 +48,14 @@ export function RegionInfographicPoster({
   const topProducts = composition.slots.find(
     (slot) => slot.id === "topProducts",
   );
+  const topFood = composition.slots.find((slot) => slot.id === "topFood");
   const rest = composition.slots.filter(
     (slot) =>
       slot.id !== "headline" &&
       slot.id !== "weekdayMix" &&
       slot.id !== "dayHourHeat" &&
-      slot.id !== "topProducts",
+      slot.id !== "topProducts" &&
+      slot.id !== "topFood",
   );
 
   return (
@@ -153,6 +158,27 @@ export function RegionInfographicPoster({
               </p>
             </div>
             <DrinkBarsChart products={topProducts.products} />
+          </div>
+        ) : null}
+
+        {topFood && topFood.id === "topFood" ? (
+          <div className="space-y-4 border-b border-border-subtle pb-8">
+            <div className="space-y-1">
+              <p className="text-xs font-medium tracking-[0.18em] text-accent-soft uppercase">
+                {slotEyebrow(topFood)}
+              </p>
+              <p className="text-lg font-medium text-secondary">
+                {slotHeadline(topFood)}
+                {slotSupporting(topFood)
+                  ? ` · ${slotSupporting(topFood)}`
+                  : null}
+              </p>
+            </div>
+            <ProductBarsChart
+              products={topFood.products}
+              ariaLabel="Top food mentions"
+              fallbackIcon="UtensilsCrossed"
+            />
           </div>
         ) : null}
 

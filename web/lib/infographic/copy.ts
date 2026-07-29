@@ -79,6 +79,8 @@ export function slotEyebrow(slot: InfographicSlot): string {
       return "Happy hour heat";
     case "topProducts":
       return "What's pouring";
+    case "topFood":
+      return "What's cooking";
     case "coverage":
       return "Venue coverage";
     case "dealLeader":
@@ -101,6 +103,10 @@ export function slotHeadline(slot: InfographicSlot): string {
     case "topProducts": {
       const leader = slot.products[0];
       return leader ? `${leader.name} leads` : "No drink matches yet";
+    }
+    case "topFood": {
+      const leader = slot.products[0];
+      return leader ? `${leader.name} leads` : "No food matches yet";
     }
     case "coverage":
       return formatCoveragePercent(slot.percent);
@@ -129,6 +135,10 @@ export function slotSupporting(slot: InfographicSlot): string | null {
     case "topProducts": {
       const leader = slot.products[0];
       return leader ? `${leader.percent}% of drink mentions` : null;
+    }
+    case "topFood": {
+      const leader = slot.products[0];
+      return leader ? `${leader.percent}% of food mentions` : null;
     }
     case "coverage":
       return `${formatDealCount(slot.venuesWithDeals)} of ${formatDealCount(slot.venueCount)} venues have a deal`;

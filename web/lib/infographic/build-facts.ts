@@ -1,6 +1,6 @@
 import type { SuburbStatistics } from "@/lib/search/queries";
 import { sortSuburbStatistics } from "@/lib/search/suburb-statistics";
-import { rankTopDrinkHits } from "@/lib/infographic/drink-bars";
+import { rankTopProductHits } from "@/lib/infographic/drink-bars";
 import { pickPeakDayHour } from "@/lib/infographic/day-hour-heat";
 import type { RegionProductCount } from "@/lib/infographic/product-tally";
 import type {
@@ -18,6 +18,7 @@ export type RegionInfographicInputs = {
   dayCounts: RegionDayCount[];
   dayHourCounts: RegionDayHourCount[];
   topProducts: RegionProductCount[];
+  topFood: RegionProductCount[];
 };
 
 function toWinner(
@@ -107,7 +108,8 @@ export function buildRegionInfographicFacts(
     dayCounts: input.dayCounts,
     peakDayHour: pickPeakDayHour(input.dayHourCounts),
     dayHourCounts: input.dayHourCounts,
-    topProducts: rankTopDrinkHits(input.topProducts),
+    topProducts: rankTopProductHits(input.topProducts),
+    topFood: rankTopProductHits(input.topFood),
     coveragePercent,
   };
 }

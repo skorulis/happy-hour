@@ -10,6 +10,8 @@ import {
 } from "@/lib/infographic/drink-bars";
 import {
   isDrinkProductName,
+  isFoodProductName,
+  tallyDrinkAndFoodHitsFromDeals,
   tallyProductHitsFromDeals,
 } from "@/lib/infographic/product-tally";
 
@@ -26,6 +28,21 @@ describe("isDrinkProductName", () => {
     expect(isDrinkProductName("music")).toBe(false);
     expect(isDrinkProductName("burger")).toBe(false);
     expect(isDrinkProductName("pizza")).toBe(false);
+  });
+});
+
+describe("isFoodProductName", () => {
+  it("includes food-tree keywords", () => {
+    expect(isFoodProductName("burger")).toBe(true);
+    expect(isFoodProductName("Pizza")).toBe(true);
+    expect(isFoodProductName("wings")).toBe(true);
+    expect(isFoodProductName("fish & chips")).toBe(true);
+  });
+
+  it("excludes non-food products", () => {
+    expect(isFoodProductName("beer")).toBe(false);
+    expect(isFoodProductName("music")).toBe(false);
+    expect(isFoodProductName("cocktails")).toBe(false);
   });
 });
 
@@ -70,6 +87,26 @@ describe("tallyProductHitsFromDeals", () => {
       expect(limitedBeer.count).toBeLessThanOrEqual(fullBeer.count);
       expect(limitedBeer.count).toBeLessThanOrEqual(2);
     }
+  });
+});
+
+describe("tallyDrinkAndFoodHitsFromDeals", () => {
+  it("splits drink and food hits in one pass", () => {
+    const hits = tallyDrinkAndFoodHitsFromDeals([
+      { title: "$8 schooners", details: null, conditions: null },
+      { title: "Burger night", details: "Cheeseburger special", conditions: null },
+      { title: "Pizza and beer", details: null, conditions: null },
+      { title: "Live music", details: null, conditions: null },
+    ]);
+
+    expect(hits.drinks.every((hit) => isDrinkProductName(hit.name))).toBe(true);
+    expect(hits.food.every((hit) => isFoodProductName(hit.name))).toBe(true);
+    expect(hits.food.some((hit) => hit.name.toLowerCase() === "burger")).toBe(
+      true,
+    );
+    expect(hits.drinks.some((hit) => hit.name.toLowerCase() === "burger")).toBe(
+      false,
+    );
   });
 });
 

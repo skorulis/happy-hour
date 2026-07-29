@@ -40,6 +40,10 @@ describe("buildRegionInfographicFacts", () => {
         { name: "Beer", count: 12 },
         { name: "Cocktails", count: 9 },
       ],
+      topFood: [
+        { name: "Burger", count: 8 },
+        { name: "Pizza", count: 4 },
+      ],
       suburbs: [
         suburb({
           id: 1,
@@ -92,6 +96,17 @@ describe("buildRegionInfographicFacts", () => {
     expect(facts.topProducts.reduce((sum, hit) => sum + hit.percent, 0)).toBe(
       100,
     );
+    expect(facts.topFood).toHaveLength(2);
+    expect(facts.topFood[0]).toMatchObject({
+      name: "Burger",
+      count: 8,
+      percent: 67,
+    });
+    expect(facts.topFood[1]).toMatchObject({
+      name: "Pizza",
+      count: 4,
+      percent: 33,
+    });
   });
 
   it("caps drink hits at five with percents of all drink mentions", () => {
@@ -109,6 +124,14 @@ describe("buildRegionInfographicFacts", () => {
         { name: "Prosecco", count: 4 },
         { name: "Sake", count: 3 },
       ],
+      topFood: [
+        { name: "Burger", count: 30 },
+        { name: "Pizza", count: 20 },
+        { name: "Wings", count: 15 },
+        { name: "Nachos", count: 10 },
+        { name: "Taco", count: 8 },
+        { name: "Pasta", count: 5 },
+      ],
       suburbs: [
         suburb({ id: 1, name: "Bondi", dealCount: 4, venueCount: 2 }),
       ],
@@ -117,6 +140,9 @@ describe("buildRegionInfographicFacts", () => {
     expect(facts.topProducts).toHaveLength(5);
     expect(facts.topProducts.map((hit) => hit.name)).not.toContain("Sake");
     expect(facts.topProducts[0]!.percent).toBe(50);
+    expect(facts.topFood).toHaveLength(5);
+    expect(facts.topFood.map((hit) => hit.name)).not.toContain("Pasta");
+    expect(facts.topFood[0]!.percent).toBe(34);
   });
 
   it("omits density and per-capita when geo data is missing", () => {
@@ -127,6 +153,7 @@ describe("buildRegionInfographicFacts", () => {
       dayCounts: [],
       dayHourCounts: [],
       topProducts: [],
+      topFood: [],
       suburbs: [
         suburb({
           id: 1,
@@ -156,6 +183,7 @@ describe("composeRegionInfographic", () => {
       dayCounts: [{ dayOfWeek: 6, count: 10 }],
       dayHourCounts: [{ dayOfWeek: 6, hour: 17, count: 5 }],
       topProducts: [{ name: "Beer", count: 3 }],
+      topFood: [{ name: "Burger", count: 2 }],
       suburbs: [
         suburb({
           id: 1,
@@ -175,6 +203,7 @@ describe("composeRegionInfographic", () => {
     expect(ids).toContain("weekdayMix");
     expect(ids).toContain("dayHourHeat");
     expect(ids).toContain("topProducts");
+    expect(ids).toContain("topFood");
     expect(ids).toContain("coverage");
     expect(ids).not.toContain("perCapita");
 
@@ -197,6 +226,12 @@ describe("composeRegionInfographic", () => {
     expect(drinks?.id === "topProducts" && slotSupporting(drinks)).toBe(
       "100% of drink mentions",
     );
+
+    const food = composition.slots.find((slot) => slot.id === "topFood");
+    expect(food?.id === "topFood" && slotHeadline(food)).toBe("Burger leads");
+    expect(food?.id === "topFood" && slotSupporting(food)).toBe(
+      "100% of food mentions",
+    );
   });
 
   it("uses a tighter slot set for og format", () => {
@@ -207,6 +242,7 @@ describe("composeRegionInfographic", () => {
       dayCounts: [{ dayOfWeek: 5, count: 18 }],
       dayHourCounts: [{ dayOfWeek: 5, hour: 17, count: 4 }],
       topProducts: [{ name: "Wine", count: 4 }],
+      topFood: [{ name: "Pizza", count: 3 }],
       suburbs: [
         suburb({
           id: 1,
@@ -231,6 +267,7 @@ describe("composeRegionInfographic", () => {
       "topProducts",
       "coverage",
     ]);
+    expect(og.slots.map((slot) => slot.id)).not.toContain("topFood");
   });
 
   it("omits weekdayMix and dayHourHeat when there are no schedule counts", () => {
@@ -241,6 +278,7 @@ describe("composeRegionInfographic", () => {
       dayCounts: [],
       dayHourCounts: [],
       topProducts: [],
+      topFood: [],
       suburbs: [
         suburb({ id: 1, name: "Empty", dealCount: 1, venueCount: 1 }),
       ],
