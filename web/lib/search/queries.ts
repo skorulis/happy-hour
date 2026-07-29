@@ -428,6 +428,54 @@ export async function searchSuburbs(
  * Closest suburb centre within `maxDistanceKm`, or null if none match.
  * Used to attribute nearby (lat/lng) searches to a suburb for analytics.
  */
+export type NearbySuburb = {
+  id: number;
+  name: string;
+  postcode: string | null;
+  heroImage: string | null;
+  dealCount: number;
+  venueCount: number;
+  distanceKm: number;
+};
+
+export async function findNearbySuburbs(
+  lat: number,
+  lng: number,
+  excludeSuburbId: number,
+  limit = 5,
+): Promise<NearbySuburb[]> {
+  const distance = suburbDistanceKmExpression(lat, lng);
+  const dealCount = count(deal.id);
+  const venueCount = countDistinct(venue.id);
+
+  return db
+    .select({
+      id: suburb.id,
+      name: suburb.name,
+      postcode: suburb.postcode,
+      heroImage: suburb.heroImage,
+      dealCount,
+      venueCount,
+      distanceKm: distance,
+    })
+    .from(suburb)
+    .leftJoin(venue, eq(venue.suburbId, suburb.id))
+    .leftJoin(
+      deal,
+      and(eq(deal.venueId, venue.id), eq(deal.status, "approved")),
+    )
+    .where(
+      and(
+        isNotNull(suburb.lat),
+        isNotNull(suburb.lng),
+        ne(suburb.id, excludeSuburbId),
+      ),
+    )
+    .groupBy(suburb.id)
+    .orderBy(distance, suburb.name)
+    .limit(limit);
+}
+
 export async function findNearestSuburb(
   lat: number,
   lng: number,

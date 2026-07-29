@@ -17,6 +17,7 @@ import {
 import {
   findRegionBySlug,
   findSuburbByWhereSlug,
+  type NearbySuburb,
 } from "@/lib/search/queries";
 import {
   regionPath,
@@ -24,9 +25,37 @@ import {
   suburbStatisticsPath,
   suburbWherePath,
 } from "@/lib/search/slugs";
+import { suburbHeroThumbUrl } from "@/lib/search/venue-hero-url";
 import { siteUrl } from "@/lib/site-url";
 
 export const dynamic = "force-dynamic";
+
+function NearbySuburbCard({ suburb }: { suburb: NearbySuburb }) {
+  const href = suburbStatisticsPath(suburb.name, suburb.postcode);
+  const thumbUrl = suburbHeroThumbUrl(suburb.heroImage);
+  return (
+    <li>
+      <Link
+        href={href}
+        className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-surface-muted"
+      >
+        {thumbUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={thumbUrl}
+            alt=""
+            className="h-14 w-14 shrink-0 rounded-lg object-cover"
+          />
+        ) : null}
+        <span className="min-w-0 flex-1 font-medium text-foreground">{suburb.name}</span>
+        <span className="flex shrink-0 flex-col items-end text-sm leading-tight text-muted">
+          <span>{suburb.venueCount} {suburb.venueCount === 1 ? "venue" : "venues"}</span>
+          <span>{suburb.dealCount} {suburb.dealCount === 1 ? "deal" : "deals"}</span>
+        </span>
+      </Link>
+    </li>
+  );
+}
 
 type StatisticsPageProps = {
   params: Promise<{ suburb: string }>;
@@ -103,10 +132,12 @@ export default async function StatisticsPage({ params }: StatisticsPageProps) {
 
   const suburb = await findSuburbByWhereSlug(slug);
   if (suburb) {
-    const { facts } = await loadSuburbInfographicFacts({
+    const { facts, nearbySuburbs } = await loadSuburbInfographicFacts({
       suburbId: suburb.id,
       suburbName: suburb.name,
       suburbPostcode: suburb.postcode,
+      suburbLat: suburb.lat,
+      suburbLng: suburb.lng,
     });
 
     if (facts.venueCount === 0) {
@@ -162,6 +193,19 @@ export default async function StatisticsPage({ params }: StatisticsPageProps) {
             .
           </p>
         </section>
+
+        {nearbySuburbs.length > 0 && (
+          <section className="space-y-4">
+            <h2 className="text-xl font-semibold text-foreground">
+              Nearby suburbs
+            </h2>
+            <ul className="grid gap-2 sm:grid-cols-2">
+              {nearbySuburbs.map((nearby) => (
+                <NearbySuburbCard key={nearby.id} suburb={nearby} />
+              ))}
+            </ul>
+          </section>
+        )}
       </div>
     );
   }
@@ -212,11 +256,8 @@ export default async function StatisticsPage({ params }: StatisticsPageProps) {
       <section className="space-y-4">
         <div className="space-y-1">
           <h2 className="text-xl font-semibold text-foreground">
-            Explore the rankings
+            Dive into individual suburbs
           </h2>
-          <p className="text-sm text-muted">
-            Compare suburbs by density and population.
-          </p>
         </div>
         <RegionStatisticsView suburbs={suburbs} regionName={region.name} />
       </section>

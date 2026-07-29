@@ -4,11 +4,13 @@ import { tallyDrinkAndFoodHitsFromDeals } from "@/lib/infographic/product-tally"
 import type { RegionInfographicFacts } from "@/lib/infographic/types";
 import {
   countVenuesWithDeals,
+  findNearbySuburbs,
   listDealDayCounts,
   listDealSchedulesForMatching,
   listDealTextsForMatching,
   listSuburbStatistics,
   type InfographicPlaceFilter,
+  type NearbySuburb,
   type SuburbStatistics,
 } from "@/lib/search/queries";
 
@@ -70,16 +72,26 @@ export async function loadSuburbInfographicFacts(input: {
   suburbId: number;
   suburbName: string;
   suburbPostcode?: string | null;
+  suburbLat?: number | null;
+  suburbLng?: number | null;
 }): Promise<{
   facts: RegionInfographicFacts;
   suburbs: SuburbStatistics[];
+  nearbySuburbs: NearbySuburb[];
 }> {
-  return loadInfographicFacts({
-    filter: { suburbId: input.suburbId },
-    placeId: input.suburbId,
-    placeName: input.suburbName,
-    scope: "suburb",
-    suburbListOptions: { suburbId: input.suburbId },
-    suburbPostcode: input.suburbPostcode,
-  });
+  const [base, nearbySuburbs] = await Promise.all([
+    loadInfographicFacts({
+      filter: { suburbId: input.suburbId },
+      placeId: input.suburbId,
+      placeName: input.suburbName,
+      scope: "suburb",
+      suburbListOptions: { suburbId: input.suburbId },
+      suburbPostcode: input.suburbPostcode,
+    }),
+    input.suburbLat != null && input.suburbLng != null
+      ? findNearbySuburbs(input.suburbLat, input.suburbLng, input.suburbId)
+      : Promise.resolve([]),
+  ]);
+
+  return { ...base, nearbySuburbs };
 }

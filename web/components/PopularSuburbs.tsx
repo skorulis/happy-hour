@@ -15,6 +15,8 @@ type PopularSuburbsProps = {
   what?: string[];
   title?: string;
   description?: string;
+  hideHeader?: boolean;
+  hideStats?: boolean;
   includeSpecialLinks?: boolean;
   includeNearbyLink?: boolean;
   allSuburbsHref?: string;
@@ -108,6 +110,8 @@ export function PopularSuburbs({
   what = [],
   title = "Popular suburbs",
   description = "Pick a suburb to browse deals nearby.",
+  hideHeader = false,
+  hideStats = false,
   includeSpecialLinks = false,
   includeNearbyLink = true,
   allSuburbsHref = "/all-suburbs",
@@ -134,10 +138,12 @@ export function PopularSuburbs({
 
   return (
     <div className="space-y-4">
-      <div className="space-y-1">
-        <h2 className="text-xl font-semibold text-foreground">{title}</h2>
-        <p className="text-sm text-muted">{description}</p>
-      </div>
+      {!hideHeader && (
+        <div className="space-y-1">
+          <h2 className="text-xl font-semibold text-foreground">{title}</h2>
+          <p className="text-sm text-muted">{description}</p>
+        </div>
+      )}
 
       <ul className="grid gap-2 sm:grid-cols-2">
         {items.map((item) => {
@@ -203,7 +209,7 @@ export function PopularSuburbs({
                     {formatSuburbLabel(suburb)}
                   </span>
                 </span>
-                <span className="flex shrink-0 flex-col items-end text-sm leading-tight text-muted">
+                {!hideStats && <span className="flex shrink-0 flex-col items-end text-sm leading-tight text-muted">
                   {statsMode === "perSqkm" && isSuburbStatistics(suburb) ? (
                     <>
                       <span>
@@ -235,7 +241,7 @@ export function PopularSuburbs({
                       </span>
                     </>
                   )}
-                </span>
+                </span>}
               </Link>
             </li>
           );

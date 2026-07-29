@@ -51,7 +51,7 @@ export function formatDayAbbrev(dayOfWeek: number): string {
 }
 
 export function formatSuburbLabel(suburb: RegionSuburbWinner): string {
-  return suburb.postcode ? `${suburb.name} (${suburb.postcode})` : suburb.name;
+  return suburb.name;
 }
 
 export function formatTopProductsLine(products: RegionProductHit[]): string {
@@ -75,7 +75,7 @@ export function slotEyebrow(slot: InfographicSlot): string {
     case "coverageTriad":
       return "Coverage";
     case "topDensity":
-      return slot.metric === "density" ? "Densest suburbs" : "Top suburbs";
+      return slot.metric === "density" ? "Suburbs by deal density" : "Suburbs by deal count";
     case "weekdayMix":
       return "Deals by day";
     case "dayHourHeat":
