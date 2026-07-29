@@ -485,7 +485,20 @@ export type ListAllSuburbsOptions = {
 
 export type ListSuburbStatisticsOptions = {
   regionId?: number;
+  suburbId?: number;
 };
+
+/** Scope infographic deal/venue aggregates to a region or a single suburb. */
+export type InfographicPlaceFilter =
+  | { regionId: number; suburbId?: never }
+  | { suburbId: number; regionId?: never };
+
+function infographicPlaceSql(filter: InfographicPlaceFilter): SQL {
+  if (filter.suburbId !== undefined) {
+    return eq(venue.suburbId, filter.suburbId);
+  }
+  return eq(suburb.regionId, filter.regionId);
+}
 
 export async function listPopularSuburbs(
   limit?: number,
@@ -600,8 +613,14 @@ export async function listSuburbStatistics(
     )
     .$dynamic();
 
-  if (options.regionId !== undefined) {
-    query = query.where(eq(suburb.regionId, options.regionId));
+  const placeFilters: SQL[] = [];
+  if (options.suburbId !== undefined) {
+    placeFilters.push(eq(suburb.id, options.suburbId));
+  } else if (options.regionId !== undefined) {
+    placeFilters.push(eq(suburb.regionId, options.regionId));
+  }
+  if (placeFilters.length > 0) {
+    query = query.where(and(...placeFilters));
   }
 
   const rows = await query.groupBy(
@@ -653,8 +672,8 @@ export type RegionDealTextRow = {
   conditions: string | null;
 };
 
-export async function countRegionVenuesWithDeals(
-  regionId: number,
+export async function countVenuesWithDeals(
+  filter: InfographicPlaceFilter,
 ): Promise<number> {
   const rows = await db
     .select({
@@ -666,13 +685,13 @@ export async function countRegionVenuesWithDeals(
       deal,
       and(eq(deal.venueId, venue.id), eq(deal.status, "approved")),
     )
-    .where(eq(suburb.regionId, regionId));
+    .where(infographicPlaceSql(filter));
 
   return rows[0]?.venuesWithDeals ?? 0;
 }
 
-export async function listRegionDealDayCounts(
-  regionId: number,
+export async function listDealDayCounts(
+  filter: InfographicPlaceFilter,
 ): Promise<RegionDealDayCount[]> {
   const scheduleCount = count(dealSchedule.id);
 
@@ -685,9 +704,7 @@ export async function listRegionDealDayCounts(
     .innerJoin(deal, eq(deal.id, dealSchedule.dealId))
     .innerJoin(venue, eq(venue.id, deal.venueId))
     .innerJoin(suburb, eq(suburb.id, venue.suburbId))
-    .where(
-      and(eq(suburb.regionId, regionId), eq(deal.status, "approved")),
-    )
+    .where(and(infographicPlaceSql(filter), eq(deal.status, "approved")))
     .groupBy(dealSchedule.dayOfWeek)
     .orderBy(dealSchedule.dayOfWeek);
 
@@ -699,8 +716,8 @@ export async function listRegionDealDayCounts(
  * map). Must be uncapped: heat tallies every covered hour, so truncating
  * silently undercounts evening cells when a region has many schedule rows.
  */
-export async function listRegionDealSchedulesForMatching(
-  regionId: number,
+export async function listDealSchedulesForMatching(
+  filter: InfographicPlaceFilter,
 ): Promise<RegionDealScheduleMatchRow[]> {
   return db
     .select({
@@ -716,14 +733,12 @@ export async function listRegionDealSchedulesForMatching(
     .innerJoin(deal, eq(deal.id, dealSchedule.dealId))
     .innerJoin(venue, eq(venue.id, deal.venueId))
     .innerJoin(suburb, eq(suburb.id, venue.suburbId))
-    .where(
-      and(eq(suburb.regionId, regionId), eq(deal.status, "approved")),
-    )
+    .where(and(infographicPlaceSql(filter), eq(deal.status, "approved")))
     .orderBy(desc(deal.id), dealSchedule.dayOfWeek, dealSchedule.startMinute);
 }
 
-export async function listRegionDealTextsForMatching(
-  regionId: number,
+export async function listDealTextsForMatching(
+  filter: InfographicPlaceFilter,
   limit = 500,
 ): Promise<RegionDealTextRow[]> {
   return db
@@ -735,9 +750,7 @@ export async function listRegionDealTextsForMatching(
     .from(deal)
     .innerJoin(venue, eq(venue.id, deal.venueId))
     .innerJoin(suburb, eq(suburb.id, venue.suburbId))
-    .where(
-      and(eq(suburb.regionId, regionId), eq(deal.status, "approved")),
-    )
+    .where(and(infographicPlaceSql(filter), eq(deal.status, "approved")))
     .orderBy(desc(deal.id))
     .limit(limit);
 }

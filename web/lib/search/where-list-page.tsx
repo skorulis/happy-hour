@@ -19,6 +19,7 @@ import {
   regionAllSuburbsPath,
   regionPath,
   regionStatisticsPath,
+  suburbStatisticsPath,
   suburbWherePath,
 } from "@/lib/search/slugs";
 
@@ -176,6 +177,8 @@ export async function renderWhereListPage(
         initialVenuesWithoutApplicableDeals={
           initialVenuesWithoutApplicableDeals
         }
+        statisticsHref={suburbStatisticsPath(suburb.name, suburb.postcode)}
+        statisticsLabel={`${suburb.name} in numbers`}
       />
     );
   }

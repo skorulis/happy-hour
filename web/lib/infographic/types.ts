@@ -58,9 +58,14 @@ export type RegionDayHourCount = {
   count: number;
 };
 
+export type InfographicScope = "region" | "suburb";
+
 export type RegionInfographicFacts = {
+  scope: InfographicScope;
   regionId: number;
   regionName: string;
+  /** Suburb postcode when scope is suburb; used for deal-list heat links. */
+  suburbPostcode: string | null;
   dealCount: number;
   venueCount: number;
   venuesWithDeals: number;
@@ -122,6 +127,8 @@ export type InfographicSlot =
 export type InfographicComposition = {
   format: InfographicFormat;
   regionName: string;
+  /** Base path for heat-map deal search links (`/sydney` or `/surry-hills-2010`). */
+  listBasePath: string;
   slots: InfographicSlot[];
 };
 

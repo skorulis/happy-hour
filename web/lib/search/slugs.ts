@@ -185,3 +185,10 @@ export function regionAllSuburbsPath(name: string): string {
 export function regionStatisticsPath(name: string): string {
   return `/${regionSlug(name)}/statistics`;
 }
+
+export function suburbStatisticsPath(
+  name: string,
+  postcode: string | null | undefined,
+): string {
+  return `${suburbWherePath(name, postcode)}/statistics`;
+}

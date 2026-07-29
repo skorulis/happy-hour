@@ -234,4 +234,10 @@ describe("happyHourHeatCellHref", () => {
       "/sydney/thursday-happyhour?startMinute=1020&endMinute=1020",
     );
   });
+
+  it("preserves suburb where paths that include a postcode", () => {
+    expect(happyHourHeatCellHref("/surry-hills-2010", 5, 17)).toBe(
+      "/surry-hills-2010/thursday-happyhour?startMinute=1020&endMinute=1020",
+    );
+  });
 });

@@ -31,6 +31,7 @@ type SearchPageProps = {
   regionName?: string;
   allSuburbsHref?: string;
   statisticsHref?: string;
+  statisticsLabel?: string;
   includeNearbyLink?: boolean;
 };
 
@@ -49,6 +50,7 @@ export function SearchPage({
   regionName,
   allSuburbsHref,
   statisticsHref,
+  statisticsLabel,
   includeNearbyLink = true,
 }: SearchPageProps) {
   const {
@@ -114,7 +116,8 @@ export function SearchPage({
             className="inline-flex w-fit items-center gap-2 text-sm font-medium text-accent-soft underline-offset-2 hover:underline"
           >
             <ChartColumn aria-hidden className="h-4 w-4" />
-            {regionName ? `${regionName} in numbers` : "Region statistics"}
+            {statisticsLabel ??
+              (regionName ? `${regionName} in numbers` : "In numbers")}
           </Link>
         ) : null}
       </header>

@@ -179,9 +179,7 @@
         "icon": "GlassWater",
         "synonyms": [
             "fireball",
-            "spirits & mixers"
-        ],
-        "groups": [
+            "spirits & mixers",
             "vodka"
         ]
     },
@@ -202,10 +200,6 @@
             "rosé",
             "house wine"
         ]
-    },
-    {
-        "name": "vodka",
-        "icon": "GlassWater"
     },
     {
         "name": "whiskey",
@@ -509,6 +503,10 @@
         "icon": "EggFried"
     },
     {
+        "name": "breakfast",
+        "icon": "EggFried"
+    },
+    {
         "name": "brunch",
         "icon": "Sun"
     },
@@ -588,6 +586,7 @@
     },
     {
         "name": "poker",
+        "noprice": true,
         "icon": "Spade"
     },
     {

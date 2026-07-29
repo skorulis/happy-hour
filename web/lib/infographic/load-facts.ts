@@ -3,34 +3,42 @@ import { tallyHappyHourDayHourCounts } from "@/lib/infographic/day-hour-heat";
 import { tallyDrinkAndFoodHitsFromDeals } from "@/lib/infographic/product-tally";
 import type { RegionInfographicFacts } from "@/lib/infographic/types";
 import {
-  countRegionVenuesWithDeals,
-  listRegionDealDayCounts,
-  listRegionDealSchedulesForMatching,
-  listRegionDealTextsForMatching,
+  countVenuesWithDeals,
+  listDealDayCounts,
+  listDealSchedulesForMatching,
+  listDealTextsForMatching,
   listSuburbStatistics,
+  type InfographicPlaceFilter,
+  type SuburbStatistics,
 } from "@/lib/search/queries";
 
-export async function loadRegionInfographicFacts(input: {
-  regionId: number;
-  regionName: string;
+async function loadInfographicFacts(input: {
+  filter: InfographicPlaceFilter;
+  placeId: number;
+  placeName: string;
+  scope: RegionInfographicFacts["scope"];
+  suburbListOptions: { regionId: number } | { suburbId: number };
+  suburbPostcode?: string | null;
 }): Promise<{
   facts: RegionInfographicFacts;
-  suburbs: Awaited<ReturnType<typeof listSuburbStatistics>>;
+  suburbs: SuburbStatistics[];
 }> {
   const [suburbs, venuesWithDeals, dayCounts, dealSchedules, dealTexts] =
     await Promise.all([
-      listSuburbStatistics({ regionId: input.regionId }),
-      countRegionVenuesWithDeals(input.regionId),
-      listRegionDealDayCounts(input.regionId),
-      listRegionDealSchedulesForMatching(input.regionId),
-      listRegionDealTextsForMatching(input.regionId),
+      listSuburbStatistics(input.suburbListOptions),
+      countVenuesWithDeals(input.filter),
+      listDealDayCounts(input.filter),
+      listDealSchedulesForMatching(input.filter),
+      listDealTextsForMatching(input.filter),
     ]);
 
   const productHits = tallyDrinkAndFoodHitsFromDeals(dealTexts);
 
   const facts = buildRegionInfographicFacts({
-    regionId: input.regionId,
-    regionName: input.regionName,
+    scope: input.scope,
+    regionId: input.placeId,
+    regionName: input.placeName,
+    suburbPostcode: input.suburbPostcode,
     suburbs,
     venuesWithDeals,
     dayCounts,
@@ -40,4 +48,38 @@ export async function loadRegionInfographicFacts(input: {
   });
 
   return { facts, suburbs };
+}
+
+export async function loadRegionInfographicFacts(input: {
+  regionId: number;
+  regionName: string;
+}): Promise<{
+  facts: RegionInfographicFacts;
+  suburbs: SuburbStatistics[];
+}> {
+  return loadInfographicFacts({
+    filter: { regionId: input.regionId },
+    placeId: input.regionId,
+    placeName: input.regionName,
+    scope: "region",
+    suburbListOptions: { regionId: input.regionId },
+  });
+}
+
+export async function loadSuburbInfographicFacts(input: {
+  suburbId: number;
+  suburbName: string;
+  suburbPostcode?: string | null;
+}): Promise<{
+  facts: RegionInfographicFacts;
+  suburbs: SuburbStatistics[];
+}> {
+  return loadInfographicFacts({
+    filter: { suburbId: input.suburbId },
+    placeId: input.suburbId,
+    placeName: input.suburbName,
+    scope: "suburb",
+    suburbListOptions: { suburbId: input.suburbId },
+    suburbPostcode: input.suburbPostcode,
+  });
 }

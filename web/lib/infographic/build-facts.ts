@@ -4,6 +4,7 @@ import { rankTopProductHits } from "@/lib/infographic/drink-bars";
 import { pickPeakDayHour } from "@/lib/infographic/day-hour-heat";
 import type { RegionProductCount } from "@/lib/infographic/product-tally";
 import type {
+  InfographicScope,
   RegionDayCount,
   RegionDayHourCount,
   RegionInfographicFacts,
@@ -14,8 +15,10 @@ import type {
 export const TOP_DENSITY_LIMIT = 5;
 
 export type RegionInfographicInputs = {
+  scope?: InfographicScope;
   regionId: number;
   regionName: string;
+  suburbPostcode?: string | null;
   suburbs: SuburbStatistics[];
   venuesWithDeals: number;
   dayCounts: RegionDayCount[];
@@ -133,8 +136,13 @@ export function buildRegionInfographicFacts(
     venueCount > 0 ? (venuesWithDeals / venueCount) * 100 : null;
 
   return {
+    scope: input.scope ?? "region",
     regionId: input.regionId,
     regionName: input.regionName,
+    suburbPostcode:
+      input.scope === "suburb"
+        ? (input.suburbPostcode ?? input.suburbs[0]?.postcode ?? null)
+        : null,
     dealCount,
     venueCount,
     venuesWithDeals,

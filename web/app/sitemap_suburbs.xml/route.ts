@@ -1,5 +1,9 @@
 import { getAllSuburbsForSitemap } from "@/lib/search/queries";
-import { suburbWherePath, suburbWhereSlug } from "@/lib/search/slugs";
+import {
+  suburbStatisticsPath,
+  suburbWherePath,
+  suburbWhereSlug,
+} from "@/lib/search/slugs";
 import { siteUrl } from "@/lib/site-url";
 
 // Dynamic: suburb list comes from Postgres; CI/Docker builds have no
@@ -43,14 +47,20 @@ export async function GET() {
   const suburbs = filterUniqueSuburbSlugs(await getAllSuburbsForSitemap());
   const lastmod = new Date();
 
-  const entries = suburbs.map((row) =>
+  const entries = suburbs.flatMap((row) => [
     urlEntry(
       `${base}${suburbWherePath(row.name, row.postcode)}`,
       lastmod,
       "weekly",
       "0.8",
     ),
-  );
+    urlEntry(
+      `${base}${suburbStatisticsPath(row.name, row.postcode)}`,
+      lastmod,
+      "weekly",
+      "0.6",
+    ),
+  ]);
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries.join("\n")}\n</urlset>`;
 

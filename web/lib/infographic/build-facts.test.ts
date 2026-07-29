@@ -450,4 +450,53 @@ describe("composeRegionInfographic", () => {
       "dayHourHeat",
     );
   });
+
+  it("composes suburb posters with a single coverage ring and no topDensity", () => {
+    const facts = buildRegionInfographicFacts({
+      scope: "suburb",
+      regionId: 42,
+      regionName: "Surry Hills",
+      suburbPostcode: "2010",
+      venuesWithDeals: 8,
+      dayCounts: [{ dayOfWeek: 5, count: 12 }],
+      dayHourCounts: [{ dayOfWeek: 5, hour: 17, count: 6 }],
+      topProducts: [{ name: "Beer", count: 4 }],
+      topFood: [{ name: "Burger", count: 2 }],
+      suburbs: [
+        suburb({
+          id: 42,
+          name: "Surry Hills",
+          postcode: "2010",
+          dealCount: 20,
+          venueCount: 10,
+          sqkm: 1,
+          dealsPerSqkm: 20,
+        }),
+      ],
+    });
+
+    expect(facts.scope).toBe("suburb");
+    expect(facts.suburbPostcode).toBe("2010");
+
+    const composition = composeRegionInfographic(facts, "page");
+    expect(composition.listBasePath).toBe("/surry-hills-2010");
+    const ids = composition.slots.map((slot) => slot.id);
+    expect(ids).toEqual([
+      "headline",
+      "coverageTriad",
+      "weekdayMix",
+      "dayHourHeat",
+      "topProducts",
+      "topFood",
+    ]);
+    expect(ids).not.toContain("topDensity");
+
+    const coverage = composition.slots.find(
+      (slot) => slot.id === "coverageTriad",
+    );
+    expect(coverage?.id === "coverageTriad" && coverage.rings).toHaveLength(1);
+    expect(
+      coverage?.id === "coverageTriad" && coverage.rings[0]?.id,
+    ).toBe("venuesWithDeals");
+  });
 });

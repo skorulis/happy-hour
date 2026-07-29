@@ -1,9 +1,15 @@
 import { notFound } from "next/navigation";
 import { composeRegionInfographic } from "@/lib/infographic/compose";
-import { loadRegionInfographicFacts } from "@/lib/infographic/load-facts";
+import {
+  loadRegionInfographicFacts,
+  loadSuburbInfographicFacts,
+} from "@/lib/infographic/load-facts";
 import { renderRegionInfographicImage } from "@/lib/infographic/render-image";
 import type { InfographicFormat } from "@/lib/infographic/types";
-import { findRegionBySlug } from "@/lib/search/queries";
+import {
+  findRegionBySlug,
+  findSuburbByWhereSlug,
+} from "@/lib/search/queries";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -21,12 +27,25 @@ function parseFormat(
 
 export async function GET(request: Request, { params }: CardRouteProps) {
   const { suburb: slug } = await params;
+
+  const format = parseFormat(new URL(request.url).searchParams.get("format"));
+
+  const suburb = await findSuburbByWhereSlug(slug);
+  if (suburb) {
+    const { facts } = await loadSuburbInfographicFacts({
+      suburbId: suburb.id,
+      suburbName: suburb.name,
+      suburbPostcode: suburb.postcode,
+    });
+    const composition = composeRegionInfographic(facts, format);
+    return renderRegionInfographicImage(composition, format);
+  }
+
   const region = await findRegionBySlug(slug);
   if (!region) {
     notFound();
   }
 
-  const format = parseFormat(new URL(request.url).searchParams.get("format"));
   const { facts } = await loadRegionInfographicFacts({
     regionId: region.id,
     regionName: region.name,

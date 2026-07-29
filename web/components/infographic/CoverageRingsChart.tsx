@@ -91,12 +91,15 @@ export function CoverageRingsChart({
 }: CoverageRingsChartProps) {
   if (rings.length === 0) return null;
 
+  const layoutClass =
+    className ??
+    (rings.length === 1
+      ? "flex justify-center"
+      : "grid grid-cols-2 gap-6 sm:grid-cols-3 sm:gap-4 md:gap-6");
+
   return (
     <div
-      className={
-        className ??
-        "grid grid-cols-2 gap-6 sm:grid-cols-3 sm:gap-4 md:gap-6"
-      }
+      className={layoutClass}
       role="img"
       aria-label={coverageTriadAriaLabel(rings)}
     >
@@ -105,7 +108,7 @@ export function CoverageRingsChart({
           key={ring.id}
           ring={ring}
           className={
-            index === 2
+            rings.length > 1 && index === 2
               ? "col-span-2 justify-self-center sm:col-span-1 sm:justify-self-auto"
               : undefined
           }

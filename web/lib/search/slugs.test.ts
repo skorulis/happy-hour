@@ -7,6 +7,7 @@ import {
   resolveSuburbWhereSlug,
   resolveVenueSuburbSlug,
   suburbMapRedirectPath,
+  suburbStatisticsPath,
   suburbWherePath,
   suburbWhereRedirectPath,
   suburbWhereSlug,
@@ -56,6 +57,18 @@ describe("region slugs", () => {
     );
   });
 });
+
+describe("suburbStatisticsPath", () => {
+  it("builds under the suburb where path", () => {
+    expect(suburbStatisticsPath("Surry Hills", "2010")).toBe(
+      "/surry-hills-2010/statistics",
+    );
+    expect(suburbStatisticsPath("Somewhere", null)).toBe(
+      "/somewhere/statistics",
+    );
+  });
+});
+
 describe("parseSuburbWhereSlug", () => {
   it("splits a trailing 4-digit postcode", () => {
     expect(parseSuburbWhereSlug("abbotsbury-2176")).toEqual({

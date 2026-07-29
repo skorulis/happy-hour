@@ -1,5 +1,8 @@
 import { normalizeWeekdayPercents } from "@/lib/infographic/beer-glass";
-import { buildCoverageTriadRings } from "@/lib/infographic/coverage-rings";
+import {
+  buildCoverageTriadRings,
+  buildSuburbCoverageRings,
+} from "@/lib/infographic/coverage-rings";
 import type {
   InfographicComposition,
   InfographicFormat,
@@ -7,44 +10,76 @@ import type {
   InfographicSlotId,
   RegionInfographicFacts,
 } from "@/lib/infographic/types";
+import { regionPath, suburbWherePath } from "@/lib/search/slugs";
 
-const FORMAT_SLOT_ORDER: Record<InfographicFormat, InfographicSlotId[]> = {
-  page: [
-    "headline",
-    "coverageTriad",
-    "weekdayMix",
-    "dayHourHeat",
-    "topProducts",
-    "topFood",
-    "topDensity",
-  ],
-  /** OG stays tight — drinks only, no heat/food. */
-  og: [
-    "headline",
-    "coverageTriad",
-    "weekdayMix",
-    "topProducts",
-    "topDensity",
-  ],
-  square: [
-    "headline",
-    "coverageTriad",
-    "weekdayMix",
-    "dayHourHeat",
-    "topProducts",
-    "topFood",
-    "topDensity",
-  ],
-  story: [
-    "headline",
-    "coverageTriad",
-    "weekdayMix",
-    "dayHourHeat",
-    "topProducts",
-    "topFood",
-    "topDensity",
-  ],
-};
+const REGION_FORMAT_SLOT_ORDER: Record<InfographicFormat, InfographicSlotId[]> =
+  {
+    page: [
+      "headline",
+      "coverageTriad",
+      "weekdayMix",
+      "dayHourHeat",
+      "topProducts",
+      "topFood",
+      "topDensity",
+    ],
+    /** OG stays tight — drinks only, no heat/food. */
+    og: [
+      "headline",
+      "coverageTriad",
+      "weekdayMix",
+      "topProducts",
+      "topDensity",
+    ],
+    square: [
+      "headline",
+      "coverageTriad",
+      "weekdayMix",
+      "dayHourHeat",
+      "topProducts",
+      "topFood",
+      "topDensity",
+    ],
+    story: [
+      "headline",
+      "coverageTriad",
+      "weekdayMix",
+      "dayHourHeat",
+      "topProducts",
+      "topFood",
+      "topDensity",
+    ],
+  };
+
+/** Suburb posters omit densest-suburbs until a suburb-level replacement exists. */
+const SUBURB_FORMAT_SLOT_ORDER: Record<InfographicFormat, InfographicSlotId[]> =
+  {
+    page: [
+      "headline",
+      "coverageTriad",
+      "weekdayMix",
+      "dayHourHeat",
+      "topProducts",
+      "topFood",
+    ],
+    og: ["headline", "coverageTriad", "weekdayMix", "topProducts"],
+    square: [
+      "headline",
+      "coverageTriad",
+      "weekdayMix",
+      "dayHourHeat",
+      "topProducts",
+      "topFood",
+    ],
+    story: [
+      "headline",
+      "coverageTriad",
+      "weekdayMix",
+      "dayHourHeat",
+      "topProducts",
+      "topFood",
+    ],
+  };
 
 function slotFromFacts(
   id: InfographicSlotId,
@@ -58,7 +93,10 @@ function slotFromFacts(
         venueCount: facts.venueCount,
       };
     case "coverageTriad": {
-      const rings = buildCoverageTriadRings(facts);
+      const rings =
+        facts.scope === "suburb"
+          ? buildSuburbCoverageRings(facts)
+          : buildCoverageTriadRings(facts);
       if (!rings) return null;
       return { id: "coverageTriad", rings };
     }
@@ -109,8 +147,12 @@ export function composeRegionInfographic(
 ): InfographicComposition {
   const slots: InfographicSlot[] = [];
   const seen = new Set<string>();
+  const order =
+    facts.scope === "suburb"
+      ? SUBURB_FORMAT_SLOT_ORDER[format]
+      : REGION_FORMAT_SLOT_ORDER[format];
 
-  for (const id of FORMAT_SLOT_ORDER[format]) {
+  for (const id of order) {
     const slot = slotFromFacts(id, facts);
     if (!slot) continue;
     const key = slot.id;
@@ -122,6 +164,10 @@ export function composeRegionInfographic(
   return {
     format,
     regionName: facts.regionName,
+    listBasePath:
+      facts.scope === "suburb"
+        ? suburbWherePath(facts.regionName, facts.suburbPostcode)
+        : regionPath(facts.regionName),
     slots,
   };
 }

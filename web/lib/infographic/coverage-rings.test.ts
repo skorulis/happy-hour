@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildCoverageTriadRings,
+  buildSuburbCoverageRings,
   clampCoveragePercent,
   coveragePercentOf,
   coverageRingDash,
@@ -71,6 +72,32 @@ describe("coverage-rings", () => {
         suburbCount: 0,
         suburbsWithVenues: 0,
         suburbsWithDeals: 0,
+        venueCount: 0,
+        venuesWithDeals: 0,
+      }),
+    ).toBeNull();
+  });
+
+  it("builds a single venues-with-deals ring for suburbs", () => {
+    const rings = buildSuburbCoverageRings({
+      venueCount: 20,
+      venuesWithDeals: 10,
+    });
+
+    expect(rings).toHaveLength(1);
+    expect(rings![0]).toMatchObject({
+      id: "venuesWithDeals",
+      percent: 50,
+      scaleCount: 10,
+      scaleUnit: "venues",
+      numerator: 10,
+      denominator: 20,
+    });
+  });
+
+  it("returns null suburb rings when there are no venues", () => {
+    expect(
+      buildSuburbCoverageRings({
         venueCount: 0,
         venuesWithDeals: 0,
       }),

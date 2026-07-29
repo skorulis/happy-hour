@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { List, LocateFixed } from "lucide-react";
 import type { PopularSuburb, SuburbStatistics } from "@/lib/search/queries";
-import { NEARBY_WHERE_SLUG, suburbWherePath } from "@/lib/search/slugs";
+import {
+  NEARBY_WHERE_SLUG,
+  suburbWherePath,
+} from "@/lib/search/slugs";
 import { suburbHeroThumbUrl } from "@/lib/search/venue-hero-url";
 import { appendFiltersToPath } from "@/lib/search/what-path";
 
@@ -16,6 +19,8 @@ type PopularSuburbsProps = {
   includeNearbyLink?: boolean;
   allSuburbsHref?: string;
   statsMode?: "counts" | "perSqkm" | "perThousand";
+  /** Override suburb list links (default: suburb deal browse path). */
+  suburbHref?: (suburb: PopularSuburb) => string;
 };
 
 type SuburbListItem =
@@ -107,6 +112,7 @@ export function PopularSuburbs({
   includeNearbyLink = true,
   allSuburbsHref = "/all-suburbs",
   statsMode = "counts",
+  suburbHref,
 }: PopularSuburbsProps) {
   const items = buildListItems(
     suburbs,
@@ -168,12 +174,14 @@ export function PopularSuburbs({
           }
 
           const { suburb } = item;
-          const path = appendFiltersToPath(
-            suburbWherePath(suburb.name, suburb.postcode),
-            days,
-            what,
-          );
-          const href = hrefWithSearch(path, search);
+          const path = suburbHref
+            ? suburbHref(suburb)
+            : appendFiltersToPath(
+                suburbWherePath(suburb.name, suburb.postcode),
+                days,
+                what,
+              );
+          const href = suburbHref ? path : hrefWithSearch(path, search);
           const thumbUrl = suburbHeroThumbUrl(suburb.heroImage);
 
           return (

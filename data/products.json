@@ -179,9 +179,7 @@
         "icon": "GlassWater",
         "synonyms": [
             "fireball",
-            "spirits & mixers"
-        ],
-        "groups": [
+            "spirits & mixers",
             "vodka"
         ]
     },
@@ -202,10 +200,6 @@
             "rosé",
             "house wine"
         ]
-    },
-    {
-        "name": "vodka",
-        "icon": "GlassWater"
     },
     {
         "name": "whiskey",
@@ -592,6 +586,7 @@
     },
     {
         "name": "poker",
+        "noprice": true,
         "icon": "Spade"
     },
     {

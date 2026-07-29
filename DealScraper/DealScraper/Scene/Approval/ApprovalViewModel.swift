@@ -142,12 +142,6 @@ final class ApprovalViewModel: CoordinatorViewModel {
             let nonBrokenVenueIds = Set(
                 venues.filter { $0.status != .broken }.compactMap(\.id)
             )
-            pendingSources = try dealSourceRepository.findNew()
-                .filter { nonBrokenVenueIds.contains($0.venueId) }
-            pendingDeals = try dealRepository.findNew()
-                .filter { nonBrokenVenueIds.contains($0.deal.venueId) }
-            pendingDealProducts = try dealRepository.findApprovedWithoutProducts()
-                .filter { nonBrokenVenueIds.contains($0.deal.venueId) }
             venueNames = Dictionary(
                 uniqueKeysWithValues: venues.compactMap { venue in
                     guard let id = venue.id else { return nil }
@@ -160,6 +154,23 @@ final class ApprovalViewModel: CoordinatorViewModel {
                     return (id, venue.googleMapId)
                 }
             )
+
+            pendingSources = []
+            pendingDeals = []
+            pendingDealProducts = []
+
+            switch mode {
+            case .sources:
+                pendingSources = try dealSourceRepository.findNew()
+                    .filter { nonBrokenVenueIds.contains($0.venueId) }
+            case .deals:
+                pendingDeals = try dealRepository.findNew()
+                    .filter { nonBrokenVenueIds.contains($0.deal.venueId) }
+            case .dealProducts:
+                pendingDealProducts = try dealRepository.findApprovedWithoutProducts()
+                    .filter { nonBrokenVenueIds.contains($0.deal.venueId) }
+            }
+
             reloadForCurrentMode()
         } catch {
             pendingSources = []
@@ -172,7 +183,7 @@ final class ApprovalViewModel: CoordinatorViewModel {
     }
 
     func onModeChanged() {
-        reloadForCurrentMode()
+        load()
     }
 
     func decide(status: DealStatus) {

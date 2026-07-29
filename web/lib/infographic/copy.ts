@@ -18,8 +18,11 @@ export function formatRegionInfographicTitle(regionName: string): string {
 }
 
 export function formatRegionInfographicDescription(
-  facts: Pick<RegionInfographicFacts, "dealCount" | "venueCount" | "regionName">,
+  facts: Pick<RegionInfographicFacts, "dealCount" | "venueCount" | "regionName" | "scope">,
 ): string {
+  if (facts.scope === "suburb") {
+    return `${facts.dealCount} deals across ${facts.venueCount} venues in ${facts.regionName} — busiest days and what's on offer.`;
+  }
   return `${facts.dealCount} deals across ${facts.venueCount} venues in ${facts.regionName} — densest suburbs, busiest days, and what's on offer.`;
 }
 

@@ -10,18 +10,18 @@ import {
   formatDayLabel,
   formatHourLabel,
 } from "@/lib/infographic/copy";
-import { regionPath } from "@/lib/search/slugs";
 import type { RegionDayHourCount } from "@/lib/infographic/types";
 
 type DayHourHeatChartProps = {
   cells: RegionDayHourCount[];
-  regionName: string;
+  /** Deal list base path (`/sydney` or `/surry-hills-2010`). */
+  listBasePath: string;
   className?: string;
 };
 
 export function DayHourHeatChart({
   cells,
-  regionName,
+  listBasePath,
   className,
 }: DayHourHeatChartProps) {
   const grid = buildDayHourHeatGrid(cells);
@@ -34,7 +34,6 @@ export function DayHourHeatChart({
   const cellByKey = new Map(
     grid.cells.map((cell) => [`${cell.dayOfWeek}:${cell.hour}`, cell] as const),
   );
-  const listPath = regionPath(regionName);
 
   return (
     <div className={className ?? "w-full max-w-xl"}>
@@ -62,7 +61,11 @@ export function DayHourHeatChart({
               </div>
               {grid.hours.map((hour) => {
                 const cell = cellByKey.get(`${dayOfWeek}:${hour}`)!;
-                const href = happyHourHeatCellHref(listPath, dayOfWeek, hour);
+                const href = happyHourHeatCellHref(
+                  listBasePath,
+                  dayOfWeek,
+                  hour,
+                );
                 const label = `${formatDayAbbrev(dayOfWeek)} ${formatHourLabel(hour)}: ${cell.count} — open search`;
                 return (
                   <Link

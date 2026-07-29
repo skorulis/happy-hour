@@ -188,13 +188,14 @@ function CoverageTriadBlock({
   dense?: boolean;
 }) {
   const ringSize = dense ? 92 : compact ? 128 : 156;
+  const single = slot.rings.length === 1;
   return (
     <div
       style={{
         display: "flex",
         flexDirection: "row",
         width: "100%",
-        justifyContent: "space-between",
+        justifyContent: single ? "center" : "space-between",
         gap: dense ? 8 : compact ? 12 : 20,
       }}
     >

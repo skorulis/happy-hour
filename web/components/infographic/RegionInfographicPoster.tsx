@@ -87,7 +87,7 @@ export function RegionInfographicPoster({
               <div className="min-w-0 flex-1 space-y-4 md:mt-14">
                 <DayHourHeatChart
                   cells={dayHourHeat.cells}
-                  regionName={composition.regionName}
+                  listBasePath={composition.listBasePath}
                   className="w-full max-w-xl md:max-w-none"
                 />
                 <div className="space-y-1">

@@ -3,6 +3,7 @@
 import { useId, useState } from "react";
 import { PopularSuburbs } from "@/components/PopularSuburbs";
 import type { SuburbStatistics } from "@/lib/search/queries";
+import { suburbStatisticsPath } from "@/lib/search/slugs";
 import {
   sortSuburbStatistics,
   type SuburbStatsView,
@@ -92,6 +93,9 @@ export function RegionStatisticsView({
           title={activeTab.title}
           description={activeTab.description}
           includeSpecialLinks={false}
+          suburbHref={(suburb) =>
+            suburbStatisticsPath(suburb.name, suburb.postcode)
+          }
         />
       </div>
     </div>

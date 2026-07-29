@@ -47,6 +47,19 @@ export function coverageRingDash(
   };
 }
 
+function venuesWithDealsRing(
+  facts: Pick<RegionInfographicFacts, "venueCount" | "venuesWithDeals">,
+): CoverageTriadRing {
+  return {
+    id: "venuesWithDeals",
+    percent: coveragePercentOf(facts.venuesWithDeals, facts.venueCount),
+    numerator: facts.venuesWithDeals,
+    denominator: Math.max(facts.venueCount, 0),
+    scaleCount: facts.venuesWithDeals,
+    scaleUnit: "venues",
+  };
+}
+
 export function buildCoverageTriadRings(
   facts: Pick<
     RegionInfographicFacts,
@@ -81,15 +94,18 @@ export function buildCoverageTriadRings(
       scaleCount: facts.suburbsWithDeals,
       scaleUnit: "suburbs",
     },
-    {
-      id: "venuesWithDeals",
-      percent: coveragePercentOf(facts.venuesWithDeals, facts.venueCount),
-      numerator: facts.venuesWithDeals,
-      denominator: Math.max(facts.venueCount, 0),
-      scaleCount: facts.venuesWithDeals,
-      scaleUnit: "venues",
-    },
+    venuesWithDealsRing(facts),
   ];
+}
+
+/** Suburb posters: single venues-with-deals ring until more metrics land. */
+export function buildSuburbCoverageRings(
+  facts: Pick<RegionInfographicFacts, "venueCount" | "venuesWithDeals">,
+): CoverageTriadRing[] | null {
+  if (facts.venueCount <= 0) {
+    return null;
+  }
+  return [venuesWithDealsRing(facts)];
 }
 
 export function coverageRingEyebrow(ring: CoverageTriadRing): string {
