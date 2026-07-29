@@ -144,41 +144,64 @@ export function RegionInfographicPoster({
           </div>
         ) : null}
 
-        {topProducts && topProducts.id === "topProducts" ? (
-          <div className="space-y-4 border-b border-border-subtle pb-8">
-            <div className="space-y-1">
-              <p className="text-xs font-medium tracking-[0.18em] text-accent-soft uppercase">
-                {slotEyebrow(topProducts)}
-              </p>
-              <p className="text-lg font-medium text-secondary">
-                {slotHeadline(topProducts)}
-                {slotSupporting(topProducts)
-                  ? ` · ${slotSupporting(topProducts)}`
-                  : null}
-              </p>
-            </div>
-            <DrinkBarsChart products={topProducts.products} />
-          </div>
-        ) : null}
-
-        {topFood && topFood.id === "topFood" ? (
-          <div className="space-y-4 border-b border-border-subtle pb-8">
-            <div className="space-y-1">
-              <p className="text-xs font-medium tracking-[0.18em] text-accent-soft uppercase">
-                {slotEyebrow(topFood)}
-              </p>
-              <p className="text-lg font-medium text-secondary">
-                {slotHeadline(topFood)}
-                {slotSupporting(topFood)
-                  ? ` · ${slotSupporting(topFood)}`
-                  : null}
-              </p>
-            </div>
-            <ProductBarsChart
-              products={topFood.products}
-              ariaLabel="Top food mentions"
-              fallbackIcon="UtensilsCrossed"
-            />
+        {topProducts || topFood ? (
+          <div className="flex flex-col gap-8 border-b border-border-subtle pb-8 md:flex-row md:items-start md:gap-8">
+            {topProducts && topProducts.id === "topProducts" ? (
+              <div
+                className={`min-w-0 space-y-3 ${
+                  topFood ? "md:flex-1" : "w-full"
+                }`}
+              >
+                <div className="space-y-1">
+                  <p className="text-xs font-medium tracking-[0.18em] text-accent-soft uppercase">
+                    {slotEyebrow(topProducts)}
+                  </p>
+                  <p
+                    className={`font-medium text-secondary ${
+                      topFood ? "text-base" : "text-lg"
+                    }`}
+                  >
+                    {slotHeadline(topProducts)}
+                    {slotSupporting(topProducts)
+                      ? ` · ${slotSupporting(topProducts)}`
+                      : null}
+                  </p>
+                </div>
+                <DrinkBarsChart
+                  products={topProducts.products}
+                  dense={Boolean(topFood)}
+                />
+              </div>
+            ) : null}
+            {topFood && topFood.id === "topFood" ? (
+              <div
+                className={`min-w-0 space-y-3 ${
+                  topProducts ? "md:flex-1" : "w-full"
+                }`}
+              >
+                <div className="space-y-1">
+                  <p className="text-xs font-medium tracking-[0.18em] text-accent-soft uppercase">
+                    {slotEyebrow(topFood)}
+                  </p>
+                  <p
+                    className={`font-medium text-secondary ${
+                      topProducts ? "text-base" : "text-lg"
+                    }`}
+                  >
+                    {slotHeadline(topFood)}
+                    {slotSupporting(topFood)
+                      ? ` · ${slotSupporting(topFood)}`
+                      : null}
+                  </p>
+                </div>
+                <ProductBarsChart
+                  products={topFood.products}
+                  ariaLabel="Top food mentions"
+                  fallbackIcon="UtensilsCrossed"
+                  dense={Boolean(topProducts)}
+                />
+              </div>
+            ) : null}
           </div>
         ) : null}
 

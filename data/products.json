@@ -505,6 +505,14 @@
         ]
     },
     {
+        "name": "breakfast",
+        "icon": "EggFried"
+    },
+    {
+        "name": "breakfast",
+        "icon": "EggFried"
+    },
+    {
         "name": "brunch",
         "icon": "Sun"
     },

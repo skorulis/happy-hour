@@ -8,6 +8,8 @@ type ProductBarsChartProps = {
   ariaLabel?: string;
   /** Fallback when a product has no registered icon (drinks → Beer, food → UtensilsCrossed). */
   fallbackIcon?: string;
+  /** Tighter rows / fewer icons for side-by-side layout. */
+  dense?: boolean;
 };
 
 function ProductIconStrip({
@@ -15,11 +17,13 @@ function ProductIconStrip({
   color,
   count,
   fallbackIcon,
+  size,
 }: {
   icon?: string;
   color: string;
   count: number;
   fallbackIcon: string;
+  size: number;
 }) {
   const iconName =
     icon && isRegisteredProductIcon(icon) ? icon : fallbackIcon;
@@ -34,7 +38,7 @@ function ProductIconStrip({
         <ProductMapIcon
           key={`${iconName}-${index}`}
           name={iconName}
-          size={18}
+          size={size}
           className="shrink-0"
         />
       ))}
@@ -47,20 +51,32 @@ export function ProductBarsChart({
   className,
   ariaLabel = "Top product mentions",
   fallbackIcon = "Beer",
+  dense = false,
 }: ProductBarsChartProps) {
-  const rows = buildDrinkBarRows(products);
+  const rows = buildDrinkBarRows(products, {
+    maxIcons: dense ? 6 : 12,
+  });
   if (rows.length === 0) return null;
 
   return (
-    <div className={className ?? "w-full max-w-2xl"}>
-      <ul className="flex flex-col gap-3.5" aria-label={ariaLabel}>
+    <div className={className ?? (dense ? "w-full" : "w-full max-w-2xl")}>
+      <ul
+        className={`flex flex-col ${dense ? "gap-2" : "gap-3.5"}`}
+        aria-label={ariaLabel}
+      >
         {rows.map((row) => (
           <li
             key={row.name}
-            className="grid grid-cols-[7rem_1fr_3rem] items-center gap-3"
+            className={
+              dense
+                ? "flex items-center gap-2"
+                : "grid grid-cols-[7rem_1fr_3rem] items-center gap-3"
+            }
           >
             <span
-              className={`truncate text-sm tracking-wide capitalize ${
+              className={`shrink-0 truncate tracking-wide capitalize ${
+                dense ? "w-[4.5rem] text-xs" : "text-sm"
+              } ${
                 row.isLeader
                   ? "font-semibold text-foreground"
                   : "font-medium text-secondary"
@@ -73,9 +89,12 @@ export function ProductBarsChart({
               color={row.color}
               count={row.iconCount}
               fallbackIcon={fallbackIcon}
+              size={dense ? 14 : 18}
             />
             <span
-              className={`text-right text-sm tabular-nums ${
+              className={`text-right tabular-nums ${
+                dense ? "ml-auto text-xs" : "text-sm"
+              } ${
                 row.isLeader ? "font-semibold text-accent-soft" : "text-muted"
               }`}
             >

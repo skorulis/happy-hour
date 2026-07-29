@@ -1,0 +1,15 @@
+[
+    { "name": "Sydney", "status": "live", "country": "AUS" },
+    { "name": "Melbourne", "status": "future", "country": "AUS" },
+    { "name": "Brisbane", "status": "future", "country": "AUS" },
+    { "name": "Perth", "status": "future", "country": "AUS" },
+    { "name": "Adelaide", "status": "future", "country": "AUS" },
+    { "name": "Darwin", "status": "future", "country": "AUS" },
+    { "name": "The Sunshine Coast", "status": "in-progress", "country": "AUS" },
+    { "name": "Central Coast", "status": "live", "country": "AUS" },
+    { "name": "Blue Mountains", "status": "live", "country": "AUS" },
+    { "name": "Hawkesbury", "status": "live", "country": "AUS" },
+    { "name": "Wollondilly", "status": "live", "country": "AUS" },
+    { "name": "Regional NSW", "status": "future", "country": "AUS" },
+    { "name": "Queenstown Lakes", "status": "live", "country": "NZL" }
+]

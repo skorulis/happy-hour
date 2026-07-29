@@ -23,24 +23,17 @@ final class ImageImportViewModel {
     private(set) var state: State = .idle
     var inputMode: InputMode = .url
     var sourceURLString: String = ""
-    var openRouterModel: String = LLMModelStore.defaultOpenRouterModel {
-        didSet { llmModelStore.openRouterModel = openRouterModel }
-    }
 
     private let venueDealExtractionService: VenueDealExtractionService
     private let webPageLoaderFactory: WebPageLoaderFactory
-    private let llmModelStore: LLMModelStore
 
     @Resolvable<Resolver>
     init(
         venueDealExtractionService: VenueDealExtractionService,
-        webPageLoaderFactory: WebPageLoaderFactory,
-        llmModelStore: LLMModelStore
+        webPageLoaderFactory: WebPageLoaderFactory
     ) {
         self.venueDealExtractionService = venueDealExtractionService
         self.webPageLoaderFactory = webPageLoaderFactory
-        self.llmModelStore = llmModelStore
-        openRouterModel = llmModelStore.openRouterModel
     }
 
     static func isLocalImageURL(_ url: URL) -> Bool {

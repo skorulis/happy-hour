@@ -117,7 +117,7 @@ export const INFOGRAPHIC_IMAGE_SIZES: Record<
   { width: number; height: number }
 > = {
   og: { width: 1200, height: 630 },
-  /** Tall enough for weekday + heat + drink/food charts + suburb tiles. */
-  square: { width: 1080, height: 2200 },
-  story: { width: 1080, height: 2480 },
+  /** Tall enough for weekday + heat + paired drink/food charts + suburb tiles. */
+  square: { width: 1080, height: 2000 },
+  story: { width: 1080, height: 2280 },
 };

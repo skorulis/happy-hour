@@ -27,6 +27,15 @@ struct SettingsView: View {
             }
 
             Section {
+                TextField("OpenRouter model", text: $viewModel.openRouterModel)
+                    .textFieldStyle(.roundedBorder)
+            } header: {
+                Text("LLM")
+            } footer: {
+                Text("Model used for deal extraction and venue blurbs (e.g. \(LLMModelStore.defaultOpenRouterModel)).")
+            }
+
+            Section {
                 apiKeyField(
                     title: "Google Places API Key",
                     text: $viewModel.googlePlacesAPIKey
@@ -70,6 +79,7 @@ struct SettingsView: View {
         .padding(24)
         .frame(minWidth: 480, minHeight: 420)
         .onChange(of: viewModel.backendURL) { viewModel.save() }
+        .onChange(of: viewModel.openRouterModel) { viewModel.save() }
         .onChange(of: viewModel.googlePlacesAPIKey) { viewModel.save() }
         .onChange(of: viewModel.openRouterAPIKey) { viewModel.save() }
         .onChange(of: viewModel.markdownerAPIKey) { viewModel.save() }

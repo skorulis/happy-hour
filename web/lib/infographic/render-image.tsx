@@ -378,31 +378,37 @@ function DayHourHeatBlock({
 function ProductMixBlock({
   slot,
   compact,
+  dense,
   fallbackIcon = "Beer",
 }: {
   slot: Extract<InfographicSlot, { id: "topProducts" | "topFood" }>;
   compact?: boolean;
+  dense?: boolean;
   fallbackIcon?: "Beer" | "UtensilsCrossed";
 }) {
   const rows = buildDrinkBarRows(slot.products, {
-    maxIcons: compact ? 8 : 12,
+    maxIcons: dense ? 6 : compact ? 8 : 12,
   });
-  const iconSize = compact ? 16 : 20;
+  const iconSize = dense ? 14 : compact ? 16 : 20;
+  const nameWidth = dense ? 88 : compact ? 110 : 140;
+  const percentWidth = dense ? 40 : compact ? 48 : 56;
+  const labelSize = dense ? 16 : compact ? 18 : 22;
+  const headlineSize = dense ? 22 : compact ? 28 : 34;
 
   return (
     <div
       style={{
         display: "flex",
         flexDirection: "column",
-        gap: compact ? 12 : 16,
+        gap: dense ? 10 : compact ? 12 : 16,
         width: "100%",
       }}
     >
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: dense ? 4 : 8 }}>
         <div
           style={{
             display: "flex",
-            fontSize: compact ? 18 : 22,
+            fontSize: dense ? 16 : compact ? 18 : 22,
             fontWeight: 600,
             letterSpacing: "0.14em",
             textTransform: "uppercase",
@@ -414,13 +420,14 @@ function ProductMixBlock({
         <div
           style={{
             display: "flex",
-            fontSize: compact ? 28 : 34,
+            fontSize: headlineSize,
             fontWeight: 600,
             color: COLORS.secondary,
           }}
         >
-          {slotHeadline(slot)}
-          {slotSupporting(slot) ? ` · ${slotSupporting(slot)}` : ""}
+          {`${slotHeadline(slot)}${
+            slotSupporting(slot) ? ` · ${slotSupporting(slot)}` : ""
+          }`}
         </div>
       </div>
 
@@ -428,73 +435,74 @@ function ProductMixBlock({
         style={{
           display: "flex",
           flexDirection: "column",
-          gap: compact ? 10 : 14,
+          gap: dense ? 8 : compact ? 10 : 14,
           width: "100%",
         }}
       >
         {rows.map((row) => (
+          <div
+            key={row.name}
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              gap: dense ? 8 : compact ? 12 : 16,
+              width: "100%",
+            }}
+          >
             <div
-              key={row.name}
+              style={{
+                display: "flex",
+                width: nameWidth,
+                fontSize: labelSize,
+                fontWeight: row.isLeader ? 700 : 500,
+                color: row.isLeader ? COLORS.fg : COLORS.secondary,
+                textTransform: "capitalize",
+              }}
+            >
+              {row.name}
+            </div>
+            <div
               style={{
                 display: "flex",
                 flexDirection: "row",
+                flexWrap: "wrap",
                 alignItems: "center",
-                gap: compact ? 12 : 16,
-                width: "100%",
+                gap: 2,
+                flexGrow: dense ? 0 : 1,
               }}
             >
-              <div
-                style={{
-                  display: "flex",
-                  width: compact ? 110 : 140,
-                  fontSize: compact ? 18 : 22,
-                  fontWeight: row.isLeader ? 700 : 500,
-                  color: row.isLeader ? COLORS.fg : COLORS.secondary,
-                  textTransform: "capitalize",
-                }}
-              >
-                {row.name}
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "row",
-                  flexWrap: "wrap",
-                  alignItems: "center",
-                  gap: 2,
-                  flexGrow: 1,
-                }}
-              >
-                {Array.from({ length: row.iconCount }, (_, index) => (
-                  // eslint-disable-next-line @next/next/no-img-element -- inline SVG data URIs for OG image render
-                  <img
-                    key={`${row.name}-${index}`}
-                    src={productIconDataUri(
-                      row.icon,
-                      row.color,
-                      iconSize,
-                      fallbackIcon,
-                    )}
-                    width={iconSize}
-                    height={iconSize}
-                    alt=""
-                  />
-                ))}
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  width: compact ? 48 : 56,
-                  justifyContent: "flex-end",
-                  fontSize: compact ? 18 : 22,
-                  fontWeight: row.isLeader ? 700 : 500,
-                  color: row.isLeader ? COLORS.accentSoft : COLORS.muted,
-                }}
-              >
-                {`${row.percent}%`}
-              </div>
+              {Array.from({ length: row.iconCount }, (_, index) => (
+                // eslint-disable-next-line @next/next/no-img-element -- inline SVG data URIs for OG image render
+                <img
+                  key={`${row.name}-${index}`}
+                  src={productIconDataUri(
+                    row.icon,
+                    row.color,
+                    iconSize,
+                    fallbackIcon,
+                  )}
+                  width={iconSize}
+                  height={iconSize}
+                  alt=""
+                />
+              ))}
             </div>
-          ))}
+            <div
+              style={{
+                display: "flex",
+                width: percentWidth,
+                justifyContent: "flex-end",
+                marginLeft: dense ? "auto" : 0,
+                fontSize: labelSize,
+                fontWeight: row.isLeader ? 700 : 500,
+                color: row.isLeader ? COLORS.accentSoft : COLORS.muted,
+              }}
+            >
+              {`${row.percent}%`}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -667,31 +675,52 @@ export async function renderRegionInfographicImage(
             </div>
           ) : null}
 
-          {topProducts && topProducts.id === "topProducts" ? (
+          {topProducts || topFood ? (
             <div
               style={{
                 display: "flex",
+                flexDirection:
+                  topProducts && topFood ? "row" : "column",
+                alignItems: "flex-start",
+                gap: compact ? 20 : 28,
+                width: "100%",
                 marginTop: compact ? 8 : 12,
                 marginBottom: compact ? 8 : 12,
+                borderBottom: `2px solid ${COLORS.border}`,
+                paddingBottom: compact ? 14 : 18,
               }}
             >
-              <ProductMixBlock slot={topProducts} compact={compact} />
-            </div>
-          ) : null}
-
-          {topFood && topFood.id === "topFood" ? (
-            <div
-              style={{
-                display: "flex",
-                marginTop: compact ? 8 : 12,
-                marginBottom: compact ? 8 : 12,
-              }}
-            >
-              <ProductMixBlock
-                slot={topFood}
-                compact={compact}
-                fallbackIcon="UtensilsCrossed"
-              />
+              {topProducts && topProducts.id === "topProducts" ? (
+                <div
+                  style={{
+                    display: "flex",
+                    width: topFood ? "48%" : "100%",
+                    flexShrink: 0,
+                  }}
+                >
+                  <ProductMixBlock
+                    slot={topProducts}
+                    compact={compact}
+                    dense={Boolean(topFood)}
+                  />
+                </div>
+              ) : null}
+              {topFood && topFood.id === "topFood" ? (
+                <div
+                  style={{
+                    display: "flex",
+                    width: topProducts ? "48%" : "100%",
+                    flexShrink: 0,
+                  }}
+                >
+                  <ProductMixBlock
+                    slot={topFood}
+                    compact={compact}
+                    dense={Boolean(topProducts)}
+                    fallbackIcon="UtensilsCrossed"
+                  />
+                </div>
+              ) : null}
             </div>
           ) : null}
 

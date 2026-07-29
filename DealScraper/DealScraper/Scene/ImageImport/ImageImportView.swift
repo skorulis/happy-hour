@@ -11,7 +11,6 @@ struct ImageImportView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                processingControls
                 sourceInput
                 content
             }
@@ -19,13 +18,6 @@ struct ImageImportView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .frame(minWidth: 480, minHeight: 400)
-    }
-
-    private var processingControls: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            TextField("OpenRouter model", text: $viewModel.openRouterModel)
-                .textFieldStyle(.roundedBorder)
-        }
     }
 
     @ViewBuilder
