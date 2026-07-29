@@ -135,7 +135,7 @@ export const INFOGRAPHIC_IMAGE_SIZES: Record<
   { width: number; height: number }
 > = {
   og: { width: 1200, height: 630 },
-  /** Tall enough for coverage rings + weekday + heat + drink/food + suburb tiles. */
-  square: { width: 1080, height: 2200 },
-  story: { width: 1080, height: 2480 },
+  /** Portrait share sizes; keep in sync with layout height in render-image.tsx. */
+  square: { width: 1080, height: 1280 },
+  story: { width: 1080, height: 1600 },
 };

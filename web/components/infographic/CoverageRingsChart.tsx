@@ -19,7 +19,13 @@ type CoverageRingsChartProps = {
   className?: string;
 };
 
-function CoverageRing({ ring }: { ring: CoverageTriadRing }) {
+function CoverageRing({
+  ring,
+  className,
+}: {
+  ring: CoverageTriadRing;
+  className?: string;
+}) {
   const dash = coverageRingDash(ring.percent);
   const percentLabel = formatCoveragePercent(
     clampCoveragePercent(ring.percent),
@@ -27,11 +33,13 @@ function CoverageRing({ ring }: { ring: CoverageTriadRing }) {
   const unit = coverageRingScaleUnitLabel(ring.scaleUnit, ring.scaleCount);
 
   return (
-    <div className="flex flex-col items-center gap-3 text-center">
+    <div
+      className={`flex flex-col items-center gap-3 text-center ${className ?? ""}`}
+    >
       <p className="text-xs font-medium tracking-[0.16em] text-accent-soft uppercase">
         {coverageRingEyebrow(ring)}
       </p>
-      <div className="relative h-36 w-36 sm:h-40 sm:w-40">
+      <div className="relative h-32 w-32 sm:h-40 sm:w-40">
         <svg
           viewBox={`0 0 ${COVERAGE_RING_VIEWBOX} ${COVERAGE_RING_VIEWBOX}`}
           className="h-full w-full"
@@ -87,13 +95,21 @@ export function CoverageRingsChart({
     <div
       className={
         className ??
-        "grid grid-cols-1 gap-8 sm:grid-cols-3 sm:gap-4 md:gap-6"
+        "grid grid-cols-2 gap-6 sm:grid-cols-3 sm:gap-4 md:gap-6"
       }
       role="img"
       aria-label={coverageTriadAriaLabel(rings)}
     >
-      {rings.map((ring) => (
-        <CoverageRing key={ring.id} ring={ring} />
+      {rings.map((ring, index) => (
+        <CoverageRing
+          key={ring.id}
+          ring={ring}
+          className={
+            index === 2
+              ? "col-span-2 justify-self-center sm:col-span-1 sm:justify-self-auto"
+              : undefined
+          }
+        />
       ))}
     </div>
   );

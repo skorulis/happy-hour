@@ -41,7 +41,6 @@ function TextSlot({ slot }: { slot: InfographicSlot }) {
 export function RegionInfographicPoster({
   composition,
 }: RegionInfographicPosterProps) {
-  const headline = composition.slots.find((slot) => slot.id === "headline");
   const coverageTriad = composition.slots.find(
     (slot) => slot.id === "coverageTriad",
   );
@@ -97,22 +96,14 @@ export function RegionInfographicPoster({
           </div>
         </header>
 
-        {headline ? (
-          <div className="space-y-1 border-b border-border-subtle pb-6">
-            <p className="text-xs font-medium tracking-[0.18em] text-accent-soft uppercase">
-              {slotHeadline(headline)}
-            </p>
-          </div>
-        ) : null}
-
         {coverageTriad && coverageTriad.id === "coverageTriad" ? (
-          <div className="border-b border-border-subtle pb-8">
+          <div>
             <CoverageRingsChart rings={coverageTriad.rings} />
           </div>
         ) : null}
 
         {weekdayMix || dayHourHeat ? (
-          <div className="flex flex-col gap-8 border-b border-border-subtle pb-8 md:flex-row md:items-start md:gap-8">
+          <div className="flex flex-col gap-8 md:flex-row md:items-start md:gap-8">
             {weekdayMix && weekdayMix.id === "weekdayMix" ? (
               <div className="min-w-0 space-y-4 md:w-[42%] md:shrink-0">
                 <div className="space-y-1">
@@ -134,6 +125,11 @@ export function RegionInfographicPoster({
             ) : null}
             {dayHourHeat && dayHourHeat.id === "dayHourHeat" ? (
               <div className="min-w-0 flex-1 space-y-4 md:mt-14">
+                <DayHourHeatChart
+                  cells={dayHourHeat.cells}
+                  regionName={composition.regionName}
+                  className="w-full max-w-xl md:max-w-none"
+                />
                 <div className="space-y-1">
                   <p className="text-xs font-medium tracking-[0.18em] text-accent-soft uppercase">
                     {slotEyebrow(dayHourHeat)}
@@ -145,18 +141,13 @@ export function RegionInfographicPoster({
                       : null}
                   </p>
                 </div>
-                <DayHourHeatChart
-                  cells={dayHourHeat.cells}
-                  regionName={composition.regionName}
-                  className="w-full max-w-xl md:max-w-none"
-                />
               </div>
             ) : null}
           </div>
         ) : null}
 
         {topProducts || topFood ? (
-          <div className="flex flex-col gap-8 border-b border-border-subtle pb-8 md:flex-row md:items-start md:gap-8">
+          <div className="flex flex-col gap-8 md:flex-row md:items-start md:gap-8">
             {topProducts && topProducts.id === "topProducts" ? (
               <div
                 className={`min-w-0 space-y-3 ${

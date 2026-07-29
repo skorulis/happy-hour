@@ -427,32 +427,6 @@ function DayHourHeatBlock({
         width: "100%",
       }}
     >
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        <div
-          style={{
-            display: "flex",
-            fontSize: compact ? 18 : 22,
-            fontWeight: 600,
-            letterSpacing: "0.14em",
-            textTransform: "uppercase",
-            color: COLORS.accentSoft,
-          }}
-        >
-          {slotEyebrow(slot)}
-        </div>
-        <div
-          style={{
-            display: "flex",
-            fontSize: compact ? 28 : 34,
-            fontWeight: 600,
-            color: COLORS.secondary,
-          }}
-        >
-          {slotHeadline(slot)}
-          {slotSupporting(slot) ? ` · ${slotSupporting(slot)}` : ""}
-        </div>
-      </div>
-
       <div
         style={{
           display: "flex",
@@ -539,6 +513,32 @@ function DayHourHeatBlock({
             })}
           </div>
         ))}
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div
+          style={{
+            display: "flex",
+            fontSize: compact ? 18 : 22,
+            fontWeight: 600,
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
+            color: COLORS.accentSoft,
+          }}
+        >
+          {slotEyebrow(slot)}
+        </div>
+        <div
+          style={{
+            display: "flex",
+            fontSize: compact ? 28 : 34,
+            fontWeight: 600,
+            color: COLORS.secondary,
+          }}
+        >
+          {slotHeadline(slot)}
+          {slotSupporting(slot) ? ` · ${slotSupporting(slot)}` : ""}
+        </div>
       </div>
     </div>
   );
@@ -687,7 +687,6 @@ export async function renderRegionInfographicImage(
   const isStory = format === "story";
   const isSquare = format === "square";
   const compact = isOg || isSquare;
-  const headline = composition.slots.find((slot) => slot.id === "headline");
   const coverageTriad = composition.slots.find(
     (slot) => slot.id === "coverageTriad",
   );
@@ -714,6 +713,9 @@ export async function renderRegionInfographicImage(
   const cardRadius = isOg ? 24 : 32;
   const cardWidth = size.width - outerPad * 2;
   const cardHeight = size.height - outerPad * 2;
+  // OG must fill a fixed social crop. Tall formats hug content so leftover
+  // canvas height letterboxes outside the bordered card instead of inside it.
+  const cardFillsCanvas = isOg;
 
   return new ImageResponse(
     (
@@ -723,22 +725,22 @@ export async function renderRegionInfographicImage(
           height: "100%",
           display: "flex",
           alignItems: "center",
-          justifyContent: "center",
+          justifyContent: cardFillsCanvas ? "center" : "flex-start",
+          padding: cardFillsCanvas ? 0 : outerPad,
           backgroundColor: COLORS.pageBg,
           fontFamily: "Geist",
         }}
       >
         <div
           style={{
-            width: cardWidth,
-            height: cardHeight,
+            width: cardFillsCanvas ? cardWidth : "100%",
+            ...(cardFillsCanvas ? { height: cardHeight, overflow: "hidden" } : {}),
             display: "flex",
             flexDirection: "column",
             justifyContent: "flex-start",
             padding: innerPad,
             borderRadius: cardRadius,
             border: `3px solid ${COLORS.border}`,
-            overflow: "hidden",
             backgroundColor: COLORS.cardBg,
             backgroundImage:
               "radial-gradient(ellipse 100% 80% at 15% -10%, rgba(124, 58, 87, 0.55) 0%, transparent 55%), radial-gradient(ellipse 70% 50% at 100% 0%, rgba(245, 158, 11, 0.2) 0%, transparent 50%)",
@@ -776,32 +778,6 @@ export async function renderRegionInfographicImage(
             </div>
           </div>
 
-          {headline ? (
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 6,
-                borderBottom: `2px solid ${COLORS.border}`,
-                paddingBottom: compact ? 14 : 20,
-                marginTop: compact ? 14 : 22,
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  fontSize: compact ? 18 : 22,
-                  fontWeight: 600,
-                  letterSpacing: "0.14em",
-                  textTransform: "uppercase",
-                  color: COLORS.accentSoft,
-                }}
-              >
-                {slotHeadline(headline)}
-              </div>
-            </div>
-          ) : null}
-
           {coverageTriad && coverageTriad.id === "coverageTriad" ? (
             <div
               style={{
@@ -809,8 +785,6 @@ export async function renderRegionInfographicImage(
                 width: "100%",
                 marginTop: compact ? 16 : 22,
                 marginBottom: compact ? 8 : 14,
-                borderBottom: `2px solid ${COLORS.border}`,
-                paddingBottom: compact ? 16 : 22,
               }}
             >
               <CoverageTriadBlock
@@ -832,8 +806,6 @@ export async function renderRegionInfographicImage(
                 width: "100%",
                 marginTop: compact ? 16 : 22,
                 marginBottom: compact ? 8 : 14,
-                borderBottom: `2px solid ${COLORS.border}`,
-                paddingBottom: compact ? 16 : 22,
               }}
             >
               {weekdayMix && weekdayMix.id === "weekdayMix" ? (
@@ -878,8 +850,6 @@ export async function renderRegionInfographicImage(
                 width: "100%",
                 marginTop: compact ? 8 : 12,
                 marginBottom: compact ? 8 : 12,
-                borderBottom: `2px solid ${COLORS.border}`,
-                paddingBottom: compact ? 14 : 18,
               }}
             >
               {topProducts && topProducts.id === "topProducts" ? (

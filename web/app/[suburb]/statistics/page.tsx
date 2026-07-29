@@ -104,7 +104,7 @@ export default async function RegionStatisticsPage({
         </p>
       </section>
 
-      <section className="space-y-4 border-t border-border-subtle pt-8">
+      <section className="space-y-4">
         <div className="space-y-1">
           <h2 className="text-xl font-semibold text-foreground">
             Explore the rankings
