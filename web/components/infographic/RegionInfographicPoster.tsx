@@ -81,9 +81,9 @@ export function RegionInfographicPoster({
             <p className="text-xs font-medium tracking-[0.2em] text-accent-soft uppercase">
               DuskRoute
             </p>
-            <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl md:text-4xl">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl md:text-4xl">
               {formatRegionInfographicTitle(composition.regionName)}
-            </h2>
+            </h1>
           </div>
         </header>
 

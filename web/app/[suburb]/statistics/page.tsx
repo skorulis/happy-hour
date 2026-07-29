@@ -78,15 +78,7 @@ export default async function RegionStatisticsPage({
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-10 px-4 py-10 md:px-6">
-      <header className="flex flex-col gap-4">
-        <p className="text-sm font-medium tracking-[0.2em] text-accent-soft uppercase">
-          DuskRoute
-        </p>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
-          {title}
-        </h1>
-        <RegionFocusNotice regionName={region.name} />
-      </header>
+      <RegionFocusNotice regionName={region.name} />
 
       <RegionInfographicPoster composition={composition} />
 

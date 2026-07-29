@@ -21,6 +21,10 @@
         "name": "beer",
         "rank": 4,
         "icon": "Beer",
+        "synonyms": [
+            "corona",
+            "cerveza"
+        ],
         "groups": [
             "schooner",
             "pint",
@@ -509,7 +513,8 @@
         "synonyms": [
             "membership jackpot draw",
             "members draw",
-            "members’ jackpot"
+            "members’ jackpot",
+            "member’s draw"
         ]
     },
     {
