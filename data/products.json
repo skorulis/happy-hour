@@ -40,16 +40,17 @@
         "icon": "Martini",
         "synonyms": [
             "cocktail",
-            "daiquiri"
-        ],
-        "groups": [
+            "daiquiri",
             "bloody marys",
+            "bloody mary's",
             "caesar",
             "espresso martini",
             "negroni",
             "martini",
-            "spritz",
             "mojito"
+        ],
+        "groups": [
+            "spritz"
         ]
     },
     {
@@ -97,39 +98,8 @@
         "icon": "Beer"
     },
     {
-        "name": "bloody mary",
-        "icon": "Martini",
-        "synonyms": [
-            "bloody mary's"
-        ]
-    },
-    {
-        "name": "caesar",
-        "icon": "Martini"
-    },
-    {
-        "name": "margarita",
-        "icon": "Martini"
-    },
-    {
-        "name": "espresso martini",
-        "icon": "Martini"
-    },
-    {
-        "name": "martini",
-        "icon": "Martini"
-    },
-    {
-        "name": "mojito",
-        "icon": "Martini"
-    },
-    {
         "name": "mulled wine",
         "icon": "Coffee"
-    },
-    {
-        "name": "negroni",
-        "icon": "Martini"
     },
     {
         "name": "pint",
@@ -493,7 +463,6 @@
             "jazz",
             "live music",
             "silent disco",
-            "meat tray",
             "pool",
             "darts",
             "board games",
@@ -605,7 +574,11 @@
     {
         "name": "raffle",
         "icon": "Ticket",
-        "noprice": true
+        "noprice": true,
+        "synonyms": [
+            "meat tray",
+            "meat raffle"
+        ]
     },
     {
         "name": "tarot",
@@ -645,11 +618,6 @@
     {
         "name": "silent disco",
         "icon": "Headphones"
-    },
-    {
-        "name": "meat tray",
-        "icon": "ChairsTablePlatter",
-        "noprice": true
     },
     {
         "name": "pool",

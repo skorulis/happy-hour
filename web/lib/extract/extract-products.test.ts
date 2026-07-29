@@ -86,9 +86,9 @@ describe("extractProducts", () => {
     });
   });
 
-  it("returns caesar cocktail from a caesar title with price", () => {
+  it("maps caesar synonym to cocktails from a caesar title with price", () => {
     expect(extractProducts({ title: "$12 Caesar", details: null })).toEqual({
-      products: [{ name: "caesar", price: 12 }],
+      products: [{ name: "cocktails", price: 12 }],
     });
   });
 
@@ -148,6 +148,22 @@ describe("extractProducts", () => {
         details: "w/ house beer or wine",
       }).products.map((p) => p.name),
     ).toEqual(["lunch"]);
+  });
+
+  it("keeps products after with followed by a dollar price", () => {
+    expect(
+      extractProducts({
+        title: "Catch the action with $9 pints",
+        details: null,
+      }).products,
+    ).toEqual([{ name: "pint", price: 9 }]);
+
+    expect(
+      extractProducts({
+        title: "Live sport w/ $5 beers",
+        details: null,
+      }).products,
+    ).toEqual([{ name: "beer", price: 5 }]);
   });
 
   it("ignores chips in chips down", () => {
@@ -374,7 +390,7 @@ describe("extractProducts", () => {
         details: null,
       }),
     ).toEqual({
-      products: [{ name: "meat tray", price: null }],
+      products: [{ name: "raffle", price: null }],
     });
   });
 });

@@ -21,7 +21,7 @@ describe("isDrinkProductName", () => {
     expect(isDrinkProductName("Beer")).toBe(true);
     expect(isDrinkProductName("cocktails")).toBe(true);
     expect(isDrinkProductName("schooner")).toBe(true);
-    expect(isDrinkProductName("negroni")).toBe(true);
+    expect(isDrinkProductName("spritz")).toBe(true);
   });
 
   it("excludes non-drink products", () => {

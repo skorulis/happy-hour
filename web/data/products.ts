@@ -177,10 +177,14 @@ function collectWordBoundedRanges(text: string, needles: string[]): TextRange[] 
   return ranges;
 }
 
-/** "With …" / "w/ …" describes sides/add-ons, not the product — ignore through end of line. */
+/**
+ * "With …" / "w/ …" describes sides/add-ons, not the product — ignore through
+ * end of line. Keep the clause when `with` / `w/` is immediately followed by a
+ * `$` price (e.g. "with $5 beers").
+ */
 function collectWithClauseIgnoreRanges(text: string): TextRange[] {
   const ranges: TextRange[] = [];
-  const pattern = /\b(?:with|w\/)[^\n]*/g;
+  const pattern = /\b(?:with|w\/)(?!\s*\$\d)[^\n]*/g;
   let match: RegExpExecArray | null;
   while ((match = pattern.exec(text)) !== null) {
     ranges.push({ start: match.index, end: match.index + match[0].length });
