@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { BeerGlassWeekdayChart } from "@/components/infographic/BeerGlassWeekdayChart";
+import { CoverageRingsChart } from "@/components/infographic/CoverageRingsChart";
 import { DayHourHeatChart } from "@/components/infographic/DayHourHeatChart";
 import {
   DrinkBarsChart,
@@ -41,6 +42,9 @@ export function RegionInfographicPoster({
   composition,
 }: RegionInfographicPosterProps) {
   const headline = composition.slots.find((slot) => slot.id === "headline");
+  const coverageTriad = composition.slots.find(
+    (slot) => slot.id === "coverageTriad",
+  );
   const weekdayMix = composition.slots.find((slot) => slot.id === "weekdayMix");
   const dayHourHeat = composition.slots.find(
     (slot) => slot.id === "dayHourHeat",
@@ -52,6 +56,7 @@ export function RegionInfographicPoster({
   const rest = composition.slots.filter(
     (slot) =>
       slot.id !== "headline" &&
+      slot.id !== "coverageTriad" &&
       slot.id !== "weekdayMix" &&
       slot.id !== "dayHourHeat" &&
       slot.id !== "topProducts" &&
@@ -97,6 +102,12 @@ export function RegionInfographicPoster({
             <p className="text-xs font-medium tracking-[0.18em] text-accent-soft uppercase">
               {slotHeadline(headline)}
             </p>
+          </div>
+        ) : null}
+
+        {coverageTriad && coverageTriad.id === "coverageTriad" ? (
+          <div className="border-b border-border-subtle pb-8">
+            <CoverageRingsChart rings={coverageTriad.rings} />
           </div>
         ) : null}
 

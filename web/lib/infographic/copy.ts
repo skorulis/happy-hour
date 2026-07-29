@@ -69,6 +69,8 @@ export function slotEyebrow(slot: InfographicSlot): string {
   switch (slot.id) {
     case "headline":
       return "";
+    case "coverageTriad":
+      return "Coverage";
     case "densest":
       return "Densest for deals";
     case "perCapita":
@@ -81,8 +83,6 @@ export function slotEyebrow(slot: InfographicSlot): string {
       return "What's pouring";
     case "topFood":
       return "What's cooking";
-    case "coverage":
-      return "Venue coverage";
     case "dealLeader":
       return "Most deals";
   }
@@ -92,6 +92,12 @@ export function slotHeadline(slot: InfographicSlot): string {
   switch (slot.id) {
     case "headline":
       return `${formatDealCount(slot.dealCount)} specials across ${formatDealCount(slot.venueCount)} venues`;
+    case "coverageTriad": {
+      const venueRing = slot.rings.find((ring) => ring.id === "venuesWithDeals");
+      return venueRing
+        ? `${formatCoveragePercent(venueRing.percent)} venue coverage`
+        : "Region coverage";
+    }
     case "densest":
       return formatSuburbLabel(slot.suburb);
     case "perCapita":
@@ -108,8 +114,6 @@ export function slotHeadline(slot: InfographicSlot): string {
       const leader = slot.products[0];
       return leader ? `${leader.name} leads` : "No food matches yet";
     }
-    case "coverage":
-      return formatCoveragePercent(slot.percent);
     case "dealLeader":
       return formatSuburbLabel(slot.suburb);
   }
@@ -118,6 +122,8 @@ export function slotHeadline(slot: InfographicSlot): string {
 export function slotSupporting(slot: InfographicSlot): string | null {
   switch (slot.id) {
     case "headline":
+      return null;
+    case "coverageTriad":
       return null;
     case "densest":
       return formatPerSqkmValue(slot.suburb.value);
@@ -140,8 +146,6 @@ export function slotSupporting(slot: InfographicSlot): string | null {
       const leader = slot.products[0];
       return leader ? `${leader.percent}% of food mentions` : null;
     }
-    case "coverage":
-      return `${formatDealCount(slot.venuesWithDeals)} of ${formatDealCount(slot.venueCount)} venues have a deal`;
     case "dealLeader":
       return `${formatDealCount(slot.suburb.dealCount)} deals`;
   }

@@ -3,18 +3,33 @@ import {
   BEER_GLASS_VIEWBOX,
   buildBeerGlassGeometry,
 } from "@/lib/infographic/beer-glass";
+import {
+  COVERAGE_RING_CENTER,
+  COVERAGE_RING_FILL,
+  COVERAGE_RING_RADIUS,
+  COVERAGE_RING_STROKE,
+  COVERAGE_RING_TRACK,
+  COVERAGE_RING_VIEWBOX,
+  clampCoveragePercent,
+  coverageRingDash,
+  coverageRingEyebrow,
+  coverageRingScaleUnitLabel,
+} from "@/lib/infographic/coverage-rings";
 import { buildDrinkBarRows } from "@/lib/infographic/drink-bars";
 import { buildDayHourHeatGrid } from "@/lib/infographic/day-hour-heat";
 import { productIconDataUri, flameIconDataUri } from "@/lib/infographic/drink-icon-data-uri";
 import { loadInfographicFonts } from "@/lib/infographic/og-fonts";
 import type {
+  CoverageTriadRing,
   InfographicComposition,
   InfographicFormat,
   InfographicSlot,
 } from "@/lib/infographic/types";
 import { INFOGRAPHIC_IMAGE_SIZES } from "@/lib/infographic/types";
 import {
+  formatCoveragePercent,
   formatDayAbbrev,
+  formatDealCount,
   formatHourLabel,
   formatRegionInfographicTitle,
   slotEyebrow,
@@ -89,6 +104,160 @@ function SlotBlock({
           {supporting}
         </div>
       ) : null}
+    </div>
+  );
+}
+
+function CoverageRingBlock({
+  ring,
+  size,
+}: {
+  ring: CoverageTriadRing;
+  size: number;
+}) {
+  const dash = coverageRingDash(ring.percent);
+  const percentLabel = formatCoveragePercent(
+    clampCoveragePercent(ring.percent),
+  );
+  const unit = coverageRingScaleUnitLabel(ring.scaleUnit, ring.scaleCount);
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 6,
+        width: "33%",
+        minWidth: 0,
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          fontSize: size < 110 ? 13 : 16,
+          fontWeight: 600,
+          letterSpacing: "0.12em",
+          textTransform: "uppercase",
+          color: COLORS.accentSoft,
+          textAlign: "center",
+        }}
+      >
+        {coverageRingEyebrow(ring)}
+      </div>
+      <div
+        style={{
+          display: "flex",
+          position: "relative",
+          width: size,
+          height: size,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <svg
+          width={size}
+          height={size}
+          viewBox={`0 0 ${COVERAGE_RING_VIEWBOX} ${COVERAGE_RING_VIEWBOX}`}
+        >
+          <circle
+            cx={COVERAGE_RING_CENTER}
+            cy={COVERAGE_RING_CENTER}
+            r={COVERAGE_RING_RADIUS}
+            fill="none"
+            stroke={COVERAGE_RING_TRACK}
+            strokeWidth={COVERAGE_RING_STROKE}
+          />
+          <g
+            transform={`rotate(-90 ${COVERAGE_RING_CENTER} ${COVERAGE_RING_CENTER})`}
+          >
+            <circle
+              cx={COVERAGE_RING_CENTER}
+              cy={COVERAGE_RING_CENTER}
+              r={COVERAGE_RING_RADIUS}
+              fill="none"
+              stroke={COVERAGE_RING_FILL}
+              strokeWidth={COVERAGE_RING_STROKE}
+              strokeLinecap="round"
+              strokeDasharray={dash.dasharray}
+              strokeDashoffset={dash.dashoffset}
+            />
+          </g>
+        </svg>
+        <div
+          style={{
+            display: "flex",
+            position: "absolute",
+            inset: 0,
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              fontSize: size > 140 ? 36 : size > 110 ? 28 : 22,
+              fontWeight: 700,
+              color: COLORS.fg,
+              lineHeight: 1,
+            }}
+          >
+            {formatDealCount(ring.scaleCount)}
+          </div>
+          <div
+            style={{
+              display: "flex",
+              fontSize: size < 110 ? 11 : 14,
+              fontWeight: 600,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              color: COLORS.secondary,
+              marginTop: 4,
+            }}
+          >
+            {unit}
+          </div>
+          <div
+            style={{
+              display: "flex",
+              fontSize: size < 110 ? 14 : 18,
+              fontWeight: 600,
+              color: COLORS.accentSoft,
+              marginTop: 4,
+            }}
+          >
+            {percentLabel}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CoverageTriadBlock({
+  slot,
+  compact,
+  dense,
+}: {
+  slot: Extract<InfographicSlot, { id: "coverageTriad" }>;
+  compact?: boolean;
+  dense?: boolean;
+}) {
+  const ringSize = dense ? 92 : compact ? 128 : 156;
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "row",
+        width: "100%",
+        justifyContent: "space-between",
+        gap: dense ? 8 : compact ? 12 : 20,
+      }}
+    >
+      {slot.rings.map((ring) => (
+        <CoverageRingBlock key={ring.id} ring={ring} size={ringSize} />
+      ))}
     </div>
   );
 }
@@ -519,6 +688,9 @@ export async function renderRegionInfographicImage(
   const isSquare = format === "square";
   const compact = isOg || isSquare;
   const headline = composition.slots.find((slot) => slot.id === "headline");
+  const coverageTriad = composition.slots.find(
+    (slot) => slot.id === "coverageTriad",
+  );
   const weekdayMix = composition.slots.find((slot) => slot.id === "weekdayMix");
   const dayHourHeat = composition.slots.find(
     (slot) => slot.id === "dayHourHeat",
@@ -530,6 +702,7 @@ export async function renderRegionInfographicImage(
   const rest = composition.slots.filter(
     (slot) =>
       slot.id !== "headline" &&
+      slot.id !== "coverageTriad" &&
       slot.id !== "weekdayMix" &&
       slot.id !== "dayHourHeat" &&
       slot.id !== "topProducts" &&
@@ -626,6 +799,25 @@ export async function renderRegionInfographicImage(
               >
                 {slotHeadline(headline)}
               </div>
+            </div>
+          ) : null}
+
+          {coverageTriad && coverageTriad.id === "coverageTriad" ? (
+            <div
+              style={{
+                display: "flex",
+                width: "100%",
+                marginTop: compact ? 16 : 22,
+                marginBottom: compact ? 8 : 14,
+                borderBottom: `2px solid ${COLORS.border}`,
+                paddingBottom: compact ? 16 : 22,
+              }}
+            >
+              <CoverageTriadBlock
+                slot={coverageTriad}
+                compact={compact}
+                dense={isOg}
+              />
             </div>
           ) : null}
 

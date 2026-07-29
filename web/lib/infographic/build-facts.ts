@@ -58,6 +58,13 @@ export function buildRegionInfographicFacts(
     (sum, suburb) => sum + suburb.venueCount,
     0,
   );
+  const suburbCount = input.suburbs.length;
+  const suburbsWithVenues = input.suburbs.filter(
+    (suburb) => suburb.venueCount > 0,
+  ).length;
+  const suburbsWithDeals = input.suburbs.filter(
+    (suburb) => suburb.dealCount > 0,
+  ).length;
   const venuesWithDeals = Math.min(input.venuesWithDeals, venueCount);
 
   const byDensity = sortSuburbStatistics(input.suburbs, "density");
@@ -101,6 +108,9 @@ export function buildRegionInfographicFacts(
     dealCount,
     venueCount,
     venuesWithDeals,
+    suburbCount,
+    suburbsWithVenues,
+    suburbsWithDeals,
     densestSuburb,
     perCapitaSuburb,
     dealLeaderSuburb,

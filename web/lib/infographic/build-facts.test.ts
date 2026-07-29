@@ -74,6 +74,9 @@ describe("buildRegionInfographicFacts", () => {
 
     expect(facts.dealCount).toBe(50);
     expect(facts.venueCount).toBe(25);
+    expect(facts.suburbCount).toBe(2);
+    expect(facts.suburbsWithVenues).toBe(2);
+    expect(facts.suburbsWithDeals).toBe(2);
     expect(facts.densestSuburb?.name).toBe("Surry Hills");
     expect(facts.perCapitaSuburb?.name).toBe("Parramatta");
     expect(facts.dealLeaderSuburb?.name).toBe("Parramatta");
@@ -171,6 +174,32 @@ describe("buildRegionInfographicFacts", () => {
     expect(facts.dayCounts).toEqual([]);
     expect(facts.peakDayHour).toBeNull();
     expect(facts.coveragePercent).toBe(100);
+    expect(facts.suburbCount).toBe(1);
+    expect(facts.suburbsWithVenues).toBe(1);
+    expect(facts.suburbsWithDeals).toBe(1);
+  });
+
+  it("counts suburbs with and without venues or deals", () => {
+    const facts = buildRegionInfographicFacts({
+      regionId: 1,
+      regionName: "Sydney",
+      venuesWithDeals: 3,
+      dayCounts: [],
+      dayHourCounts: [],
+      topProducts: [],
+      topFood: [],
+      suburbs: [
+        suburb({ id: 1, name: "Bondi", dealCount: 4, venueCount: 2 }),
+        suburb({ id: 2, name: "Empty", dealCount: 0, venueCount: 0 }),
+        suburb({ id: 3, name: "Venues only", dealCount: 0, venueCount: 5 }),
+      ],
+    });
+
+    expect(facts.suburbCount).toBe(3);
+    expect(facts.suburbsWithVenues).toBe(2);
+    expect(facts.suburbsWithDeals).toBe(1);
+    expect(facts.dealCount).toBe(4);
+    expect(facts.venueCount).toBe(7);
   });
 });
 
@@ -198,14 +227,25 @@ describe("composeRegionInfographic", () => {
     const ids = composition.slots.map((slot) => slot.id);
 
     expect(ids).toContain("headline");
+    expect(ids).toContain("coverageTriad");
     expect(ids).toContain("dealLeader");
     expect(ids).not.toContain("densest");
     expect(ids).toContain("weekdayMix");
     expect(ids).toContain("dayHourHeat");
     expect(ids).toContain("topProducts");
     expect(ids).toContain("topFood");
-    expect(ids).toContain("coverage");
+    expect(ids).not.toContain("coverage");
     expect(ids).not.toContain("perCapita");
+
+    const triad = composition.slots.find((slot) => slot.id === "coverageTriad");
+    expect(triad?.id === "coverageTriad" && triad.rings).toHaveLength(3);
+    expect(
+      triad?.id === "coverageTriad" &&
+        triad.rings.find((ring) => ring.id === "venuesWithDeals")?.percent,
+    ).toBe(40);
+    expect(triad?.id === "coverageTriad" && slotHeadline(triad)).toBe(
+      "40% venue coverage",
+    );
 
     const mix = composition.slots.find((slot) => slot.id === "weekdayMix");
     expect(mix?.id === "weekdayMix" && mix.peakDayOfWeek).toBe(6);
@@ -262,10 +302,10 @@ describe("composeRegionInfographic", () => {
     const og = composeRegionInfographic(facts, "og");
     expect(og.slots.map((slot) => slot.id)).toEqual([
       "headline",
+      "coverageTriad",
       "weekdayMix",
       "densest",
       "topProducts",
-      "coverage",
     ]);
     expect(og.slots.map((slot) => slot.id)).not.toContain("topFood");
   });
@@ -284,6 +324,7 @@ describe("composeRegionInfographic", () => {
       ],
     });
     const composition = composeRegionInfographic(facts, "page");
+    expect(composition.slots.map((slot) => slot.id)).toContain("coverageTriad");
     expect(composition.slots.map((slot) => slot.id)).not.toContain(
       "weekdayMix",
     );

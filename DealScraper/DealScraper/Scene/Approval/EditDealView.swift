@@ -390,6 +390,23 @@ struct EditDealView: View {
         DealScheduleFormatting.formattedSummary(schedules.map { $0.toDealSchedule() })
     }
 
+    /// Schedule IDs that overlap another period on the same weekday (warning only; save still allowed).
+    private var overlappingScheduleIDs: Set<Int64> {
+        var overlapping: Set<Int64> = []
+        for i in schedules.indices {
+            for j in schedules.indices where j > i {
+                let a = schedules[i]
+                let b = schedules[j]
+                guard a.dayOfWeek == b.dayOfWeek else { continue }
+                if a.startMinute < b.endMinute && b.startMinute < a.endMinute {
+                    overlapping.insert(a.id)
+                    overlapping.insert(b.id)
+                }
+            }
+        }
+        return overlapping
+    }
+
     private func syncFieldsFromItem() {
         title = item.deal.title ?? ""
         details = item.deal.details ?? ""
@@ -617,7 +634,8 @@ struct EditDealView: View {
     }
 
     private func scheduleEditRow(schedule: Binding<EditableDealSchedule>) -> some View {
-        HStack(spacing: 8) {
+        let isOverlapping = overlappingScheduleIDs.contains(schedule.wrappedValue.id)
+        return HStack(spacing: 8) {
             Picker("Day", selection: schedule.dayOfWeek) {
                 ForEach(DealScheduleFormatting.weekdaysInDisplayOrder, id: \.self) { weekday in
                     Text(DealScheduleFormatting.dayName(for: weekday))
@@ -673,6 +691,14 @@ struct EditDealView: View {
             .help("Remove schedule")
         }
         .font(.caption)
+        .padding(.horizontal, 4)
+        .padding(.vertical, 2)
+        .background {
+            if isOverlapping {
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Color.red.opacity(0.15))
+            }
+        }
     }
 
     private func optionalDateRow(label: String, date: Binding<Date?>) -> some View {

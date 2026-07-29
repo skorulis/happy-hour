@@ -1,4 +1,5 @@
 import { normalizeWeekdayPercents } from "@/lib/infographic/beer-glass";
+import { buildCoverageTriadRings } from "@/lib/infographic/coverage-rings";
 import type {
   InfographicComposition,
   InfographicFormat,
@@ -10,35 +11,41 @@ import type {
 const FORMAT_SLOT_ORDER: Record<InfographicFormat, InfographicSlotId[]> = {
   page: [
     "headline",
+    "coverageTriad",
     "weekdayMix",
     "dayHourHeat",
     "densest",
     "perCapita",
     "topProducts",
     "topFood",
-    "coverage",
   ],
   /** OG stays tight — drinks only, no heat/food. */
-  og: ["headline", "weekdayMix", "densest", "topProducts", "coverage"],
+  og: [
+    "headline",
+    "coverageTriad",
+    "weekdayMix",
+    "densest",
+    "topProducts",
+  ],
   square: [
     "headline",
+    "coverageTriad",
     "weekdayMix",
     "dayHourHeat",
     "densest",
     "perCapita",
     "topProducts",
     "topFood",
-    "coverage",
   ],
   story: [
     "headline",
+    "coverageTriad",
     "weekdayMix",
     "dayHourHeat",
     "densest",
     "perCapita",
     "topProducts",
     "topFood",
-    "coverage",
   ],
 };
 
@@ -53,6 +60,11 @@ function slotFromFacts(
         dealCount: facts.dealCount,
         venueCount: facts.venueCount,
       };
+    case "coverageTriad": {
+      const rings = buildCoverageTriadRings(facts);
+      if (!rings) return null;
+      return { id: "coverageTriad", rings };
+    }
     case "densest":
       if (!facts.densestSuburb) {
         if (!facts.dealLeaderSuburb) return null;
@@ -93,14 +105,6 @@ function slotFromFacts(
     case "topFood":
       if (facts.topFood.length === 0) return null;
       return { id: "topFood", products: facts.topFood };
-    case "coverage":
-      if (facts.coveragePercent === null || facts.venueCount === 0) return null;
-      return {
-        id: "coverage",
-        percent: facts.coveragePercent,
-        venuesWithDeals: facts.venuesWithDeals,
-        venueCount: facts.venueCount,
-      };
     case "dealLeader":
       if (!facts.dealLeaderSuburb) return null;
       return { id: "dealLeader", suburb: facts.dealLeaderSuburb };

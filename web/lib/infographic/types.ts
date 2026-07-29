@@ -2,14 +2,30 @@ export type InfographicFormat = "page" | "og" | "square" | "story";
 
 export type InfographicSlotId =
   | "headline"
+  | "coverageTriad"
   | "densest"
   | "perCapita"
   | "weekdayMix"
   | "dayHourHeat"
   | "topProducts"
   | "topFood"
-  | "coverage"
   | "dealLeader";
+
+export type CoverageTriadRingId =
+  | "suburbsWithVenues"
+  | "suburbsWithDeals"
+  | "venuesWithDeals";
+
+export type CoverageTriadRing = {
+  id: CoverageTriadRingId;
+  /** Coverage fill rate 0–100. */
+  percent: number;
+  numerator: number;
+  denominator: number;
+  /** Raw scale shown in the ring center. */
+  scaleCount: number;
+  scaleUnit: "suburbs" | "deals" | "venues";
+};
 
 export type RegionSuburbWinner = {
   name: string;
@@ -48,6 +64,9 @@ export type RegionInfographicFacts = {
   dealCount: number;
   venueCount: number;
   venuesWithDeals: number;
+  suburbCount: number;
+  suburbsWithVenues: number;
+  suburbsWithDeals: number;
   densestSuburb: RegionSuburbWinner | null;
   perCapitaSuburb: RegionSuburbWinner | null;
   dealLeaderSuburb: RegionSuburbWinner | null;
@@ -57,6 +76,7 @@ export type RegionInfographicFacts = {
   dayHourCounts: RegionDayHourCount[];
   topProducts: RegionProductHit[];
   topFood: RegionProductHit[];
+  /** Venues-with-deals %; also exposed on the coverage triad venue ring. */
   coveragePercent: number | null;
 };
 
@@ -65,6 +85,10 @@ export type InfographicSlot =
       id: "headline";
       dealCount: number;
       venueCount: number;
+    }
+  | {
+      id: "coverageTriad";
+      rings: CoverageTriadRing[];
     }
   | {
       id: "densest";
@@ -96,12 +120,6 @@ export type InfographicSlot =
       products: RegionProductHit[];
     }
   | {
-      id: "coverage";
-      percent: number;
-      venuesWithDeals: number;
-      venueCount: number;
-    }
-  | {
       id: "dealLeader";
       suburb: RegionSuburbWinner;
     };
@@ -117,7 +135,7 @@ export const INFOGRAPHIC_IMAGE_SIZES: Record<
   { width: number; height: number }
 > = {
   og: { width: 1200, height: 630 },
-  /** Tall enough for weekday + heat + paired drink/food charts + suburb tiles. */
-  square: { width: 1080, height: 2000 },
-  story: { width: 1080, height: 2280 },
+  /** Tall enough for coverage rings + weekday + heat + drink/food + suburb tiles. */
+  square: { width: 1080, height: 2200 },
+  story: { width: 1080, height: 2480 },
 };
