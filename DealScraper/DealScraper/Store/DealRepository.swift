@@ -47,6 +47,37 @@ final class DealRepository {
         }
     }
 
+    /// Approved deals with two or more schedules that overlap on the same weekday.
+    func findApprovedWithOverlappingSchedules() throws -> [DealWithSchedules] {
+        try store.dbQueue.read { db in
+            let deals = try Deal.fetchAll(
+                db,
+                sql: """
+                    SELECT DISTINCT d.*
+                    FROM deal d
+                    WHERE d.status = ?
+                      AND EXISTS (
+                          SELECT 1
+                          FROM deal_schedule s1
+                          INNER JOIN deal_schedule s2
+                            ON s1.deal_id = s2.deal_id
+                            AND s1.id < s2.id
+                            AND s1.day_of_week = s2.day_of_week
+                            AND s1.start_minute < s2.end_minute
+                            AND s2.start_minute < s1.end_minute
+                          WHERE s1.deal_id = d.id
+                      )
+                    ORDER BY d.id ASC
+                    """,
+                arguments: [DealStatus.approved.rawValue]
+            )
+
+            return try deals.map { deal in
+                try Self.dealWithRelations(db: db, deal: deal)
+            }
+        }
+    }
+
     func find(venueId: Int64) throws -> [DealWithSchedules] {
         try store.dbQueue.read { db in
             let deals = try Deal

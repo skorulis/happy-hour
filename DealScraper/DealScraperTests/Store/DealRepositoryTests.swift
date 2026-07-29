@@ -333,6 +333,54 @@ struct DealRepositoryTests {
         #expect(pending.allSatisfy { $0.deal.status == .approved })
     }
 
+    @Test func findApprovedWithOverlappingSchedulesReturnsApprovedDealsWithOverlaps() throws {
+        let store = SQLStore.inMemory()
+        let venueRepository = VenueRepository(store: store)
+        let dealRepository = DealRepository(store: store)
+
+        try venueRepository.upsert(Venue(
+            googleMapId: "places/a",
+            name: "Venue A",
+            lat: 0,
+            lng: 0,
+            json: "{}"
+        ))
+
+        let venueAId = try #require(try venueRepository.find(googleMapId: "places/a")?.id)
+
+        _ = try dealRepository.replaceAll(
+            venueId: venueAId,
+            deals: [
+                DealWithSchedules(
+                    deal: Deal(venueId: venueAId, title: "Overlapping Approved", status: .approved),
+                    schedules: [
+                        DealSchedule(dealId: 0, dayOfWeek: 3, startMinute: 960, endMinute: 1_080),
+                        DealSchedule(dealId: 0, dayOfWeek: 3, startMinute: 1_020, endMinute: 1_140),
+                    ]
+                ),
+                DealWithSchedules(
+                    deal: Deal(venueId: venueAId, title: "Clean Approved", status: .approved),
+                    schedules: [
+                        DealSchedule(dealId: 0, dayOfWeek: 3, startMinute: 960, endMinute: 1_080),
+                        DealSchedule(dealId: 0, dayOfWeek: 5, startMinute: 960, endMinute: 1_080),
+                    ]
+                ),
+                DealWithSchedules(
+                    deal: Deal(venueId: venueAId, title: "Overlapping New", status: .new),
+                    schedules: [
+                        DealSchedule(dealId: 0, dayOfWeek: 3, startMinute: 960, endMinute: 1_080),
+                        DealSchedule(dealId: 0, dayOfWeek: 3, startMinute: 1_020, endMinute: 1_140),
+                    ]
+                ),
+            ]
+        )
+
+        let pending = try dealRepository.findApprovedWithOverlappingSchedules()
+        #expect(pending.count == 1)
+        #expect(pending.first?.deal.title == "Overlapping Approved")
+        #expect(DealScheduleFormatting.hasOverlappingSchedules(pending.first?.schedules ?? []))
+    }
+
     @Test func updatePersistsDealTextAndStatus() throws {
         let store = SQLStore.inMemory()
         let venueRepository = VenueRepository(store: store)

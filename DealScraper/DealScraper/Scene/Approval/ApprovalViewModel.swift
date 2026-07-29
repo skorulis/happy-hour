@@ -15,6 +15,7 @@ final class ApprovalViewModel: CoordinatorViewModel {
         case sources = "Sources"
         case deals = "Deals"
         case dealProducts = "Deal products"
+        case dealReview = "Deal Review"
     }
 
     enum PreviewState: Equatable {
@@ -48,6 +49,7 @@ final class ApprovalViewModel: CoordinatorViewModel {
     private(set) var pendingSources: [DealSource] = []
     private(set) var pendingDeals: [DealWithSchedules] = []
     private(set) var pendingDealProducts: [DealWithSchedules] = []
+    private(set) var pendingDealReview: [DealWithSchedules] = []
     private(set) var venueNames: [Int64: String] = [:]
     private(set) var venueGoogleMapIds: [Int64: String] = [:]
     private(set) var previewState: PreviewState = .idle
@@ -87,6 +89,10 @@ final class ApprovalViewModel: CoordinatorViewModel {
         pendingDealProducts.first
     }
 
+    var currentDealReview: DealWithSchedules? {
+        pendingDealReview.first
+    }
+
     var hasPendingItems: Bool {
         switch mode {
         case .sources:
@@ -95,6 +101,8 @@ final class ApprovalViewModel: CoordinatorViewModel {
             return currentDeal != nil
         case .dealProducts:
             return currentDealProduct != nil
+        case .dealReview:
+            return currentDealReview != nil
         }
     }
 
@@ -106,6 +114,8 @@ final class ApprovalViewModel: CoordinatorViewModel {
             return pendingDeals.count
         case .dealProducts:
             return pendingDealProducts.count
+        case .dealReview:
+            return pendingDealReview.count
         }
     }
 
@@ -158,6 +168,7 @@ final class ApprovalViewModel: CoordinatorViewModel {
             pendingSources = []
             pendingDeals = []
             pendingDealProducts = []
+            pendingDealReview = []
 
             switch mode {
             case .sources:
@@ -169,6 +180,9 @@ final class ApprovalViewModel: CoordinatorViewModel {
             case .dealProducts:
                 pendingDealProducts = try dealRepository.findApprovedWithoutProducts()
                     .filter { nonBrokenVenueIds.contains($0.deal.venueId) }
+            case .dealReview:
+                pendingDealReview = try dealRepository.findApprovedWithOverlappingSchedules()
+                    .filter { nonBrokenVenueIds.contains($0.deal.venueId) }
             }
 
             reloadForCurrentMode()
@@ -176,6 +190,7 @@ final class ApprovalViewModel: CoordinatorViewModel {
             pendingSources = []
             pendingDeals = []
             pendingDealProducts = []
+            pendingDealReview = []
             venueNames = [:]
             venueGoogleMapIds = [:]
             previewState = .failed(error.localizedDescription)
@@ -205,6 +220,8 @@ final class ApprovalViewModel: CoordinatorViewModel {
             item = currentDeal
         case .dealProducts:
             item = currentDealProduct
+        case .dealReview:
+            item = currentDealReview
         case .sources:
             return
         }
@@ -234,6 +251,8 @@ final class ApprovalViewModel: CoordinatorViewModel {
                 pendingDeals.removeFirst()
             case .dealProducts:
                 pendingDealProducts.removeFirst()
+            case .dealReview:
+                pendingDealReview.removeFirst()
             case .sources:
                 break
             }
@@ -248,7 +267,7 @@ final class ApprovalViewModel: CoordinatorViewModel {
         switch mode {
         case .sources:
             loadPreview()
-        case .deals, .dealProducts:
+        case .deals, .dealProducts, .dealReview:
             previewState = .idle
         }
     }

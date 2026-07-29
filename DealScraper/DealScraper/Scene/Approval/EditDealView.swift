@@ -397,11 +397,16 @@ struct EditDealView: View {
             for j in schedules.indices where j > i {
                 let a = schedules[i]
                 let b = schedules[j]
-                guard a.dayOfWeek == b.dayOfWeek else { continue }
-                if a.startMinute < b.endMinute && b.startMinute < a.endMinute {
-                    overlapping.insert(a.id)
-                    overlapping.insert(b.id)
-                }
+                guard DealScheduleFormatting.schedulesOverlap(
+                    dayOfWeek: a.dayOfWeek,
+                    startMinute: a.startMinute,
+                    endMinute: a.endMinute,
+                    otherDayOfWeek: b.dayOfWeek,
+                    otherStartMinute: b.startMinute,
+                    otherEndMinute: b.endMinute
+                ) else { continue }
+                overlapping.insert(a.id)
+                overlapping.insert(b.id)
             }
         }
         return overlapping

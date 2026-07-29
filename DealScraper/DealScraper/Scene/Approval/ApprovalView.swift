@@ -76,6 +76,8 @@ struct ApprovalView: View {
             return "No deals are waiting for approval."
         case .dealProducts:
             return "No approved deals are missing products."
+        case .dealReview:
+            return "No approved deals have overlapping schedules."
         }
     }
 
@@ -90,6 +92,10 @@ struct ApprovalView: View {
             }
         case .dealProducts:
             if let item = viewModel.currentDealProduct {
+                dealEditContent(item: item)
+            }
+        case .dealReview:
+            if let item = viewModel.currentDealReview {
                 dealEditContent(item: item)
             }
         }

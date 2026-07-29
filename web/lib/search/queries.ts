@@ -53,6 +53,8 @@ export type SuburbSearchResult = {
   id: number;
   name: string;
   postcode: string | null;
+  regionId?: number | null;
+  regionName?: string | null;
   lat?: number | null;
   lng?: number | null;
   sqkm?: number | null;
@@ -827,6 +829,8 @@ export async function findSuburbByWhereSlug(
       id: suburb.id,
       name: suburb.name,
       postcode: suburb.postcode,
+      regionId: geographicRegion.id,
+      regionName: geographicRegion.name,
       lat: suburb.lat,
       lng: suburb.lng,
       sqkm: suburb.sqkm,
@@ -834,6 +838,7 @@ export async function findSuburbByWhereSlug(
       heroImage: suburb.heroImage,
     })
     .from(suburb)
+    .leftJoin(geographicRegion, eq(suburb.regionId, geographicRegion.id))
     .where(postcode === null ? isNull(suburb.postcode) : eq(suburb.postcode, postcode));
 
   return (

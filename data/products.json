@@ -541,7 +541,8 @@
         "name": "board games",
         "icon": "ChessKnight",
         "synonyms": [
-            "board game"
+            "board game",
+            "mahjong"
         ]
     },
     {
@@ -633,6 +634,7 @@
     {
         "name": "live music",
         "icon": "Music",
+        "noprice": true,
         "synonyms": [
             "live local music"
         ]

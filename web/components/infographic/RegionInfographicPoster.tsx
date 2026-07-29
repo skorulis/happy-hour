@@ -13,6 +13,7 @@ import {
   slotHeadline,
   slotSupporting,
 } from "@/lib/infographic/copy";
+import Image from "next/image";
 
 type RegionInfographicPosterProps = {
   composition: InfographicComposition;
@@ -187,9 +188,24 @@ export function RegionInfographicPoster({
           </div>
         ) : null}
 
-        <p className="self-end text-xs font-medium tracking-[0.2em] text-accent-soft uppercase">
-          DuskRoute
-        </p>
+        <div className="flex items-center gap-2.5">
+          <Image
+            src="/icon.png"
+            alt=""
+            width={28}
+            height={28}
+            className="h-7 w-7 rounded-full"
+            aria-hidden
+          />
+          <div className="flex flex-col gap-0.5">
+            <span className="text-xs font-semibold tracking-[0.12em] text-accent-soft">
+              DuskRoute.com
+            </span>
+            <span className="text-[10px] font-medium tracking-[0.15em] text-muted uppercase">
+              your night starts here
+            </span>
+          </div>
+        </div>
       </div>
       </article>
     </div>

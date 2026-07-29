@@ -155,6 +155,54 @@ nonisolated enum DealScheduleFormatting {
             return lhs.endMinute < rhs.endMinute
         }
     }
+
+    static func hasOverlappingSchedules(_ schedules: [DealSchedule]) -> Bool {
+        for i in schedules.indices {
+            for j in schedules.indices where j > i {
+                if schedulesOverlap(schedules[i], schedules[j]) {
+                    return true
+                }
+            }
+        }
+        return false
+    }
+
+    static func overlappingScheduleIDs(_ schedules: [DealSchedule]) -> Set<Int64> {
+        var overlapping: Set<Int64> = []
+        for i in schedules.indices {
+            for j in schedules.indices where j > i {
+                let a = schedules[i]
+                let b = schedules[j]
+                guard schedulesOverlap(a, b) else { continue }
+                if let id = a.id { overlapping.insert(id) }
+                if let id = b.id { overlapping.insert(id) }
+            }
+        }
+        return overlapping
+    }
+
+    private static func schedulesOverlap(_ a: DealSchedule, _ b: DealSchedule) -> Bool {
+        schedulesOverlap(
+            dayOfWeek: a.dayOfWeek,
+            startMinute: a.startMinute,
+            endMinute: a.endMinute,
+            otherDayOfWeek: b.dayOfWeek,
+            otherStartMinute: b.startMinute,
+            otherEndMinute: b.endMinute
+        )
+    }
+
+    static func schedulesOverlap(
+        dayOfWeek: Int,
+        startMinute: Int,
+        endMinute: Int,
+        otherDayOfWeek: Int,
+        otherStartMinute: Int,
+        otherEndMinute: Int
+    ) -> Bool {
+        guard dayOfWeek == otherDayOfWeek else { return false }
+        return startMinute < otherEndMinute && otherStartMinute < endMinute
+    }
 }
 
 extension DealWithSchedules {

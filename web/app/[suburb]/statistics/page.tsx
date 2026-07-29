@@ -108,6 +108,29 @@ export default async function StatisticsPage({ params }: StatisticsPageProps) {
       suburbName: suburb.name,
       suburbPostcode: suburb.postcode,
     });
+
+    if (facts.venueCount === 0) {
+      return (
+        <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-4 px-4 py-10 md:px-6">
+          <p className="text-muted">
+            This suburb does not have any venues.
+            {suburb.regionName && (
+              <>
+                {" "}
+                <Link
+                  href={regionStatisticsPath(suburb.regionName)}
+                  className="font-medium text-accent-soft underline-offset-2 hover:underline"
+                >
+                  View {suburb.regionName} statistics
+                </Link>
+                .
+              </>
+            )}
+          </p>
+        </div>
+      );
+    }
+
     const composition = composeRegionInfographic(facts, "page");
     const path = suburbStatisticsPath(suburb.name, suburb.postcode);
     const absoluteUrl = `${siteUrl()}${path}`;
@@ -152,6 +175,7 @@ export default async function StatisticsPage({ params }: StatisticsPageProps) {
     regionId: region.id,
     regionName: region.name,
   });
+
   const composition = composeRegionInfographic(facts, "page");
   const path = regionStatisticsPath(region.name);
   const absoluteUrl = `${siteUrl()}${path}`;

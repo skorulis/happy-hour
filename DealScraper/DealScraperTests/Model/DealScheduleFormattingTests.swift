@@ -108,6 +108,33 @@ struct DealScheduleFormattingTests {
         #expect(DealScheduleFormatting.formattedSummary(schedules) == "Fri 22:00–2:00")
     }
 
+    @Test func detectsOverlappingSchedulesOnSameDay() {
+        let schedules = [
+            schedule(day: 3, start: 16 * 60, end: 18 * 60),
+            schedule(day: 3, start: 17 * 60, end: 19 * 60),
+        ]
+
+        #expect(DealScheduleFormatting.hasOverlappingSchedules(schedules))
+    }
+
+    @Test func ignoresNonOverlappingSchedulesOnDifferentDays() {
+        let schedules = [
+            schedule(day: 3, start: 16 * 60, end: 18 * 60),
+            schedule(day: 5, start: 16 * 60, end: 18 * 60),
+        ]
+
+        #expect(!DealScheduleFormatting.hasOverlappingSchedules(schedules))
+    }
+
+    @Test func ignoresAdjacentSchedulesOnSameDay() {
+        let schedules = [
+            schedule(day: 3, start: 16 * 60, end: 18 * 60),
+            schedule(day: 3, start: 18 * 60, end: 20 * 60),
+        ]
+
+        #expect(!DealScheduleFormatting.hasOverlappingSchedules(schedules))
+    }
+
     @Test func dealWithSchedulesUsesFormattedSummary() {
         let item = DealWithSchedules(
             deal: Deal(
