@@ -14,38 +14,35 @@ const FORMAT_SLOT_ORDER: Record<InfographicFormat, InfographicSlotId[]> = {
     "coverageTriad",
     "weekdayMix",
     "dayHourHeat",
-    "densest",
-    "perCapita",
     "topProducts",
     "topFood",
+    "topDensity",
   ],
   /** OG stays tight — drinks only, no heat/food. */
   og: [
     "headline",
     "coverageTriad",
     "weekdayMix",
-    "densest",
     "topProducts",
+    "topDensity",
   ],
   square: [
     "headline",
     "coverageTriad",
     "weekdayMix",
     "dayHourHeat",
-    "densest",
-    "perCapita",
     "topProducts",
     "topFood",
+    "topDensity",
   ],
   story: [
     "headline",
     "coverageTriad",
     "weekdayMix",
     "dayHourHeat",
-    "densest",
-    "perCapita",
     "topProducts",
     "topFood",
+    "topDensity",
   ],
 };
 
@@ -65,15 +62,13 @@ function slotFromFacts(
       if (!rings) return null;
       return { id: "coverageTriad", rings };
     }
-    case "densest":
-      if (!facts.densestSuburb) {
-        if (!facts.dealLeaderSuburb) return null;
-        return { id: "dealLeader", suburb: facts.dealLeaderSuburb };
-      }
-      return { id: "densest", suburb: facts.densestSuburb };
-    case "perCapita":
-      if (!facts.perCapitaSuburb) return null;
-      return { id: "perCapita", suburb: facts.perCapitaSuburb };
+    case "topDensity":
+      if (facts.topDensitySuburbs.length === 0) return null;
+      return {
+        id: "topDensity",
+        suburbs: facts.topDensitySuburbs,
+        metric: facts.topDensityMetric,
+      };
     case "weekdayMix": {
       const total = facts.dayCounts.reduce((sum, row) => sum + row.count, 0);
       if (total <= 0 || !facts.busiestDay) return null;
@@ -105,9 +100,6 @@ function slotFromFacts(
     case "topFood":
       if (facts.topFood.length === 0) return null;
       return { id: "topFood", products: facts.topFood };
-    case "dealLeader":
-      if (!facts.dealLeaderSuburb) return null;
-      return { id: "dealLeader", suburb: facts.dealLeaderSuburb };
   }
 }
 
@@ -121,7 +113,7 @@ export function composeRegionInfographic(
   for (const id of FORMAT_SLOT_ORDER[format]) {
     const slot = slotFromFacts(id, facts);
     if (!slot) continue;
-    const key = `${slot.id}:${"suburb" in slot ? slot.suburb.name : ""}`;
+    const key = slot.id;
     if (seen.has(key)) continue;
     seen.add(key);
     slots.push(slot);

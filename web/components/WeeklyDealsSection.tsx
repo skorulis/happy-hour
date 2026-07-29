@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import { DealCard } from "@/components/DealCard";
 import { DealDayFilter } from "@/components/DealDayFilter";
@@ -8,8 +8,11 @@ import { useFavorites } from "@/lib/favorites/useFavorites";
 import type { DealSearchResult } from "@/lib/search/queries";
 import {
   canonicalizeDayHash,
-  hashToDayNumber,
+  getDayHashSnapshot,
+  getServerDayHashSnapshot,
+  notifyDayHashChange,
   replaceDayHash,
+  subscribeDayHash,
 } from "@/lib/search/day-path";
 import { DAY_LABELS, groupDealsByDay } from "@/lib/search/schedule";
 import { dealAnchorId } from "@/lib/search/slugs";
@@ -39,12 +42,7 @@ const defaultEmptyMessage =
   "This venue doesn't have any deals. If you know of one, please add it";
 const defaultEmptyDayMessage = (dayLabel: string) => `No deals on ${dayLabel}.`;
 
-function dayFromLocationHash(): number | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-  return hashToDayNumber(window.location.hash);
-}
+const subscribeNoop = () => () => {};
 
 export function WeeklyDealsSection({
   deals,
@@ -59,19 +57,17 @@ export function WeeklyDealsSection({
   syncDayHash = false,
 }: WeeklyDealsSectionProps) {
   const pathname = usePathname();
-  const [selectedDay, setSelectedDay] = useState<number | null>(() => {
-    if (syncDayHash) {
-      return dayFromLocationHash() ?? initialSelectedDay ?? null;
-    }
-    return initialSelectedDay ?? null;
-  });
-  // Soft nav updates the hash without remounting; adjust during render instead of
-  // setState-in-effect (https://react.dev/learn/you-might-not-need-an-effect).
-  const [hashPathname, setHashPathname] = useState(pathname);
-  if (syncDayHash && pathname !== hashPathname) {
-    setHashPathname(pathname);
-    setSelectedDay(dayFromLocationHash() ?? initialSelectedDay ?? null);
-  }
+  // Read the hash via an external store so SSR/hydration always see `null`
+  // (fragments are never sent to the server), then update after hydrate.
+  const hashDay = useSyncExternalStore(
+    syncDayHash ? subscribeDayHash : subscribeNoop,
+    getDayHashSnapshot,
+    getServerDayHashSnapshot,
+  );
+  const [localDay, setLocalDay] = useState<number | null>(
+    () => initialSelectedDay ?? null,
+  );
+  const selectedDay = syncDayHash ? hashDay : localDay;
   const favorites = useFavorites();
   const isFavorite = isFavoriteProp ?? favorites.isFavorite;
   const toggleFavorite = onToggleFavoriteProp ?? favorites.toggleFavorite;
@@ -85,19 +81,16 @@ export function WeeklyDealsSection({
 
     // Soft nav can leave `#sunday#saturday`; rewrite to a single canonical hash.
     canonicalizeDayHash();
-
-    function onHashChange() {
-      setSelectedDay(canonicalizeDayHash());
-    }
-
-    window.addEventListener("hashchange", onHashChange);
-    return () => window.removeEventListener("hashchange", onHashChange);
+    // App Router updates the fragment via pushState (no hashchange). Re-read
+    // after pathname changes so venue soft-nav picks up `#saturday`.
+    notifyDayHashChange();
   }, [syncDayHash, pathname]);
 
   function handleSelectedDayChange(day: number | null) {
-    setSelectedDay(day);
     if (syncDayHash) {
       replaceDayHash(day);
+    } else {
+      setLocalDay(day);
     }
   }
 

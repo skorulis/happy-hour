@@ -8,7 +8,10 @@ import type {
   RegionDayHourCount,
   RegionInfographicFacts,
   RegionSuburbWinner,
+  TopDensityMetric,
 } from "@/lib/infographic/types";
+
+export const TOP_DENSITY_LIMIT = 5;
 
 export type RegionInfographicInputs = {
   regionId: number;
@@ -99,6 +102,33 @@ export function buildRegionInfographicFacts(
       ? toWinner(dealLeaderCandidate, dealLeaderCandidate.dealCount)
       : null;
 
+  const densityRanked: RegionSuburbWinner[] = [];
+  for (const row of byDensity) {
+    if (densityRanked.length >= TOP_DENSITY_LIMIT) break;
+    if (
+      row.dealsPerSqkm === null ||
+      row.sqkm === null ||
+      row.sqkm <= 0
+    ) {
+      continue;
+    }
+    const winner = toWinner(row, row.dealsPerSqkm);
+    if (winner) densityRanked.push(winner);
+  }
+
+  const dealRanked: RegionSuburbWinner[] = [];
+  for (const row of byDealCount) {
+    if (dealRanked.length >= TOP_DENSITY_LIMIT) break;
+    if (row.dealCount <= 0) continue;
+    const winner = toWinner(row, row.dealCount);
+    if (winner) dealRanked.push(winner);
+  }
+
+  const topDensitySuburbs =
+    densityRanked.length > 0 ? densityRanked : dealRanked;
+  const topDensityMetric: TopDensityMetric =
+    densityRanked.length > 0 ? "density" : "deals";
+
   const coveragePercent =
     venueCount > 0 ? (venuesWithDeals / venueCount) * 100 : null;
 
@@ -114,6 +144,8 @@ export function buildRegionInfographicFacts(
     densestSuburb,
     perCapitaSuburb,
     dealLeaderSuburb,
+    topDensitySuburbs,
+    topDensityMetric,
     busiestDay: pickBusiestDay(input.dayCounts),
     dayCounts: input.dayCounts,
     peakDayHour: pickPeakDayHour(input.dayHourCounts),

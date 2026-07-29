@@ -242,6 +242,39 @@ export function appendDayHash(path: string, days: number[]): string {
   return hash ? `${base}${hash}` : base;
 }
 
+/** Custom event so replaceState-based hash updates re-render subscribers. */
+const DAY_HASH_CHANGE_EVENT = "duskroute:dayhashchange";
+
+/** Notify day-hash subscribers after pushState/replaceState (no hashchange). */
+export function notifyDayHashChange(): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+  window.dispatchEvent(new Event(DAY_HASH_CHANGE_EVENT));
+}
+
+/** Subscribe to browser hash changes and our replaceState notifications. */
+export function subscribeDayHash(onStoreChange: () => void): () => void {
+  const handler = () => onStoreChange();
+  window.addEventListener("hashchange", handler);
+  window.addEventListener("popstate", handler);
+  window.addEventListener(DAY_HASH_CHANGE_EVENT, handler);
+  return () => {
+    window.removeEventListener("hashchange", handler);
+    window.removeEventListener("popstate", handler);
+    window.removeEventListener(DAY_HASH_CHANGE_EVENT, handler);
+  };
+}
+
+export function getDayHashSnapshot(): number | null {
+  return hashToDayNumber(window.location.hash);
+}
+
+/** Hashes are never sent to the server; SSR always sees no day filter. */
+export function getServerDayHashSnapshot(): number | null {
+  return null;
+}
+
 /** Replace or clear the day hash on the current URL (client-only). */
 export function replaceDayHash(day: number | null): void {
   if (typeof window === "undefined") {
@@ -264,6 +297,7 @@ export function replaceDayHash(day: number | null): void {
     return;
   }
   window.history.replaceState(window.history.state, "", next);
+  notifyDayHashChange();
 }
 
 /**
@@ -296,4 +330,5 @@ export function clearLocationHash(): void {
     "",
     `${window.location.pathname}${window.location.search}`,
   );
+  notifyDayHashChange();
 }

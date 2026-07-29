@@ -71,10 +71,8 @@ export function slotEyebrow(slot: InfographicSlot): string {
       return "";
     case "coverageTriad":
       return "Coverage";
-    case "densest":
-      return "Densest for deals";
-    case "perCapita":
-      return "Most deals per capita";
+    case "topDensity":
+      return slot.metric === "density" ? "Densest suburbs" : "Top suburbs";
     case "weekdayMix":
       return "Deals by day";
     case "dayHourHeat":
@@ -83,8 +81,6 @@ export function slotEyebrow(slot: InfographicSlot): string {
       return "What's pouring";
     case "topFood":
       return "What's cooking";
-    case "dealLeader":
-      return "Most deals";
   }
 }
 
@@ -98,10 +94,10 @@ export function slotHeadline(slot: InfographicSlot): string {
         ? `${formatCoveragePercent(venueRing.percent)} venue coverage`
         : "Region coverage";
     }
-    case "densest":
-      return formatSuburbLabel(slot.suburb);
-    case "perCapita":
-      return formatSuburbLabel(slot.suburb);
+    case "topDensity": {
+      const leader = slot.suburbs[0];
+      return leader ? `${formatSuburbLabel(leader)} leads` : "No suburbs yet";
+    }
     case "weekdayMix":
       return `${formatDayLabel(slot.peakDayOfWeek)} leads`;
     case "dayHourHeat":
@@ -114,8 +110,6 @@ export function slotHeadline(slot: InfographicSlot): string {
       const leader = slot.products[0];
       return leader ? `${leader.name} leads` : "No food matches yet";
     }
-    case "dealLeader":
-      return formatSuburbLabel(slot.suburb);
   }
 }
 
@@ -125,10 +119,12 @@ export function slotSupporting(slot: InfographicSlot): string | null {
       return null;
     case "coverageTriad":
       return null;
-    case "densest":
-      return formatPerSqkmValue(slot.suburb.value);
-    case "perCapita":
-      return formatPerThousandValue(slot.suburb.value);
+    case "topDensity": {
+      if (slot.metric === "density") {
+        return "Top 5 by deals per km²";
+      }
+      return "Top 5 by deal count";
+    }
     case "weekdayMix": {
       const peak = slot.days.find((day) => day.dayOfWeek === slot.peakDayOfWeek);
       return peak ? `${peak.percent}% of scheduled deals` : null;
@@ -146,7 +142,5 @@ export function slotSupporting(slot: InfographicSlot): string | null {
       const leader = slot.products[0];
       return leader ? `${leader.percent}% of food mentions` : null;
     }
-    case "dealLeader":
-      return `${formatDealCount(slot.suburb.dealCount)} deals`;
   }
 }

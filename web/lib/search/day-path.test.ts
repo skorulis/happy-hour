@@ -5,6 +5,7 @@ import {
   dayNumberToHash,
   dayNumberToPathSlug,
   daysFromBrowserUrl,
+  getServerDayHashSnapshot,
   hashToDayNumber,
   pathSlugToDayNumber,
   stripDayFromPath,
@@ -155,6 +156,10 @@ describe("dayNumberToHash / hashToDayNumber", () => {
   it("uses the last valid day when the hash was concatenated", () => {
     expect(hashToDayNumber("#sunday#saturday")).toBe(7);
     expect(hashToDayNumber("#monday#deal-1#friday")).toBe(6);
+  });
+
+  it("exposes a null server snapshot for hydration-safe hash reads", () => {
+    expect(getServerDayHashSnapshot()).toBeNull();
   });
 });
 

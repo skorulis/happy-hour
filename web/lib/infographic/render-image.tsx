@@ -15,6 +15,10 @@ import {
   coverageRingEyebrow,
   coverageRingScaleUnitLabel,
 } from "@/lib/infographic/coverage-rings";
+import {
+  buildDensityBarRows,
+  formatDensityBarValue,
+} from "@/lib/infographic/density-bars";
 import { buildDrinkBarRows } from "@/lib/infographic/drink-bars";
 import { buildDayHourHeatGrid } from "@/lib/infographic/day-hour-heat";
 import { productIconDataUri, flameIconDataUri } from "@/lib/infographic/drink-icon-data-uri";
@@ -46,67 +50,6 @@ const COLORS = {
   accentSoft: "#fdba74",
   border: "#3b414d",
 };
-
-function SlotBlock({
-  eyebrow,
-  headline,
-  supporting,
-  compact,
-}: {
-  eyebrow: string;
-  headline: string;
-  supporting: string | null;
-  compact?: boolean;
-}) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: compact ? 4 : 6,
-        flexShrink: 1,
-        minWidth: 0,
-      }}
-    >
-      {eyebrow ? (
-        <div
-          style={{
-            display: "flex",
-            fontSize: compact ? 18 : 22,
-            fontWeight: 600,
-            letterSpacing: "0.14em",
-            textTransform: "uppercase",
-            color: COLORS.accentSoft,
-          }}
-        >
-          {eyebrow}
-        </div>
-      ) : null}
-      <div
-        style={{
-          display: "flex",
-          fontSize: compact ? 36 : 48,
-          fontWeight: 700,
-          lineHeight: 1.1,
-          color: COLORS.fg,
-        }}
-      >
-        {headline}
-      </div>
-      {supporting ? (
-        <div
-          style={{
-            display: "flex",
-            fontSize: compact ? 22 : 28,
-            color: COLORS.secondary,
-          }}
-        >
-          {supporting}
-        </div>
-      ) : null}
-    </div>
-  );
-}
 
 function CoverageRingBlock({
   ring,
@@ -544,6 +487,125 @@ function DayHourHeatBlock({
   );
 }
 
+function TopDensityBlock({
+  slot,
+  compact,
+}: {
+  slot: Extract<InfographicSlot, { id: "topDensity" }>;
+  compact?: boolean;
+}) {
+  const rows = buildDensityBarRows(slot.suburbs);
+  const nameWidth = compact ? 110 : 140;
+  const valueWidth = compact ? 72 : 88;
+  const labelSize = compact ? 18 : 22;
+  const barHeight = compact ? 10 : 12;
+  const headlineSize = compact ? 28 : 34;
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: compact ? 12 : 16,
+        width: "100%",
+      }}
+    >
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div
+          style={{
+            display: "flex",
+            fontSize: compact ? 18 : 22,
+            fontWeight: 600,
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
+            color: COLORS.accentSoft,
+          }}
+        >
+          {slotEyebrow(slot)}
+        </div>
+        <div
+          style={{
+            display: "flex",
+            fontSize: headlineSize,
+            fontWeight: 600,
+            color: COLORS.secondary,
+          }}
+        >
+          {`${slotHeadline(slot)}${
+            slotSupporting(slot) ? ` · ${slotSupporting(slot)}` : ""
+          }`}
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: compact ? 10 : 14,
+          width: "100%",
+        }}
+      >
+        {rows.map((row) => (
+          <div
+            key={`${row.name}-${row.postcode ?? ""}`}
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              gap: compact ? 12 : 16,
+              width: "100%",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                width: nameWidth,
+                fontSize: labelSize,
+                fontWeight: row.isLeader ? 700 : 500,
+                color: row.isLeader ? COLORS.fg : COLORS.secondary,
+              }}
+            >
+              {row.name}
+            </div>
+            <div
+              style={{
+                display: "flex",
+                flexGrow: 1,
+                height: barHeight,
+                borderRadius: 999,
+                backgroundColor: "rgba(255,255,255,0.1)",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  width: `${row.widthPercent}%`,
+                  height: "100%",
+                  borderRadius: 999,
+                  backgroundColor: row.color,
+                }}
+              />
+            </div>
+            <div
+              style={{
+                display: "flex",
+                width: valueWidth,
+                justifyContent: "flex-end",
+                fontSize: labelSize,
+                fontWeight: row.isLeader ? 700 : 500,
+                color: row.isLeader ? COLORS.accentSoft : COLORS.muted,
+              }}
+            >
+              {formatDensityBarValue(row.value, slot.metric)}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function ProductMixBlock({
   slot,
   compact,
@@ -698,16 +760,7 @@ export async function renderRegionInfographicImage(
     (slot) => slot.id === "topProducts",
   );
   const topFood = composition.slots.find((slot) => slot.id === "topFood");
-  const rest = composition.slots.filter(
-    (slot) =>
-      slot.id !== "headline" &&
-      slot.id !== "coverageTriad" &&
-      slot.id !== "weekdayMix" &&
-      slot.id !== "dayHourHeat" &&
-      slot.id !== "topProducts" &&
-      slot.id !== "topFood",
-  );
-  const gridColumns = isOg ? 3 : 2;
+  const topDensity = composition.slots.find((slot) => slot.id === "topDensity");
   const outerPad = isOg ? 24 : isStory ? 44 : 32;
   const innerPad = isStory ? 52 : isOg ? 36 : 44;
   const cardRadius = isOg ? 24 : 32;
@@ -886,32 +939,38 @@ export async function renderRegionInfographicImage(
             </div>
           ) : null}
 
+          {topDensity && topDensity.id === "topDensity" ? (
+            <div
+              style={{
+                display: "flex",
+                width: "100%",
+                marginTop: compact ? 8 : 12,
+              }}
+            >
+              <TopDensityBlock slot={topDensity} compact={compact} />
+            </div>
+          ) : null}
+
           <div
             style={{
               display: "flex",
-              flexWrap: "wrap",
-              gap: compact ? 20 : 28,
-              marginTop: compact ? 8 : 12,
-              alignContent: "flex-start",
+              width: "100%",
+              justifyContent: "flex-end",
+              marginTop: compact ? 16 : 24,
             }}
           >
-            {rest.map((slot) => (
-              <div
-                key={slot.id}
-                style={{
-                  display: "flex",
-                  width: `${100 / gridColumns - 2}%`,
-                  minWidth: isOg ? 180 : 240,
-                }}
-              >
-                <SlotBlock
-                  eyebrow={slotEyebrow(slot)}
-                  headline={slotHeadline(slot)}
-                  supporting={slotSupporting(slot)}
-                  compact={compact}
-                />
-              </div>
-            ))}
+            <div
+              style={{
+                display: "flex",
+                fontSize: isOg ? 18 : 22,
+                fontWeight: 600,
+                letterSpacing: "0.22em",
+                textTransform: "uppercase",
+                color: COLORS.accentSoft,
+              }}
+            >
+              DuskRoute
+            </div>
           </div>
         </div>
       </div>

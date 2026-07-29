@@ -1,11 +1,12 @@
 import { BeerGlassWeekdayChart } from "@/components/infographic/BeerGlassWeekdayChart";
 import { CoverageRingsChart } from "@/components/infographic/CoverageRingsChart";
 import { DayHourHeatChart } from "@/components/infographic/DayHourHeatChart";
+import { DensityBarsChart } from "@/components/infographic/DensityBarsChart";
 import {
   DrinkBarsChart,
   ProductBarsChart,
 } from "@/components/infographic/DrinkBarsChart";
-import type { InfographicComposition, InfographicSlot } from "@/lib/infographic/types";
+import type { InfographicComposition } from "@/lib/infographic/types";
 import {
   formatRegionInfographicTitle,
   slotEyebrow,
@@ -16,26 +17,6 @@ import {
 type RegionInfographicPosterProps = {
   composition: InfographicComposition;
 };
-
-function TextSlot({ slot }: { slot: InfographicSlot }) {
-  const eyebrow = slotEyebrow(slot);
-  const supporting = slotSupporting(slot);
-  return (
-    <div className="space-y-1">
-      {eyebrow ? (
-        <p className="text-xs font-medium tracking-[0.16em] text-muted uppercase">
-          {eyebrow}
-        </p>
-      ) : null}
-      <p className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
-        {slotHeadline(slot)}
-      </p>
-      {supporting ? (
-        <p className="text-sm text-secondary">{supporting}</p>
-      ) : null}
-    </div>
-  );
-}
 
 export function RegionInfographicPoster({
   composition,
@@ -51,15 +32,7 @@ export function RegionInfographicPoster({
     (slot) => slot.id === "topProducts",
   );
   const topFood = composition.slots.find((slot) => slot.id === "topFood");
-  const rest = composition.slots.filter(
-    (slot) =>
-      slot.id !== "headline" &&
-      slot.id !== "coverageTriad" &&
-      slot.id !== "weekdayMix" &&
-      slot.id !== "dayHourHeat" &&
-      slot.id !== "topProducts" &&
-      slot.id !== "topFood",
-  );
+  const topDensity = composition.slots.find((slot) => slot.id === "topDensity");
 
   return (
     <div id="region-infographic-poster">
@@ -194,15 +167,29 @@ export function RegionInfographicPoster({
           </div>
         ) : null}
 
-        {rest.length > 0 ? (
-          <div className="grid gap-5 sm:grid-cols-2">
-            {rest.map((slot) => (
-              <div key={slot.id}>
-                <TextSlot slot={slot} />
-              </div>
-            ))}
+        {topDensity && topDensity.id === "topDensity" ? (
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <p className="text-xs font-medium tracking-[0.18em] text-accent-soft uppercase">
+                {slotEyebrow(topDensity)}
+              </p>
+              <p className="text-lg font-medium text-secondary">
+                {slotHeadline(topDensity)}
+                {slotSupporting(topDensity)
+                  ? ` · ${slotSupporting(topDensity)}`
+                  : null}
+              </p>
+            </div>
+            <DensityBarsChart
+              suburbs={topDensity.suburbs}
+              metric={topDensity.metric}
+            />
           </div>
         ) : null}
+
+        <p className="self-end text-xs font-medium tracking-[0.2em] text-accent-soft uppercase">
+          DuskRoute
+        </p>
       </div>
       </article>
     </div>

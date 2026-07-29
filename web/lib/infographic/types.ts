@@ -3,13 +3,13 @@ export type InfographicFormat = "page" | "og" | "square" | "story";
 export type InfographicSlotId =
   | "headline"
   | "coverageTriad"
-  | "densest"
-  | "perCapita"
+  | "topDensity"
   | "weekdayMix"
   | "dayHourHeat"
   | "topProducts"
-  | "topFood"
-  | "dealLeader";
+  | "topFood";
+
+export type TopDensityMetric = "density" | "deals";
 
 export type CoverageTriadRingId =
   | "suburbsWithVenues"
@@ -70,6 +70,9 @@ export type RegionInfographicFacts = {
   densestSuburb: RegionSuburbWinner | null;
   perCapitaSuburb: RegionSuburbWinner | null;
   dealLeaderSuburb: RegionSuburbWinner | null;
+  /** Top suburbs by deals/km², or by deal count when area is missing. */
+  topDensitySuburbs: RegionSuburbWinner[];
+  topDensityMetric: TopDensityMetric;
   busiestDay: RegionDayCount | null;
   dayCounts: RegionDayCount[];
   peakDayHour: RegionDayHourCount | null;
@@ -91,12 +94,9 @@ export type InfographicSlot =
       rings: CoverageTriadRing[];
     }
   | {
-      id: "densest";
-      suburb: RegionSuburbWinner;
-    }
-  | {
-      id: "perCapita";
-      suburb: RegionSuburbWinner;
+      id: "topDensity";
+      suburbs: RegionSuburbWinner[];
+      metric: TopDensityMetric;
     }
   | {
       id: "weekdayMix";
@@ -118,12 +118,7 @@ export type InfographicSlot =
   | {
       id: "topFood";
       products: RegionProductHit[];
-    }
-  | {
-      id: "dealLeader";
-      suburb: RegionSuburbWinner;
     };
-
 export type InfographicComposition = {
   format: InfographicFormat;
   regionName: string;

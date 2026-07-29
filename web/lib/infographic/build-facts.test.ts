@@ -80,6 +80,13 @@ describe("buildRegionInfographicFacts", () => {
     expect(facts.densestSuburb?.name).toBe("Surry Hills");
     expect(facts.perCapitaSuburb?.name).toBe("Parramatta");
     expect(facts.dealLeaderSuburb?.name).toBe("Parramatta");
+    expect(facts.topDensityMetric).toBe("density");
+    expect(facts.topDensitySuburbs).toHaveLength(2);
+    expect(facts.topDensitySuburbs.map((s) => s.name)).toEqual([
+      "Surry Hills",
+      "Parramatta",
+    ]);
+    expect(facts.topDensitySuburbs[0]?.value).toBe(20);
     expect(facts.busiestDay).toEqual({ dayOfWeek: 6, count: 40 });
     expect(facts.dayCounts).toHaveLength(2);
     expect(facts.peakDayHour).toEqual({ dayOfWeek: 6, hour: 17, count: 12 });
@@ -170,6 +177,13 @@ describe("buildRegionInfographicFacts", () => {
     expect(facts.densestSuburb).toBeNull();
     expect(facts.perCapitaSuburb).toBeNull();
     expect(facts.dealLeaderSuburb?.name).toBe("Nowhere");
+    expect(facts.topDensityMetric).toBe("deals");
+    expect(facts.topDensitySuburbs).toHaveLength(1);
+    expect(facts.topDensitySuburbs[0]).toMatchObject({
+      name: "Nowhere",
+      value: 4,
+      dealCount: 4,
+    });
     expect(facts.busiestDay).toBeNull();
     expect(facts.dayCounts).toEqual([]);
     expect(facts.peakDayHour).toBeNull();
@@ -204,7 +218,7 @@ describe("buildRegionInfographicFacts", () => {
 });
 
 describe("composeRegionInfographic", () => {
-  it("falls back densest slot to deal leader when area is missing", () => {
+  it("falls back topDensity to deal count when area is missing", () => {
     const facts = buildRegionInfographicFacts({
       regionId: 1,
       regionName: "Sydney",
@@ -228,14 +242,27 @@ describe("composeRegionInfographic", () => {
 
     expect(ids).toContain("headline");
     expect(ids).toContain("coverageTriad");
-    expect(ids).toContain("dealLeader");
+    expect(ids).toContain("topDensity");
     expect(ids).not.toContain("densest");
+    expect(ids).not.toContain("dealLeader");
     expect(ids).toContain("weekdayMix");
     expect(ids).toContain("dayHourHeat");
     expect(ids).toContain("topProducts");
     expect(ids).toContain("topFood");
     expect(ids).not.toContain("coverage");
     expect(ids).not.toContain("perCapita");
+
+    const density = composition.slots.find((slot) => slot.id === "topDensity");
+    expect(density?.id === "topDensity" && density.metric).toBe("deals");
+    expect(density?.id === "topDensity" && density.suburbs[0]?.name).toBe(
+      "Bondi",
+    );
+    expect(density?.id === "topDensity" && slotHeadline(density)).toBe(
+      "Bondi leads",
+    );
+    expect(density?.id === "topDensity" && slotSupporting(density)).toBe(
+      "Top 5 by deal count",
+    );
 
     const triad = composition.slots.find((slot) => slot.id === "coverageTriad");
     expect(triad?.id === "coverageTriad" && triad.rings).toHaveLength(3);
@@ -304,10 +331,100 @@ describe("composeRegionInfographic", () => {
       "headline",
       "coverageTriad",
       "weekdayMix",
-      "densest",
       "topProducts",
+      "topDensity",
     ]);
     expect(og.slots.map((slot) => slot.id)).not.toContain("topFood");
+    const density = og.slots.find((slot) => slot.id === "topDensity");
+    expect(density?.id === "topDensity" && density.metric).toBe("density");
+    expect(density?.id === "topDensity" && slotHeadline(density)).toBe(
+      "Newtown leads",
+    );
+    expect(density?.id === "topDensity" && slotSupporting(density)).toBe(
+      "Top 5 by deals per km²",
+    );
+  });
+
+  it("caps topDensity at five suburbs ordered by deals per km²", () => {
+    const facts = buildRegionInfographicFacts({
+      regionId: 1,
+      regionName: "Sydney",
+      venuesWithDeals: 10,
+      dayCounts: [],
+      dayHourCounts: [],
+      topProducts: [],
+      topFood: [],
+      suburbs: [
+        suburb({
+          id: 1,
+          name: "A",
+          dealCount: 10,
+          venueCount: 2,
+          sqkm: 1,
+          dealsPerSqkm: 10,
+        }),
+        suburb({
+          id: 2,
+          name: "B",
+          dealCount: 9,
+          venueCount: 2,
+          sqkm: 1,
+          dealsPerSqkm: 9,
+        }),
+        suburb({
+          id: 3,
+          name: "C",
+          dealCount: 8,
+          venueCount: 2,
+          sqkm: 1,
+          dealsPerSqkm: 8,
+        }),
+        suburb({
+          id: 4,
+          name: "D",
+          dealCount: 7,
+          venueCount: 2,
+          sqkm: 1,
+          dealsPerSqkm: 7,
+        }),
+        suburb({
+          id: 5,
+          name: "E",
+          dealCount: 6,
+          venueCount: 2,
+          sqkm: 1,
+          dealsPerSqkm: 6,
+        }),
+        suburb({
+          id: 6,
+          name: "F",
+          dealCount: 5,
+          venueCount: 2,
+          sqkm: 1,
+          dealsPerSqkm: 5,
+        }),
+        suburb({
+          id: 7,
+          name: "NoArea",
+          dealCount: 100,
+          venueCount: 2,
+        }),
+      ],
+    });
+
+    expect(facts.topDensitySuburbs.map((s) => s.name)).toEqual([
+      "A",
+      "B",
+      "C",
+      "D",
+      "E",
+    ]);
+    expect(facts.topDensityMetric).toBe("density");
+
+    const composition = composeRegionInfographic(facts, "page");
+    const density = composition.slots.find((slot) => slot.id === "topDensity");
+    expect(density?.id === "topDensity" && density.suburbs).toHaveLength(5);
+    expect(composition.slots.map((slot) => slot.id)).not.toContain("perCapita");
   });
 
   it("omits weekdayMix and dayHourHeat when there are no schedule counts", () => {
@@ -325,6 +442,7 @@ describe("composeRegionInfographic", () => {
     });
     const composition = composeRegionInfographic(facts, "page");
     expect(composition.slots.map((slot) => slot.id)).toContain("coverageTriad");
+    expect(composition.slots.map((slot) => slot.id)).toContain("topDensity");
     expect(composition.slots.map((slot) => slot.id)).not.toContain(
       "weekdayMix",
     );
