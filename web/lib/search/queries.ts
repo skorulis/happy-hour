@@ -456,7 +456,7 @@ export async function findNearbySuburbs(
       heroImage: suburb.heroImage,
       dealCount,
       venueCount,
-      distanceKm: distance,
+      distanceKm: sql<number>`${distance}`,
     })
     .from(suburb)
     .leftJoin(venue, eq(venue.suburbId, suburb.id))
