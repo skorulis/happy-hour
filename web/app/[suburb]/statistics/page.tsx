@@ -90,7 +90,6 @@ export default async function RegionStatisticsPage({
           url={absoluteUrl}
           title={title}
           text={shareText}
-          downloadPath={`${path}/card?format=square`}
         />
         <p className="text-sm text-muted">
           Browse deals in{" "}

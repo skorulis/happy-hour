@@ -2,19 +2,69 @@
 
 import { useSyncExternalStore, useState } from "react";
 import { Check, Download, Link2, Loader2, Share2 } from "lucide-react";
+import { domToPng } from "modern-screenshot";
+
+const POSTER_ELEMENT_ID = "region-infographic-poster";
 
 type RegionInfographicShareProps = {
   url: string;
   title: string;
   text: string;
-  downloadPath: string;
 };
+
+function downloadFileName(title: string): string {
+  return `${title.replace(/[^\w.-]+/g, "-").toLowerCase()}.png`;
+}
+
+function triggerPngDownload(dataUrl: string, filename: string) {
+  const anchor = document.createElement("a");
+  anchor.href = dataUrl;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+}
+
+async function capturePosterPng(): Promise<string> {
+  const poster = document.getElementById(POSTER_ELEMENT_ID);
+  if (!poster) {
+    throw new Error("Poster element not found");
+  }
+
+  // Wait a frame so layout/fonts settle before rasterizing.
+  await new Promise<void>((resolve) => {
+    requestAnimationFrame(() => resolve());
+  });
+
+  const pad = 16;
+  const width = poster.offsetWidth + pad * 2;
+  const height = poster.offsetHeight + pad * 2;
+
+  return domToPng(poster, {
+    scale: 2,
+    width,
+    height,
+    // Page background behind export padding so the card border isn’t clipped.
+    backgroundColor: "#081426",
+    style: {
+      padding: `${pad}px`,
+      width: `${width}px`,
+      height: `${height}px`,
+      boxSizing: "border-box",
+      backgroundColor: "#081426",
+    },
+    filter: (node) => {
+      if (!(node instanceof Element)) return true;
+      // Skip interactive chrome that shouldn’t appear in the export.
+      return !node.hasAttribute("data-infographic-exclude");
+    },
+  });
+}
 
 export function RegionInfographicShare({
   url,
   title,
   text,
-  downloadPath,
 }: RegionInfographicShareProps) {
   const [copied, setCopied] = useState(false);
   const [downloading, setDownloading] = useState(false);
@@ -53,19 +103,8 @@ export function RegionInfographicShare({
     setDownloading(true);
     setStatus(null);
     try {
-      const response = await fetch(downloadPath);
-      if (!response.ok) {
-        throw new Error(`Download failed (${response.status})`);
-      }
-      const blob = await response.blob();
-      const objectUrl = URL.createObjectURL(blob);
-      const anchor = document.createElement("a");
-      anchor.href = objectUrl;
-      anchor.download = `${title.replace(/[^\w.-]+/g, "-").toLowerCase()}.png`;
-      document.body.appendChild(anchor);
-      anchor.click();
-      anchor.remove();
-      URL.revokeObjectURL(objectUrl);
+      const dataUrl = await capturePosterPng();
+      triggerPngDownload(dataUrl, downloadFileName(title));
     } catch {
       setStatus("Couldn’t download the image");
     } finally {

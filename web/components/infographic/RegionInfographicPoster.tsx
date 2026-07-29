@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { BeerGlassWeekdayChart } from "@/components/infographic/BeerGlassWeekdayChart";
 import { CoverageRingsChart } from "@/components/infographic/CoverageRingsChart";
 import { DayHourHeatChart } from "@/components/infographic/DayHourHeatChart";
@@ -63,37 +62,25 @@ export function RegionInfographicPoster({
   );
 
   return (
-    <article
-      className="relative overflow-hidden rounded-2xl border border-border bg-surface-elevated shadow-card"
-      aria-label={`Infographic for ${composition.regionName}`}
-    >
-      <div
-        className="pointer-events-none absolute inset-0 opacity-90"
-        style={{
-          background:
-            "radial-gradient(ellipse 100% 80% at 20% -20%, rgb(124 58 87 / 0.5) 0%, transparent 55%), radial-gradient(ellipse 70% 50% at 100% 0%, rgb(245 158 11 / 0.18) 0%, transparent 50%), linear-gradient(165deg, #0c1a2e 0%, #081426 48%, #06101f 100%)",
-        }}
-        aria-hidden
-      />
+    <div id="region-infographic-poster">
+      <article
+        className="relative overflow-hidden rounded-2xl border border-border bg-surface-elevated shadow-card"
+        aria-label={`Infographic for ${composition.regionName}`}
+      >
+        <div
+          className="pointer-events-none absolute inset-0 opacity-90"
+          style={{
+            background:
+              "radial-gradient(ellipse 100% 80% at 20% -20%, rgb(124 58 87 / 0.5) 0%, transparent 55%), radial-gradient(ellipse 70% 50% at 100% 0%, rgb(245 158 11 / 0.18) 0%, transparent 50%), linear-gradient(165deg, #0c1a2e 0%, #081426 48%, #06101f 100%)",
+          }}
+          aria-hidden
+        />
 
-      <div className="relative flex flex-col gap-8 p-6 sm:p-8 md:p-10">
-        <header className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-5">
-          <Image
-            src="/icon.png"
-            alt=""
-            width={64}
-            height={64}
-            className="h-14 w-14 rounded-full sm:h-16 sm:w-16"
-            priority
-          />
-          <div className="min-w-0 space-y-1">
-            <p className="text-xs font-medium tracking-[0.2em] text-accent-soft uppercase">
-              DuskRoute
-            </p>
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl md:text-4xl">
-              {formatRegionInfographicTitle(composition.regionName)}
-            </h1>
-          </div>
+        <div className="relative flex flex-col gap-8 p-6 sm:p-8 md:p-10">
+        <header>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl md:text-4xl">
+            {formatRegionInfographicTitle(composition.regionName)}
+          </h1>
         </header>
 
         {coverageTriad && coverageTriad.id === "coverageTriad" ? (
@@ -217,6 +204,7 @@ export function RegionInfographicPoster({
           </div>
         ) : null}
       </div>
-    </article>
+      </article>
+    </div>
   );
 }
