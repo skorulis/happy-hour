@@ -38,6 +38,7 @@ import {
   UNKNOWN_SUBURB_SLUG,
 } from "@/lib/search/slugs";
 import {
+  country,
   deal,
   dealSchedule,
   dealSearchVector,
@@ -458,6 +459,8 @@ export type RegionWithCounts = {
   heroImage: string | null;
   dealCount: number;
   venueCount: number;
+  countryName: string;
+  countryIso3: string;
 };
 
 export type RegionSearchResult = {
@@ -748,8 +751,11 @@ export async function listRegions(): Promise<RegionWithCounts[]> {
       heroImage: geographicRegion.heroImage,
       dealCount,
       venueCount,
+      countryName: country.name,
+      countryIso3: country.iso3,
     })
     .from(geographicRegion)
+    .innerJoin(country, eq(geographicRegion.countryId, country.id))
     .leftJoin(suburb, eq(suburb.regionId, geographicRegion.id))
     .leftJoin(venue, eq(venue.suburbId, suburb.id))
     .leftJoin(
@@ -760,6 +766,8 @@ export async function listRegions(): Promise<RegionWithCounts[]> {
       geographicRegion.id,
       geographicRegion.name,
       geographicRegion.heroImage,
+      country.name,
+      country.iso3,
     )
     .orderBy(desc(dealCount), geographicRegion.name);
 

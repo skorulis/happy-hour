@@ -35,7 +35,7 @@ nonisolated struct VenueAreaSweepResult: Sendable {
 enum VenueAreaSweep {
 
     static let nearbyResultCap = 20
-    static let defaultIncludedTypes = ["bar", "night_club"]
+    nonisolated static let defaultIncludedTypes = ["bar", "night_club", "pub", "brewery"]
     static let spacingOverlapFactor = 0.7
     static let maxSubdivisionDepth = 3
     static let nearbyCallDelay: Duration = .milliseconds(200)

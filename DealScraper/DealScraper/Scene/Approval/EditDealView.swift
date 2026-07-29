@@ -306,6 +306,8 @@ struct EditDealView: View {
         HStack(spacing: 32) {
             switch actionStyle {
             case .approval:
+                extractProductsButton
+
                 statusButton(
                     systemImage: "checkmark",
                     color: .green,
@@ -336,6 +338,38 @@ struct EditDealView: View {
             }
         }
         .frame(maxWidth: .infinity)
+    }
+    
+    @ViewBuilder
+    private var extractProductsLabel: some View {
+        if isExtractingProducts {
+            ProgressView()
+                .controlSize(.small)
+        } else {
+            Image(systemName: "wand.and.stars")
+                .font(.title.weight(.semibold))
+        }
+    }
+
+    private var extractProductsButton: some View {
+        Button {
+            Task { await extractProductsFromAPI() }
+        } label: {
+            extractProductsLabel
+            .frame(width: 48, height: 48)
+            .background {
+                Circle()
+                    .fill(.clear)
+            }
+            .overlay {
+                Circle()
+                    .strokeBorder(Color.accentColor, lineWidth: 2)
+            }
+            .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .disabled(isExtractingProducts)
+        .help("Extract products from title and details")
     }
 
     private var currentDraft: EditDealDraft {
