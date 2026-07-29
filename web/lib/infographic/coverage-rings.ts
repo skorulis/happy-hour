@@ -53,7 +53,6 @@ export function buildCoverageTriadRings(
     | "suburbCount"
     | "suburbsWithVenues"
     | "suburbsWithDeals"
-    | "dealCount"
     | "venueCount"
     | "venuesWithDeals"
   >,
@@ -71,7 +70,7 @@ export function buildCoverageTriadRings(
       ),
       numerator: facts.suburbsWithVenues,
       denominator: facts.suburbCount,
-      scaleCount: facts.suburbCount,
+      scaleCount: facts.suburbsWithVenues,
       scaleUnit: "suburbs",
     },
     {
@@ -79,15 +78,15 @@ export function buildCoverageTriadRings(
       percent: coveragePercentOf(facts.suburbsWithDeals, facts.suburbCount),
       numerator: facts.suburbsWithDeals,
       denominator: facts.suburbCount,
-      scaleCount: facts.dealCount,
-      scaleUnit: "deals",
+      scaleCount: facts.suburbsWithDeals,
+      scaleUnit: "suburbs",
     },
     {
       id: "venuesWithDeals",
       percent: coveragePercentOf(facts.venuesWithDeals, facts.venueCount),
       numerator: facts.venuesWithDeals,
       denominator: Math.max(facts.venueCount, 0),
-      scaleCount: facts.venueCount,
+      scaleCount: facts.venuesWithDeals,
       scaleUnit: "venues",
     },
   ];
@@ -109,7 +108,6 @@ export function coverageRingScaleUnitLabel(
   count: number,
 ): string {
   if (unit === "suburbs") return count === 1 ? "suburb" : "suburbs";
-  if (unit === "deals") return count === 1 ? "deal" : "deals";
   return count === 1 ? "venue" : "venues";
 }
 

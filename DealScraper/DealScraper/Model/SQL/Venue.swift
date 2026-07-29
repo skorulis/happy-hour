@@ -134,6 +134,14 @@ nonisolated struct Venue: Codable, Sendable {
         return .normal
     }
 
+    /// Crawl should pick a hero when missing, empty, or still a legacy `file://` path.
+    var needsCrawlHeroImageSelection: Bool {
+        guard let heroImage else { return true }
+        let trimmed = heroImage.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return true }
+        return URL(string: trimmed)?.isFileURL == true
+    }
+
     static func touchLastUpdate(_ db: Database, venueId: Int64) throws {
         try db.execute(
             sql: "UPDATE venue SET last_update = ? WHERE id = ?",

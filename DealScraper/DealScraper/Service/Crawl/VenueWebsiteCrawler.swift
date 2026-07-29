@@ -220,7 +220,9 @@ final class VenueWebsiteCrawler {
                     facebook: discoveredLinks.facebook?.absoluteString
                 )
 
-                if venue.heroImage?.isEmpty != false {
+                // Missing, empty, or legacy file:// — re-select so crawl gradually
+                // replaces local paths with remote source + R2 URLs.
+                if venue.needsCrawlHeroImageSelection {
                     await progress("Selecting hero image…")
                     if let heroURL = await heroImageSelector.selectHeroImage(
                         from: loadedPage.imageURLs,

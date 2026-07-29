@@ -34,7 +34,6 @@ describe("coverage-rings", () => {
       suburbCount: 10,
       suburbsWithVenues: 8,
       suburbsWithDeals: 5,
-      dealCount: 40,
       venueCount: 20,
       venuesWithDeals: 10,
     });
@@ -43,7 +42,7 @@ describe("coverage-rings", () => {
     expect(rings![0]).toMatchObject({
       id: "suburbsWithVenues",
       percent: 80,
-      scaleCount: 10,
+      scaleCount: 8,
       scaleUnit: "suburbs",
       numerator: 8,
       denominator: 10,
@@ -51,13 +50,13 @@ describe("coverage-rings", () => {
     expect(rings![1]).toMatchObject({
       id: "suburbsWithDeals",
       percent: 50,
-      scaleCount: 40,
-      scaleUnit: "deals",
+      scaleCount: 5,
+      scaleUnit: "suburbs",
     });
     expect(rings![2]).toMatchObject({
       id: "venuesWithDeals",
       percent: 50,
-      scaleCount: 20,
+      scaleCount: 10,
       scaleUnit: "venues",
     });
     expect(coverageRingEyebrow(rings![0]!)).toBe("Suburbs with venues");
@@ -72,7 +71,6 @@ describe("coverage-rings", () => {
         suburbCount: 0,
         suburbsWithVenues: 0,
         suburbsWithDeals: 0,
-        dealCount: 0,
         venueCount: 0,
         venuesWithDeals: 0,
       }),

@@ -22,9 +22,9 @@ export type CoverageTriadRing = {
   percent: number;
   numerator: number;
   denominator: number;
-  /** Raw scale shown in the ring center. */
+  /** Count matching the ring label, shown in the ring center. */
   scaleCount: number;
-  scaleUnit: "suburbs" | "deals" | "venues";
+  scaleUnit: "suburbs" | "venues";
 };
 
 export type RegionSuburbWinner = {
