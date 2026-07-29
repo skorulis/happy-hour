@@ -78,6 +78,36 @@ final class DealRepository {
         }
     }
 
+    /// Approved deals mentioning "happy hour" with any schedule longer than 12 hours.
+    func findApprovedHappyHourWithLongSchedules() throws -> [DealWithSchedules] {
+        try store.dbQueue.read { db in
+            let deals = try Deal.fetchAll(
+                db,
+                sql: """
+                    SELECT DISTINCT d.*
+                    FROM deal d
+                    WHERE d.status = ?
+                      AND (
+                          LOWER(IFNULL(d.title, '')) LIKE '%happy hour%'
+                          OR LOWER(IFNULL(d.details, '')) LIKE '%happy hour%'
+                      )
+                      AND EXISTS (
+                          SELECT 1
+                          FROM deal_schedule s
+                          WHERE s.deal_id = d.id
+                            AND (s.end_minute - s.start_minute) > 720
+                      )
+                    ORDER BY d.id ASC
+                    """,
+                arguments: [DealStatus.approved.rawValue]
+            )
+
+            return try deals.map { deal in
+                try Self.dealWithRelations(db: db, deal: deal)
+            }
+        }
+    }
+
     func find(venueId: Int64) throws -> [DealWithSchedules] {
         try store.dbQueue.read { db in
             let deals = try Deal

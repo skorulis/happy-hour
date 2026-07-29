@@ -412,6 +412,22 @@ struct EditDealView: View {
         return overlapping
     }
 
+    /// True when title or details mention "happy hour" (conditions intentionally excluded).
+    private var isHappyHourDeal: Bool {
+        title.localizedCaseInsensitiveContains("happy hour")
+            || details.localizedCaseInsensitiveContains("happy hour")
+    }
+
+    /// Schedule IDs longer than 12 hours on a happy-hour deal (warning only; save still allowed).
+    private var longHappyHourScheduleIDs: Set<Int64> {
+        guard isHappyHourDeal else { return [] }
+        return Set(
+            schedules
+                .filter { ($0.endMinute - $0.startMinute) > 720 }
+                .map(\.id)
+        )
+    }
+
     private func syncFieldsFromItem() {
         title = item.deal.title ?? ""
         details = item.deal.details ?? ""
@@ -639,7 +655,9 @@ struct EditDealView: View {
     }
 
     private func scheduleEditRow(schedule: Binding<EditableDealSchedule>) -> some View {
-        let isOverlapping = overlappingScheduleIDs.contains(schedule.wrappedValue.id)
+        let scheduleID = schedule.wrappedValue.id
+        let isHighlighted = overlappingScheduleIDs.contains(scheduleID)
+            || longHappyHourScheduleIDs.contains(scheduleID)
         return HStack(spacing: 8) {
             Picker("Day", selection: schedule.dayOfWeek) {
                 ForEach(DealScheduleFormatting.weekdaysInDisplayOrder, id: \.self) { weekday in
@@ -699,7 +717,7 @@ struct EditDealView: View {
         .padding(.horizontal, 4)
         .padding(.vertical, 2)
         .background {
-            if isOverlapping {
+            if isHighlighted {
                 RoundedRectangle(cornerRadius: 4)
                     .fill(Color.red.opacity(0.15))
             }

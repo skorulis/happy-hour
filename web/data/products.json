@@ -311,7 +311,10 @@
     },
     {
         "name": "cheese plate",
-        "icon": "Cheese"
+        "icon": "Cheese",
+        "synonyms": [
+            "cheese board"
+        ]
     },
     {
         "name": "fish & chips",

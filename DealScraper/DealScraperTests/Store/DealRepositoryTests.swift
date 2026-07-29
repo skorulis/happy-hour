@@ -381,6 +381,89 @@ struct DealRepositoryTests {
         #expect(DealScheduleFormatting.hasOverlappingSchedules(pending.first?.schedules ?? []))
     }
 
+    @Test func findApprovedHappyHourWithLongSchedulesReturnsMatchingDeals() throws {
+        let store = SQLStore.inMemory()
+        let venueRepository = VenueRepository(store: store)
+        let dealRepository = DealRepository(store: store)
+
+        try venueRepository.upsert(Venue(
+            googleMapId: "places/a",
+            name: "Venue A",
+            lat: 0,
+            lng: 0,
+            json: "{}"
+        ))
+
+        let venueAId = try #require(try venueRepository.find(googleMapId: "places/a")?.id)
+
+        _ = try dealRepository.replaceAll(
+            venueId: venueAId,
+            deals: [
+                DealWithSchedules(
+                    deal: Deal(
+                        venueId: venueAId,
+                        title: "Happy Hour All Day",
+                        status: .approved
+                    ),
+                    schedules: [
+                        // 8:00–21:00 = 13 hours
+                        DealSchedule(dealId: 0, dayOfWeek: 3, startMinute: 480, endMinute: 1_260),
+                    ]
+                ),
+                DealWithSchedules(
+                    deal: Deal(
+                        venueId: venueAId,
+                        title: "Happy Hour",
+                        status: .approved
+                    ),
+                    schedules: [
+                        // 16:00–18:00 = 2 hours
+                        DealSchedule(dealId: 0, dayOfWeek: 3, startMinute: 960, endMinute: 1_080),
+                    ]
+                ),
+                DealWithSchedules(
+                    deal: Deal(
+                        venueId: venueAId,
+                        title: "All Day Special",
+                        details: "Not HH",
+                        status: .approved
+                    ),
+                    schedules: [
+                        DealSchedule(dealId: 0, dayOfWeek: 3, startMinute: 480, endMinute: 1_260),
+                    ]
+                ),
+                DealWithSchedules(
+                    deal: Deal(
+                        venueId: venueAId,
+                        title: "Happy Hour Draft",
+                        status: .new
+                    ),
+                    schedules: [
+                        DealSchedule(dealId: 0, dayOfWeek: 3, startMinute: 480, endMinute: 1_260),
+                    ]
+                ),
+                DealWithSchedules(
+                    deal: Deal(
+                        venueId: venueAId,
+                        details: "Includes happy hour pricing",
+                        status: .approved
+                    ),
+                    schedules: [
+                        // Exactly 12 hours should not match (> 12 required)
+                        DealSchedule(dealId: 0, dayOfWeek: 4, startMinute: 480, endMinute: 1_200),
+                        // 12 hours + 1 minute
+                        DealSchedule(dealId: 0, dayOfWeek: 5, startMinute: 480, endMinute: 1_201),
+                    ]
+                ),
+            ]
+        )
+
+        let pending = try dealRepository.findApprovedHappyHourWithLongSchedules()
+        #expect(pending.count == 2)
+        let titles = Set(pending.map { $0.deal.title ?? $0.deal.details ?? "" })
+        #expect(titles == ["Happy Hour All Day", "Includes happy hour pricing"])
+    }
+
     @Test func updatePersistsDealTextAndStatus() throws {
         let store = SQLStore.inMemory()
         let venueRepository = VenueRepository(store: store)

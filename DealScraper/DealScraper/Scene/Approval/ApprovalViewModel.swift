@@ -181,8 +181,14 @@ final class ApprovalViewModel: CoordinatorViewModel {
                 pendingDealProducts = try dealRepository.findApprovedWithoutProducts()
                     .filter { nonBrokenVenueIds.contains($0.deal.venueId) }
             case .dealReview:
-                pendingDealReview = try dealRepository.findApprovedWithOverlappingSchedules()
+                let overlapping = try dealRepository.findApprovedWithOverlappingSchedules()
                     .filter { nonBrokenVenueIds.contains($0.deal.venueId) }
+                if overlapping.isEmpty {
+                    pendingDealReview = try dealRepository.findApprovedHappyHourWithLongSchedules()
+                        .filter { nonBrokenVenueIds.contains($0.deal.venueId) }
+                } else {
+                    pendingDealReview = overlapping
+                }
             }
 
             reloadForCurrentMode()

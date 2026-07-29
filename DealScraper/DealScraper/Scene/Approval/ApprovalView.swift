@@ -77,7 +77,7 @@ struct ApprovalView: View {
         case .dealProducts:
             return "No approved deals are missing products."
         case .dealReview:
-            return "No approved deals have overlapping schedules."
+            return "No approved deals need schedule review."
         }
     }
 
