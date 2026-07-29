@@ -27,6 +27,7 @@ import {
   Coins,
   Cookie,
   CookingPot,
+  CupSoda,
   Drumstick,
   EggFried,
   Fish,
@@ -63,7 +64,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { ComponentType } from "react";
-import { chips, nachos, pool, sake, soju, taco, whisky } from "./customProductIcons";
+import { chips, nachos, paperBag, pool, sake, soju, taco, whisky } from "./customProductIcons";
 
 type ProductIconProps = {
   size?: number;
@@ -121,6 +122,7 @@ const PRODUCT_ICON_REGISTRY: Record<string, ProductIcon> = {
   Coins: wrapLucideIcon(Coins),
   Cookie: wrapLucideIcon(Cookie),
   CookingPot: wrapLucideIcon(CookingPot),
+  CupSoda: wrapLucideIcon(CupSoda),
   Dress: labIcon(dress),
   Drumstick: wrapLucideIcon(Drumstick),
   EggFried: wrapLucideIcon(EggFried),
@@ -143,6 +145,7 @@ const PRODUCT_ICON_REGISTRY: Record<string, ProductIcon> = {
   Music: wrapLucideIcon(Music),
   Music4: wrapLucideIcon(Music4),
   Nachos: labIcon(nachos),
+  PaperBag: labIcon(paperBag),
   Percent: wrapLucideIcon(Percent),
   Pizza: wrapLucideIcon(Pizza),
   Pool: labIcon(pool),

@@ -85,9 +85,6 @@ export default async function RegionStatisticsPage({
         <h1 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
           {title}
         </h1>
-        <p className="max-w-2xl text-base text-muted md:text-lg">
-          {shareText}
-        </p>
         <RegionFocusNotice regionName={region.name} />
       </header>
 

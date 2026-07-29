@@ -65,6 +65,31 @@ final class GeographicRegionRepository {
         }
     }
 
+    func brokenVenueCount(regionId: Int64) throws -> Int {
+        try store.dbQueue.read { db in
+            try Int.fetchOne(db, sql: """
+                SELECT COUNT(*)
+                FROM venue v
+                INNER JOIN suburb s ON s.id = v.suburb_id
+                WHERE s.region_id = ?
+                  AND v.status = ?
+                """, arguments: [regionId, VenueStatus.broken.rawValue]) ?? 0
+        }
+    }
+
+    func readyVenueCount(regionId: Int64) throws -> Int {
+        try store.dbQueue.read { db in
+            try Int.fetchOne(db, sql: """
+                SELECT COUNT(DISTINCT v.id)
+                FROM venue v
+                INNER JOIN suburb s ON s.id = v.suburb_id
+                INNER JOIN deal d ON d.venue_id = v.id
+                WHERE s.region_id = ?
+                  AND v.status != ?
+                """, arguments: [regionId, VenueStatus.broken.rawValue]) ?? 0
+        }
+    }
+
     func crawledVenueCount(regionId: Int64) throws -> Int {
         try store.dbQueue.read { db in
             try Int.fetchOne(db, sql: """
@@ -105,9 +130,19 @@ final class GeographicRegionRepository {
         }
     }
 
-    func dealSourceCount(regionId: Int64) throws -> Int {
+    func dealSourceCount(regionId: Int64, status: DealStatus? = nil) throws -> Int {
         try store.dbQueue.read { db in
-            try Int.fetchOne(db, sql: """
+            if let status {
+                return try Int.fetchOne(db, sql: """
+                    SELECT COUNT(*)
+                    FROM deal_source ds
+                    INNER JOIN venue v ON v.id = ds.venue_id
+                    INNER JOIN suburb s ON s.id = v.suburb_id
+                    WHERE s.region_id = ?
+                      AND ds.status = ?
+                    """, arguments: [regionId, status.rawValue]) ?? 0
+            }
+            return try Int.fetchOne(db, sql: """
                 SELECT COUNT(*)
                 FROM deal_source ds
                 INNER JOIN venue v ON v.id = ds.venue_id
@@ -117,9 +152,19 @@ final class GeographicRegionRepository {
         }
     }
 
-    func dealCount(regionId: Int64) throws -> Int {
+    func dealCount(regionId: Int64, status: DealStatus? = nil) throws -> Int {
         try store.dbQueue.read { db in
-            try Int.fetchOne(db, sql: """
+            if let status {
+                return try Int.fetchOne(db, sql: """
+                    SELECT COUNT(*)
+                    FROM deal d
+                    INNER JOIN venue v ON v.id = d.venue_id
+                    INNER JOIN suburb s ON s.id = v.suburb_id
+                    WHERE s.region_id = ?
+                      AND d.status = ?
+                    """, arguments: [regionId, status.rawValue]) ?? 0
+            }
+            return try Int.fetchOne(db, sql: """
                 SELECT COUNT(*)
                 FROM deal d
                 INNER JOIN venue v ON v.id = d.venue_id

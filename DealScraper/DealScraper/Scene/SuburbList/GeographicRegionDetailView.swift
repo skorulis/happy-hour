@@ -42,9 +42,13 @@ struct GeographicRegionDetailView: View {
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
 
-                            Text(countsLabel)
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(venuesCountsLabel)
+                                Text(sourcesCountsLabel)
+                                Text(dealsCountsLabel)
+                            }
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
                         }
 
                         Spacer(minLength: 16)
@@ -127,13 +131,16 @@ struct GeographicRegionDetailView: View {
         }
     }
 
-    private var countsLabel: String {
-        let venueCount = viewModel.venueCount
-        let sourceCount = viewModel.sourceCount
-        let dealCount = viewModel.dealCount
-        let venues = "\(venueCount) venue\(venueCount == 1 ? "" : "s")"
-        let sources = "\(sourceCount) source\(sourceCount == 1 ? "" : "s")"
-        let deals = "\(dealCount) deal\(dealCount == 1 ? "" : "s")"
-        return "\(venues) · \(sources) · \(deals)"
+    private var venuesCountsLabel: String {
+        "\(viewModel.venueCount) venues · \(viewModel.brokenVenueCount) broken · \(viewModel.readyVenueCount) ready"
+    }
+
+    private var sourcesCountsLabel: String {
+        "\(viewModel.sourceCount) sources · \(viewModel.waitingSourceCount) waiting · \(viewModel.acceptedSourceCount) accepted"
+    }
+
+    private var dealsCountsLabel: String {
+        "\(viewModel.dealCount) deals · \(viewModel.waitingDealCount) waiting · \(viewModel.acceptedDealCount) accepted"
     }
 }
+

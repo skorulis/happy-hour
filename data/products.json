@@ -12,7 +12,9 @@
             "champagne",
             "prosecco",
             "sake",
-            "soju"
+            "soju",
+            "seltzer",
+            "cider"
         ]
     },
     {
@@ -63,6 +65,14 @@
         "icon": "BottleWine",
         "synonyms": [
             "champers"
+        ]
+    },
+    {
+        "name": "cider",
+        "icon": "Beer",
+        "synonyms": [
+            "hard cider",
+            "apple cider"
         ]
     },
     {
@@ -134,6 +144,14 @@
     {
         "name": "sangria",
         "icon": "Wine"
+    },
+    {
+        "name": "seltzer",
+        "icon": "CupSoda",
+        "synonyms": [
+            "hard seltzer",
+            "fellr"
+        ]
     },
     {
         "name": "schooner",
@@ -231,6 +249,7 @@
             "fish & chips",
             "gyros",
             "hot dog",
+            "irish spice bag",
             "mixed grill",
             "mussels",
             "nachos",
@@ -290,7 +309,8 @@
     {
         "name": "fish & chips",
         "synonyms": [
-            "fish with chips"
+            "fish with chips",
+            "fish and chips"
         ],
         "icon": "Fish"
     },
@@ -310,6 +330,13 @@
         "icon": "HotDog",
         "synonyms": [
             "hotdog"
+        ]
+    },
+    {
+        "name": "irish spice bag",
+        "icon": "PaperBag",
+        "synonyms": [
+            "spice bag"
         ]
     },
     {

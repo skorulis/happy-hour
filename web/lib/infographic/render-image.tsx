@@ -53,18 +53,20 @@ function SlotBlock({
         minWidth: 0,
       }}
     >
-      <div
-        style={{
-          display: "flex",
-          fontSize: compact ? 18 : 22,
-          fontWeight: 600,
-          letterSpacing: "0.14em",
-          textTransform: "uppercase",
-          color: COLORS.accentSoft,
-        }}
-      >
-        {eyebrow}
-      </div>
+      {eyebrow ? (
+        <div
+          style={{
+            display: "flex",
+            fontSize: compact ? 18 : 22,
+            fontWeight: 600,
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
+            color: COLORS.accentSoft,
+          }}
+        >
+          {eyebrow}
+        </div>
+      ) : null}
       <div
         style={{
           display: "flex",
@@ -580,15 +582,6 @@ export async function renderRegionInfographicImage(
                 lineHeight: 1.05,
               }}
             >
-              {composition.regionName}
-            </div>
-            <div
-              style={{
-                display: "flex",
-                fontSize: isOg ? 24 : 28,
-                color: COLORS.secondary,
-              }}
-            >
               {formatRegionInfographicTitle(composition.regionName)}
             </div>
           </div>
@@ -604,12 +597,18 @@ export async function renderRegionInfographicImage(
                 marginTop: compact ? 14 : 22,
               }}
             >
-              <SlotBlock
-                eyebrow={slotEyebrow(headline)}
-                headline={slotHeadline(headline)}
-                supporting={slotSupporting(headline)}
-                compact={compact}
-              />
+              <div
+                style={{
+                  display: "flex",
+                  fontSize: compact ? 18 : 22,
+                  fontWeight: 600,
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase",
+                  color: COLORS.accentSoft,
+                }}
+              >
+                {slotHeadline(headline)}
+              </div>
             </div>
           ) : null}
 

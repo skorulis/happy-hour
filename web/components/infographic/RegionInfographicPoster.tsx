@@ -15,16 +15,20 @@ type RegionInfographicPosterProps = {
 };
 
 function TextSlot({ slot }: { slot: InfographicSlot }) {
+  const eyebrow = slotEyebrow(slot);
+  const supporting = slotSupporting(slot);
   return (
     <div className="space-y-1">
-      <p className="text-xs font-medium tracking-[0.16em] text-muted uppercase">
-        {slotEyebrow(slot)}
-      </p>
+      {eyebrow ? (
+        <p className="text-xs font-medium tracking-[0.16em] text-muted uppercase">
+          {eyebrow}
+        </p>
+      ) : null}
       <p className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
         {slotHeadline(slot)}
       </p>
-      {slotSupporting(slot) ? (
-        <p className="text-sm text-secondary">{slotSupporting(slot)}</p>
+      {supporting ? (
+        <p className="text-sm text-secondary">{supporting}</p>
       ) : null}
     </div>
   );
@@ -78,27 +82,16 @@ export function RegionInfographicPoster({
               DuskRoute
             </p>
             <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl md:text-4xl">
-              {composition.regionName}
-            </h2>
-            <p className="text-sm text-secondary sm:text-base">
               {formatRegionInfographicTitle(composition.regionName)}
-            </p>
+            </h2>
           </div>
         </header>
 
         {headline ? (
           <div className="space-y-1 border-b border-border-subtle pb-6">
             <p className="text-xs font-medium tracking-[0.18em] text-accent-soft uppercase">
-              {slotEyebrow(headline)}
-            </p>
-            <p className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
               {slotHeadline(headline)}
             </p>
-            {slotSupporting(headline) ? (
-              <p className="text-base text-secondary sm:text-lg">
-                {slotSupporting(headline)}
-              </p>
-            ) : null}
           </div>
         ) : null}
 

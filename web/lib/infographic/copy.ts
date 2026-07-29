@@ -14,7 +14,7 @@ export function formatHourLabel(hour: number): string {
 }
 
 export function formatRegionInfographicTitle(regionName: string): string {
-  return `${regionName}'s happy hour map, in numbers`;
+  return `${regionName} happy hours by the numbers`;
 }
 
 export function formatRegionInfographicDescription(
@@ -68,7 +68,7 @@ export function formatDayHourPeakLabel(
 export function slotEyebrow(slot: InfographicSlot): string {
   switch (slot.id) {
     case "headline":
-      return "Mapped so far";
+      return "";
     case "densest":
       return "Densest for deals";
     case "perCapita":
@@ -89,7 +89,7 @@ export function slotEyebrow(slot: InfographicSlot): string {
 export function slotHeadline(slot: InfographicSlot): string {
   switch (slot.id) {
     case "headline":
-      return `${formatDealCount(slot.dealCount)} deals`;
+      return `${formatDealCount(slot.dealCount)} specials across ${formatDealCount(slot.venueCount)} venues`;
     case "densest":
       return formatSuburbLabel(slot.suburb);
     case "perCapita":
@@ -112,7 +112,7 @@ export function slotHeadline(slot: InfographicSlot): string {
 export function slotSupporting(slot: InfographicSlot): string | null {
   switch (slot.id) {
     case "headline":
-      return `${formatDealCount(slot.venueCount)} venues`;
+      return null;
     case "densest":
       return formatPerSqkmValue(slot.suburb.value);
     case "perCapita":

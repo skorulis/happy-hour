@@ -16,12 +16,18 @@ final class GeographicRegionDetailViewModel: CoordinatorViewModel {
     private(set) var suburbCount: Int = 0
     private(set) var crawledSuburbCount: Int = 0
     private(set) var venueCount: Int = 0
+    private(set) var brokenVenueCount: Int = 0
+    private(set) var readyVenueCount: Int = 0
     private(set) var nonBrokenVenueCount: Int = 0
     private(set) var crawledVenueCount: Int = 0
     private(set) var venuesWithApprovedSourcesCount: Int = 0
     private(set) var extractedVenueCount: Int = 0
     private(set) var sourceCount: Int = 0
+    private(set) var waitingSourceCount: Int = 0
+    private(set) var acceptedSourceCount: Int = 0
     private(set) var dealCount: Int = 0
+    private(set) var waitingDealCount: Int = 0
+    private(set) var acceptedDealCount: Int = 0
     private(set) var isAutoTuningNearbyRadius = false
     var actionMessage: String?
 
@@ -121,23 +127,35 @@ final class GeographicRegionDetailViewModel: CoordinatorViewModel {
             suburbCount = try geographicRegionRepository.suburbCount(regionId: regionId)
             crawledSuburbCount = try geographicRegionRepository.crawledSuburbCount(regionId: regionId)
             venueCount = try geographicRegionRepository.venueCount(regionId: regionId)
+            brokenVenueCount = try geographicRegionRepository.brokenVenueCount(regionId: regionId)
+            readyVenueCount = try geographicRegionRepository.readyVenueCount(regionId: regionId)
             nonBrokenVenueCount = try geographicRegionRepository.nonBrokenVenueCount(regionId: regionId)
             crawledVenueCount = try geographicRegionRepository.crawledVenueCount(regionId: regionId)
             venuesWithApprovedSourcesCount = try geographicRegionRepository.venuesWithApprovedSourcesCount(regionId: regionId)
             extractedVenueCount = try geographicRegionRepository.extractedVenueCount(regionId: regionId)
             sourceCount = try geographicRegionRepository.dealSourceCount(regionId: regionId)
+            waitingSourceCount = try geographicRegionRepository.dealSourceCount(regionId: regionId, status: .new)
+            acceptedSourceCount = try geographicRegionRepository.dealSourceCount(regionId: regionId, status: .approved)
             dealCount = try geographicRegionRepository.dealCount(regionId: regionId)
+            waitingDealCount = try geographicRegionRepository.dealCount(regionId: regionId, status: .new)
+            acceptedDealCount = try geographicRegionRepository.dealCount(regionId: regionId, status: .approved)
         } catch {
             region = nil
             suburbCount = 0
             crawledSuburbCount = 0
             venueCount = 0
+            brokenVenueCount = 0
+            readyVenueCount = 0
             nonBrokenVenueCount = 0
             crawledVenueCount = 0
             venuesWithApprovedSourcesCount = 0
             extractedVenueCount = 0
             sourceCount = 0
+            waitingSourceCount = 0
+            acceptedSourceCount = 0
             dealCount = 0
+            waitingDealCount = 0
+            acceptedDealCount = 0
         }
     }
 

@@ -611,11 +611,35 @@ struct VenueDetailsView: View {
                 description: Text("Approve deal sources and run extraction from the Deal Sources tab.")
             )
         } else {
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Deals")
-                    .font(.headline)
+            VStack(alignment: .leading, spacing: 24) {
+                dealsCategorySection(
+                    title: "Waiting",
+                    deals: viewModel.deals.filter { $0.deal.status == .new }
+                )
+                dealsCategorySection(
+                    title: "Approved",
+                    deals: viewModel.deals.filter { $0.deal.status == .approved }
+                )
+                dealsCategorySection(
+                    title: "Rejected",
+                    deals: viewModel.deals.filter { $0.deal.status == .rejected }
+                )
+            }
+        }
+    }
 
-                ForEach(viewModel.deals, id: \.deal.id) { item in
+    @ViewBuilder
+    private func dealsCategorySection(title: String, deals: [DealWithSchedules]) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("\(title) (\(deals.count))")
+                .font(.headline)
+
+            if deals.isEmpty {
+                Text("No \(title.lowercased()) deals.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else {
+                ForEach(deals, id: \.deal.id) { item in
                     DealRow(
                         item: item,
                         venueName: viewModel.venue?.name ?? "Unknown Venue",
