@@ -23,7 +23,7 @@ import {
   currentCalendarWeekday,
   currentMinuteOfDay,
 } from "@/lib/search/schedule";
-import { expandKeywords } from "@data/products";
+import { expandSearchTerms } from "@data/products";
 import {
   NEAR_ME_RADIUS_KM,
   nearbySuburbRadiusKm,
@@ -255,7 +255,7 @@ function textSearchFilterForWhatQuery(query: string): SQL {
     return textSearchFilter(query);
   }
 
-  const terms = expandKeywords(tokens);
+  const terms = expandSearchTerms(tokens);
   if (terms.length === 1) {
     return textSearchFilter(terms[0]);
   }
@@ -694,10 +694,13 @@ export async function listRegionDealDayCounts(
   return rows;
 }
 
-/** Schedule rows with deal text for product matching (e.g. happy-hour heat map). */
+/**
+ * All schedule rows with deal text for product matching (e.g. happy-hour heat
+ * map). Must be uncapped: heat tallies every covered hour, so truncating
+ * silently undercounts evening cells when a region has many schedule rows.
+ */
 export async function listRegionDealSchedulesForMatching(
   regionId: number,
-  limit = 5000,
 ): Promise<RegionDealScheduleMatchRow[]> {
   return db
     .select({
@@ -716,8 +719,7 @@ export async function listRegionDealSchedulesForMatching(
     .where(
       and(eq(suburb.regionId, regionId), eq(deal.status, "approved")),
     )
-    .orderBy(desc(deal.id), dealSchedule.dayOfWeek, dealSchedule.startMinute)
-    .limit(limit);
+    .orderBy(desc(deal.id), dealSchedule.dayOfWeek, dealSchedule.startMinute);
 }
 
 export async function listRegionDealTextsForMatching(

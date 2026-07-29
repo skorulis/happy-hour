@@ -414,6 +414,35 @@ export function expandKeywords(tokens: string[]): string[] {
   return expanded;
 }
 
+/**
+ * Like {@link expandKeywords}, then adds each term's product synonyms.
+ * Used for What-field FTS so searching "happy hour" also finds "happiest hour".
+ */
+export function expandSearchTerms(tokens: string[]): string[] {
+  const expanded: string[] = [];
+  const seen = new Set<string>();
+
+  for (const term of expandKeywords(tokens)) {
+    const key = term.toLowerCase();
+    if (!seen.has(key)) {
+      seen.add(key);
+      expanded.push(term);
+    }
+
+    const product = productsByName.get(key);
+    for (const synonym of product?.synonyms ?? []) {
+      const synonymKey = synonym.toLowerCase();
+      if (seen.has(synonymKey)) {
+        continue;
+      }
+      seen.add(synonymKey);
+      expanded.push(synonym);
+    }
+  }
+
+  return expanded;
+}
+
 export function expandKeywordGroups(tokens: string[]): string[][] {
   return tokens
     .map((token) => token.trim())

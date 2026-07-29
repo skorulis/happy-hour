@@ -53,6 +53,15 @@ describe("hoursCoveredOnScheduleDay", () => {
     expect(hoursCoveredOnScheduleDay(16 * 60, 18 * 60)).toEqual([16, 17]);
   });
 
+  it("excludes the end hour when the window ends on the hour", () => {
+    expect(hoursCoveredOnScheduleDay(20 * 60, 23 * 60)).toEqual([20, 21, 22]);
+  });
+
+  it("only counts hours active at the top of the hour", () => {
+    // 10:30pm–11:30pm: active at 11:00, not at 10:00
+    expect(hoursCoveredOnScheduleDay(22 * 60 + 30, 23 * 60 + 30)).toEqual([23]);
+  });
+
   it("returns empty for all-day schedules", () => {
     expect(hoursCoveredOnScheduleDay(0, 1440)).toEqual([]);
   });
@@ -119,6 +128,32 @@ describe("tallyHappyHourDayHourCounts", () => {
         }),
       ]),
     ).toEqual([]);
+  });
+
+  it("counts hours while happy hour is on, not only the start hour", () => {
+    const counts = tallyHappyHourDayHourCounts([
+      schedule({
+        dealId: 1,
+        title: "Happy Hour",
+        dayOfWeek: 4,
+        startMinute: 17 * 60,
+        endMinute: 21 * 60 + 30,
+      }),
+      schedule({
+        dealId: 2,
+        title: "Happy Hour",
+        dayOfWeek: 4,
+        startMinute: 21 * 60,
+        endMinute: 22 * 60,
+      }),
+    ]);
+
+    expect(counts.find((cell) => cell.dayOfWeek === 4 && cell.hour === 21)).toEqual(
+      { dayOfWeek: 4, hour: 21, count: 2 },
+    );
+    expect(counts.find((cell) => cell.dayOfWeek === 4 && cell.hour === 17)).toEqual(
+      { dayOfWeek: 4, hour: 17, count: 1 },
+    );
   });
 });
 

@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { expandKeywordGroups, expandKeywords } from "@data/products";
+import {
+  expandKeywordGroups,
+  expandKeywords,
+  expandSearchTerms,
+} from "@data/products";
 import { filtersToApiSearchParams, parseWhatTokens, DEFAULT_SEARCH_FILTERS } from "./url";
 
 describe("expandKeywords", () => {
@@ -83,6 +87,28 @@ describe("expandKeywords", () => {
       ]),
     );
     expect(expanded).toHaveLength(8);
+  });
+});
+
+describe("expandSearchTerms", () => {
+  it("includes product synonyms for FTS", () => {
+    const expanded = expandSearchTerms(["happy hour"]);
+    expect(expanded).toEqual(
+      expect.arrayContaining([
+        "happy hour",
+        "golden hour",
+        "happiest hour",
+        "mates rates",
+      ]),
+    );
+    expect(expanded[0]).toBe("happy hour");
+  });
+
+  it("still expands groups before adding synonyms", () => {
+    const expanded = expandSearchTerms(["beer"]);
+    expect(expanded).toEqual(
+      expect.arrayContaining(["beer", "schooner", "pint", "guinness"]),
+    );
   });
 });
 

@@ -60,8 +60,10 @@ export function dealMatchesHappyHour(deal: DealTextFields): boolean {
 }
 
 /**
- * Hours a schedule covers on its listed day (before midnight), excluding
- * all-day rows. A 4–6pm window yields [16, 17].
+ * Hours where a schedule is active at the top of the hour on its listed day
+ * (before midnight), excluding all-day rows. Matches the heat-cell search
+ * filter (`startMinute === endMinute === hour * 60`), so an 8pm–11pm window
+ * yields [20, 21, 22] — not 23, because it ends at 11:00.
  */
 export function hoursCoveredOnScheduleDay(
   startMinute: number,
@@ -71,12 +73,12 @@ export function hoursCoveredOnScheduleDay(
     return [];
   }
   const start = minutesWithinDay(startMinute);
-  const endExclusive = Math.min(Math.max(endMinute, start + 1), 1440);
-  const startHour = Math.floor(start / 60);
-  const lastHour = Math.floor((endExclusive - 1) / 60);
   const hours: number[] = [];
-  for (let hour = startHour; hour <= lastHour && hour < 24; hour += 1) {
-    hours.push(hour);
+  for (let hour = 0; hour < 24; hour += 1) {
+    const minute = hour * 60;
+    if (start <= minute && endMinute > minute) {
+      hours.push(hour);
+    }
   }
   return hours;
 }
