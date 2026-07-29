@@ -31,6 +31,15 @@ async function capturePosterPng(): Promise<string> {
     throw new Error("Poster element not found");
   }
 
+  // Reveal capture-only elements (e.g. branding) for the export.
+  const captureOnly = Array.from(
+    poster.querySelectorAll<HTMLElement>("[data-capture-only]"),
+  );
+  for (const el of captureOnly) {
+    el.classList.remove("hidden");
+    el.classList.add("flex");
+  }
+
   // Wait a frame so layout/fonts settle before rasterizing.
   await new Promise<void>((resolve) => {
     requestAnimationFrame(() => resolve());
@@ -40,11 +49,11 @@ async function capturePosterPng(): Promise<string> {
   const width = poster.offsetWidth + pad * 2;
   const height = poster.offsetHeight + pad * 2;
 
-  return domToPng(poster, {
+  const result = await domToPng(poster, {
     scale: 2,
     width,
     height,
-    // Page background behind export padding so the card border isn’t clipped.
+    // Page background behind export padding so the card border isn't clipped.
     backgroundColor: "#081426",
     style: {
       padding: `${pad}px`,
@@ -55,10 +64,18 @@ async function capturePosterPng(): Promise<string> {
     },
     filter: (node) => {
       if (!(node instanceof Element)) return true;
-      // Skip interactive chrome that shouldn’t appear in the export.
+      // Skip interactive chrome that shouldn't appear in the export.
       return !node.hasAttribute("data-infographic-exclude");
     },
   });
+
+  // Restore capture-only elements to hidden after rasterizing.
+  for (const el of captureOnly) {
+    el.classList.add("hidden");
+    el.classList.remove("flex");
+  }
+
+  return result;
 }
 
 export function RegionInfographicShare({
@@ -82,7 +99,7 @@ export function RegionInfographicShare({
       setStatus(null);
       window.setTimeout(() => setCopied(false), 2000);
     } catch {
-      setStatus("Couldn’t copy the link");
+      setStatus("Couldn't copy the link");
     }
   }
 
@@ -94,7 +111,7 @@ export function RegionInfographicShare({
       if (error instanceof DOMException && error.name === "AbortError") {
         return;
       }
-      setStatus("Sharing isn’t available here — copy the link instead");
+      setStatus("Sharing isn't available here — copy the link instead");
     }
   }
 
@@ -106,7 +123,7 @@ export function RegionInfographicShare({
       const dataUrl = await capturePosterPng();
       triggerPngDownload(dataUrl, downloadFileName(title));
     } catch {
-      setStatus("Couldn’t download the image");
+      setStatus("Couldn't download the image");
     } finally {
       setDownloading(false);
     }

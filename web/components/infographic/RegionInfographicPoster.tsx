@@ -188,7 +188,7 @@ export function RegionInfographicPoster({
           </div>
         ) : null}
 
-        <div className="flex items-center gap-2.5">
+        <div className="hidden items-center gap-2.5" data-capture-only>
           <Image
             src="/icon.png"
             alt=""
