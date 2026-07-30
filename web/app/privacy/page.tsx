@@ -27,7 +27,7 @@ export default function PrivacyPage() {
         <h1 className="text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
           Privacy policy
         </h1>
-        <p className="text-sm text-muted">Last updated: 26 July 2026</p>
+        <p className="text-sm text-muted">Last updated: 30 July 2026</p>
       </header>
 
       <article className="space-y-8 text-base leading-relaxed text-secondary">
@@ -139,9 +139,9 @@ export default function PrivacyPage() {
             </li>
             <li>
               Understand product usage via analytics (for example page views,
-              searches, map interactions, and venue opens), including
-              first-party search analytics stored in our application database
-              to improve search and the product.
+              searches, search-bar filter selections, map interactions, and
+              venue opens), including first-party search analytics stored in
+              our application database to improve search and the product.
             </li>
             <li>Diagnose errors and reliability issues via error monitoring.</li>
             <li>

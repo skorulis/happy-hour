@@ -873,6 +873,10 @@ export function useSearchFilters(options?: {
   ]);
 
   function handleDaysApply(days: number[], timeRange: TimeRange) {
+    track("search_day_selected", {
+      days: days.slice().sort((a, b) => a - b).join(","),
+      time: timeRangeKey(timeRange) || null,
+    });
     setFilters((current) => ({
       ...current,
       days,
@@ -881,6 +885,18 @@ export function useSearchFilters(options?: {
   }
 
   function handleWhereChange(where: SearchFilters["where"]) {
+    const whereKind = where.kind;
+    let suburbId: number | null = null;
+    let suburbSlug: string | null = null;
+    if (whereKind === "suburb") {
+      suburbId = where.id;
+      suburbSlug = suburbWhereSlug(where.suburb.name, where.suburb.postcode);
+    }
+    track("search_location_selected", {
+      where_kind: whereKind,
+      suburb_id: suburbId,
+      suburb_slug: suburbSlug,
+    });
     setFilters((current) => ({
       ...current,
       where,
@@ -891,6 +907,9 @@ export function useSearchFilters(options?: {
   }
 
   function handleWhatChange(what: string[]) {
+    track("search_product_selected", {
+      what: what.join(",") || null,
+    });
     setFilters((current) => ({
       ...current,
       what,

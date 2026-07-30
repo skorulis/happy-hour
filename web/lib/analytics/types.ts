@@ -1,6 +1,9 @@
 export const ANALYTICS_EVENT_TYPES = [
   "page_viewed",
   "search_performed",
+  "search_day_selected",
+  "search_product_selected",
+  "search_location_selected",
   "view_mode_toggled",
   "map_marker_selected",
   "venue_opened",

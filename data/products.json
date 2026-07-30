@@ -10,7 +10,6 @@
             "wine",
             "whiskey",
             "champagne",
-            "prosecco",
             "sake",
             "soju",
             "seltzer",
@@ -80,10 +79,6 @@
             "hard cider",
             "apple cider"
         ]
-    },
-    {
-        "name": "prosecco",
-        "icon": "BottleWine"
     },
     {
         "name": "craft beer",
@@ -168,7 +163,8 @@
             "red wine",
             "white wine",
             "rosé",
-            "house wine"
+            "house wine",
+            "prosecco"
         ]
     },
     {
@@ -427,7 +423,8 @@
             "porterhouse",
             "rump",
             "sirloin",
-            "t-bone"
+            "t-bone",
+            "scotch fillet"
         ]
     },
     {
@@ -493,6 +490,7 @@
     {
         "name": "badge draw",
         "icon": "BadgeDollarSign",
+        "noprice": true,
         "synonyms": [
             "membership jackpot draw",
             "members draw",
