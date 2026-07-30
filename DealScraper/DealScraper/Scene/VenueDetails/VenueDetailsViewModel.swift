@@ -56,6 +56,12 @@ final class VenueDetailsViewModel {
         case failed(message: String)
     }
 
+    enum SaveFeaturesState: Equatable {
+        case idle
+        case completed
+        case failed(message: String)
+    }
+
     enum FetchPlacesSummariesState: Equatable {
         case idle
         case fetching
@@ -74,6 +80,7 @@ final class VenueDetailsViewModel {
     private(set) var generateBlurbState: GenerateBlurbState = .idle
     private(set) var saveBlurbState: SaveBlurbState = .idle
     private(set) var saveContactEmailState: SaveContactEmailState = .idle
+    private(set) var saveFeaturesState: SaveFeaturesState = .idle
     private(set) var fetchPlacesSummariesState: FetchPlacesSummariesState = .idle
     private(set) var fetchedEditorialSummary: String?
     private(set) var fetchedReviewSummary: String?
@@ -97,6 +104,14 @@ final class VenueDetailsViewModel {
         }
     }
 
+    var selectedFeatures: Set<String> = [] {
+        didSet {
+            if saveFeaturesState == .completed {
+                saveFeaturesState = .idle
+            }
+        }
+    }
+
     var openRouterModel: String = LLMModelStore.defaultOpenRouterModel {
         didSet { llmModelStore.openRouterModel = openRouterModel }
     }
@@ -106,12 +121,14 @@ final class VenueDetailsViewModel {
     private let dealSourceRepository: DealSourceRepository
     private let dealRepository: DealRepository
     private let venueLinksRepository: VenueLinksRepository
+    private let venueFeatureRepository: VenueFeatureRepository
     private let heroImageStore: VenueHeroImageStore
     private let jobQueue: JobQueue
     private let llmModelStore: LLMModelStore
     private let venueBlurbGenerator: VenueBlurbGenerator
     private let googlePlacesClient: GooglePlacesClient
     private let apiKeyStore: APIKeyStore
+    private var savedFeatureNames: Set<String> = []
 
     @Resolvable<Resolver>
     init(
@@ -121,6 +138,7 @@ final class VenueDetailsViewModel {
         dealSourceRepository: DealSourceRepository,
         dealRepository: DealRepository,
         venueLinksRepository: VenueLinksRepository,
+        venueFeatureRepository: VenueFeatureRepository,
         heroImageStore: VenueHeroImageStore,
         jobQueue: JobQueue,
         llmModelStore: LLMModelStore,
@@ -134,6 +152,7 @@ final class VenueDetailsViewModel {
         self.dealSourceRepository = dealSourceRepository
         self.dealRepository = dealRepository
         self.venueLinksRepository = venueLinksRepository
+        self.venueFeatureRepository = venueFeatureRepository
         self.heroImageStore = heroImageStore
         self.jobQueue = jobQueue
         self.llmModelStore = llmModelStore
@@ -237,6 +256,15 @@ final class VenueDetailsViewModel {
         return draft != saved
     }
 
+    var availableFeatures: [String] {
+        FeaturesCatalog.featureNames
+    }
+
+    var canSaveFeatures: Bool {
+        guard venue?.id != nil else { return false }
+        return selectedFeatures != savedFeatureNames
+    }
+
     var canFetchPlacesSummaries: Bool {
         venue != nil
             && !apiKeyStore.googlePlacesAPIKey.isEmpty
@@ -297,6 +325,33 @@ final class VenueDetailsViewModel {
             saveContactEmailState = .completed
         } catch {
             saveContactEmailState = .failed(message: error.localizedDescription)
+        }
+    }
+
+    func setFeatureSelected(_ feature: String, isSelected: Bool) {
+        if isSelected {
+            selectedFeatures.insert(feature)
+        } else {
+            selectedFeatures.remove(feature)
+        }
+    }
+
+    func isFeatureSelected(_ feature: String) -> Bool {
+        selectedFeatures.contains(feature)
+    }
+
+    func saveFeatures() {
+        guard let venueId = venue?.id, canSaveFeatures else { return }
+
+        do {
+            try venueFeatureRepository.replaceAll(
+                venueId: venueId,
+                features: selectedFeatures.sorted()
+            )
+            load()
+            saveFeaturesState = .completed
+        } catch {
+            saveFeaturesState = .failed(message: error.localizedDescription)
         }
     }
 
@@ -592,6 +647,15 @@ final class VenueDetailsViewModel {
         saveBlurbState = .idle
         contactEmailText = venue?.contactEmail ?? ""
         saveContactEmailState = .idle
+        if let venueId = venue?.id {
+            let features = (try? venueFeatureRepository.find(venueId: venueId)) ?? []
+            selectedFeatures = Set(features.map(\.feature))
+            savedFeatureNames = selectedFeatures
+        } else {
+            selectedFeatures = []
+            savedFeatureNames = []
+        }
+        saveFeaturesState = .idle
     }
 
     private func mapCrawlState(_ status: JobStatus) -> ProgressState<VenueCrawlResults> {

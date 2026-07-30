@@ -60,4 +60,20 @@ struct VenueFeatureRepositoryTests {
             #expect(name == "sports bar")
         }
     }
+
+    @Test func ensureFeaturesMergesWithoutRemovingExisting() throws {
+        let store = SQLStore.inMemory()
+        let repository = VenueFeatureRepository(store: store)
+        let venueId = try makeVenueId(store: store)
+
+        try repository.replaceAll(venueId: venueId, features: ["rooftop"])
+        let didInsert = try repository.ensureFeatures(
+            venueId: venueId,
+            features: ["brewery", "craft beer", "rooftop"]
+        )
+        #expect(didInsert)
+
+        let found = try repository.find(venueId: venueId)
+        #expect(found.map(\.feature) == ["brewery", "craft beer", "rooftop"])
+    }
 }

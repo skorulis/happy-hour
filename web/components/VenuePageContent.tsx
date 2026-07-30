@@ -71,6 +71,11 @@ export function VenuePageContent({
           <h1 className="text-3xl font-bold text-foreground">
             {venue.name}
           </h1>
+          {venue.features.length > 0 ? (
+            <p className="text-sm font-medium tracking-[0.2em] text-accent-soft uppercase">
+              {venue.features.join(" - ")}
+            </p>
+          ) : null}
           {venue.suburbName ? (
             <nav aria-label="Breadcrumb" className="text-sm text-muted">
               {venue.regionName ? (

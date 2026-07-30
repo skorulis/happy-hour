@@ -7,7 +7,35 @@
         "synonyms": ["beer gardens"]
     },
     {
+        "name": "craft beer",
+        "synonyms": ["craft beers"]
+    },
+    {
+        "name": "brewery",
+        "synonyms": ["breweries", "brewpub"]
+    },
+    {
+        "name": "tab facilities",
+        "synonyms": ["tab", "tabs"]
+    },
+    {
+        "name": "sports",
+        "synonyms": ["live sport", "live sports", "sports bar"]
+    },
+    {
+        "name": "irish pub",
+        "synonyms": ["irish"]
+    },
+    {
+        "name": "whiskey",
+        "synonyms": ["whisky"]
+    },
+    {
         "name": "rooftop",
         "synonyms": ["rooftop bar", "rooftop terrace"]
+    },
+    {
+        "name": "water views",
+        "synonyms": ["water view", "harbour views", "harbor views", "ocean views"]
     }
 ]

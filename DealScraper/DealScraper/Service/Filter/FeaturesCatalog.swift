@@ -30,4 +30,18 @@ nonisolated enum FeaturesCatalog {
         let key = name.lowercased()
         return loadFeatures().contains { $0.name.lowercased() == key }
     }
+
+    /// Features implied by Google Places types when a venue is synced.
+    static func featuresInferred(fromGoogleTypes types: [String]?) -> [String] {
+        guard let types, !types.isEmpty else { return [] }
+
+        let lower = Set(types.map { $0.lowercased() })
+        var inferred: [String] = []
+
+        if lower.contains("brewery") {
+            inferred.append(contentsOf: ["brewery", "craft beer"])
+        }
+
+        return inferred.filter { isKnownFeature($0) }
+    }
 }

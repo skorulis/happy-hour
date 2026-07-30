@@ -41,6 +41,33 @@ final class VenueFeatureRepository {
         }
     }
 
+    /// Adds missing features without removing any already assigned.
+    @discardableResult
+    func ensureFeatures(venueId: Int64, features: [String]) throws -> Bool {
+        let normalized = try normalizeFeatures(features)
+        guard !normalized.isEmpty else { return false }
+
+        return try store.dbQueue.write { db in
+            let existing = try VenueFeature
+                .filter(Column("venue_id") == venueId)
+                .fetchAll(db)
+            let existingKeys = Set(existing.map { $0.feature.lowercased() })
+
+            var didInsert = false
+            for feature in normalized {
+                guard !existingKeys.contains(feature.lowercased()) else { continue }
+                var row = VenueFeature(venueId: venueId, feature: feature)
+                try row.insert(db)
+                didInsert = true
+            }
+
+            if didInsert {
+                try Venue.touchLastUpdate(db, venueId: venueId)
+            }
+            return didInsert
+        }
+    }
+
     private func normalizeFeatures(_ features: [String]) throws -> [String] {
         var seen = Set<String>()
         var normalized: [String] = []

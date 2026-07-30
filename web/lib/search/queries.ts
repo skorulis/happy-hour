@@ -45,9 +45,32 @@ import {
   geographicRegion,
   suburb,
   venue,
+  venueFeature,
   venueLinks,
 } from "@/db/schema";
+import { features as featureCatalog } from "@data/features";
 import { getDealIdsWithOpenReports } from "@/lib/reports/queries";
+
+const featureCatalogOrder = new Map(
+  featureCatalog.map((feature, index) => [feature.name.toLowerCase(), index]),
+);
+
+function sortVenueFeatures(names: string[]): string[] {
+  return [...names].sort((a, b) => {
+    const aOrder = featureCatalogOrder.get(a.toLowerCase());
+    const bOrder = featureCatalogOrder.get(b.toLowerCase());
+    if (aOrder != null && bOrder != null) {
+      return aOrder - bOrder;
+    }
+    if (aOrder != null) {
+      return -1;
+    }
+    if (bOrder != null) {
+      return 1;
+    }
+    return a.localeCompare(b);
+  });
+}
 
 export type SuburbSearchResult = {
   id: number;
@@ -136,6 +159,7 @@ export type VenueDetailResult = VenueSearchResult & {
   suburbName: string | null;
   suburbPostcode: string | null;
   regionName: string | null;
+  features: string[];
   links: {
     whatsOn: string | null;
     instagram: string | null;
@@ -1284,6 +1308,11 @@ async function buildVenueDetail(
     .where(eq(venueLinks.venueId, venueRow.id))
     .limit(1);
 
+  const featureRows = await db
+    .select({ feature: venueFeature.feature })
+    .from(venueFeature)
+    .where(eq(venueFeature.venueId, venueRow.id));
+
   const deals = await searchDeals({ venueId: venueRow.id, limit: 500 });
   const openReportDealIds = await getDealIdsWithOpenReports(
     deals.map((dealRow) => dealRow.id),
@@ -1301,6 +1330,7 @@ async function buildVenueDetail(
     websiteUri: venueRow.websiteUri,
     heroImage: venueRow.heroImage,
     blurb: venueRow.blurb,
+    features: sortVenueFeatures(featureRows.map((row) => row.feature)),
     links: linksRow
       ? {
           whatsOn: linksRow.whatsOn,

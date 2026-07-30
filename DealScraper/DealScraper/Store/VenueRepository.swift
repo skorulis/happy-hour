@@ -118,6 +118,19 @@ final class VenueRepository {
             ) {
                 newCount += 1
             }
+
+            let inferredFeatures = FeaturesCatalog.featuresInferred(
+                fromGoogleTypes: place.types
+            )
+            if !inferredFeatures.isEmpty,
+               let venue = try find(googleMapId: place.id),
+               let venueId = venue.id
+            {
+                try VenueFeatureRepository(store: store).ensureFeatures(
+                    venueId: venueId,
+                    features: inferredFeatures
+                )
+            }
         }
         return VenueUpsertResults(newVenues: newCount, droppedVenues: droppedCount)
     }

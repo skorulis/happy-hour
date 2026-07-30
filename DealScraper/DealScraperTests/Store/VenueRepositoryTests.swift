@@ -648,4 +648,46 @@ struct VenueRepositoryTests {
         #expect(try venueLinksRepository.find(venueId: venueId) == nil)
         #expect(try venueRepository.delete(id: venueId) == false)
     }
+
+    @Test func upsertPlacesAssignsBreweryFeaturesFromGoogleType() throws {
+        let store = SQLStore.inMemory()
+        let repository = VenueRepository(store: store)
+        let featureRepository = VenueFeatureRepository(store: store)
+
+        let brewery = GooglePlace(
+            id: "places/ChIJBrewery",
+            displayName: .init(text: "Local Brewery", languageCode: "en"),
+            location: .init(latitude: -33.8600, longitude: 151.2100),
+            formattedAddress: "1 Circular Quay, Sydney NSW 2000",
+            websiteUri: "https://localbrewery.example.com",
+            types: ["brewery", "bar"]
+        )
+        let bar = GooglePlace(
+            id: "places/ChIJBarOnly",
+            displayName: .init(text: "Bar Only", languageCode: "en"),
+            location: .init(latitude: -33.8610, longitude: 151.2110),
+            formattedAddress: "2 Circular Quay, Sydney NSW 2000",
+            websiteUri: "https://baronly.example.com",
+            types: ["bar"]
+        )
+
+        try repository.upsert(places: [brewery, bar])
+
+        let breweryId = try #require(try repository.find(googleMapId: "places/ChIJBrewery")?.id)
+        let barId = try #require(try repository.find(googleMapId: "places/ChIJBarOnly")?.id)
+
+        #expect(
+            try featureRepository.find(venueId: breweryId).map(\.feature)
+                == ["brewery", "craft beer"]
+        )
+        #expect(try featureRepository.find(venueId: barId).isEmpty)
+
+        try featureRepository.replaceAll(venueId: breweryId, features: ["rooftop"])
+        try repository.upsert(places: [brewery])
+
+        #expect(
+            try featureRepository.find(venueId: breweryId).map(\.feature)
+                == ["brewery", "craft beer", "rooftop"]
+        )
+    }
 }
