@@ -354,6 +354,17 @@ final class SQLMigrations {
                 t.add(column: "nearby_radius_km", .double)
             }
         }
+
+        migrator.registerMigration("v41_create_venue_feature") { db in
+            try db.create(table: "venue_feature") { t in
+                t.autoIncrementedPrimaryKey("id")
+                t.column("venue_id", .integer)
+                    .notNull()
+                    .references("venue", onDelete: .cascade)
+                t.column("feature", .text).notNull()
+                t.uniqueKey(["venue_id", "feature"])
+            }
+        }
     }
 }
 

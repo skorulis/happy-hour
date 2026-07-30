@@ -65,6 +65,26 @@ If a product name or synonym appears only inside one of these phrases, that hit 
 - **With-clause ignore:** From the word `with` through the end of that line is ignored for product matching. Those phrases describe sides or inclusions (e.g. `With house beer or wine`), not the product itself. Text before `with` still matches (e.g. `Steak with chips` → `steak`).
 - **Bottomless title-only:** If the deal title matches `bottomless`, product matching uses the title only and ignores details. Other title keywords (e.g. `Bottomless pizza`) still match.
 
+# Venue features
+
+Catalog of venue amenities and spaces (e.g. outdoor areas) stored per venue in `venue_feature`. Defined in [`features.json`](features.json).
+
+## Entry fields
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `name` | yes | Canonical feature label stored on `venue_feature.feature` (e.g. `beer garden`, `rooftop`). |
+| `synonyms` | no | Alternate substrings for future text matching (e.g. `beer gardens` → `beer garden`). |
+
+## Example
+
+```json
+{
+  "name": "beer garden",
+  "synonyms": ["beer gardens"]
+}
+```
+
 # Geographic regions
 
 Approved geographic regions used by DealScraper (and shared with the web via the `data/` copy). Defined in [`regions.json`](regions.json).

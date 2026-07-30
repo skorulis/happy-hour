@@ -1,0 +1,13 @@
+[
+    {
+        "name": "courtyard"
+    },
+    {
+        "name": "beer garden",
+        "synonyms": ["beer gardens"]
+    },
+    {
+        "name": "rooftop",
+        "synonyms": ["rooftop bar", "rooftop terrace"]
+    }
+]

@@ -101,6 +101,21 @@ export const venueLinks = pgTable("venue_links", {
   facebook: text("facebook"),
 });
 
+export const venueFeature = pgTable(
+  "venue_feature",
+  {
+    id: serial("id").primaryKey(),
+    venueId: integer("venue_id")
+      .notNull()
+      .references(() => venue.id, { onDelete: "cascade" }),
+    feature: text("feature").notNull(),
+  },
+  (table) => [
+    uniqueIndex("venue_feature_venue_feature_idx").on(table.venueId, table.feature),
+    index("venue_feature_venue_id_idx").on(table.venueId),
+  ],
+);
+
 export const dealCreationSource = ["scraper", "user", "venue"] as const;
 export type DealCreationSource = (typeof dealCreationSource)[number];
 
@@ -277,6 +292,7 @@ export const venueRelations = relations(venue, ({ one, many }) => ({
     fields: [venue.id],
     references: [venueLinks.venueId],
   }),
+  features: many(venueFeature),
   deals: many(deal),
   ownerships: many(venueOwnership),
 }));
@@ -319,6 +335,13 @@ export const searchQueriesRelations = relations(searchQueries, ({ one }) => ({
 export const venueLinksRelations = relations(venueLinks, ({ one }) => ({
   venue: one(venue, {
     fields: [venueLinks.venueId],
+    references: [venue.id],
+  }),
+}));
+
+export const venueFeatureRelations = relations(venueFeature, ({ one }) => ({
+  venue: one(venue, {
+    fields: [venueFeature.venueId],
     references: [venue.id],
   }),
 }));

@@ -12,6 +12,10 @@ export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET,
   baseURL,
   database: drizzleAdapter(db, { provider: "pg" }),
+  session: {
+    expiresIn: 60 * 60 * 24 * 30, // 30 days
+    updateAge: 60 * 60 * 24, // extend expiry when used at least once per day
+  },
   emailAndPassword: {
     enabled: true,
     revokeSessionsOnPasswordReset: true,

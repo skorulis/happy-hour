@@ -109,6 +109,12 @@ type SqliteVenueLinks = {
   facebook: string | null;
 };
 
+type SqliteVenueFeature = {
+  id: number;
+  venue_id: number;
+  feature: string;
+};
+
 type SyncMode = "all" | "incremental";
 
 function parseArgs(argv: string[]): {
@@ -561,6 +567,23 @@ async function main() {
                 facebook: linksRow.facebook,
               },
             });
+        }
+
+        const featureRows = sqlite
+          .prepare("SELECT * FROM venue_feature WHERE venue_id = ? ORDER BY feature")
+          .all(venueRow.id) as SqliteVenueFeature[];
+
+        await tx
+          .delete(schema.venueFeature)
+          .where(eq(schema.venueFeature.venueId, venueId));
+
+        if (featureRows.length > 0) {
+          await tx.insert(schema.venueFeature).values(
+            featureRows.map((row) => ({
+              venueId,
+              feature: row.feature,
+            })),
+          );
         }
 
         const approvedDeals = sqlite

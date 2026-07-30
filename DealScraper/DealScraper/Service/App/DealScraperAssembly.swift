@@ -212,6 +212,11 @@ final class DealScraperAssembly: AutoInitModuleAssembly {
         }
         .inObjectScope(.container)
 
+        container.register(VenueFeatureRepository.self) { resolver in
+            VenueFeatureRepository(store: resolver.sqlStore())
+        }
+        .inObjectScope(.container)
+
         container.register(SuburbRepository.self) { resolver in
             SuburbRepository(store: resolver.sqlStore())
         }
