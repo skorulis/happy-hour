@@ -1,7 +1,3 @@
-import {
-  findMatchingProductsForDeals,
-  type DealTextFields,
-} from "@data/products";
 import type { RegionDayHourCount } from "@/lib/infographic/types";
 import type { RegionDealScheduleMatchRow } from "@/lib/search/queries";
 import {
@@ -53,12 +49,6 @@ export type DayHourHeatGrid = {
   total: number;
 };
 
-export function dealMatchesHappyHour(deal: DealTextFields): boolean {
-  return findMatchingProductsForDeals([deal]).some(
-    (product) => product.name.toLowerCase() === "happy hour",
-  );
-}
-
 /**
  * Hours where a schedule is active at the top of the hour on its listed day
  * (before midnight), excluding all-day rows. Matches the heat-cell search
@@ -107,31 +97,13 @@ export function colorForHeatIntensity(intensity: number): string {
 }
 
 /**
- * Count (day × hour) coverage for deals that match the happy hour product.
- * Only noon→11pm hours are kept for the dial-aligned heat window.
+ * Count (day × hour) coverage for already What-filtered happy-hour schedule
+ * rows. Only noon→11pm hours are kept for the dial-aligned heat window.
  */
 export function tallyHappyHourDayHourCounts(
   rows: RegionDealScheduleMatchRow[],
 ): RegionDayHourCount[] {
-  const happyHourDealIds = new Set<number>();
-  const seenDeals = new Map<number, DealTextFields>();
-
-  for (const row of rows) {
-    if (seenDeals.has(row.dealId)) continue;
-    seenDeals.set(row.dealId, {
-      title: row.title,
-      details: row.details,
-      conditions: row.conditions,
-    });
-  }
-
-  for (const [dealId, deal] of seenDeals) {
-    if (dealMatchesHappyHour(deal)) {
-      happyHourDealIds.add(dealId);
-    }
-  }
-
-  if (happyHourDealIds.size === 0) {
+  if (rows.length === 0) {
     return [];
   }
 
@@ -139,7 +111,6 @@ export function tallyHappyHourDayHourCounts(
   const counts = new Map<string, RegionDayHourCount>();
 
   for (const row of rows) {
-    if (!happyHourDealIds.has(row.dealId)) continue;
     for (const hour of hoursCoveredOnScheduleDay(
       row.startMinute,
       row.endMinute,

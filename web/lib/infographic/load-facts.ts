@@ -30,7 +30,7 @@ async function loadInfographicFacts(input: {
       listSuburbStatistics(input.suburbListOptions),
       countVenuesWithDeals(input.filter),
       listDealDayCounts(input.filter),
-      listDealSchedulesForMatching(input.filter),
+      listDealSchedulesForMatching(input.filter, { query: "happy hour" }),
       listDealTextsForMatching(input.filter),
     ]);
 
@@ -44,6 +44,7 @@ async function loadInfographicFacts(input: {
     suburbs,
     venuesWithDeals,
     dayCounts,
+    // Schedules are already What-filtered with the same FTS as search.
     dayHourCounts: tallyHappyHourDayHourCounts(dealSchedules),
     topProducts: productHits.drinks,
     topFood: productHits.food,

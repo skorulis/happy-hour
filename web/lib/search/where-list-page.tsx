@@ -192,6 +192,12 @@ export async function renderWhereListPage(
     regionId: region.id,
     ...(days.length > 0 ? { days } : {}),
     ...(what.length > 0 ? { query: what.join(",") } : {}),
+    ...(timeRange?.startMinute !== undefined
+      ? { startMinute: timeRange.startMinute }
+      : {}),
+    ...(timeRange?.endMinute !== undefined
+      ? { endMinute: timeRange.endMinute }
+      : {}),
   });
 
   return (

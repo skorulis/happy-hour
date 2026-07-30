@@ -247,8 +247,16 @@ function scheduleTimeFilter(
   );
 }
 
+/**
+ * Multi-word terms (e.g. "happy hour", "golden hour") match as a phrase so
+ * token co-occurrence like "golden … hours" does not count.
+ */
 function textSearchFilter(query: string): SQL {
-  return sql`${dealSearchVector} @@ plainto_tsquery('english', ${query})`;
+  const trimmed = query.trim();
+  if (/\s/.test(trimmed)) {
+    return sql`${dealSearchVector} @@ phraseto_tsquery('english', ${trimmed})`;
+  }
+  return sql`${dealSearchVector} @@ plainto_tsquery('english', ${trimmed})`;
 }
 
 function textSearchFilterForWhatQuery(query: string): SQL {
@@ -768,7 +776,9 @@ export async function listDealDayCounts(
  */
 export async function listDealSchedulesForMatching(
   filter: InfographicPlaceFilter,
+  options: { query?: string } = {},
 ): Promise<RegionDealScheduleMatchRow[]> {
+  const trimmedQuery = options.query?.trim();
   return db
     .select({
       dealId: deal.id,
@@ -783,7 +793,13 @@ export async function listDealSchedulesForMatching(
     .innerJoin(deal, eq(deal.id, dealSchedule.dealId))
     .innerJoin(venue, eq(venue.id, deal.venueId))
     .innerJoin(suburb, eq(suburb.id, venue.suburbId))
-    .where(and(infographicPlaceSql(filter), eq(deal.status, "approved")))
+    .where(
+      and(
+        infographicPlaceSql(filter),
+        eq(deal.status, "approved"),
+        trimmedQuery ? textSearchFilterForWhatQuery(trimmedQuery) : undefined,
+      ),
+    )
     .orderBy(desc(deal.id), dealSchedule.dayOfWeek, dealSchedule.startMinute);
 }
 
