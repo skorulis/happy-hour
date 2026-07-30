@@ -1,3 +1,4 @@
+import { appendDayToPath } from "@/lib/search/day-path";
 import { DAY_ABBREVIATIONS, WEEKDAY_UI_ORDER } from "@/lib/search/schedule";
 import type {
   RegionDayCount,
@@ -403,4 +404,12 @@ export function weekdayMixAriaLabel(
   return parts.length > 0
     ? `Deal schedule mix by day: ${parts.join(", ")}`
     : "No scheduled deals by day";
+}
+
+/** Region/suburb list href for a weekday band. Example: `/sydney/friday`. */
+export function weekdayMixDayHref(
+  listBasePath: string,
+  dayOfWeek: number,
+): string {
+  return appendDayToPath(listBasePath, [dayOfWeek]);
 }

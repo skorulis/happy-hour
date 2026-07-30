@@ -81,6 +81,7 @@ export function RegionInfographicPoster({
                 <BeerGlassWeekdayChart
                   days={weekdayMix.days}
                   peakDayOfWeek={weekdayMix.peakDayOfWeek}
+                  listBasePath={composition.listBasePath}
                 />
               </div>
             ) : null}

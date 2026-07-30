@@ -2,6 +2,7 @@ import { useId } from "react";
 import {
   buildBeerGlassGeometry,
   weekdayMixAriaLabel,
+  weekdayMixDayHref,
 } from "@/lib/infographic/beer-glass";
 import { formatDayLabel } from "@/lib/infographic/copy";
 import type { RegionWeekdayShare } from "@/lib/infographic/types";
@@ -9,12 +10,15 @@ import type { RegionWeekdayShare } from "@/lib/infographic/types";
 type BeerGlassWeekdayChartProps = {
   days: RegionWeekdayShare[];
   peakDayOfWeek: number;
+  /** Deal list base path (`/sydney` or `/surry-hills-2010`). */
+  listBasePath: string;
   className?: string;
 };
 
 export function BeerGlassWeekdayChart({
   days,
   peakDayOfWeek,
+  listBasePath,
   className,
 }: BeerGlassWeekdayChartProps) {
   const clipId = useId().replace(/:/g, "");
@@ -26,7 +30,7 @@ export function BeerGlassWeekdayChart({
       <svg
         viewBox={geometry.chartViewBox}
         className="h-56 w-auto max-w-full sm:h-72"
-        role="img"
+        role="group"
         aria-label={ariaLabel}
       >
         <defs>
@@ -36,16 +40,27 @@ export function BeerGlassWeekdayChart({
         </defs>
 
         <g clipPath={`url(#${clipId})`}>
-          {geometry.segments.map((segment) => (
-            <rect
-              key={`seg-${segment.dayOfWeek}`}
-              x={0}
-              y={segment.yTop}
-              width={geometry.glassWidth}
-              height={segment.yBottom - segment.yTop}
-              fill={segment.color}
-            />
-          ))}
+          {geometry.segments.map((segment) => {
+            const href = weekdayMixDayHref(listBasePath, segment.dayOfWeek);
+            const label = `${formatDayLabel(segment.dayOfWeek)} deals — open search`;
+            return (
+              <a
+                key={`seg-${segment.dayOfWeek}`}
+                href={href}
+                aria-label={label}
+                className="outline-offset-2 transition-[filter] hover:brightness-125 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent-soft"
+              >
+                <title>{label}</title>
+                <rect
+                  x={0}
+                  y={segment.yTop}
+                  width={geometry.glassWidth}
+                  height={segment.yBottom - segment.yTop}
+                  fill={segment.color}
+                />
+              </a>
+            );
+          })}
         </g>
 
         <path
@@ -54,6 +69,7 @@ export function BeerGlassWeekdayChart({
           stroke={geometry.outlineColor}
           strokeWidth={2.25}
           strokeLinejoin="round"
+          pointerEvents="none"
         />
 
         {geometry.legend.map((item) =>
@@ -67,6 +83,7 @@ export function BeerGlassWeekdayChart({
               strokeLinecap="round"
               strokeLinejoin="round"
               opacity={0.85}
+              pointerEvents="none"
             />
           ) : null,
         )}
@@ -74,7 +91,7 @@ export function BeerGlassWeekdayChart({
         {geometry.legend.map((item) => {
           const isPeak = item.dayOfWeek === peakDayOfWeek;
           return (
-            <g key={`legend-${item.dayOfWeek}`}>
+            <g key={`legend-${item.dayOfWeek}`} pointerEvents="none">
               <rect
                 x={item.swatchX}
                 y={item.y - item.swatchSize / 2}

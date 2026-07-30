@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildBeerGlassGeometry,
   normalizeWeekdayPercents,
+  weekdayMixDayHref,
 } from "@/lib/infographic/beer-glass";
 import { WEEKDAY_UI_ORDER } from "@/lib/search/schedule";
 
@@ -91,5 +92,18 @@ describe("buildBeerGlassGeometry", () => {
     expect(cubicCount).toBeGreaterThan(4);
     // Base must join right→left before ascending the left wall.
     expect(geometry.clipPath).toMatch(/C [\d.]+ [\d.]+ [\d.]+ [\d.]+ [\d.]+ [\d.]+\s+L /);
+  });
+});
+
+describe("weekdayMixDayHref", () => {
+  it("appends a day path segment to the list base path", () => {
+    expect(weekdayMixDayHref("/sydney", 6)).toBe("/sydney/friday");
+    expect(weekdayMixDayHref("/sydney", 2)).toBe("/sydney/monday");
+  });
+
+  it("preserves suburb where paths that include a postcode", () => {
+    expect(weekdayMixDayHref("/surry-hills-2010", 5)).toBe(
+      "/surry-hills-2010/thursday",
+    );
   });
 });
