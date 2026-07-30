@@ -131,7 +131,7 @@ export function PopularSuburbs({
   if (items.length === 0) {
     return (
       <p className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted">
-        No suburbs with deals yet. Try Near me or search for a suburb above.
+        No suburbs with specials yet. Try Near me or search for a suburb above.
       </p>
     );
   }

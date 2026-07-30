@@ -113,9 +113,9 @@ export function coverageRingEyebrow(ring: CoverageTriadRing): string {
     case "suburbsWithVenues":
       return "Suburbs with venues";
     case "suburbsWithDeals":
-      return "Suburbs with deals";
+      return "Suburbs with specials";
     case "venuesWithDeals":
-      return "Venues with deals";
+      return "Venues with specials";
   }
 }
 
@@ -133,9 +133,9 @@ export function coverageRingSupporting(ring: CoverageTriadRing): string {
     case "suburbsWithVenues":
       return `${of} suburbs have a venue`;
     case "suburbsWithDeals":
-      return `${of} suburbs have a deal`;
+      return `${of} suburbs have a special`;
     case "venuesWithDeals":
-      return `${of} venues have a deal`;
+      return `${of} venues have a special`;
   }
 }
 
