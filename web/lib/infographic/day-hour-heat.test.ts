@@ -5,7 +5,6 @@ import {
   DAY_HOUR_HEAT_EMPTY_COLOR,
   happyHourHeatCellHref,
   hoursCoveredOnScheduleDay,
-  pickPeakDayHour,
   tallyHappyHourDayHourCounts,
 } from "@/lib/infographic/day-hour-heat";
 import type { RegionDealScheduleMatchRow } from "@/lib/search/queries";

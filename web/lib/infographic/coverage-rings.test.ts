@@ -62,7 +62,7 @@ describe("coverage-rings", () => {
     });
     expect(coverageRingEyebrow(rings![0]!)).toBe("Suburbs with venues");
     expect(coverageRingSupporting(rings![2]!)).toBe(
-      "10 of 20 venues have a deal",
+      "10 of 20 venues have a special",
     );
   });
 
