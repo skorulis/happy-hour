@@ -25,6 +25,17 @@ function triggerPngDownload(dataUrl: string, filename: string) {
   anchor.remove();
 }
 
+/** Matches page `max-w-4xl` so mobile exports use the desktop composition. */
+const CAPTURE_CONTENT_WIDTH_PX = 896;
+
+function waitForNextPaint(): Promise<void> {
+  return new Promise((resolve) => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => resolve());
+    });
+  });
+}
+
 async function capturePosterPng(): Promise<string> {
   const poster = document.getElementById(POSTER_ELEMENT_ID);
   if (!poster) {
@@ -40,42 +51,58 @@ async function capturePosterPng(): Promise<string> {
     el.classList.add("flex");
   }
 
-  // Wait a frame so layout/fonts settle before rasterizing.
-  await new Promise<void>((resolve) => {
-    requestAnimationFrame(() => resolve());
-  });
+  // Temporarily force a desktop-width layout. The poster is a `@container`, so
+  // `@md:` styles follow this width (viewport media queries would not).
+  const previousWidth = poster.style.width;
+  const previousMinWidth = poster.style.minWidth;
+  const previousMaxWidth = poster.style.maxWidth;
+  const previousBodyOverflowX = document.body.style.overflowX;
 
-  const pad = 16;
-  const width = poster.offsetWidth + pad * 2;
-  const height = poster.offsetHeight + pad * 2;
+  try {
+    poster.style.width = `${CAPTURE_CONTENT_WIDTH_PX}px`;
+    poster.style.minWidth = `${CAPTURE_CONTENT_WIDTH_PX}px`;
+    poster.style.maxWidth = `${CAPTURE_CONTENT_WIDTH_PX}px`;
+    document.body.style.overflowX = "hidden";
 
-  const result = await domToPng(poster, {
-    scale: 2,
-    width,
-    height,
-    // Page background behind export padding so the card border isn't clipped.
-    backgroundColor: "#081426",
-    style: {
-      padding: `${pad}px`,
-      width: `${width}px`,
-      height: `${height}px`,
-      boxSizing: "border-box",
+    await waitForNextPaint();
+    if (document.fonts?.ready) {
+      await document.fonts.ready;
+    }
+
+    const pad = 16;
+    const width = poster.offsetWidth + pad * 2;
+    const height = poster.offsetHeight + pad * 2;
+
+    return await domToPng(poster, {
+      scale: 2,
+      width,
+      height,
+      // Page background behind export padding so the card border isn't clipped.
       backgroundColor: "#081426",
-    },
-    filter: (node) => {
-      if (!(node instanceof Element)) return true;
-      // Skip interactive chrome that shouldn't appear in the export.
-      return !node.hasAttribute("data-infographic-exclude");
-    },
-  });
+      style: {
+        padding: `${pad}px`,
+        width: `${width}px`,
+        height: `${height}px`,
+        boxSizing: "border-box",
+        backgroundColor: "#081426",
+      },
+      filter: (node) => {
+        if (!(node instanceof Element)) return true;
+        // Skip interactive chrome that shouldn't appear in the export.
+        return !node.hasAttribute("data-infographic-exclude");
+      },
+    });
+  } finally {
+    poster.style.width = previousWidth;
+    poster.style.minWidth = previousMinWidth;
+    poster.style.maxWidth = previousMaxWidth;
+    document.body.style.overflowX = previousBodyOverflowX;
 
-  // Restore capture-only elements to hidden after rasterizing.
-  for (const el of captureOnly) {
-    el.classList.add("hidden");
-    el.classList.remove("flex");
+    for (const el of captureOnly) {
+      el.classList.add("hidden");
+      el.classList.remove("flex");
+    }
   }
-
-  return result;
 }
 
 export function RegionInfographicShare({

@@ -29,7 +29,7 @@ export function BeerGlassWeekdayChart({
     <div className={className ?? "flex justify-start"}>
       <svg
         viewBox={geometry.chartViewBox}
-        className="h-56 w-auto max-w-full sm:h-72"
+        className="h-56 w-auto max-w-full @sm:h-72"
         role="group"
         aria-label={ariaLabel}
       >

@@ -36,7 +36,8 @@ export function RegionInfographicPoster({
   const topDensity = composition.slots.find((slot) => slot.id === "topDensity");
 
   return (
-    <div id="region-infographic-poster">
+    // `@container` so export can temporarily widen this node and pick up `@md:` layout.
+    <div id="region-infographic-poster" className="@container">
       <article
         className="relative overflow-hidden rounded-2xl border border-border bg-surface-elevated shadow-card"
         aria-label={`Infographic for ${composition.regionName}`}
@@ -50,9 +51,9 @@ export function RegionInfographicPoster({
           aria-hidden
         />
 
-        <div className="relative flex flex-col gap-8 p-6 sm:p-8 md:p-10">
+        <div className="relative flex flex-col gap-8 p-6 @sm:p-8 @md:p-10">
         <header>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl md:text-4xl">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground @sm:text-3xl @md:text-4xl">
             {formatRegionInfographicTitle(composition.regionName)}
           </h1>
         </header>
@@ -64,9 +65,9 @@ export function RegionInfographicPoster({
         ) : null}
 
         {weekdayMix || dayHourHeat ? (
-          <div className="flex flex-col gap-8 md:flex-row md:items-start md:gap-8">
+          <div className="flex flex-col gap-8 @md:flex-row @md:items-start @md:gap-8">
             {weekdayMix && weekdayMix.id === "weekdayMix" ? (
-              <div className="min-w-0 space-y-4 md:w-[42%] md:shrink-0">
+              <div className="min-w-0 space-y-4 @md:w-[42%] @md:shrink-0">
                 <div className="space-y-1">
                   <p className="text-xs font-medium tracking-[0.18em] text-accent-soft uppercase">
                     {slotEyebrow(weekdayMix)}
@@ -86,11 +87,11 @@ export function RegionInfographicPoster({
               </div>
             ) : null}
             {dayHourHeat && dayHourHeat.id === "dayHourHeat" ? (
-              <div className="min-w-0 flex-1 space-y-4 md:mt-14">
+              <div className="min-w-0 flex-1 space-y-4 @md:mt-14">
                 <DayHourHeatChart
                   cells={dayHourHeat.cells}
                   listBasePath={composition.listBasePath}
-                  className="w-full max-w-xl md:max-w-none"
+                  className="w-full max-w-xl @md:max-w-none"
                 />
                 <div className="space-y-1">
                   <p className="text-xs font-medium tracking-[0.18em] text-accent-soft uppercase">
@@ -109,11 +110,11 @@ export function RegionInfographicPoster({
         ) : null}
 
         {topProducts || topFood ? (
-          <div className="flex flex-col gap-8 md:flex-row md:items-start md:gap-8">
+          <div className="flex flex-col gap-8 @md:flex-row @md:items-start @md:gap-8">
             {topProducts && topProducts.id === "topProducts" ? (
               <div
                 className={`min-w-0 space-y-3 ${
-                  topFood ? "md:flex-1" : "w-full"
+                  topFood ? "@md:flex-1" : "w-full"
                 }`}
               >
                 <div className="space-y-1">
@@ -140,7 +141,7 @@ export function RegionInfographicPoster({
             {topFood && topFood.id === "topFood" ? (
               <div
                 className={`min-w-0 space-y-3 ${
-                  topProducts ? "md:flex-1" : "w-full"
+                  topProducts ? "@md:flex-1" : "w-full"
                 }`}
               >
                 <div className="space-y-1">

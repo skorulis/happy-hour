@@ -39,7 +39,7 @@ function CoverageRing({
       <p className="text-xs font-medium tracking-[0.16em] text-accent-soft uppercase">
         {coverageRingEyebrow(ring)}
       </p>
-      <div className="relative h-32 w-32 sm:h-40 sm:w-40">
+      <div className="relative h-32 w-32 @sm:h-40 @sm:w-40">
         <svg
           viewBox={`0 0 ${COVERAGE_RING_VIEWBOX} ${COVERAGE_RING_VIEWBOX}`}
           className="h-full w-full"
@@ -70,7 +70,7 @@ function CoverageRing({
           </g>
         </svg>
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-3">
-          <p className="text-2xl font-semibold tracking-tight text-foreground tabular-nums sm:text-3xl">
+          <p className="text-2xl font-semibold tracking-tight text-foreground tabular-nums @sm:text-3xl">
             {formatDealCount(ring.scaleCount)}
           </p>
           <p className="text-xs font-medium tracking-wide text-secondary uppercase">
@@ -95,7 +95,7 @@ export function CoverageRingsChart({
     className ??
     (rings.length === 1
       ? "flex justify-center"
-      : "grid grid-cols-2 gap-6 sm:grid-cols-3 sm:gap-4 md:gap-6");
+      : "grid grid-cols-2 gap-6 @sm:grid-cols-3 @sm:gap-4 @md:gap-6");
 
   return (
     <div
@@ -109,7 +109,7 @@ export function CoverageRingsChart({
           ring={ring}
           className={
             rings.length > 1 && index === 2
-              ? "col-span-2 justify-self-center sm:col-span-1 sm:justify-self-auto"
+              ? "col-span-2 justify-self-center @sm:col-span-1 @sm:justify-self-auto"
               : undefined
           }
         />
